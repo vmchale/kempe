@@ -1,7 +1,7 @@
 {
     module Kempe.Lexer ( alexMonadScan
                        , runAlex
-                       , loop
+                       , lexKempe
                        , AlexPosn (..)
                        , Alex (..)
                        ) where
@@ -97,5 +97,8 @@ loop = do
     case tok' of
         EOF{} -> pure []
         _ -> (tok' :) <$> loop
+
+lexKempe :: BSL.ByteString -> Either String [Token AlexPosn]
+lexKempe = flip runAlex loop
 
 }

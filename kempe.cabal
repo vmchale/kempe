@@ -1,94 +1,125 @@
-name:                kempe
-version:             0.1.0.0
--- synopsis:
--- description:
-license:             BSD3
-license-file:        LICENSE
-author:              Vanessa McHale
-maintainer:          vamchale@gmail.com
-copyright:           Copyright: (c) 2020 Vanessa McHale
-category:            Language, Compilers
-build-type:          Simple
-extra-doc-files:     README.md
-                     CHANGELOG.md
-cabal-version:       1.18
-
-library
-  hs-source-dirs:      src
-  exposed-modules:     Kempe.Lexer
-  other-modules:       Kempe.Unique
-                       Kempe.Name
-  build-depends:       base >= 4.3 && < 5
-                     , array
-                     , bytestring
-                     , containers
-                     , text
-  build-tool-depends:  alex:alex
-  default-language:    Haskell2010
-  if impl(ghc >= 8.0)
-    ghc-options:       -Wincomplete-uni-patterns -Wincomplete-record-updates -Wredundant-constraints -Widentities
-  if impl(ghc >= 8.4)
-    ghc-options:       -Wmissing-export-lists
-  if impl(ghc >= 8.2)
-    ghc-options: -Wcpp-undef
-  if impl(ghc >= 8.10)
-    ghc-options: -Wunused-packages
-  ghc-options:         -Wall
-
-executable kempe
-  hs-source-dirs:      run
-  main-is:             Main.hs
-  ghc-options:         -threaded -rtsopts -with-rtsopts=-N
-  build-depends:       base
-                     , kempe
-  default-language:    Haskell2010
-  if impl(ghc >= 8.0)
-    ghc-options:       -Wincomplete-uni-patterns -Wincomplete-record-updates -Wredundant-constraints -Widentities
-  if impl(ghc >= 8.4)
-    ghc-options:       -Wmissing-export-lists
-  if impl(ghc >= 8.2)
-    ghc-options: -Wcpp-undef
-  if impl(ghc >= 8.10)
-    ghc-options: -Wunused-packages
-  ghc-options:         -Wall
-
-test-suite kempe-test
-  type:                exitcode-stdio-1.0
-  hs-source-dirs:      test
-  main-is:             Spec.hs
-  build-depends:       base
-                     , kempe
-                     , tasty
-                     , tasty-hunit
-  if impl(ghc >= 8.0)
-    ghc-options:       -Wincomplete-uni-patterns -Wincomplete-record-updates -Wredundant-constraints -Widentities
-  if impl(ghc >= 8.4)
-    ghc-options:       -Wmissing-export-lists
-  if impl(ghc >= 8.2)
-    ghc-options: -Wcpp-undef
-  if impl(ghc >= 8.10)
-    ghc-options: -Wunused-packages
-  ghc-options:         -threaded -rtsopts -with-rtsopts=-N -Wall
-  default-language:    Haskell2010
-
-benchmark kempe-bench
-  type:                exitcode-stdio-1.0
-  hs-source-dirs:      bench
-  main-is:             Bench.hs
-  build-depends:       base
-                     , kempe
-                     , criterion
-  if impl(ghc >= 8.0)
-    ghc-options:       -Wincomplete-uni-patterns -Wincomplete-record-updates -Wredundant-constraints -Widentities
-  if impl(ghc >= 8.4)
-    ghc-options:       -Wmissing-export-lists
-  if impl(ghc >= 8.2)
-    ghc-options: -Wcpp-undef
-  if impl(ghc >= 8.10)
-    ghc-options: -Wunused-packages
-  ghc-options:         -threaded -rtsopts -with-rtsopts=-N -O3 -Wall
-  default-language:    Haskell2010
+cabal-version:   1.18
+name:            kempe
+version:         0.1.0.0
+license:         BSD3
+license-file:    LICENSE
+copyright:       Copyright: (c) 2020 Vanessa McHale
+maintainer:      vamchale@gmail.com
+author:          Vanessa McHale
+synopsis:        Kempe compiler
+description:     Kempe is a stack-based language
+category:        Language, Compilers
+build-type:      Simple
+extra-doc-files:
+    README.md
+    CHANGELOG.md
 
 source-repository head
-  type:     git
-  location: https://github.com/vmchale/kempe
+    type:     git
+    location: https://github.com/vmchale/kempe
+
+library
+    exposed-modules:    Kempe.Lexer
+    build-tool-depends: alex:alex -any
+    hs-source-dirs:     src
+    other-modules:
+        Kempe.Unique
+        Kempe.Name
+
+    default-language:   Haskell2010
+    ghc-options:        -Wall
+    build-depends:
+        base >=4.3 && <5,
+        array -any,
+        bytestring -any,
+        containers -any,
+        text -any
+
+    if impl(ghc >=8.0)
+        ghc-options:
+            -Wincomplete-uni-patterns -Wincomplete-record-updates
+            -Wredundant-constraints -Widentities
+
+    if impl(ghc >=8.4)
+        ghc-options: -Wmissing-export-lists
+
+    if impl(ghc >=8.2)
+        ghc-options: -Wcpp-undef
+
+    if impl(ghc >=8.10)
+        ghc-options: -Wunused-packages
+
+executable kempe
+    main-is:          Main.hs
+    hs-source-dirs:   run
+    default-language: Haskell2010
+    ghc-options:      -threaded -rtsopts -with-rtsopts=-N -Wall
+    build-depends:
+        base -any,
+        kempe -any
+
+    if impl(ghc >=8.0)
+        ghc-options:
+            -Wincomplete-uni-patterns -Wincomplete-record-updates
+            -Wredundant-constraints -Widentities
+
+    if impl(ghc >=8.4)
+        ghc-options: -Wmissing-export-lists
+
+    if impl(ghc >=8.2)
+        ghc-options: -Wcpp-undef
+
+    if impl(ghc >=8.10)
+        ghc-options: -Wunused-packages
+
+test-suite kempe-test
+    type:             exitcode-stdio-1.0
+    main-is:          Spec.hs
+    hs-source-dirs:   test
+    default-language: Haskell2010
+    ghc-options:      -threaded -rtsopts -with-rtsopts=-N -Wall
+    build-depends:
+        base -any,
+        kempe -any,
+        tasty -any,
+        tasty-hunit -any,
+        bytestring -any
+
+    if impl(ghc >=8.0)
+        ghc-options:
+            -Wincomplete-uni-patterns -Wincomplete-record-updates
+            -Wredundant-constraints -Widentities
+
+    if impl(ghc >=8.4)
+        ghc-options: -Wmissing-export-lists
+
+    if impl(ghc >=8.2)
+        ghc-options: -Wcpp-undef
+
+    if impl(ghc >=8.10)
+        ghc-options: -Wunused-packages
+
+benchmark kempe-bench
+    type:             exitcode-stdio-1.0
+    main-is:          Bench.hs
+    hs-source-dirs:   bench
+    default-language: Haskell2010
+    ghc-options:      -threaded -rtsopts -with-rtsopts=-N -O3 -Wall
+    build-depends:
+        base -any,
+        kempe -any,
+        criterion -any
+
+    if impl(ghc >=8.0)
+        ghc-options:
+            -Wincomplete-uni-patterns -Wincomplete-record-updates
+            -Wredundant-constraints -Widentities
+
+    if impl(ghc >=8.4)
+        ghc-options: -Wmissing-export-lists
+
+    if impl(ghc >=8.2)
+        ghc-options: -Wcpp-undef
+
+    if impl(ghc >=8.10)
+        ghc-options: -Wunused-packages

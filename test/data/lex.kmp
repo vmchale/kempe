@@ -1,0 +1,4 @@
+; this is a comment
+
+drop2 : a a --
+drop2 =: drop drop
