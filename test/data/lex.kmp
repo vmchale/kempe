@@ -10,7 +10,7 @@ type OS { macos ; linux ; windows ; freebsd }
 ; nothing has type -- Maybe a
 
 drop2 : a b --
-drop2 =: [ drop drop ]
+drop2 =: [ drop drop ] ; TODO: allow this without brackets?
 
 drop3 : a b c --
 drop3 =: [ drop drop drop ]
