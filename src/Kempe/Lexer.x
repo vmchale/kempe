@@ -11,7 +11,8 @@ import Data.Functor (($>))
 import qualified Data.ByteString.Lazy as BSL
 import qualified Data.IntMap as IM
 import qualified Data.Map as M
-import Data.Text as T
+import qualified Data.Text as T
+import Data.Text.Encoding (decodeUtf8)
 import Kempe.Name
 import Kempe.Unique
 
@@ -23,14 +24,29 @@ $digit = [0-9]
 
 $latin = [a-zA-Z]
 
+@follow_char = [$latin $digit \-\!\_]
+
+@name = [a-z] @follow_char*
+@tyname = [A-Z] @follow_char*
+
 tokens :-
 
     <0> {
 
+        $white+                  ;
+
         ";".*                    ; -- comment
 
         "--"                     { mkSym Arrow }
-        -- "=:"
+        "=:"                     { mkSym DefEq }
+        ":"                      { mkSym Colon }
+        "{"                      { mkSym LBrace }
+        "}"                      { mkSym RBrace }
+
+        type                     { mkKw KwType }
+
+        @name                    { tok (\p s -> TokName p <$> newIdentAlex p (mkText s)) }
+        @tyname                  { tok (\p s -> TokTyName p <$> newIdentAlex p (mkText s)) }
 
     }
 
@@ -43,7 +59,12 @@ tok f (p,_,s,_) len = f p (BSL.take len s)
 
 constructor c t = tok (\p _ -> alex $ c p t)
 
+mkKw = constructor TokKeyword
+
 mkSym = constructor TokSym
+
+mkText :: BSL.ByteString -> T.Text
+mkText = decodeUtf8 . BSL.toStrict
 
 type AlexUserState = (Int, M.Map T.Text Int, IM.IntMap (Name AlexPosn))
 
@@ -72,10 +93,19 @@ data Sym = Arrow
          | Div
          | Times
          | DefEq
+         | Eq
+         | Colon
+         | LBrace
+         | RBrace
+         | Semicolon
+
+data Keyword = KwType
 
 data Token a = EOF a
              | TokSym a Sym
-             | TokIdent a (Name a)
+             | TokName a (Name a)
+             | TokTyName a (Name a)
+             | TokKeyword a Keyword
 
 newIdentAlex :: AlexPosn -> T.Text -> Alex (Name AlexPosn)
 newIdentAlex pos t = do

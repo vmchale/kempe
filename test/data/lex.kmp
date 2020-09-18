@@ -1,4 +1,8 @@
 ; this is a comment
 
+type Void {}
+
+type Color { red ; green ; blue }
+
 drop2 : a a --
 drop2 =: drop drop
