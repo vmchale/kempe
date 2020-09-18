@@ -11,3 +11,4 @@ data BuiltinTy = TyPtr
 data KempeTy a = TyBuiltin a !BuiltinTy
                | TyNamed a (TyName a)
                | TyUniversal a (Name a) (KempeTy a)
+               -- | TyProduct a [KempeTy a]
