@@ -25,7 +25,14 @@ $latin = [a-zA-Z]
 
 tokens :-
 
-    <0> ";".*                    ; -- comment
+    <0> {
+
+        ";".*                    ; -- comment
+
+        "--"                     { mkSym Arrow }
+        -- "=:"
+
+    }
 
 {
 
@@ -64,9 +71,11 @@ data Sym = Arrow
          | Percent
          | Div
          | Times
+         | DefEq
 
 data Token a = EOF a
              | TokSym a Sym
+             | TokIdent a (Name a)
 
 newIdentAlex :: AlexPosn -> T.Text -> Alex (Name AlexPosn)
 newIdentAlex pos t = do
