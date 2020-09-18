@@ -34,6 +34,7 @@ library
         array -any,
         bytestring -any,
         containers -any,
+        deepseq,
         text -any
 
     if impl(ghc >=8.0)
@@ -109,6 +110,7 @@ benchmark kempe-bench
     build-depends:
         base -any,
         kempe -any,
+        bytestring,
         criterion -any
 
     if impl(ghc >=8.0)

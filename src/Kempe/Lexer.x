@@ -1,4 +1,7 @@
 {
+    {-# LANGUAGE DeriveAnyClass #-}
+    {-# LANGUAGE DeriveGeneric #-}
+    {-# LANGUAGE StandaloneDeriving #-}
     module Kempe.Lexer ( alexMonadScan
                        , runAlex
                        , lexKempe
@@ -7,12 +10,14 @@
                        ) where
 
 import Control.Arrow ((&&&))
+import Control.DeepSeq (NFData)
 import Data.Functor (($>))
 import qualified Data.ByteString.Lazy as BSL
 import qualified Data.IntMap as IM
 import qualified Data.Map as M
 import qualified Data.Text as T
 import Data.Text.Encoding (decodeUtf8)
+import GHC.Generics (Generic)
 import Kempe.Name
 import Kempe.Unique
 
@@ -44,6 +49,7 @@ tokens :-
         "}"                      { mkSym RBrace }
 
         type                     { mkKw KwType }
+        import                   { mkKw KwImport }
 
         @name                    { tok (\p s -> TokName p <$> newIdentAlex p (mkText s)) }
         @tyname                  { tok (\p s -> TokTyName p <$> newIdentAlex p (mkText s)) }
@@ -65,6 +71,10 @@ mkSym = constructor TokSym
 
 mkText :: BSL.ByteString -> T.Text
 mkText = decodeUtf8 . BSL.toStrict
+
+deriving instance Generic AlexPosn
+
+deriving instance NFData AlexPosn
 
 type AlexUserState = (Int, M.Map T.Text Int, IM.IntMap (Name AlexPosn))
 
@@ -98,14 +108,18 @@ data Sym = Arrow
          | LBrace
          | RBrace
          | Semicolon
+         deriving (Generic, NFData)
 
 data Keyword = KwType
+             | KwImport
+             deriving (Generic, NFData)
 
 data Token a = EOF a
              | TokSym a Sym
              | TokName a (Name a)
              | TokTyName a (TyName a)
              | TokKeyword a Keyword
+             deriving (Generic, NFData)
 
 newIdentAlex :: AlexPosn -> T.Text -> Alex (Name AlexPosn)
 newIdentAlex pos t = do
