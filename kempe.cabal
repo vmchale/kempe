@@ -20,6 +20,7 @@ source-repository head
 
 library
     exposed-modules:    Kempe.Lexer
+                        Kempe.AST
     build-tool-depends: alex:alex -any
     hs-source-dirs:     src
     other-modules:

@@ -1,6 +1,7 @@
 {-# LANGUAGE DeriveFunctor #-}
 
 module Kempe.Name ( Name (..)
+                  , TyName
                   ) where
 
 import qualified Data.Text    as T
@@ -16,3 +17,5 @@ instance Eq (Name a) where
 
 instance Ord (Name a) where
     compare (Name _ u _) (Name _ u' _) = compare u u'
+
+type TyName = Name

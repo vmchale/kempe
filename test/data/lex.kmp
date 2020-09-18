@@ -4,5 +4,7 @@ type Void {}
 
 type Color { red ; green ; blue }
 
+; TODO: Maybe type?
+
 drop2 : a a --
 drop2 =: drop drop

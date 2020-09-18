@@ -104,7 +104,7 @@ data Keyword = KwType
 data Token a = EOF a
              | TokSym a Sym
              | TokName a (Name a)
-             | TokTyName a (Name a)
+             | TokTyName a (TyName a)
              | TokKeyword a Keyword
 
 newIdentAlex :: AlexPosn -> T.Text -> Alex (Name AlexPosn)
