@@ -47,6 +47,8 @@ tokens :-
         ":"                      { mkSym Colon }
         "{"                      { mkSym LBrace }
         "}"                      { mkSym RBrace }
+        "["                      { mkSym LSqBracket }
+        "]"                      { mkSym RSqBracket }
 
         type                     { mkKw KwType }
         import                   { mkKw KwImport }
@@ -108,6 +110,8 @@ data Sym = Arrow
          | LBrace
          | RBrace
          | Semicolon
+         | LSqBracket
+         | RSqBracket
          deriving (Generic, NFData)
 
 data Keyword = KwType

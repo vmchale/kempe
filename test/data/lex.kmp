@@ -8,4 +8,4 @@ type Maybe a { just a ; nothing }
 ; nothing has type -- Maybe a
 
 drop2 : a a --
-drop2 =: drop drop
+drop2 =: [ drop drop ]
