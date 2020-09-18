@@ -4,8 +4,16 @@ type Void {}
 
 type Maybe a { just a ; nothing }
 
+type OS { macos ; linux ; windows ; freebsd }
+
 ; just has type a -- Maybe a
 ; nothing has type -- Maybe a
 
-drop2 : a a --
+drop2 : a b --
 drop2 =: [ drop drop ]
+
+drop3 : a b c --
+drop3 =: [ drop drop drop ]
+
+trip : a -- a a a
+trip =: [ dup dup ]
