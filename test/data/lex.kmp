@@ -4,5 +4,8 @@ type Void {}
 
 type Maybe a { just a ; nothing }
 
+; just has type a -- Maybe a
+; nothing has type -- Maybe a
+
 drop2 : a a --
 drop2 =: drop drop
