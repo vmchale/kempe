@@ -9,6 +9,16 @@ type OS { macos ; linux ; windows ; freebsd }
 ; just has type a -- Maybe a
 ; nothing has type -- Maybe a
 
+osNum : OS -- Int
+osNum =: [
+    { case
+        | macos -> 1
+        | linux -> 2
+        | windows -> 3
+        | freebsd -> 4
+    }
+]
+
 drop2 : a b --
 drop2 =: [ drop drop ] ; TODO: allow this without brackets?
 

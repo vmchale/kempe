@@ -13,6 +13,7 @@ import Control.Arrow ((&&&))
 import Control.DeepSeq (NFData)
 import Data.Functor (($>))
 import qualified Data.ByteString.Lazy as BSL
+import qualified Data.ByteString.Lazy.Char8 as ASCII
 import qualified Data.IntMap as IM
 import qualified Data.Map as M
 import qualified Data.Text as T
@@ -49,9 +50,14 @@ tokens :-
         "}"                      { mkSym RBrace }
         "["                      { mkSym LSqBracket }
         "]"                      { mkSym RSqBracket }
+        \|                       { mkSym VBar }
+        "->"                     { mkSym CaseArr }
 
         type                     { mkKw KwType }
         import                   { mkKw KwImport }
+        case                     { mkKw KwCase }
+
+        $digit+                  { tok (\p s -> alex $ TokInt p (read $ ASCII.unpack s)) }
 
         @name                    { tok (\p s -> TokName p <$> newIdentAlex p (mkText s)) }
         @tyname                  { tok (\p s -> TokTyName p <$> newIdentAlex p (mkText s)) }
@@ -113,10 +119,13 @@ data Sym = Arrow
          | Semicolon
          | LSqBracket
          | RSqBracket
+         | VBar
+         | CaseArr
          deriving (Generic, NFData)
 
 data Keyword = KwType
              | KwImport
+             | KwCase
              deriving (Generic, NFData)
 
 data Token a = EOF a
@@ -124,6 +133,7 @@ data Token a = EOF a
              | TokName a (Name a)
              | TokTyName a (TyName a)
              | TokKeyword a Keyword
+             | TokInt a Integer
              deriving (Generic, NFData)
 
 newIdentAlex :: AlexPosn -> T.Text -> Alex (Name AlexPosn)
