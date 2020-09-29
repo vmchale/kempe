@@ -94,7 +94,8 @@ test-suite kempe-test
         kempe -any,
         tasty -any,
         tasty-hunit -any,
-        bytestring -any
+        bytestring -any,
+        prettyprinter >=1.7.0
 
     if impl(ghc >=8.0)
         ghc-options:

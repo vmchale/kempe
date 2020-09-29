@@ -1,15 +1,21 @@
 module Kempe.AST ( BuiltinTy (..)
                  , KempeTy (..)
                  , TyDecl (..)
+                 , Atom (..)
+                 , FunDecl (..)
+                 , KempeDecl (..)
+                 , Module
                  ) where
 
 import           Kempe.Name
 
 data BuiltinTy = TyPtr
                | TyInt
-               -- -- | TyArr !Word
+               | TyArr !Word
                -- tupling builtin for sake of case-matching on two+ things at
                -- once
+               --
+               -- #1 vs ->1 (lol)
 
 -- what to do about if, dip
 --
@@ -38,3 +44,8 @@ data Atom a = AtName a (Name a)
             | IntLit a Integer
 
 data FunDecl a = FunDecl a (Name a) (KempeTy a) (KempeTy a) [Atom a]
+
+data KempeDecl a = KempeTyDecl (TyDecl a)
+                 | KempeFunDecl (FunDecl a)
+
+type Module a = [KempeDecl a]

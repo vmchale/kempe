@@ -2,7 +2,7 @@
     {-# LANGUAGE DeriveAnyClass #-}
     {-# LANGUAGE DeriveGeneric #-}
     {-# LANGUAGE OverloadedStrings #-}
-    module Kempe.Parser ( parseTyDecl
+    module Kempe.Parser ( parse
                         , ParseError (..)
                         ) where
 
@@ -10,6 +10,7 @@ import Control.DeepSeq (NFData)
 import Control.Exception (Exception)
 import Control.Monad.Except (ExceptT, runExceptT, throwError)
 import Control.Monad.Trans.Class (lift)
+import qualified Data.ByteString.Lazy as BSL
 import qualified Data.Text as T
 import Data.Typeable (Typeable)
 import GHC.Generics (Generic)
@@ -21,7 +22,7 @@ import Prettyprinter (Pretty (pretty), (<+>))
 
 }
 
-%name parseTyDecl TyDecl
+%name parseModule Module
 %tokentype { Token AlexPosn }
 %error { parseError }
 %monad { Parse } { (>>=) } { pure }
@@ -57,8 +58,15 @@ sepBy(p,q)
 braces(p)
     : lbrace p rbrace { $2 }
 
+Module :: { Module AlexPosn }
+       : many(Decl) { $1 }
+
+Decl :: { KempeDecl AlexPosn }
+     : TyDecl { KempeTyDecl $1 }
+
 TyDecl :: { TyDecl AlexPosn }
        : type tyName many(name) braces(sepBy(TyLeaf, vbar)) { TyDecl $1 $2 (reverse $3) (reverse $4) }
+       | type tyName many(name) lbrace rbrace { TyDecl $1 $2 (reverse $3) [] }
 
 Type :: { KempeTy AlexPosn }
      : name { TyVar (Name.loc $1) $1 }
@@ -89,5 +97,16 @@ instance Pretty a => Show (ParseError a) where
 instance (Pretty a, Typeable a) => Exception (ParseError a)
 
 type Parse = ExceptT (ParseError AlexPosn) Alex
+
+parse :: BSL.ByteString -> Either (ParseError AlexPosn) (Module AlexPosn)
+parse = runParse parseModule
+
+runParse :: Parse a -> BSL.ByteString -> Either (ParseError AlexPosn) a
+runParse parser str = liftErr $ runAlex str (runExceptT parser)
+
+liftErr :: Either String (Either (ParseError a) b) -> Either (ParseError a) b
+liftErr (Left err)         = Left (LexErr err)
+liftErr (Right (Left err)) = Left err
+liftErr (Right (Right x))  = Right x
 
 }
