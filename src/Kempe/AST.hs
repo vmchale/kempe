@@ -8,6 +8,8 @@ import           Kempe.Name
 data BuiltinTy = TyPtr
                | TyInt
                -- -- | TyArr !Word
+               -- tupling builtin for sake of case-matching on two+ things at
+               -- once
 
 -- what to do about if, dip
 --
