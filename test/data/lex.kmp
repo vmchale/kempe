@@ -2,9 +2,9 @@
 
 type Void {}
 
-type Maybe a { just a ; nothing }
+type Maybe a { just a | nothing }
 
-type OS { macos ; linux ; windows ; freebsd }
+type OS { macos | linux | windows | freebsd }
 
 ; just has type a -- Maybe a
 ; nothing has type -- Maybe a
@@ -19,8 +19,9 @@ osNum =: [
     }
 ]
 
+; all types are sized (monomorphized)
 drop2 : a b --
-drop2 =: [ drop drop ] ; TODO: allow this without brackets?
+drop2 =: [ drop drop ]
 
 drop3 : a b c --
 drop3 =: [ drop drop drop ]

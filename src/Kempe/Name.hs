@@ -7,6 +7,7 @@ module Kempe.Name ( Name (..)
 import           Control.DeepSeq (NFData (..))
 import qualified Data.Text       as T
 import           Kempe.Unique
+import           Prettyprinter   (Pretty (pretty))
 
 data Name a = Name { name   :: T.Text
                    , unique :: !Unique
@@ -15,6 +16,9 @@ data Name a = Name { name   :: T.Text
 
 instance Eq (Name a) where
     (==) (Name _ u _) (Name _ u' _) = u == u'
+
+instance Pretty (Name a) where
+    pretty (Name t _ _) = pretty t
 
 instance Ord (Name a) where
     compare (Name _ u _) (Name _ u' _) = compare u u'
