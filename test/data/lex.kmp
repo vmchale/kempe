@@ -19,6 +19,9 @@ osNum =: [
     }
 ]
 
+rand : -- Int
+rand =: [ $cfun(rand) ]
+
 ; all types are sized (monomorphized)
 drop2 : a b --
 drop2 =: [ drop drop ]

@@ -24,6 +24,5 @@ data KempeTy a = TyBuiltin a !BuiltinTy
                | TyNamed a (TyName a)
                | TyTuple a [KempeTy a]
                | TyApp a (KempeTy a) (KempeTy a)
-               -- | TyUniversal a (Name a) (KempeTy a)
 
 data TyDecl a = TyDecl a (TyName a) [Name a] [(Name a, [TyName a])]

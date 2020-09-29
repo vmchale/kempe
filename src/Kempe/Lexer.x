@@ -55,12 +55,15 @@ tokens :-
         "}"                      { mkSym RBrace }
         "["                      { mkSym LSqBracket }
         "]"                      { mkSym RSqBracket }
+        "("                      { mkSym LParen }
+        ")"                      { mkSym RParen }
         \|                       { mkSym VBar }
         "->"                     { mkSym CaseArr }
 
         type                     { mkKw KwType }
         import                   { mkKw KwImport }
         case                     { mkKw KwCase }
+        "$cfun"                  { mkKw KwCfun }
 
         $digit+                  { tok (\p s -> alex $ TokInt p (read $ ASCII.unpack s)) }
 
@@ -129,6 +132,8 @@ data Sym = Arrow
          | RSqBracket
          | VBar
          | CaseArr
+         | LParen
+         | RParen
          deriving (Generic, NFData)
 
 instance Pretty Sym where
@@ -148,16 +153,20 @@ instance Pretty Sym where
     pretty RSqBracket = "]"
     pretty VBar       = "|"
     pretty CaseArr    = "->"
+    pretty LParen     = "("
+    pretty RParen     = ")"
 
 data Keyword = KwType
              | KwImport
              | KwCase
+             | KwCfun
              deriving (Generic, NFData)
 
 instance Pretty Keyword where
     pretty KwType   = "type"
     pretty KwImport = "import"
     pretty KwCase   = "case"
+    pretty KwCfun   = "$cfun"
 
 data Token a = EOF { loc :: a }
              | TokSym { loc :: a, _sym :: Sym }
