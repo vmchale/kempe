@@ -20,9 +20,19 @@ data BuiltinTy = TyPtr
 --
 -- what about pattern matches that bind variables??
 
-data KempeTy a = TyBuiltin a !BuiltinTy
+data KempeTy a = TyBuiltin a BuiltinTy
                | TyNamed a (TyName a)
+               | TyVar a (Name a)
                | TyTuple a [KempeTy a]
                | TyApp a (KempeTy a) (KempeTy a)
 
-data TyDecl a = TyDecl a (TyName a) [Name a] [(Name a, [TyName a])]
+data TyDecl a = TyDecl a (TyName a) [Name a] [(TyName a, [KempeTy a])]
+
+data Pattern a
+
+data Atom a = AtName a (Name a)
+            | Ccall a (Name a)
+            | Case a [(Pattern a, Atom a)]
+            | IntLit a Integer
+
+data FunDecl a = FunDecl a (Name a) (KempeTy a) (KempeTy a) [Atom a]

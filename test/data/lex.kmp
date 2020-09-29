@@ -2,9 +2,9 @@
 
 type Void {}
 
-type Maybe a { just a | nothing }
+type Maybe a { Just a | Nothing }
 
-type OS { macos | linux | windows | freebsd }
+type OS { Macos | Linux | Windows | Freebsd }
 
 ; just has type a -- Maybe a
 ; nothing has type -- Maybe a
@@ -12,10 +12,10 @@ type OS { macos | linux | windows | freebsd }
 osNum : OS -- Int
 osNum =: [
     { case
-        | macos -> 1
-        | linux -> 2
-        | windows -> 3
-        | freebsd -> 4
+        | Macos -> 1
+        | Linux -> 2
+        | Windows -> 3
+        | Freebsd -> 4
     }
 ]
 

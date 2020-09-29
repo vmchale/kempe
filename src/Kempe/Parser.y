@@ -15,6 +15,7 @@ import Data.Typeable (Typeable)
 import GHC.Generics (Generic)
 import Kempe.AST
 import Kempe.Lexer
+import qualified Kempe.Name as Name
 import Kempe.Name hiding (loc)
 import Prettyprinter (Pretty (pretty), (<+>))
 
@@ -59,8 +60,13 @@ braces(p)
 TyDecl :: { TyDecl AlexPosn }
        : type tyName many(name) braces(sepBy(TyLeaf, vbar)) { TyDecl $1 $2 (reverse $3) (reverse $4) }
 
-TyLeaf :: { (Name AlexPosn, [TyName AlexPosn]) }
-       : name many(tyName) { ($1, reverse $2) }
+Type :: { KempeTy AlexPosn }
+     : name { TyVar (Name.loc $1) $1 }
+     | tyName { TyNamed (Name.loc $1) $1 }
+
+-- FIXME: tyName is uppercase, need "free" variables as well...
+TyLeaf :: { (Name AlexPosn, [KempeTy AlexPosn]) }
+       : tyName many(Type) { ($1, reverse $2) }
 
 {
 
@@ -69,11 +75,13 @@ parseError = throwError . Unexpected
 
 data ParseError a = Unexpected (Token a)
                   | LexErr String
+                  | NoImpl (Name a)
                   deriving (Generic, NFData)
 
 instance Pretty a => Pretty (ParseError a) where
     pretty (Unexpected tok)  = pretty (loc tok) <+> "Unexpected" <+> pretty tok
     pretty (LexErr str)      = pretty (T.pack str)
+    pretty (NoImpl n)        = pretty (Name.loc n) <+> "Signature for" <+> pretty n <+> "is not accompanied by an implementation"
 
 instance Pretty a => Show (ParseError a) where
     show = show . pretty
