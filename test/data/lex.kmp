@@ -9,7 +9,7 @@ type OS { Macos | Linux | Windows | Freebsd }
 ; just has type a -- Maybe a
 ; nothing has type -- Maybe a
 
-osNum : OS -- Int
+osNum : OS -- Int,
 osNum =: [
     { case
         | Macos -> 1
@@ -19,15 +19,15 @@ osNum =: [
     }
 ]
 
-rand : -- Int
-rand =: [ $cfun(rand) ]
+rand : -- Int,
+rand =: [ $cfun"rand" ]
 
 ; all types are sized (monomorphized)
-drop2 : a b --
+drop2 : a b --,
 drop2 =: [ drop drop ]
 
-drop3 : a b c --
+drop3 : a b c --,
 drop3 =: [ drop drop drop ]
 
-trip : a -- a a a
+trip : a -- a a a,
 trip =: [ dup dup ]

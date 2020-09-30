@@ -20,6 +20,8 @@ import qualified Kempe.Name as Name
 import Kempe.Name hiding (loc)
 import Prettyprinter (Pretty (pretty), (<+>))
 
+import Debug.Trace (traceShow)
+
 }
 
 %name parseModule Module
@@ -39,11 +41,17 @@ import Prettyprinter (Pretty (pretty), (<+>))
     rsqbracket { TokSym $$ RSqBracket }
     vbar { TokSym $$ VBar }
     caseArr { TokSym $$ CaseArr }
+    comma { TokSym $$ Comma }
 
     name { TokName _ $$ }
     tyName { TokTyName  _ $$ }
+    foreign { TokForeign _ $$ }
 
-    type { TokKeyword $$ KwType } 
+    intLit { $$@(TokInt _ _) }
+
+    type { TokKeyword $$ KwType }
+    case { TokKeyword $$ KwCase }
+    cfun { TokKeyword $$ KwCfun }
 
 %%
 
@@ -58,25 +66,56 @@ sepBy(p,q)
 braces(p)
     : lbrace p rbrace { $2 }
 
+brackets(p)
+    : lsqbracket p rsqbracket { $2 }
+
 Module :: { Module AlexPosn }
        : many(Decl) { $1 }
 
 Decl :: { KempeDecl AlexPosn }
-     : TyDecl { KempeTyDecl $1 }
+     : TyDecl { $1 }
+     | FunDecl { $1 }
 
-TyDecl :: { TyDecl AlexPosn }
+TyDecl :: { KempeDecl AlexPosn }
        : type tyName many(name) braces(sepBy(TyLeaf, vbar)) { TyDecl $1 $2 (reverse $3) (reverse $4) }
-       | type tyName many(name) lbrace rbrace { TyDecl $1 $2 (reverse $3) [] }
+       | type tyName many(name) lbrace rbrace { TyDecl $1 $2 (reverse $3) [] } -- necessary since sepBy always has some "flesh"
 
 Type :: { KempeTy AlexPosn }
      : name { TyVar (Name.loc $1) $1 }
      | tyName { TyNamed (Name.loc $1) $1 }
+
+FunDecl :: { KempeDecl AlexPosn }
+        : FunSig FunBody {% mergeFun $1 $2 }
+
+FunSig :: { (AlexPosn, Name AlexPosn, [KempeTy AlexPosn], [KempeTy AlexPosn]) }
+       : name colon many(Type) arrow many(Type) comma { ($2, $1, $3, $5) }
+
+FunBody :: { (Name AlexPosn, [Atom AlexPosn]) }
+        : name defEq brackets(many(Atom)) { ($1, $3) }
+
+Atom :: { Atom AlexPosn }
+     : name { AtName (Name.loc $1) $1 }
+     | lbrace case many(CaseLeaf) rbrace { Case $2 (reverse $3) }
+     | intLit { IntLit (loc $1) (int $1) }
+     | cfun foreign { Ccall $1 $2 }
+
+CaseLeaf :: { (Pattern AlexPosn, [Atom AlexPosn]) }
+         : vbar Pattern caseArr many(Atom) { ($2, reverse $4) }
+
+Pattern :: { Pattern AlexPosn }
+        : tyName many(Pattern) { PatternCons (Name.loc $1) $2 }
 
 -- FIXME: tyName is uppercase, need "free" variables as well...
 TyLeaf :: { (Name AlexPosn, [KempeTy AlexPosn]) }
        : tyName many(Type) { ($1, reverse $2) }
 
 {
+
+mergeFun :: (AlexPosn, Name AlexPosn, [KempeTy AlexPosn], [KempeTy AlexPosn]) -> (Name AlexPosn, [Atom AlexPosn]) -> Parse (KempeDecl AlexPosn)
+mergeFun (l, n, tys, tys') (n', as) =
+    if n /= n'
+        then throwError (NoImpl n)
+        else pure $ FunDecl l n tys tys' as
 
 parseError :: Token AlexPosn -> Parse a
 parseError = throwError . Unexpected

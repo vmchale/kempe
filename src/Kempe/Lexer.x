@@ -25,7 +25,7 @@ import Data.Text.Encoding (decodeUtf8)
 import GHC.Generics (Generic)
 import Kempe.Name
 import Kempe.Unique
-import Prettyprinter (Pretty (pretty), colon)
+import Prettyprinter (Pretty (pretty), colon, dquotes)
 
 }
 
@@ -39,6 +39,8 @@ $latin = [a-zA-Z]
 
 @name = [a-z] @follow_char*
 @tyname = [A-Z] @follow_char*
+
+@foreign = \" $latin @follow_char* \"
 
 tokens :-
 
@@ -59,6 +61,7 @@ tokens :-
         ")"                      { mkSym RParen }
         \|                       { mkSym VBar }
         "->"                     { mkSym CaseArr }
+        ","                      { mkSym Comma }
 
         type                     { mkKw KwType }
         import                   { mkKw KwImport }
@@ -69,6 +72,7 @@ tokens :-
 
         @name                    { tok (\p s -> TokName p <$> newIdentAlex p (mkText s)) }
         @tyname                  { tok (\p s -> TokTyName p <$> newIdentAlex p (mkText s)) }
+        @foreign                 { tok (\p s -> alex $ TokForeign p s) }
 
     }
 
@@ -134,6 +138,7 @@ data Sym = Arrow
          | CaseArr
          | LParen
          | RParen
+         | Comma
          deriving (Generic, NFData)
 
 instance Pretty Sym where
@@ -155,6 +160,7 @@ instance Pretty Sym where
     pretty CaseArr    = "->"
     pretty LParen     = "("
     pretty RParen     = ")"
+    pretty Comma      = ","
 
 data Keyword = KwType
              | KwImport
@@ -174,6 +180,7 @@ data Token a = EOF { loc :: a }
              | TokTyName { loc :: a, _tyName :: (TyName a) }
              | TokKeyword { loc :: a, _kw :: Keyword }
              | TokInt { loc :: a, int :: Integer }
+             | TokForeign { loc :: a, ident :: BSL.ByteString }
              deriving (Generic, NFData)
 
 instance Pretty (Token a) where
@@ -183,6 +190,7 @@ instance Pretty (Token a) where
     pretty (TokTyName _ tn)  = pretty tn
     pretty (TokKeyword _ kw) = pretty kw
     pretty (TokInt _ i)      = pretty i
+    pretty (TokForeign _ fn) = dquotes (pretty $ mkText fn)
 
 newIdentAlex :: AlexPosn -> T.Text -> Alex (Name AlexPosn)
 newIdentAlex pos t = do
