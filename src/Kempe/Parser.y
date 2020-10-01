@@ -44,6 +44,7 @@ import Debug.Trace (traceShow)
     vbar { TokSym $$ VBar }
     caseArr { TokSym $$ CaseArr }
     comma { TokSym $$ Comma }
+    underscore { TokSym $$ Underscore }
 
     name { TokName _ $$ }
     tyName { TokTyName  _ $$ }
@@ -57,8 +58,7 @@ import Debug.Trace (traceShow)
     if { TokKeyword $$ KwIf }
 
     dip { TokBuiltin $$ BuiltinDip }
-    true { TokBuiltin $$ (BuiltinBoolLit True) }
-    false { TokBuiltin $$ (BuiltinBoolLit False) }
+    boolLit { $$@(TokBuiltin _ (BuiltinBoolLit _)) }
     bool { TokBuiltin $$ BuiltinBool }
     int { TokBuiltin $$ BuiltinInt }
     ptr { TokBuiltin $$ BuiltinPtr }
@@ -116,6 +116,7 @@ Atom :: { Atom AlexPosn }
      | cfun foreign { Ccall $1 $2 }
      | dip parens(many(Atom)) { Dip $1 $2 }
      | if lparen many(Atom) comma many(Atom) rparen { If $1 $3 $5 }
+     | boolLit { BoolLit (loc $1) (bool $ builtin $1) }
 
 CaseLeaf :: { (Pattern AlexPosn, [Atom AlexPosn]) }
          : vbar Pattern caseArr many(Atom) { ($2, reverse $4) }
@@ -123,6 +124,7 @@ CaseLeaf :: { (Pattern AlexPosn, [Atom AlexPosn]) }
 Pattern :: { Pattern AlexPosn }
         : tyName many(Pattern) { PatternCons (Name.loc $1) $1 $2 } 
         | name { PatternVar (Name.loc $1) $1 }
+        | underscore { PatternWildcard $1 }
 
 -- FIXME: tyName is uppercase, need "free" variables as well...
 TyLeaf :: { (Name AlexPosn, [KempeTy AlexPosn]) }

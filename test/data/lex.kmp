@@ -9,6 +9,14 @@ type OS { Macos | Linux | Windows | Freebsd }
 ; just has type a -- Maybe a
 ; nothing has type -- Maybe a
 
+isUnix : OS -- Bool,
+isUnix =: [
+    { case
+        | Windows -> False
+        | _ -> True
+    }
+]
+
 osNum : OS -- Int,
 osNum =: [
     { case

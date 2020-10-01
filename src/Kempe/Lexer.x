@@ -64,6 +64,7 @@ tokens :-
         \|                       { mkSym VBar }
         "->"                     { mkSym CaseArr }
         ","                      { mkSym Comma }
+        \_                       { mkSym Underscore }
 
         type                     { mkKw KwType }
         import                   { mkKw KwImport }
@@ -152,6 +153,7 @@ data Sym = Arrow
          | LParen
          | RParen
          | Comma
+         | Underscore
          deriving (Generic, NFData)
 
 instance Pretty Sym where
@@ -174,6 +176,7 @@ instance Pretty Sym where
     pretty LParen     = "("
     pretty RParen     = ")"
     pretty Comma      = ","
+    pretty Underscore = "_"
 
 data Keyword = KwType
              | KwImport
@@ -190,7 +193,7 @@ instance Pretty Keyword where
     pretty KwIf     = "if"
 
 data Builtin = BuiltinBool
-             | BuiltinBoolLit !Bool
+             | BuiltinBoolLit { bool :: !Bool }
              | BuiltinInt
              | BuiltinPtr
              | BuiltinDip
@@ -210,7 +213,7 @@ data Token a = EOF { loc :: a }
              | TokKeyword { loc :: a, _kw :: Keyword }
              | TokInt { loc :: a, int :: Integer }
              | TokForeign { loc :: a, ident :: BSL.ByteString }
-             | TokBuiltin { loc :: a, _builtin :: Builtin }
+             | TokBuiltin { loc :: a, builtin :: Builtin }
              deriving (Generic, NFData)
 
 instance Pretty (Token a) where

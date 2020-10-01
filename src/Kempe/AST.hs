@@ -4,7 +4,7 @@
 
 module Kempe.AST ( BuiltinTy (..)
                  , KempeTy (..)
-                 , StackType (..)
+                 , StackType
                  , Atom (..)
                  , KempeDecl (..)
                  , Pattern (..)
@@ -62,14 +62,16 @@ instance Pretty (KempeTy a) where
 data Pattern a = PatternInt a Integer
                | PatternCons a (TyName a) [Pattern a] -- a constructed pattern
                | PatternVar a (Name a)
+               | PatternWildcard a
                deriving (Generic, NFData)
 
 data Atom a = AtName a (Name a)
             | Ccall a BSL.ByteString
             | Case a [(Pattern a, [Atom a])]
-            | IntLit a Integer
             | If a [Atom a] [Atom a]
             | Dip a [Atom a]
+            | IntLit a Integer
+            | BoolLit a Bool
             deriving (Generic, NFData)
 
 data KempeDecl a = TyDecl a (TyName a) [Name a] [(TyName a, [KempeTy a])]
