@@ -23,6 +23,7 @@ library
         Kempe.Lexer
         Kempe.Parser
         Kempe.AST
+        Kempe.TypeSynthesis
 
     build-tool-depends: alex:alex -any
     hs-source-dirs:     src

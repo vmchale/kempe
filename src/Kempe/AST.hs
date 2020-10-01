@@ -4,6 +4,7 @@
 
 module Kempe.AST ( BuiltinTy (..)
                  , KempeTy (..)
+                 , StackType (..)
                  , Atom (..)
                  , KempeDecl (..)
                  , Pattern (..)
@@ -18,6 +19,7 @@ import           Prettyprinter        (Pretty (pretty), parens, tupled, (<+>))
 
 data BuiltinTy = TyPtr
                | TyInt
+               | TyBool
                | TyArr Word
                deriving (Generic, NFData)
                -- tupling builtin for sake of case-matching on two+ things at
@@ -26,8 +28,9 @@ data BuiltinTy = TyPtr
                -- #1 vs ->1 (lol)
 
 instance Pretty BuiltinTy where
-    pretty TyPtr = "Ptr"
-    pretty TyInt = "Int"
+    pretty TyPtr  = "Ptr"
+    pretty TyInt  = "Int"
+    pretty TyBool = "Bool"
 
 -- what to do about if, dip
 --
@@ -47,6 +50,8 @@ data KempeTy a = TyBuiltin a BuiltinTy
                | TyTuple a [KempeTy a]
                deriving (Generic, NFData)
 
+type StackType a = ([KempeTy a], [KempeTy a])
+
 instance Pretty (KempeTy a) where
     pretty (TyBuiltin _ b)  = pretty b
     pretty (TyNamed _ tn)   = pretty tn
@@ -55,14 +60,16 @@ instance Pretty (KempeTy a) where
     pretty (TyTuple _ tys)  = tupled (pretty <$> tys)
 
 data Pattern a = PatternInt a Integer
-               | PatternCons a [Pattern a] -- a constructed pattern
-               | IntPattern a Integer
+               | PatternCons a (TyName a) [Pattern a] -- a constructed pattern
+               | PatternVar a (Name a)
                deriving (Generic, NFData)
 
 data Atom a = AtName a (Name a)
             | Ccall a BSL.ByteString
             | Case a [(Pattern a, [Atom a])]
             | IntLit a Integer
+            | If a [Atom a] [Atom a]
+            | Dip a [Atom a]
             deriving (Generic, NFData)
 
 data KempeDecl a = TyDecl a (TyName a) [Name a] [(TyName a, [KempeTy a])]

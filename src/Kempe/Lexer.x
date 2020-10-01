@@ -11,6 +11,7 @@
                        , Token (..)
                        , Keyword (..)
                        , Sym (..)
+                       , Builtin (..)
                        ) where
 
 import Control.Arrow ((&&&))
@@ -26,7 +27,7 @@ import Data.Text.Encoding (decodeUtf8)
 import GHC.Generics (Generic)
 import Kempe.Name
 import Kempe.Unique
-import Prettyprinter (Pretty (pretty), colon, dquotes)
+import Prettyprinter (Pretty (pretty), (<+>), colon, dquotes, squotes)
 
 }
 
@@ -68,6 +69,15 @@ tokens :-
         import                   { mkKw KwImport }
         case                     { mkKw KwCase }
         "$cfun"                  { mkKw KwCfun }
+        if                       { mkKw KwIf }
+
+        -- builtin
+        dip                      { mkBuiltin BuiltinDip }
+        Int                      { mkBuiltin BuiltinInt }
+        Ptr                      { mkBuiltin BuiltinPtr }
+        Bool                     { mkBuiltin BuiltinBool }
+        True                     { mkBuiltin (BuiltinBoolLit True) }
+        False                    { mkBuiltin (BuiltinBoolLit False) }
 
         $digit+                  { tok (\p s -> alex $ TokInt p (read $ ASCII.unpack s)) }
 
@@ -89,6 +99,8 @@ constructor c t = tok (\p _ -> alex $ c p t)
 mkKw = constructor TokKeyword
 
 mkSym = constructor TokSym
+
+mkBuiltin = constructor TokBuiltin
 
 mkText :: BSL.ByteString -> T.Text
 mkText = decodeUtf8 . BSL.toStrict
@@ -167,6 +179,7 @@ data Keyword = KwType
              | KwImport
              | KwCase
              | KwCfun
+             | KwIf
              deriving (Generic, NFData)
 
 instance Pretty Keyword where
@@ -174,6 +187,21 @@ instance Pretty Keyword where
     pretty KwImport = "import"
     pretty KwCase   = "case"
     pretty KwCfun   = "$cfun"
+    pretty KwIf     = "if"
+
+data Builtin = BuiltinBool
+             | BuiltinBoolLit !Bool
+             | BuiltinInt
+             | BuiltinPtr
+             | BuiltinDip
+             deriving (Generic, NFData)
+
+instance Pretty Builtin where
+    pretty BuiltinBool        = "Bool"
+    pretty (BuiltinBoolLit b) = pretty b
+    pretty BuiltinInt         = "Int"
+    pretty BuiltinPtr         = "Ptr"
+    pretty BuiltinDip         = "dip"
 
 data Token a = EOF { loc :: a }
              | TokSym { loc :: a, _sym :: Sym }
@@ -182,16 +210,18 @@ data Token a = EOF { loc :: a }
              | TokKeyword { loc :: a, _kw :: Keyword }
              | TokInt { loc :: a, int :: Integer }
              | TokForeign { loc :: a, ident :: BSL.ByteString }
+             | TokBuiltin { loc :: a, _builtin :: Builtin }
              deriving (Generic, NFData)
 
 instance Pretty (Token a) where
-    pretty EOF{}             = ""
-    pretty (TokSym _ s)      = pretty s
-    pretty (TokName _ n)     = pretty n
-    pretty (TokTyName _ tn)  = pretty tn
-    pretty (TokKeyword _ kw) = pretty kw
+    pretty EOF{}             = "(eof)"
+    pretty (TokSym _ s)      = "symbol" <+> squotes (pretty s)
+    pretty (TokName _ n)     = "identifier" <+> squotes (pretty n)
+    pretty (TokTyName _ tn)  = "identifier" <+> squotes (pretty tn)
+    pretty (TokKeyword _ kw) = "keyword" <+> squotes (pretty kw)
     pretty (TokInt _ i)      = pretty i
     pretty (TokForeign _ fn) = dquotes (pretty $ mkText fn)
+    pretty (TokBuiltin _ b)  = pretty b
 
 newIdentAlex :: AlexPosn -> T.Text -> Alex (Name AlexPosn)
 newIdentAlex pos t = do

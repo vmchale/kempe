@@ -39,6 +39,8 @@ import Debug.Trace (traceShow)
     rbrace { TokSym $$ RBrace }
     lsqbracket { TokSym $$ LSqBracket }
     rsqbracket { TokSym $$ RSqBracket }
+    lparen { TokSym $$ LParen }
+    rparen { TokSym $$ RParen }
     vbar { TokSym $$ VBar }
     caseArr { TokSym $$ CaseArr }
     comma { TokSym $$ Comma }
@@ -52,6 +54,14 @@ import Debug.Trace (traceShow)
     type { TokKeyword $$ KwType }
     case { TokKeyword $$ KwCase }
     cfun { TokKeyword $$ KwCfun }
+    if { TokKeyword $$ KwIf }
+
+    dip { TokBuiltin $$ BuiltinDip }
+    true { TokBuiltin $$ (BuiltinBoolLit True) }
+    false { TokBuiltin $$ (BuiltinBoolLit False) }
+    bool { TokBuiltin $$ BuiltinBool }
+    int { TokBuiltin $$ BuiltinInt }
+    ptr { TokBuiltin $$ BuiltinPtr }
 
 %%
 
@@ -69,6 +79,9 @@ braces(p)
 brackets(p)
     : lsqbracket p rsqbracket { $2 }
 
+parens(p)
+    : lparen p rparen { $2 }
+
 Module :: { Module AlexPosn }
        : many(Decl) { $1 }
 
@@ -83,6 +96,9 @@ TyDecl :: { KempeDecl AlexPosn }
 Type :: { KempeTy AlexPosn }
      : name { TyVar (Name.loc $1) $1 }
      | tyName { TyNamed (Name.loc $1) $1 }
+     | bool { TyBuiltin $1 TyBool }
+     | int { TyBuiltin $1 TyInt }
+     | ptr { TyBuiltin $1 TyPtr }
 
 FunDecl :: { KempeDecl AlexPosn }
         : FunSig FunBody {% mergeFun $1 $2 }
@@ -98,12 +114,15 @@ Atom :: { Atom AlexPosn }
      | lbrace case many(CaseLeaf) rbrace { Case $2 (reverse $3) }
      | intLit { IntLit (loc $1) (int $1) }
      | cfun foreign { Ccall $1 $2 }
+     | dip parens(many(Atom)) { Dip $1 $2 }
+     | if lparen many(Atom) comma many(Atom) rparen { If $1 $3 $5 }
 
 CaseLeaf :: { (Pattern AlexPosn, [Atom AlexPosn]) }
          : vbar Pattern caseArr many(Atom) { ($2, reverse $4) }
 
 Pattern :: { Pattern AlexPosn }
-        : tyName many(Pattern) { PatternCons (Name.loc $1) $2 }
+        : tyName many(Pattern) { PatternCons (Name.loc $1) $1 $2 } 
+        | name { PatternVar (Name.loc $1) $1 }
 
 -- FIXME: tyName is uppercase, need "free" variables as well...
 TyLeaf :: { (Name AlexPosn, [KempeTy AlexPosn]) }
