@@ -1,0 +1,10 @@
+# how mirth does some things, for example
+
+def(comp, Int Int -- Int Bool Bool,
+    + true false)
+
+def(consume, Int Bool Bool --,
+    drop drop drop)
+
+def(balance, Int Int --,
+    comp consume)
