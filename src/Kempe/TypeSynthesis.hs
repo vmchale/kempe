@@ -1,6 +1,7 @@
 module Kempe.TypeSynthesis ( catTypes
                            ) where
 
+import qualified Data.IntMap as IM
 import           Kempe.AST
 
 -- should types of e.g. atoms be StackType a -> StackType a ?
