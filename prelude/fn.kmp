@@ -1,2 +1,8 @@
 trip : a -- a a a
      =: [ dup dup ]
+
+rotr : a b c -- c a b
+     =: [ swap drip(swap) ]
+
+over : a b -- a b a
+     =: [ dip(dup) swap ]
