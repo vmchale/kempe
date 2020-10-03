@@ -101,13 +101,13 @@ Type :: { KempeTy AlexPosn }
      | ptr { TyBuiltin $1 TyPtr }
 
 FunDecl :: { KempeDecl AlexPosn }
-        : FunSig FunBody {% mergeFun $1 $2 }
+        : FunSig FunBody { uncurry4 FunDecl $1 $2 }
 
 FunSig :: { (AlexPosn, Name AlexPosn, [KempeTy AlexPosn], [KempeTy AlexPosn]) }
-       : name colon many(Type) arrow many(Type) comma { ($2, $1, $3, $5) }
+       : name colon many(Type) arrow many(Type) { ($2, $1, $3, $5) }
 
-FunBody :: { (Name AlexPosn, [Atom AlexPosn]) }
-        : name defEq brackets(many(Atom)) { ($1, $3) }
+FunBody :: { [Atom AlexPosn] }
+        : defEq brackets(many(Atom)) { $2 }
 
 Atom :: { Atom AlexPosn }
      : name { AtName (Name.loc $1) $1 }
@@ -131,12 +131,6 @@ TyLeaf :: { (Name AlexPosn, [KempeTy AlexPosn]) }
        : tyName many(Type) { ($1, reverse $2) }
 
 {
-
-mergeFun :: (AlexPosn, Name AlexPosn, [KempeTy AlexPosn], [KempeTy AlexPosn]) -> (Name AlexPosn, [Atom AlexPosn]) -> Parse (KempeDecl AlexPosn)
-mergeFun (l, n, tys, tys') (n', as) =
-    if n /= n'
-        then throwError (NoImpl n)
-        else pure $ FunDecl l n tys tys' as
 
 parseError :: Token AlexPosn -> Parse a
 parseError = throwError . Unexpected
@@ -168,5 +162,9 @@ liftErr :: Either String (Either (ParseError a) b) -> Either (ParseError a) b
 liftErr (Left err)         = Left (LexErr err)
 liftErr (Right (Left err)) = Left err
 liftErr (Right (Right x))  = Right x
+
+
+uncurry4 :: (a -> b -> c -> d -> e) -> (a, b, c, d) -> e
+uncurry4 f ~(x, y, z, w) = f x y z w
 
 }

@@ -1,0 +1,2 @@
+trip : a -- a a a
+     =: [ dup dup ]

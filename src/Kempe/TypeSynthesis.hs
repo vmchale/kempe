@@ -9,6 +9,10 @@ import           Kempe.AST
 -- alpha-equivalence (of 'StackType's?) (note it is quantified *only* on the "exterior" i.e.
 -- implicitly)
 
+-- how does one scope unification "back"? (tardis monad but I don't want it to
+-- hang indefinitely...)
+--
+-- also monomorphization
 type TyEnv a = IM.IntMap (KempeTy a)
 
 -- | Given @x@ and @y@, return the 'StackType' of @xy@

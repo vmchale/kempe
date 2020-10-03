@@ -197,6 +197,8 @@ data Builtin = BuiltinBool
              | BuiltinInt
              | BuiltinPtr
              | BuiltinDip
+             | BuiltinDrop
+             | BuiltinSwap
              deriving (Generic, NFData)
 
 instance Pretty Builtin where
@@ -205,6 +207,8 @@ instance Pretty Builtin where
     pretty BuiltinInt         = "Int"
     pretty BuiltinPtr         = "Ptr"
     pretty BuiltinDip         = "dip"
+    pretty BuiltinDrop        = "drop"
+    pretty BuiltinSwap        = "swap"
 
 data Token a = EOF { loc :: a }
              | TokSym { loc :: a, _sym :: Sym }

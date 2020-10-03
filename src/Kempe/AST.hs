@@ -72,7 +72,12 @@ data Atom a = AtName a (Name a)
             | Dip a [Atom a]
             | IntLit a Integer
             | BoolLit a Bool
+            | AtBuiltin a BuiltinFn
             deriving (Generic, NFData)
+
+data BuiltinFn = Drop
+               | Swap
+               deriving (Generic, NFData)
 
 data KempeDecl a = TyDecl a (TyName a) [Name a] [(TyName a, [KempeTy a])]
                  | FunDecl a (Name a) [KempeTy a] [KempeTy a] [Atom a]
