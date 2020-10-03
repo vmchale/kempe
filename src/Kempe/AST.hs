@@ -2,10 +2,12 @@
 {-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE OverloadedStrings #-}
 
+-- | Frontend AST
 module Kempe.AST ( BuiltinTy (..)
                  , KempeTy (..)
-                 , StackType
+                 , StackType (..)
                  , Atom (..)
+                 , BuiltinFn (..)
                  , KempeDecl (..)
                  , Pattern (..)
                  , Module
@@ -50,7 +52,10 @@ data KempeTy a = TyBuiltin a BuiltinTy
                | TyTuple a [KempeTy a]
                deriving (Generic, NFData)
 
-type StackType a = ([KempeTy a], [KempeTy a])
+data StackType a = StackType { quantify :: [Name a]
+                             , inTypes  :: [KempeTy a]
+                             , outTypes :: [KempeTy a]
+                             }
 
 instance Pretty (KempeTy a) where
     pretty (TyBuiltin _ b)  = pretty b

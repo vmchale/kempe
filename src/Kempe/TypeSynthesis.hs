@@ -15,8 +15,13 @@ import           Kempe.AST
 -- also monomorphization
 type TyEnv a = IM.IntMap (KempeTy a)
 
+-- TODO: need a renamer for types
+typeOfBuiltin :: BuiltinFn -> StackType ()
+typeOfBuiltin Drop = undefined
+typeOfBuiltin Swap = undefined
+
 -- | Given @x@ and @y@, return the 'StackType' of @xy@
 catTypes :: StackType a -- ^ @x@
          -> StackType a -- ^ @y@
          -> StackType a
-catTypes _ _ = undefined -- not actually easy because I need unification? :o
+catTypes _ _ = undefined -- I need unification? :o
