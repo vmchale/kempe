@@ -1,8 +1,38 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Kempe.TypeSynthesis ( catTypes
+                           , TypeM
                            ) where
 
-import qualified Data.IntMap as IM
+import           Control.Monad.State
+import qualified Data.IntMap         as IM
+import qualified Data.Text           as T
 import           Kempe.AST
+import           Kempe.Name
+import           Kempe.Unique
+import           Lens.Micro          (Lens')
+import           Lens.Micro.Mtl      (modifying)
+
+type TyEnv a = IM.IntMap (KempeTy a)
+
+data TyState a = TyState { maxU    :: Int -- ^ For renamer
+                         , tyEnv   :: TyEnv a
+                         , renames :: IM.IntMap Int
+                         }
+
+maxULens :: Lens' (TyState a) Int
+maxULens f s = fmap (\x -> s { maxU = x }) (f (maxU s))
+
+dummyName :: T.Text -> TypeM () (Name ())
+dummyName n = do
+    pSt <- gets maxU
+    Name n (Unique $ pSt + 1) ()
+        <$ modifying maxULens (+1)
+
+type TypeM a = State (TyState a)
+
+runTypeM :: TypeM a x -> x
+runTypeM = flip evalState (TyState 0 mempty mempty)
 
 -- should types of e.g. atoms be StackType a -> StackType a ?
 --
@@ -13,12 +43,15 @@ import           Kempe.AST
 -- hang indefinitely...)
 --
 -- also monomorphization
-type TyEnv a = IM.IntMap (KempeTy a)
 
--- TODO: need a renamer for types
-typeOfBuiltin :: BuiltinFn -> StackType ()
-typeOfBuiltin Drop = undefined
-typeOfBuiltin Swap = undefined
+typeOfBuiltin :: BuiltinFn -> TypeM () (StackType ())
+typeOfBuiltin Drop = do
+    aN <- dummyName "a"
+    pure $ StackType [aN] [TyVar () aN] []
+typeOfBuiltin Swap = do
+    aN <- dummyName "a"
+    bN <- dummyName "b"
+    pure $ StackType [aN, bN] [TyVar () aN, TyVar () bN] [TyVar () bN, TyVar () aN]
 
 -- | Given @x@ and @y@, return the 'StackType' of @xy@
 catTypes :: StackType a -- ^ @x@

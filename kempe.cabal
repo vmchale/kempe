@@ -49,6 +49,8 @@ library
         deepseq -any,
         text -any,
         mtl -any,
+        microlens -any,
+        microlens-mtl -any,
         transformers -any,
         prettyprinter >=1.7.0
 
