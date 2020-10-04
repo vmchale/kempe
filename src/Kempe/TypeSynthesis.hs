@@ -1,7 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Kempe.TypeSynthesis ( catTypes
-                           , TypeM
+module Kempe.TypeSynthesis ( TypeM
                            ) where
 
 import           Control.Monad.State
@@ -43,6 +42,8 @@ runTypeM = flip evalState (TyState 0 mempty mempty)
 -- hang indefinitely...)
 --
 -- also monomorphization
+
+-- dip-ify?
 
 typeOfBuiltin :: BuiltinFn -> TypeM () (StackType ())
 typeOfBuiltin Drop = do
