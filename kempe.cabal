@@ -77,11 +77,14 @@ executable kc
     other-modules:    Paths_kempe
     autogen-modules:  Paths_kempe
     default-language: Haskell2010
-    ghc-options:      -threaded -rtsopts -with-rtsopts=-N -Wall
+    ghc-options:      -Wall
     build-depends:
         base -any,
         optparse-applicative -any,
         kempe -any
+
+    if !impl(ghc >=8.0)
+        build-depends: semigroups -any
 
     if impl(ghc >=8.0)
         ghc-options:
@@ -130,7 +133,7 @@ benchmark kempe-bench
     main-is:          Bench.hs
     hs-source-dirs:   bench
     default-language: Haskell2010
-    ghc-options:      -threaded -rtsopts -with-rtsopts=-N -O3 -Wall
+    ghc-options:      -O3 -Wall
     build-depends:
         base -any,
         kempe -any,
