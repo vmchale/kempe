@@ -5,6 +5,7 @@ module Kempe.TypeSynthesis ( TypeM
 
 import           Control.Monad.State
 import qualified Data.IntMap         as IM
+import qualified Data.Set            as S
 import qualified Data.Text           as T
 import           Kempe.AST
 import           Kempe.Name
@@ -48,11 +49,11 @@ runTypeM = flip evalState (TyState 0 mempty mempty)
 typeOfBuiltin :: BuiltinFn -> TypeM () (StackType ())
 typeOfBuiltin Drop = do
     aN <- dummyName "a"
-    pure $ StackType [aN] [TyVar () aN] []
+    pure $ StackType (S.singleton aN) [TyVar () aN] []
 typeOfBuiltin Swap = do
     aN <- dummyName "a"
     bN <- dummyName "b"
-    pure $ StackType [aN, bN] [TyVar () aN, TyVar () bN] [TyVar () bN, TyVar () aN]
+    pure $ StackType (S.fromList [aN, bN]) [TyVar () aN, TyVar () bN] [TyVar () bN, TyVar () aN]
 
 -- | Given @x@ and @y@, return the 'StackType' of @xy@
 catTypes :: StackType a -- ^ @x@

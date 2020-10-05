@@ -15,6 +15,7 @@ module Kempe.AST ( BuiltinTy (..)
 
 import           Control.DeepSeq      (NFData)
 import qualified Data.ByteString.Lazy as BSL
+import qualified Data.Set             as S
 import           GHC.Generics         (Generic)
 import           Kempe.Name
 import           Prettyprinter        (Pretty (pretty), parens, tupled, (<+>))
@@ -52,7 +53,7 @@ data KempeTy a = TyBuiltin a BuiltinTy
                | TyTuple a [KempeTy a]
                deriving (Generic, NFData)
 
-data StackType a = StackType { quantify :: [Name a]
+data StackType a = StackType { quantify :: S.Set (Name a)
                              , inTypes  :: [KempeTy a]
                              , outTypes :: [KempeTy a]
                              }
