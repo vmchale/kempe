@@ -6,6 +6,7 @@ module Kempe.Error ( Error (..)
 import           Kempe.AST
 import           Prettyprinter (Pretty (pretty), squotes, (<+>))
 
+-- reject mutually recursive types? idk :p
 data Error a = MismatchedTypes a (KempeTy a) (KempeTy a)
 
 instance Pretty (Error a) where

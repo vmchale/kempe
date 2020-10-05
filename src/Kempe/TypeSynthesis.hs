@@ -34,15 +34,13 @@ type TypeM a = State (TyState a)
 runTypeM :: TypeM a x -> x
 runTypeM = flip evalState (TyState 0 mempty mempty)
 
--- should types of e.g. atoms be StackType a -> StackType a ?
---
 -- alpha-equivalence (of 'StackType's?) (note it is quantified *only* on the "exterior" i.e.
--- implicitly)
+-- implicitly) -> except we have to then "back-instantiate"? hm
 
 -- how does one scope unification "back"? (tardis monad but I don't want it to
 -- hang indefinitely...)
 --
--- also monomorphization
+-- monomorphization
 
 -- dip-ify?
 
@@ -55,7 +53,7 @@ typeOfBuiltin Swap = do
     bN <- dummyName "b"
     pure $ StackType (S.fromList [aN, bN]) [TyVar () aN, TyVar () bN] [TyVar () bN, TyVar () aN]
 
--- | Given @x@ and @y@, return the 'StackType' of @xy@
+-- | Given @x@ and @y@, return the 'StackType' of @x y@
 catTypes :: StackType a -- ^ @x@
          -> StackType a -- ^ @y@
          -> StackType a
