@@ -1,5 +1,6 @@
 module Main (main) where
 
+import           Data.Semigroup      ((<>))
 import qualified Data.Version        as V
 import           Options.Applicative
 import qualified Paths_kempe         as P
