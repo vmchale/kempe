@@ -29,7 +29,7 @@ library
         Kempe.AST
         Kempe.TypeSynthesis
 
-    build-tool-depends: alex:alex -any
+    build-tool-depends: alex:alex -any, happy:happy -any
     hs-source-dirs:     src
     other-modules:
         Kempe.Unique
