@@ -1,0 +1,11 @@
+---
+cradle:
+  cabal:
+    - path: "./src"
+      component: "lib:kempe"
+    - path: "./test/Spec.hs"
+      component: "test:kempe-test"
+    - path: "./bench/Bench.hs"
+      component: "bench:kempe-bench"
+    - path: "./run/Main.hs"
+      component: "exe:kc"
