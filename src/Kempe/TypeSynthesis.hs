@@ -23,7 +23,7 @@ data TyState a = TyState { maxU             :: Int -- ^ For renamer
                          , tyEnv            :: TyEnv a
                          , renames          :: IM.IntMap Int
                          , constructorTypes :: IM.IntMap (KempeTy a)
-                         , constraints      :: S.Set (KempeTy a, KempeTy a) -- Just need equality between simple types?
+                         , constraints      :: S.Set (KempeTy a, KempeTy a) -- Just need equality between simple types? (do have tyapp but yeah)
                          }
 
 emptyStackType :: StackType a
@@ -95,6 +95,7 @@ tyAtoms = foldM
     (\seed a -> do { tys' <- tyAtom a ; catTypes tys' seed })
     emptyStackType
 
+-- just dispatch constraints?
 mergeStackTypes :: StackType () -> StackType () -> TypeM () (StackType ())
 mergeStackTypes _ _ = pure undefined
 

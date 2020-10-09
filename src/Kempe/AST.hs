@@ -24,7 +24,7 @@ data BuiltinTy = TyPtr
                | TyInt
                | TyBool
                | TyArr Word
-               deriving (Generic, NFData)
+               deriving (Generic, NFData, Eq)
                -- tupling builtin for sake of case-matching on two+ things at
                -- once
                --
