@@ -21,7 +21,7 @@ type TyEnv a = IM.IntMap (StackType a)
 data TyState a = TyState { maxU             :: Int -- ^ For renamer
                          , tyEnv            :: TyEnv a
                          , renames          :: IM.IntMap Int
-                         , constructorTypes :: IM.IntMap Int
+                         , constructorTypes :: IM.IntMap (KempeTy a)
                          , constraints      :: S.Set (KempeTy a, KempeTy a) -- Just need equality between simple types?
                          }
 
