@@ -73,7 +73,7 @@ data Pattern a = PatternInt a Integer
 
 data Atom a = AtName a (Name a)
             | Ccall a BSL.ByteString -- TODO: type annotation?
-            | Case a [(Pattern a, [Atom a])]
+            | Case a [(Pattern a, [Atom a])] -- TODO: should this be nonempty? hm
             | If a [Atom a] [Atom a]
             | Dip a [Atom a]
             | IntLit a Integer

@@ -87,7 +87,7 @@ tyAtom (Dip _ as)      = dipify =<< tyAtoms as
 tyAtom (If _ as as')   = do
     tys <- tyAtoms as
     tys' <- tyAtoms as'
-    (StackType vars ins out) <- mergeStackTypes [tys, tys']
+    (StackType vars ins out) <- mergeStackTypes tys tys'
     pure $ StackType vars (TyBuiltin () TyBool:ins) out
 
 tyAtoms :: [Atom a] -> TypeM () (StackType ())
@@ -95,9 +95,8 @@ tyAtoms = foldM
     (\seed a -> do { tys' <- tyAtom a ; catTypes tys' seed })
     emptyStackType
 
--- (try to) unify stack types
-mergeStackTypes :: [StackType ()] -> TypeM () (StackType ())
-mergeStackTypes _ = pure undefined
+mergeStackTypes :: StackType () -> StackType () -> TypeM () (StackType ())
+mergeStackTypes _ _ = pure undefined
 
 -- | Given @x@ and @y@, return the 'StackType' of @x y@
 catTypes :: StackType a -- ^ @x@
