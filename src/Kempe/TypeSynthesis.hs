@@ -7,6 +7,7 @@ module Kempe.TypeSynthesis ( TypeM
 
 import           Control.Monad.Except (ExceptT, runExceptT, throwError)
 import           Control.Monad.State
+import           Data.Foldable        (traverse_)
 import qualified Data.IntMap          as IM
 import qualified Data.Set             as S
 import qualified Data.Text            as T
@@ -31,6 +32,9 @@ emptyStackType = StackType mempty [] []
 
 maxULens :: Lens' (TyState a) Int
 maxULens f s = fmap (\x -> s { maxU = x }) (f (maxU s))
+
+constructorTypesLens :: Lens' (TyState a) (IM.IntMap (StackType a))
+constructorTypesLens f s = fmap (\x -> s { constructorTypes = x }) (f (constructorTypes s))
 
 dummyName :: T.Text -> TypeM () (Name ())
 dummyName n = do
@@ -104,6 +108,14 @@ tyAtoms :: [Atom a] -> TypeM () (StackType ())
 tyAtoms = foldM
     (\seed a -> do { tys' <- tyAtom a ; catTypes tys' seed })
     emptyStackType
+
+tyInsertLeaf :: Name a -- ^ type being declared
+             -> S.Set (Name a) -> (TyName a, [KempeTy a]) -> TypeM a ()
+tyInsertLeaf n vars (tn@(Name _ (Unique i) _), ins) =
+    modifying constructorTypesLens (IM.insert i (StackType vars ins [TyNamed (loc n) n]))
+
+tyInsert :: KempeDecl a -> TypeM a ()
+tyInsert (TyDecl _ tn ns ls) = traverse_ (tyInsertLeaf tn (S.fromList ns)) ls
 
 -- just dispatch constraints?
 mergeStackTypes :: StackType () -> StackType () -> TypeM () (StackType ())
