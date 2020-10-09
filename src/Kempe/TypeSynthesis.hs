@@ -38,7 +38,7 @@ type TypeM a = ExceptT (Error a) (State (TyState a))
 
 -- TODO: take constructor types as an argument?..
 runTypeM :: TypeM a x -> Either (Error a) x
-runTypeM = flip evalState (TyState 0 mempty mempty S.empty) . runExceptT
+runTypeM = flip evalState (TyState 0 mempty mempty mempty S.empty) . runExceptT
 
 -- alpha-equivalence (of 'StackType's?) (note it is quantified *only* on the "exterior" i.e.
 -- implicitly) -> except we have to then "back-instantiate"? hm
