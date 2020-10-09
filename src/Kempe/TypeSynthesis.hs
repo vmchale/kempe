@@ -69,6 +69,11 @@ tyLookup n@(Name _ (Unique i) l) = do
         Just ty -> pure ty
         Nothing -> throwError (PoorScope l n)
 
+dipify :: StackType () -> TypeM () (StackType ())
+dipify (StackType fvrs is os) = do
+    n <- dummyName "a"
+    pure $ StackType (S.insert n fvrs) (TyNamed () n:is) (TyNamed () n:os)
+
 tyAtom :: Atom a -> TypeM () (StackType ())
 tyAtom (AtBuiltin _ b) = typeOfBuiltin b
 tyAtom BoolLit{}       = pure $ StackType mempty [] [TyBuiltin () TyBool]
