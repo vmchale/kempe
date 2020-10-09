@@ -2,6 +2,7 @@
 
 module Kempe.TypeSynthesis ( TypeM
                            , runTypeM
+                           , tyAtoms
                            ) where
 
 import           Control.Monad.Except (ExceptT, runExceptT, throwError)
@@ -24,6 +25,9 @@ data TyState a = TyState { maxU             :: Int -- ^ For renamer
                          , constructorTypes :: IM.IntMap (KempeTy a)
                          , constraints      :: S.Set (KempeTy a, KempeTy a) -- Just need equality between simple types?
                          }
+
+emptyStackType :: StackType a
+emptyStackType = StackType mempty [] []
 
 maxULens :: Lens' (TyState a) Int
 maxULens f s = fmap (\x -> s { maxU = x }) (f (maxU s))
@@ -79,6 +83,21 @@ tyAtom (AtBuiltin _ b) = typeOfBuiltin b
 tyAtom BoolLit{}       = pure $ StackType mempty [] [TyBuiltin () TyBool]
 tyAtom IntLit{}        = pure $ StackType mempty [] [TyBuiltin () TyInt]
 tyAtom (AtName _ n)    = tyLookup (void n)
+tyAtom (Dip _ as)      = dipify =<< tyAtoms as
+tyAtom (If _ as as')   = do
+    tys <- tyAtoms as
+    tys' <- tyAtoms as'
+    (StackType vars ins out) <- mergeStackTypes [tys, tys']
+    pure $ StackType vars (TyBuiltin () TyBool:ins) out
+
+tyAtoms :: [Atom a] -> TypeM () (StackType ())
+tyAtoms = foldM
+    (\seed a -> do { tys' <- tyAtom a ; catTypes tys' seed })
+    emptyStackType
+
+-- (try to) unify stack types
+mergeStackTypes :: [StackType ()] -> TypeM () (StackType ())
+mergeStackTypes _ = pure undefined
 
 -- | Given @x@ and @y@, return the 'StackType' of @x y@
 catTypes :: StackType a -- ^ @x@
