@@ -79,6 +79,7 @@ data Atom a = AtName a (Name a)
             | IntLit a Integer
             | BoolLit a Bool
             | AtBuiltin a BuiltinFn
+            | AtCons a (TyName a)
             deriving (Generic, NFData)
 
 data BuiltinFn = Drop

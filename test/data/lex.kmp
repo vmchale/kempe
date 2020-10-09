@@ -40,5 +40,5 @@ drop3 : a b c --
 trip : a -- a a a
      =: [ dup dup ]
 
-push3 : -- Int Int Int
-      =: [ 3 dup dup ]
+push3 : -- OS OS OS
+      =: [ Linux dup dup ]

@@ -111,6 +111,7 @@ FunBody :: { [Atom AlexPosn] }
 
 Atom :: { Atom AlexPosn }
      : name { AtName (Name.loc $1) $1 }
+     | tyName { AtCons (Name.loc $1) $1 }
      | lbrace case many(CaseLeaf) rbrace { Case $2 (reverse $3) }
      | intLit { IntLit (loc $1) (int $1) }
      | cfun foreign { Ccall $1 $2 }
@@ -122,7 +123,7 @@ CaseLeaf :: { (Pattern AlexPosn, [Atom AlexPosn]) }
          : vbar Pattern caseArr many(Atom) { ($2, reverse $4) }
 
 Pattern :: { Pattern AlexPosn }
-        : tyName many(Pattern) { PatternCons (Name.loc $1) $1 $2 } 
+        : tyName many(Pattern) { PatternCons (Name.loc $1) $1 $2 }
         | name { PatternVar (Name.loc $1) $1 }
         | underscore { PatternWildcard $1 }
 

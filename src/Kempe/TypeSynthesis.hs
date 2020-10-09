@@ -22,7 +22,7 @@ type TyEnv a = IM.IntMap (StackType a)
 data TyState a = TyState { maxU             :: Int -- ^ For renamer
                          , tyEnv            :: TyEnv a
                          , renames          :: IM.IntMap Int
-                         , constructorTypes :: IM.IntMap (KempeTy a)
+                         , constructorTypes :: IM.IntMap (StackType a)
                          , constraints      :: S.Set (KempeTy a, KempeTy a) -- Just need equality between simple types? (do have tyapp but yeah)
                          }
 
@@ -89,6 +89,16 @@ tyAtom (If _ as as')   = do
     tys' <- tyAtoms as'
     (StackType vars ins out) <- mergeStackTypes tys tys'
     pure $ StackType vars (TyBuiltin () TyBool:ins) out
+tyAtom (AtCons _ tn@(Name _ (Unique i) _)) = do
+    cSt <- gets constructorTypes
+    case IM.lookup i cSt of
+        Just st -> pure st
+        Nothing -> throwError $ PoorScope () (void tn)
+tyAtom (AtName _ n@(Name _ (Unique i) _)) = do
+    cSt <- gets tyEnv
+    case IM.lookup i cSt of
+        Just st -> pure st
+        Nothing -> throwError $ PoorScope () (void n)
 
 tyAtoms :: [Atom a] -> TypeM () (StackType ())
 tyAtoms = foldM
