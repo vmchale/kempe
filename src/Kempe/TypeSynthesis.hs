@@ -73,5 +73,5 @@ tyAtom (AtName _ n)    = tyLookup (void n)
 -- | Given @x@ and @y@, return the 'StackType' of @x y@
 catTypes :: StackType a -- ^ @x@
          -> StackType a -- ^ @y@
-         -> StackType a
-catTypes _ _ = undefined -- I need unification? :o
+         -> TypeM () (StackType ())
+catTypes _ _ = pure undefined -- I need unification? :o
