@@ -18,10 +18,11 @@ import           Lens.Micro.Mtl       (modifying)
 
 type TyEnv a = IM.IntMap (StackType a)
 
-data TyState a = TyState { maxU        :: Int -- ^ For renamer
-                         , tyEnv       :: TyEnv a
-                         , renames     :: IM.IntMap Int
-                         , constraints :: S.Set (KempeTy a, KempeTy a) -- Just need equality between simple types?
+data TyState a = TyState { maxU             :: Int -- ^ For renamer
+                         , tyEnv            :: TyEnv a
+                         , renames          :: IM.IntMap Int
+                         , constructorTypes :: IM.IntMap (KempeTy a)
+                         , constraints      :: S.Set (KempeTy a, KempeTy a) -- Just need equality between simple types?
                          }
 
 maxULens :: Lens' (TyState a) Int
@@ -35,18 +36,18 @@ dummyName n = do
 
 type TypeM a = ExceptT (Error a) (State (TyState a))
 
+-- TODO: take constructor types as an argument?..
 runTypeM :: TypeM a x -> Either (Error a) x
-runTypeM = flip evalState (TyState 0 mempty mempty S.empty) . runExceptT
+runTypeM = flip evalState (TyState 0 mempty mempty mempty S.empty) . runExceptT
 
 -- alpha-equivalence (of 'StackType's?) (note it is quantified *only* on the "exterior" i.e.
 -- implicitly) -> except we have to then "back-instantiate"? hm
 
--- how does one scope unification "back"? (tardis monad but I don't want it to
--- hang indefinitely...)
---
 -- monomorphization
 
 -- dip-ify?
+
+-- renameStackType? or maybe j substitute?
 
 typeOfBuiltin :: BuiltinFn -> TypeM () (StackType ())
 typeOfBuiltin Drop = do
@@ -57,6 +58,10 @@ typeOfBuiltin Swap = do
     bN <- dummyName "b"
     pure $ StackType (S.fromList [aN, bN]) [TyVar () aN, TyVar () bN] [TyVar () bN, TyVar () aN]
 
+-- maybe constraints? e.g. ("a" = "b") and (3 = "a")
+-- but maybe simpler since no function types? lol
+--
+-- so I can literally just check it's 3 and then pass that back lololol
 tyLookup :: Name a -> TypeM a (StackType a)
 tyLookup n@(Name _ (Unique i) l) = do
     st <- gets tyEnv
