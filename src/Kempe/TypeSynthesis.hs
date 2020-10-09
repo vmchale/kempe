@@ -36,6 +36,9 @@ maxULens f s = fmap (\x -> s { maxU = x }) (f (maxU s))
 constructorTypesLens :: Lens' (TyState a) (IM.IntMap (StackType a))
 constructorTypesLens f s = fmap (\x -> s { constructorTypes = x }) (f (constructorTypes s))
 
+tyEnvLens :: Lens' (TyState a) (TyEnv a)
+tyEnvLens f s = fmap (\x -> s { tyEnv = x }) (f (tyEnv s))
+
 dummyName :: T.Text -> TypeM () (Name ())
 dummyName n = do
     pSt <- gets maxU
@@ -98,11 +101,6 @@ tyAtom (AtCons _ tn@(Name _ (Unique i) _)) = do
     case IM.lookup i cSt of
         Just st -> pure st
         Nothing -> throwError $ PoorScope () (void tn)
-tyAtom (AtName _ n@(Name _ (Unique i) _)) = do
-    cSt <- gets tyEnv
-    case IM.lookup i cSt of
-        Just st -> pure st
-        Nothing -> throwError $ PoorScope () (void n)
 
 tyAtoms :: [Atom a] -> TypeM () (StackType ())
 tyAtoms = foldM
@@ -110,12 +108,27 @@ tyAtoms = foldM
     emptyStackType
 
 tyInsertLeaf :: Name a -- ^ type being declared
-             -> S.Set (Name a) -> (TyName a, [KempeTy a]) -> TypeM a ()
-tyInsertLeaf n vars (tn@(Name _ (Unique i) _), ins) =
-    modifying constructorTypesLens (IM.insert i (StackType vars ins [TyNamed (loc n) n]))
+             -> S.Set (Name a) -> (TyName a, [KempeTy a]) -> TypeM () ()
+tyInsertLeaf n vars (Name _ (Unique i) _, ins) =
+    modifying constructorTypesLens (IM.insert i (voidStackType $ StackType vars ins [TyNamed undefined n]))
 
-tyInsert :: KempeDecl a -> TypeM a ()
+extrVars :: KempeTy a -> [Name a]
+extrVars TyBuiltin{}      = []
+extrVars TyNamed{}        = []
+extrVars (TyVar _ n)      = [n]
+extrVars (TyApp _ ty ty') = extrVars ty ++ extrVars ty'
+extrVars (TyTuple _ tys)  = concatMap extrVars tys
+
+freeVars :: [KempeTy a] -> S.Set (Name a)
+freeVars tys = S.fromList (concatMap extrVars tys)
+
+tyInsert :: KempeDecl a -> TypeM () ()
 tyInsert (TyDecl _ tn ns ls) = traverse_ (tyInsertLeaf tn (S.fromList ns)) ls
+tyInsert (FunDecl _ (Name _ (Unique i) _) ins out as) = do
+    let sig = voidStackType $ StackType (freeVars (ins ++ out)) ins out
+    inferred <- tyAtoms as
+    reconcile <- mergeStackTypes sig inferred
+    modifying tyEnvLens (IM.insert i reconcile)
 
 -- just dispatch constraints?
 mergeStackTypes :: StackType () -> StackType () -> TypeM () (StackType ())

@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveAnyClass    #-}
+{-# LANGUAGE DeriveFunctor     #-}
 {-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE OverloadedStrings #-}
 
@@ -11,10 +12,13 @@ module Kempe.AST ( BuiltinTy (..)
                  , KempeDecl (..)
                  , Pattern (..)
                  , Module
+                 -- * I resent this...
+                 , voidStackType
                  ) where
 
 import           Control.DeepSeq      (NFData)
 import qualified Data.ByteString.Lazy as BSL
+import           Data.Functor         (void)
 import qualified Data.Set             as S
 import           GHC.Generics         (Generic)
 import           Kempe.Name
@@ -51,12 +55,15 @@ data KempeTy a = TyBuiltin a BuiltinTy
                | TyVar a (Name a)
                | TyApp a (KempeTy a) (KempeTy a)
                | TyTuple a [KempeTy a]
-               deriving (Generic, NFData)
+               deriving (Generic, NFData, Functor)
 
 data StackType a = StackType { quantify :: S.Set (Name a)
                              , inTypes  :: [KempeTy a]
                              , outTypes :: [KempeTy a]
                              }
+
+voidStackType :: StackType a -> StackType ()
+voidStackType (StackType vars ins outs) = StackType (S.map void vars) (void <$> ins) (void <$> outs)
 
 instance Pretty (KempeTy a) where
     pretty (TyBuiltin _ b)  = pretty b
