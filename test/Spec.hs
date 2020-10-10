@@ -5,7 +5,6 @@ module Main (main) where
 import           Control.Exception    (throwIO)
 import qualified Data.ByteString.Lazy as BSL
 import           Data.Foldable        (traverse_)
-import qualified Data.Set             as S
 import           Kempe.Lexer
 import           Kempe.Parser
 import           Kempe.TypeSynthesis
