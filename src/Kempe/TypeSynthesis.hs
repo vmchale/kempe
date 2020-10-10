@@ -88,6 +88,13 @@ tyLookup n@(Name _ (Unique i) l) = do
         Just ty -> pure ty
         Nothing -> throwError (PoorScope l n)
 
+consLookup :: TyName a -> TypeM a (StackType a)
+consLookup tn@(Name _ (Unique i) l) = do
+    st <- gets constructorTypes
+    case IM.lookup i st of
+        Just ty -> pure ty
+        Nothing -> throwError (PoorScope l tn)
+
 dipify :: StackType () -> TypeM () (StackType ())
 dipify (StackType fvrs is os) = do
     n <- dummyName "a"
@@ -99,16 +106,12 @@ tyAtom BoolLit{}       = pure $ StackType mempty [] [TyBuiltin () TyBool]
 tyAtom IntLit{}        = pure $ StackType mempty [] [TyBuiltin () TyInt]
 tyAtom (AtName _ n)    = tyLookup (void n)
 tyAtom (Dip _ as)      = dipify =<< tyAtoms as
+tyAtom (AtCons _ tn)   = consLookup (void tn)
 tyAtom (If _ as as')   = do
     tys <- tyAtoms as
     tys' <- tyAtoms as'
     (StackType vars ins out) <- mergeStackTypes tys tys'
     pure $ StackType vars (TyBuiltin () TyBool:ins) out
-tyAtom (AtCons _ tn@(Name _ (Unique i) _)) = do
-    cSt <- gets constructorTypes
-    case IM.lookup i cSt of
-        Just st -> pure st
-        Nothing -> throwError $ PoorScope () (void tn)
 
 tyAtoms :: [Atom a] -> TypeM () (StackType ())
 tyAtoms = foldM
