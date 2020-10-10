@@ -14,6 +14,7 @@ import           Control.Monad.State
 import           Data.Foldable        (traverse_)
 import qualified Data.IntMap          as IM
 import           Data.List.NonEmpty   (NonEmpty (..))
+import           Data.Semigroup       ((<>))
 import qualified Data.Set             as S
 import qualified Data.Text            as T
 import           Kempe.AST

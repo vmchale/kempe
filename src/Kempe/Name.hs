@@ -6,6 +6,7 @@ module Kempe.Name ( Name (..)
                   ) where
 
 import           Control.DeepSeq (NFData (..))
+import           Data.Semigroup  ((<>))
 import qualified Data.Text       as T
 import           Kempe.Unique
 import           Prettyprinter   (Pretty (pretty))
