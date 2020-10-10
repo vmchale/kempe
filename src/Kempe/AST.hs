@@ -19,6 +19,7 @@ module Kempe.AST ( BuiltinTy (..)
 import           Control.DeepSeq      (NFData)
 import qualified Data.ByteString.Lazy as BSL
 import           Data.Functor         (void)
+import           Data.List.NonEmpty   (NonEmpty)
 import qualified Data.Set             as S
 import           GHC.Generics         (Generic)
 import           Kempe.Name
@@ -28,7 +29,7 @@ data BuiltinTy = TyPtr
                | TyInt
                | TyBool
                | TyArr Word
-               deriving (Generic, NFData, Eq)
+               deriving (Generic, NFData)
                -- tupling builtin for sake of case-matching on two+ things at
                -- once
                --
@@ -80,7 +81,7 @@ data Pattern a = PatternInt a Integer
 
 data Atom a = AtName a (Name a)
             | Ccall a BSL.ByteString -- TODO: type annotation?
-            | Case a [(Pattern a, [Atom a])] -- TODO: should this be nonempty? hm
+            | Case a (NonEmpty (Pattern a, [Atom a]))
             | If a [Atom a] [Atom a]
             | Dip a [Atom a]
             | IntLit a Integer

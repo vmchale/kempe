@@ -14,6 +14,8 @@ import Control.Monad.Except (ExceptT, runExceptT, throwError)
 import Control.Monad.Trans.Class (lift)
 import Data.Bifunctor (first)
 import qualified Data.ByteString.Lazy as BSL
+import Data.List.NonEmpty (NonEmpty (..))
+import qualified Data.List.NonEmpty as NE
 import qualified Data.Text as T
 import Data.Typeable (Typeable)
 import GHC.Generics (Generic)
@@ -75,6 +77,9 @@ many(p)
     : many(p) p { $2 : $1 }
     | { [] }
 
+some(p)
+    : many(p) p { $2 :| $1 }
+
 sepBy(p,q)
     : sepBy(p,q) q p { $3 : $1 }
     | p q p { $3 : [$1] }
@@ -89,7 +94,7 @@ parens(p)
     : lparen p rparen { $2 }
 
 Module :: { Module AlexPosn }
-       : many(Decl) { $1 }
+       : many(Decl) { (reverse $1) }
 
 Decl :: { KempeDecl AlexPosn }
      : TyDecl { $1 }
@@ -118,7 +123,7 @@ FunBody :: { [Atom AlexPosn] }
 Atom :: { Atom AlexPosn }
      : name { AtName (Name.loc $1) $1 }
      | tyName { AtCons (Name.loc $1) $1 }
-     | lbrace case many(CaseLeaf) rbrace { Case $2 (reverse $3) }
+     | lbrace case some(CaseLeaf) rbrace { Case $2 (NE.reverse $3) }
      | intLit { IntLit (loc $1) (int $1) }
      | cfun foreign { Ccall $1 $2 }
      | dip parens(many(Atom)) { Dip $1 $2 }

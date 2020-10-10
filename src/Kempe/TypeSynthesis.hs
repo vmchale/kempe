@@ -4,6 +4,8 @@ module Kempe.TypeSynthesis ( TypeM
                            , runTypeM
                            , tyAtoms
                            , tyInsert
+                           -- * Exported for testing
+                           , renameStack
                            ) where
 
 import           Control.Composition  (thread)
@@ -11,6 +13,7 @@ import           Control.Monad.Except (ExceptT, runExceptT, throwError)
 import           Control.Monad.State
 import           Data.Foldable        (traverse_)
 import qualified Data.IntMap          as IM
+import           Data.List.NonEmpty   (NonEmpty (..))
 import qualified Data.Set             as S
 import qualified Data.Text            as T
 import           Kempe.AST
@@ -193,6 +196,9 @@ mergeStackTypes st0 st1 = do
     (StackType q _ _) <- renameStack st0
     (StackType q' _ _) <- renameStack st1
     pure $ StackType (q <> q') undefined undefined
+
+mergeMany :: NonEmpty (StackType ()) -> TypeM () (StackType ())
+mergeMany (t :| ts) = foldM mergeStackTypes t ts
 
 -- | Given @x@ and @y@, return the 'StackType' of @x y@
 catTypes :: StackType a -- ^ @x@

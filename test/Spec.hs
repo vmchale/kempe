@@ -1,8 +1,11 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Main (main) where
 
 import           Control.Exception    (throwIO)
 import qualified Data.ByteString.Lazy as BSL
 import           Data.Foldable        (traverse_)
+import qualified Data.Set             as S
 import           Kempe.Lexer
 import           Kempe.Parser
 import           Kempe.TypeSynthesis
@@ -13,8 +16,10 @@ import           Test.Tasty.HUnit
 main :: IO ()
 main = defaultMain $
     testGroup "Kempe compiler tests"
-        [ lexNoError "test/data/lex.kmp"
-        , parseNoError "test/data/lex.kmp"
+        [ testGroup "Parser golden tests"
+            [ lexNoError "test/data/lex.kmp"
+            , parseNoError "test/data/lex.kmp"
+            ]
         , tyInfer "test/data/lex.kmp"
         ]
 

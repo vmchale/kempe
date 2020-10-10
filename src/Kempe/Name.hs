@@ -1,4 +1,5 @@
-{-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE DeriveFunctor     #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Kempe.Name ( Name (..)
                   , TyName
@@ -18,7 +19,7 @@ instance Eq (Name a) where
     (==) (Name _ u _) (Name _ u' _) = u == u'
 
 instance Pretty (Name a) where
-    pretty (Name t _ _) = pretty t
+    pretty (Name t u _) = pretty t <> "_" <> pretty u
 
 instance Ord (Name a) where
     compare (Name _ u _) (Name _ u' _) = compare u u'
