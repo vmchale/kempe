@@ -82,6 +82,9 @@ tokens :-
         Bool                     { mkBuiltin BuiltinBool }
         True                     { mkBuiltin (BuiltinBoolLit True) }
         False                    { mkBuiltin (BuiltinBoolLit False) }
+        dup                      { mkBuiltin BuiltinDup }
+        drop                     { mkBuiltin BuiltinDrop }
+        swap                     { mkBuiltin BuiltinSwap }
 
         $digit+                  { tok (\p s -> alex $ TokInt p (read $ ASCII.unpack s)) }
 
@@ -202,6 +205,7 @@ data Builtin = BuiltinBool
              | BuiltinDip
              | BuiltinDrop
              | BuiltinSwap
+             | BuiltinDup
              deriving (Generic, NFData)
 
 instance Pretty Builtin where
@@ -212,6 +216,7 @@ instance Pretty Builtin where
     pretty BuiltinDip         = "dip"
     pretty BuiltinDrop        = "drop"
     pretty BuiltinSwap        = "swap"
+    pretty BuiltinDup         = "dup"
 
 data Token a = EOF { loc :: a }
              | TokSym { loc :: a, _sym :: Sym }

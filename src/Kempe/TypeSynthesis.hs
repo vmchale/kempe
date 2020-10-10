@@ -73,6 +73,9 @@ typeOfBuiltin Swap = do
     aN <- dummyName "a"
     bN <- dummyName "b"
     pure $ StackType (S.fromList [aN, bN]) [TyVar () aN, TyVar () bN] [TyVar () bN, TyVar () aN]
+typeOfBuiltin Dup = do
+    aN <- dummyName "a"
+    pure $ StackType (S.singleton aN) [TyVar () aN] [TyVar () aN, TyVar () aN]
 
 -- maybe constraints? e.g. ("a" = "b") and (3 = "a")
 -- but maybe simpler since no function types? lol

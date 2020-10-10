@@ -91,6 +91,7 @@ data Atom a = AtName a (Name a)
 
 data BuiltinFn = Drop
                | Swap
+               | Dup
                deriving (Generic, NFData)
 
 data KempeDecl a = TyDecl a (TyName a) [Name a] [(TyName a, [KempeTy a])]

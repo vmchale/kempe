@@ -2,7 +2,8 @@
     {-# LANGUAGE DeriveAnyClass #-}
     {-# LANGUAGE DeriveGeneric #-}
     {-# LANGUAGE OverloadedStrings #-}
-    module Kempe.Parser ( parse
+    module Kempe.Parser ( parse 
+                        , parseWithMax
                         , ParseError (..)
                         ) where
 
@@ -64,6 +65,9 @@ import Debug.Trace (traceShow)
     bool { TokBuiltin $$ BuiltinBool }
     int { TokBuiltin $$ BuiltinInt }
     ptr { TokBuiltin $$ BuiltinPtr }
+    dup { TokBuiltin $$ BuiltinDup }
+    swap { TokBuiltin $$ BuiltinSwap }
+    drop { TokBuiltin $$ BuiltinDrop }
 
 %%
 
@@ -120,6 +124,9 @@ Atom :: { Atom AlexPosn }
      | dip parens(many(Atom)) { Dip $1 $2 }
      | if lparen many(Atom) comma many(Atom) rparen { If $1 $3 $5 }
      | boolLit { BoolLit (loc $1) (bool $ builtin $1) }
+     | dup { AtBuiltin $1 Dup }
+     | drop { AtBuiltin $1 Drop }
+     | swap { AtBuiltin $1 Swap }
 
 CaseLeaf :: { (Pattern AlexPosn, [Atom AlexPosn]) }
          : vbar Pattern caseArr many(Atom) { ($2, reverse $4) }
