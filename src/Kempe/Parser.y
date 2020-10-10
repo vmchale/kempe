@@ -6,10 +6,12 @@
                         , ParseError (..)
                         ) where
 
+import Control.Composition ((.*))
 import Control.DeepSeq (NFData)
 import Control.Exception (Exception)
 import Control.Monad.Except (ExceptT, runExceptT, throwError)
 import Control.Monad.Trans.Class (lift)
+import Data.Bifunctor (first)
 import qualified Data.ByteString.Lazy as BSL
 import qualified Data.Text as T
 import Data.Typeable (Typeable)
@@ -154,18 +156,23 @@ instance (Pretty a, Typeable a) => Exception (ParseError a)
 type Parse = ExceptT (ParseError AlexPosn) Alex
 
 parse :: BSL.ByteString -> Either (ParseError AlexPosn) (Module AlexPosn)
-parse = runParse parseModule
+parse = fmap snd . parseWithMax
 
-runParse :: Parse a -> BSL.ByteString -> Either (ParseError AlexPosn) a
-runParse parser str = liftErr $ runAlex str (runExceptT parser)
+parseWithMax :: BSL.ByteString -> Either (ParseError AlexPosn) (Int, Module AlexPosn)
+parseWithMax = fmap (first fst3) . runParse parseModule
 
-liftErr :: Either String (Either (ParseError a) b) -> Either (ParseError a) b
-liftErr (Left err)         = Left (LexErr err)
-liftErr (Right (Left err)) = Left err
-liftErr (Right (Right x))  = Right x
+runParse :: Parse a -> BSL.ByteString -> Either (ParseError AlexPosn) (AlexUserState, a)
+runParse parser str = liftErr $ runAlexSt str (runExceptT parser)
 
+liftErr :: Either String (b, Either (ParseError a) c) -> Either (ParseError a) (b, c)
+liftErr (Left err)            = Left (LexErr err)
+liftErr (Right (_, Left err)) = Left err
+liftErr (Right (i, Right x))  = Right (i, x)
 
 uncurry4 :: (a -> b -> c -> d -> e) -> (a, b, c, d) -> e
 uncurry4 f ~(x, y, z, w) = f x y z w
+
+fst3 :: (a, b, c) -> a
+fst3 ~(x,_,_) = x
 
 }

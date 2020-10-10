@@ -5,6 +5,7 @@
     {-# LANGUAGE StandaloneDeriving #-}
     module Kempe.Lexer ( alexMonadScan
                        , runAlex
+                       , runAlexSt
                        , lexKempe
                        , AlexPosn (..)
                        , Alex (..)
@@ -12,13 +13,15 @@
                        , Keyword (..)
                        , Sym (..)
                        , Builtin (..)
+                       , AlexUserState
                        ) where
 
 import Control.Arrow ((&&&))
 import Control.DeepSeq (NFData)
-import Data.Functor (($>))
+import Data.Bifunctor (first)
 import qualified Data.ByteString.Lazy as BSL
 import qualified Data.ByteString.Lazy.Char8 as ASCII
+import Data.Functor (($>))
 import qualified Data.IntMap as IM
 import qualified Data.Map as M
 import Data.Semigroup ((<>))
@@ -253,5 +256,18 @@ loop = do
 
 lexKempe :: BSL.ByteString -> Either String [Token AlexPosn]
 lexKempe = flip runAlex loop
+
+runAlexSt :: BSL.ByteString -> Alex a -> Either String (AlexUserState, a)
+runAlexSt inp = withAlexSt inp alexInitUserState
+
+withAlexSt :: BSL.ByteString -> AlexUserState -> Alex a -> Either String (AlexUserState, a)
+withAlexSt inp ust (Alex f) = first alex_ust <$> f
+    (AlexState { alex_bpos = 0
+               , alex_pos = alexStartPos
+               , alex_inp = inp
+               , alex_chr = '\n'
+               , alex_ust = ust
+               , alex_scd = 0
+               })
 
 }
