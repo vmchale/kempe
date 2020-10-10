@@ -206,3 +206,4 @@ catTypes :: StackType a -- ^ @x@
          -> StackType a -- ^ @y@
          -> TypeM () (StackType ())
 catTypes _ _ = pure undefined -- I need unification? :o
+-- all of the "ins" of y have to come from x
