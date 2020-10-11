@@ -198,7 +198,7 @@ mergeStackTypes st0 st1 = do
     (StackType q' _ _) <- renameStack st1
     pure $ StackType (q <> q') undefined undefined
 
-tyPattern :: Pattern a -> TypeM () (S.Set (Name ()), [KempeTy ()])
+tyPattern :: Pattern a -> TypeM () (S.Set (Name ()), [KempeTy ()]) -- TODO: should this be a StackType for ease of use?
 tyPattern PatternWildcard{} = do
     aN <- dummyName "a"
     pure (S.singleton aN, [TyVar () aN])

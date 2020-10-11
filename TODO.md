@@ -4,3 +4,4 @@
 - [ ] IR (abstract assembly?)
 # Features
 - [ ] REPL for type inspection?
+- [ ] Pattern match exhaustiveness checker
