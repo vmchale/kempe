@@ -190,13 +190,20 @@ renameStack (StackType qs ins outs) = do
     withTyState newBinds $
         StackType (S.fromList newNames) <$> traverse renameIn ins <*> traverse renameIn outs
 
--- just dispatch constraints?
+-- dispatch constraints?
 mergeStackTypes :: StackType () -> StackType () -> TypeM () (StackType ())
 mergeStackTypes st0 st1 = do
     -- freshen stack types (free vars) so no clasing/overwriting happens
     (StackType q _ _) <- renameStack st0
     (StackType q' _ _) <- renameStack st1
     pure $ StackType (q <> q') undefined undefined
+
+tyPattern :: Pattern a -> TypeM () (S.Set (Name ()), [KempeTy ()])
+tyPattern PatternWildcard{} = do
+    aN <- dummyName "a"
+    pure (S.singleton aN, [TyVar () aN])
+tyPattern PatternInt{} = pure (S.empty, [TyBuiltin () TyInt])
+tyPattern PatternBool{} = pure (S.empty, [TyBuiltin () TyBool])
 
 mergeMany :: NonEmpty (StackType ()) -> TypeM () (StackType ())
 mergeMany (t :| ts) = foldM mergeStackTypes t ts

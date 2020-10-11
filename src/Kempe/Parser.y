@@ -140,6 +140,8 @@ Pattern :: { Pattern AlexPosn }
         : tyName many(Pattern) { PatternCons (Name.loc $1) $1 $2 }
         | name { PatternVar (Name.loc $1) $1 }
         | underscore { PatternWildcard $1 }
+        | intLit { PatternInt (loc $1) (int $1) }
+        | boolLit { PatternBool (loc $1) (bool $ builtin $1) }
 
 -- FIXME: tyName is uppercase, need "free" variables as well...
 TyLeaf :: { (Name AlexPosn, [KempeTy AlexPosn]) }

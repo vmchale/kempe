@@ -77,6 +77,8 @@ data Pattern a = PatternInt a Integer
                | PatternCons a (TyName a) [Pattern a] -- a constructed pattern
                | PatternVar a (Name a)
                | PatternWildcard a
+               | PatternBool a Bool
+               -- -- | PatternTuple
                deriving (Generic, NFData)
 
 data Atom a = AtName a (Name a)
