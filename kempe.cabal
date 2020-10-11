@@ -27,7 +27,7 @@ library
         Kempe.Lexer
         Kempe.Parser
         Kempe.AST
-        Kempe.TypeSynthesis
+        Kempe.TypeInference
 
     build-tool-depends: alex:alex -any, happy:happy -any
     hs-source-dirs:     src

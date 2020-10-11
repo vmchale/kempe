@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Kempe.TypeSynthesis ( TypeM
+module Kempe.TypeInference ( TypeM
                            , runTypeM
                            , tyAtoms
                            , tyInsert

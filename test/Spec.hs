@@ -7,7 +7,7 @@ import qualified Data.ByteString.Lazy as BSL
 import           Data.Foldable        (traverse_)
 import           Kempe.Lexer
 import           Kempe.Parser
-import           Kempe.TypeSynthesis
+import           Kempe.TypeInference
 import           Prettyprinter        (pretty)
 import           Test.Tasty
 import           Test.Tasty.HUnit
