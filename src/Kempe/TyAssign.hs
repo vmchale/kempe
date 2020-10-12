@@ -118,7 +118,7 @@ tyAtom (If _ as as')   = do
 
 tyAtoms :: [Atom a] -> TypeM () (StackType ())
 tyAtoms = foldM
-    (\seed a -> do { tys' <- tyAtom a ; catTypes tys' seed })
+    (\seed a -> do { tys' <- renameStack =<< tyAtom a ; catTypes tys' seed })
     emptyStackType
 
 tyInsertLeaf :: Name a -- ^ type being declared
@@ -229,7 +229,8 @@ catTypes :: StackType a -- ^ @x@
          -> StackType a -- ^ @y@
          -> TypeM () (StackType ())
 catTypes st0@(StackType q0 insX osX) st1@(StackType q1 insY osY) = do
-    when (length insY > length osX) $
+    let lY = length insY
+    when (lY > length osX) $
         throwError $ MismatchedLengths () (voidStackType st0) (voidStackType st1)
     pure undefined -- I need unification? :o
 -- all of the "ins" of y have to come from x
