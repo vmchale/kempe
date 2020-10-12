@@ -193,9 +193,13 @@ renameStack (StackType qs ins outs) = do
 mergeStackTypes :: StackType () -> StackType () -> TypeM () (StackType ())
 mergeStackTypes st0 st1 = do
     -- freshen stack types (free vars) so no clasing/overwriting happens
-    (StackType q _ _) <- renameStack st0
-    (StackType q' _ _) <- renameStack st1
-    pure $ StackType (q <> q') undefined undefined
+    (StackType q ins os) <- renameStack st0
+    (StackType q' ins' os') <- renameStack st1
+    when (length ins /= length ins' || length os /= length os') $
+        throwError $ MismatchedLengths () st0 st1
+    zipWithM_ pushConstraint ins ins'
+    zipWithM_ pushConstraint os os'
+    pure $ StackType (q <> q') ins os -- do I need to merge?
 
 tyPattern :: Pattern a -> TypeM () (S.Set (Name ()), [KempeTy ()]) -- TODO: should this be a StackType for ease of use?
 tyPattern PatternWildcard{} = do
@@ -224,5 +228,8 @@ mergeMany (t :| ts) = foldM mergeStackTypes t ts
 catTypes :: StackType a -- ^ @x@
          -> StackType a -- ^ @y@
          -> TypeM () (StackType ())
-catTypes _ _ = pure undefined -- I need unification? :o
+catTypes st0@(StackType q0 insX osX) st1@(StackType q1 insY osY) = do
+    when (length insY > length osX) $
+        throwError $ MismatchedLengths () (voidStackType st0) (voidStackType st1)
+    pure undefined -- I need unification? :o
 -- all of the "ins" of y have to come from x
