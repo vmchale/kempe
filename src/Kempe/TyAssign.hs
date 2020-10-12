@@ -1,12 +1,12 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Kempe.TypeInference ( TypeM
-                           , runTypeM
-                           , tyAtoms
-                           , tyInsert
-                           -- * Exported for testing
-                           , renameStack
-                           ) where
+module Kempe.TyAssign ( TypeM
+                      , runTypeM
+                      , tyAtoms
+                      , tyInsert
+                      -- * Exported for testing
+                      , renameStack
+                      ) where
 
 import           Control.Composition  (thread)
 import           Control.Monad.Except (ExceptT, runExceptT, throwError)
