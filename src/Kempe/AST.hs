@@ -29,7 +29,7 @@ data BuiltinTy = TyPtr
                | TyInt
                | TyBool
                | TyArr Word
-               deriving (Generic, NFData)
+               deriving (Generic, NFData, Eq, Ord)
                -- tupling builtin for sake of case-matching on two+ things at
                -- once
                --
@@ -56,7 +56,7 @@ data KempeTy a = TyBuiltin a BuiltinTy
                | TyVar a (Name a)
                | TyApp a (KempeTy a) (KempeTy a)
                | TyTuple a [KempeTy a]
-               deriving (Generic, NFData, Functor)
+               deriving (Generic, NFData, Functor, Eq, Ord) -- questionable eq instance but eh
 
 data StackType a = StackType { quantify :: S.Set (Name a)
                              , inTypes  :: [KempeTy a]

@@ -48,6 +48,9 @@ tyEnvLens f s = fmap (\x -> s { tyEnv = x }) (f (tyEnv s))
 renamesLens :: Lens' (TyState a) (IM.IntMap Int)
 renamesLens f s = fmap (\x -> s { renames = x }) (f (renames s))
 
+constraintsLens :: Lens' (TyState a) (S.Set (KempeTy a, KempeTy a))
+constraintsLens f s = fmap (\x -> s { constraints = x }) (f (constraints s))
+
 dummyName :: T.Text -> TypeM () (Name ())
 dummyName n = do
     pSt <- gets maxU
@@ -64,10 +67,6 @@ runTypeM maxInt = flip evalState (TyState maxInt mempty mempty mempty S.empty) .
 -- implicitly) -> except we have to then "back-instantiate"? hm
 
 -- monomorphization
-
--- dip-ify?
-
--- renameStackType? or maybe j substitute?
 
 typeOfBuiltin :: BuiltinFn -> TypeM () (StackType ())
 typeOfBuiltin Drop = do
@@ -204,6 +203,19 @@ tyPattern PatternWildcard{} = do
     pure (S.singleton aN, [TyVar () aN])
 tyPattern PatternInt{} = pure (S.empty, [TyBuiltin () TyInt])
 tyPattern PatternBool{} = pure (S.empty, [TyBuiltin () TyBool])
+tyPattern (PatternCons _ tn@(Name _ (Unique k) _) ps) = do
+    st <- gets constructorTypes
+    consTy <-
+        case IM.lookup k st of
+            Just sty -> pure sty
+            Nothing  -> throwError $ PoorScope () (void tn)
+    -- tyIn needs to be renamed...
+    pure undefined
+
+-- assumes they have been renamed...
+pushConstraint :: KempeTy a -> KempeTy a -> TypeM () ()
+pushConstraint ty ty' =
+    modifying constraintsLens (S.insert (void ty, void ty'))
 
 mergeMany :: NonEmpty (StackType ()) -> TypeM () (StackType ())
 mergeMany (t :| ts) = foldM mergeStackTypes t ts
