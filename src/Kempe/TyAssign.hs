@@ -195,11 +195,7 @@ mergeStackTypes st0 st1 = do
     -- freshen stack types (free vars) so no clasing/overwriting happens
     (StackType q ins os) <- renameStack st0
     (StackType q' ins' os') <- renameStack st1
-    when (length ins /= length ins' || length os /= length os') $
-        throwError $ MismatchedLengths () st0 st1
-    zipWithM_ pushConstraint ins ins'
-    zipWithM_ pushConstraint os os'
-    pure $ StackType (q <> q') ins os -- do I need to merge?
+    pure $ StackType (q <> q') undefined undefined -- do I need to merge?
 
 tyPattern :: Pattern a -> TypeM () (S.Set (Name ()), [KempeTy ()]) -- TODO: should this be a StackType for ease of use?
 tyPattern PatternWildcard{} = do
