@@ -206,6 +206,7 @@ tyPattern PatternBool{} = pure (S.empty, [TyBuiltin () TyBool])
 tyPattern (PatternCons _ tn ps) = do
     consTy <- consLookup (void tn)
     -- tyIn needs to be renamed...
+    -- TODO: if a pattern binds a TyVar, insert its type (locally)
     pure undefined
 
 -- assumes they have been renamed...
