@@ -227,6 +227,7 @@ catTypes :: StackType a -- ^ @x@
          -> TypeM () (StackType ())
 catTypes st0@(StackType q0 insX osX) st1@(StackType q1 insY osY) = do
     let lY = length insY
+    -- zip up the types in the right way
     when (lY > length osX) $
         throwError $ MismatchedLengths () (voidStackType st0) (voidStackType st1)
     pure undefined -- I need unification? :o
