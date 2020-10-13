@@ -203,12 +203,8 @@ tyPattern PatternWildcard{} = do
     pure (S.singleton aN, [TyVar () aN])
 tyPattern PatternInt{} = pure (S.empty, [TyBuiltin () TyInt])
 tyPattern PatternBool{} = pure (S.empty, [TyBuiltin () TyBool])
-tyPattern (PatternCons _ tn@(Name _ (Unique k) _) ps) = do
-    st <- gets constructorTypes
-    consTy <-
-        case IM.lookup k st of
-            Just sty -> pure sty
-            Nothing  -> throwError $ PoorScope () (void tn)
+tyPattern (PatternCons _ tn ps) = do
+    consTy <- consLookup (void tn)
     -- tyIn needs to be renamed...
     pure undefined
 
