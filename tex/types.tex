@@ -1,0 +1,49 @@
+\documentclass{report}
+
+\usepackage{mathpartir}
+\usepackage{syntax}
+
+\begin{document}
+
+\title{Kempe Type System}
+\author {Vanessa McHale}
+\maketitle
+
+\tableofcontents
+
+\section{Introduction}
+
+This presents the Kempe type system.
+
+\section{Syntax}
+
+\setlength{\grammarparsep}{20pt plus 1pt minus 1pt}
+\setlength{\grammarindent}{12em}
+
+\begin{grammar}
+<kind> ::= <type>
+\alt <stack>
+\end{grammar}
+
+\section{Judgments}
+
+% this is the part I'm sure about
+
+\begin{mathpar}
+\inferrule
+    {\Gamma \vdash x : \alpha -- \beta \\ \Gamma \vdash y : \beta -- \gamma} % figure out 
+    {\Gamma \vdash xy : \alpha -- \gamma}
+    \quad(\textsc {Fun})
+
+\inferrule
+{\Gamma \vdash x : -- \alpha \\ \Gamma \vdash y : -- \beta}
+{\Gamma \vdash xy : -- \alpha\beta}
+\quad(\textsc{Push})
+
+\inferrule
+{\Gamma \vdash x : \alpha -- \\ \Gamma \vdash y : \beta --}
+{\Gamma \vdash xy : \beta\alpha --}
+\quad(\textsc{Pop})
+\end{mathpar}
+
+\end{document}
