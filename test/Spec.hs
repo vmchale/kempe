@@ -19,7 +19,7 @@ main = defaultMain $
             [ lexNoError "test/data/lex.kmp"
             , parseNoError "test/data/lex.kmp"
             ]
-        , tyInfer "test/data/lex.kmp"
+        , tyInfer "test/data/ty.kmp"
         ]
 
 lexNoError :: FilePath -> TestTree

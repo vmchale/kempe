@@ -1,5 +1,3 @@
-; this is a comment
-
 type Void {}
 
 type Maybe a { Just a | Nothing }
@@ -8,24 +6,6 @@ type OS { Macos | Linux | Windows | Freebsd }
 
 ; just has type a -- Maybe a
 ; nothing has type -- Maybe a
-
-isUnix : OS -- Bool
-       =: [
-    { case
-        | Windows -> False
-        | _ -> True
-    }
-]
-
-osNum : OS -- Int
-      =: [
-    { case
-        | Macos -> 1
-        | Linux -> 2
-        | Windows -> 3
-        | Freebsd -> 4
-    }
-]
 
 rand : -- Int
      =: $cfun"rand"

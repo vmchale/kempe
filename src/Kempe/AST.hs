@@ -82,7 +82,6 @@ data Pattern a = PatternInt a Integer
                deriving (Generic, NFData)
 
 data Atom a = AtName a (Name a)
-            | Ccall a BSL.ByteString -- TODO: type annotation?
             | Case a (NonEmpty (Pattern a, [Atom a]))
             | If a [Atom a] [Atom a]
             | Dip a [Atom a]
@@ -99,6 +98,7 @@ data BuiltinFn = Drop
 
 data KempeDecl a = TyDecl a (TyName a) [Name a] [(TyName a, [KempeTy a])]
                  | FunDecl a (Name a) [KempeTy a] [KempeTy a] [Atom a]
+                 | ExtFnDecl a (Name a) [KempeTy a] [KempeTy a] BSL.ByteString
                  deriving (Generic, NFData)
 
 type Module a = [KempeDecl a]

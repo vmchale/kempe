@@ -143,6 +143,10 @@ tyInsert (FunDecl _ (Name _ (Unique i) _) ins out as) = do
     inferred <- tyAtoms as
     reconcile <- mergeStackTypes sig inferred
     modifying tyEnvLens (IM.insert i reconcile) -- lel microlens-tardis
+tyInsert (ExtFnDecl _ (Name _ (Unique i) _) ins os _) = do
+    sig <- renameStack $ voidStackType $ StackType S.empty ins os -- no free variables allowed in c functions
+    modifying tyEnvLens (IM.insert i sig)
+
 
 -- Make sure you don't have cycles in the renames map!
 replaceUnique :: Unique -> TypeM a Unique
