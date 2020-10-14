@@ -23,7 +23,7 @@ import           Data.List.NonEmpty   (NonEmpty)
 import qualified Data.Set             as S
 import           GHC.Generics         (Generic)
 import           Kempe.Name
-import           Prettyprinter        (Pretty (pretty), parens, tupled, (<+>))
+import           Prettyprinter        (Pretty (pretty), parens, sep, tupled, (<+>))
 
 data BuiltinTy = TyPtr
                | TyInt
@@ -62,6 +62,9 @@ data StackType a = StackType { quantify :: S.Set (Name a)
                              , inTypes  :: [KempeTy a]
                              , outTypes :: [KempeTy a]
                              }
+
+instance Pretty (StackType a) where
+    pretty (StackType _ ins outs) = sep (fmap pretty ins) <+> "--" <+> sep (fmap pretty outs)
 
 voidStackType :: StackType a -> StackType ()
 voidStackType (StackType vars ins outs) = StackType (S.map void vars) (void <$> ins) (void <$> outs)

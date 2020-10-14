@@ -136,6 +136,7 @@ extrVars (TyTuple _ tys)  = concatMap extrVars tys
 freeVars :: [KempeTy a] -> S.Set (Name a)
 freeVars tys = S.fromList (concatMap extrVars tys)
 
+-- TODO: traverse headers first
 tyInsert :: KempeDecl a -> TypeM () ()
 tyInsert (TyDecl _ tn ns ls) = traverse_ (tyInsertLeaf tn (S.fromList ns)) ls
 tyInsert (FunDecl _ (Name _ (Unique i) _) ins out as) = do
@@ -201,6 +202,7 @@ mergeStackTypes st0 st1 = do
     (StackType q' ins' os') <- renameStack st1
     pure $ StackType (q <> q') undefined undefined -- do I need to merge?
 
+{-
 tyPattern :: Pattern a -> TypeM () (S.Set (Name ()), [KempeTy ()]) -- TODO: should this be a StackType for ease of use?
 tyPattern PatternWildcard{} = do
     aN <- dummyName "a"
@@ -212,6 +214,7 @@ tyPattern (PatternCons _ tn ps) = do
     -- tyIn needs to be renamed...
     -- TODO: if a pattern binds a TyVar, insert its type (locally)
     pure undefined
+-}
 
 -- assumes they have been renamed...
 pushConstraint :: KempeTy a -> KempeTy a -> TypeM () ()
@@ -221,14 +224,16 @@ pushConstraint ty ty' =
 mergeMany :: NonEmpty (StackType ()) -> TypeM () (StackType ())
 mergeMany (t :| ts) = foldM mergeStackTypes t ts
 
+-- do renaming before this
 -- | Given @x@ and @y@, return the 'StackType' of @x y@
-catTypes :: StackType a -- ^ @x@
-         -> StackType a -- ^ @y@
+catTypes :: StackType () -- ^ @x@
+         -> StackType () -- ^ @y@
          -> TypeM () (StackType ())
 catTypes st0@(StackType q0 insX osX) st1@(StackType q1 insY osY) = do
     let lY = length insY
     -- zip up the types in the right way
-    when (lY > length osX) $
-        throwError $ MismatchedLengths () (voidStackType st0) (voidStackType st1)
-    pure undefined -- I need unification? :o
--- all of the "ins" of y have to come from x
+    let (takeForPush, takeForIn) = splitAt (length osX - lY) insY
+    zipWithM_ pushConstraint osX takeForIn
+    pure $ StackType (q0 <> q1) insX takeForPush -- prune?
+    -- all of the "ins" of y have to come from x -> or already be on the stack?
+    -- idk
