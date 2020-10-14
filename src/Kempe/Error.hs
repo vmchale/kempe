@@ -1,17 +1,23 @@
+{-# LANGUAGE DeriveAnyClass    #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Kempe.Error ( Error (..)
                    ) where
 
-import           Data.Semigroup ((<>))
+import           Control.Exception (Exception)
+import           Data.Semigroup    ((<>))
 import           Kempe.AST
 import           Kempe.Name
-import           Prettyprinter  (Pretty (pretty), comma, squotes, (<+>))
+import           Prettyprinter     (Pretty (pretty), comma, squotes, (<+>))
 
 -- reject mutually recursive types? idk :p
 data Error a = MismatchedTypes a (KempeTy a) (KempeTy a) -- TODO: include atom "expression?"
              | PoorScope a (Name a)
              | MismatchedLengths a (StackType a) (StackType a)
+             deriving (Exception)
+
+instance Show (Error a) where
+    show = show . pretty
 
 instance Pretty (Error a) where
     pretty (MismatchedTypes _ ty ty')    = "could not match type" <+> squotes (pretty ty) <+> "with type" <+> squotes (pretty ty')

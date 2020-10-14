@@ -1,7 +1,9 @@
 module Main (main) where
 
+import           Control.Exception   (throwIO)
 import           Data.Semigroup      ((<>))
 import qualified Data.Version        as V
+import           Kempe.File
 import           Options.Applicative
 import qualified Paths_kempe         as P
 
@@ -9,8 +11,8 @@ data Command = TypeCheck !FilePath
              | Compile !FilePath !FilePath
 
 run :: Command -> IO ()
-run (TypeCheck _) = pure ()
-run (Compile _ _) = pure ()
+run (TypeCheck fp) = either throwIO pure =<< tcFile fp
+run (Compile _ _)  = pure ()
 
 kmpFile :: Parser FilePath
 kmpFile = argument str

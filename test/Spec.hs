@@ -5,6 +5,7 @@ module Main (main) where
 import           Control.Exception    (throwIO)
 import qualified Data.ByteString.Lazy as BSL
 import           Data.Foldable        (traverse_)
+import           Kempe.File
 import           Kempe.Lexer
 import           Kempe.Parser
 import           Kempe.TyAssign
@@ -38,9 +39,7 @@ parseNoError fp = testCase ("Parsing doesn't fail (" ++ fp ++ ")") $ do
 
 tyInfer :: FilePath -> TestTree
 tyInfer fp = testCase ("Checks types (" ++ fp ++ ")") $ do
-    contents <- BSL.readFile fp
-    (maxU, ds) <- either throwIO pure $ parseWithMax contents
-    let res = runTypeM maxU (traverse_ tyInsert ds)
+    res <- tcFile fp
     case res of
         Left err -> assertFailure (show $ pretty err)
         Right{}  -> assertBool "Doesn't fail type-checkign" True
