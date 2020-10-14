@@ -52,11 +52,10 @@ library
         text -any,
         mtl -any,
         microlens -any,
-        microlens-mtl -any,
         transformers -any,
         prettyprinter >=1.7.0,
         composition-prelude >=1.1.0.1,
-        tardis -any
+        tardis >=0.4.1.0
 
     if !impl(ghc >=8.0)
         build-depends: semigroups -any
