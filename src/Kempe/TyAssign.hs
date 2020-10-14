@@ -236,11 +236,16 @@ expandType n (StackType q i o) = do
 catTypes :: StackType () -- ^ @x@
          -> StackType () -- ^ @y@
          -> TypeM () (StackType ())
-catTypes st0@(StackType q0 insX osX) st1@(StackType q1 insY osY) = do
+catTypes st0@(StackType _ _ osX) st1@(StackType q1 insY osY) = do
     let lY = length insY
-    -- zip up the types in the right way
-    let (takeForPush, takeForIn) = splitAt (length osX - lY) insY
-    zipWithM_ pushConstraint osX takeForIn
-    pure $ StackType (q0 <> q1) insX takeForPush -- prune?
-    -- all of the "ins" of y have to come from x -> or already be on the stack?
-    -- idk
+        lDiff = lY - length osX
+
+    -- all of the "ins" of y have to come from x, so we expand x as needed
+    st0'@(StackType q0 insX osX') <- if lDiff > 0
+        then expandType lDiff st0
+        else pure st0
+
+    -- get the last (length insY) of osX' + zip with insY
+    -- zipWithM_ pushConstraint osX' insY
+
+    pure undefined
