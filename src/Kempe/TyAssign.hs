@@ -225,6 +225,12 @@ pushConstraint ty ty' =
 mergeMany :: NonEmpty (StackType ()) -> TypeM () (StackType ())
 mergeMany (t :| ts) = foldM mergeStackTypes t ts
 
+expandType :: Int -> StackType () -> TypeM () (StackType ())
+expandType n (StackType q i o) = do
+    newVars <- replicateM n (dummyName "a")
+    let newTy = TyNamed () <$> newVars
+    pure $ StackType (q <> S.fromList newVars) (newTy ++ i) (newTy ++ o)
+
 -- do renaming before this
 -- | Given @x@ and @y@, return the 'StackType' of @x y@
 catTypes :: StackType () -- ^ @x@
