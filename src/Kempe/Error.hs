@@ -3,9 +3,10 @@
 module Kempe.Error ( Error (..)
                    ) where
 
+import           Data.Semigroup ((<>))
 import           Kempe.AST
 import           Kempe.Name
-import           Prettyprinter (Pretty (pretty), comma, squotes, (<+>))
+import           Prettyprinter  (Pretty (pretty), comma, squotes, (<+>))
 
 -- reject mutually recursive types? idk :p
 data Error a = MismatchedTypes a (KempeTy a) (KempeTy a) -- TODO: include atom "expression?"
