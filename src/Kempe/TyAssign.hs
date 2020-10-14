@@ -200,6 +200,7 @@ mergeStackTypes st0 st1 = do
     -- freshen stack types (free vars) so no clasing/overwriting happens
     (StackType q ins os) <- renameStack st0
     (StackType q' ins' os') <- renameStack st1
+    -- shift stuff over so it "lines up" at the tails?
     pure $ StackType (q <> q') undefined undefined -- do I need to merge?
 
 {-
