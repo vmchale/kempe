@@ -197,11 +197,11 @@ renameStack (StackType qs ins outs) = do
 -- dispatch constraints?
 mergeStackTypes :: StackType () -> StackType () -> TypeM () (StackType ())
 mergeStackTypes st0 st1 = do
-    -- freshen stack types (free vars) so no clasing/overwriting happens
+    -- freshen stack types (free vars) so no clashing/overwriting happens
     (StackType q ins os) <- renameStack st0
     (StackType q' ins' os') <- renameStack st1
     -- shift stuff over so it "lines up" at the tails?
-    pure $ StackType (q <> q') undefined undefined -- do I need to merge?
+    pure $ StackType (q <> q') undefined undefined
 
 {-
 tyPattern :: Pattern a -> TypeM () (S.Set (Name ()), [KempeTy ()]) -- TODO: should this be a StackType for ease of use?
@@ -236,16 +236,16 @@ expandType n (StackType q i o) = do
 catTypes :: StackType () -- ^ @x@
          -> StackType () -- ^ @y@
          -> TypeM () (StackType ())
-catTypes st0@(StackType _ _ osX) st1@(StackType q1 insY osY) = do
+catTypes st0@(StackType _ _ osX) (StackType q1 insY osY) = do
     let lY = length insY
         lDiff = lY - length osX
 
     -- all of the "ins" of y have to come from x, so we expand x as needed
-    st0'@(StackType q0 insX osX') <- if lDiff > 0
+    (StackType q0 insX osX') <- if lDiff > 0
         then expandType lDiff st0
         else pure st0
 
-    -- get the last (length insY) of osX' + zip with insY
-    -- zipWithM_ pushConstraint osX' insY
+    -- zip the last (length insY) of osX' with insY
+    zipWithM_ pushConstraint (drop (length osX' - lY) osX') insY -- TODO splitAt
 
-    pure undefined
+    pure $ StackType (q0 <> q1) insX (take (length osX' - lY) osX' ++ osY)
