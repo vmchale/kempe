@@ -9,9 +9,8 @@ module Kempe.TyAssign ( TypeM
                       ) where
 
 import           Control.Composition        (thread)
-import           Control.Monad.Except       (ExceptT, runExceptT, throwError)
 import           Control.Monad.State
-import           Control.Monad.Tardis.Class (getPast, getsPast, modifyForwards, sendFuture)
+import           Control.Monad.Tardis.Class (getPast, getsPast, modifyForwards, sendFuture, sendPast)
 import           Control.Monad.Trans.Tardis (TardisT, evalTardisT, mapTardisT)
 import           Data.Foldable              (traverse_)
 import qualified Data.IntMap                as IM
@@ -24,7 +23,6 @@ import           Kempe.Error
 import           Kempe.Name
 import           Kempe.Unique
 import           Lens.Micro                 (Lens', over)
-import           Lens.Micro.Mtl             (modifying, (.=))
 import           Lens.Tardis
 
 type TyEnv a = IM.IntMap (StackType a)
@@ -36,7 +34,7 @@ data TyState a = TyState { maxU             :: Int -- ^ For renamer
                          , constraints      :: S.Set (KempeTy a, KempeTy a) -- Just need equality between simple types? (do have tyapp but yeah)
                          }
 
-data TyFut a = TyFut (IM.IntMap (KempeTy a))
+type TyFut a = IM.IntMap (KempeTy a)
 
 emptyStackType :: StackType a
 emptyStackType = StackType mempty [] []
@@ -64,9 +62,22 @@ dummyName n = do
 
 type TypeM a = TardisT (TyFut a) (TyState a) (Either (Error a))
 
+unify :: S.Set (KempeTy a, KempeTy a) -> Either (Error a) (IM.IntMap (KempeTy a))
+unify = undefined
+
+unifyM :: S.Set (KempeTy a, KempeTy a) -> TypeM a (IM.IntMap (KempeTy a))
+unifyM s =
+    case unify s of
+        Right x  -> pure x
+        Left err -> throwType err
+
 -- TODO: take constructor types as an argument?..
 runTypeM :: Int -> TypeM a x -> Either (Error a) x
-runTypeM maxInt = flip evalTardisT (undefined, TyState maxInt mempty mempty mempty S.empty)
+runTypeM maxInt act =
+    flip evalTardisT (undefined, TyState maxInt mempty mempty mempty S.empty) $ do
+        res <- act
+        sendPast =<< unifyM =<< getsPast constraints
+        pure res
 
 throwType :: Error a -> TypeM a b
 throwType err = mapTardisT (const $ Left err) (pure () :: TypeM a ())
