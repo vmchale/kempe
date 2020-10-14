@@ -31,19 +31,14 @@ This presents the Kempe type system.
 
 \begin{mathpar}
 \inferrule
-    {\Gamma \vdash x : \alpha -- \beta \\ \Gamma \vdash y : \beta -- \gamma} % figure out 
-    {\Gamma \vdash xy : \alpha -- \gamma}
-    \quad(\textsc {Fun})
+    {\Gamma \vdash x : \alpha_1\cdots\alpha_n -- \beta_1\cdots\beta_m\gamma_1\cdots\gamma_k \\ \Gamma \vdash y : \gamma_1\cdots\gamma_k -- \delta_1\cdots\delta_l}
+    {\Gamma \vdash xy : \alpha_1\cdots\alpha_n -- \beta_1\cdots\beta_n\delta_1\cdots\delta_l}
+    \quad(\textsc {Concat})
 
 \inferrule
-{\Gamma \vdash x : -- \alpha \\ \Gamma \vdash y : -- \beta}
-{\Gamma \vdash xy : -- \alpha\beta}
-\quad(\textsc{Push})
-
-\inferrule
-{\Gamma \vdash x : \alpha -- \\ \Gamma \vdash y : \beta --}
-{\Gamma \vdash xy : \beta\alpha --}
-\quad(\textsc{Pop})
+{\Gamma \vdash x : \alpha_1\cdots\alpha_n -- \beta_1\cdots\beta_m}
+{\Gamma \vdash x : a\alpha_1\cdots\alpha_n -- a\beta_1\cdots\beta_m}
+\quad(\textsc{Generalize})
 \end{mathpar}
 
 \end{document}
