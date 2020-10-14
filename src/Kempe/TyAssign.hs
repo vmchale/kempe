@@ -196,12 +196,20 @@ renameStack (StackType qs ins outs) = do
 
 -- dispatch constraints?
 mergeStackTypes :: StackType () -> StackType () -> TypeM () (StackType ())
-mergeStackTypes st0 st1 = do
+mergeStackTypes st0@(StackType _ i0 o0) st1@(StackType _ i1 o1) = do
+    let toExpand = max (abs (length i0 - length i1)) (abs (length o0 - length o1))
+
     -- freshen stack types (free vars) so no clashing/overwriting happens
-    (StackType q ins os) <- renameStack st0
-    (StackType q' ins' os') <- renameStack st1
-    -- shift stuff over so it "lines up" at the tails?
-    pure $ StackType (q <> q') undefined undefined
+    (StackType q ins os) <- expandType toExpand =<< renameStack st0
+    (StackType q' ins' os') <- expandType toExpand =<< renameStack st1
+
+    when ((length ins /= length ins') || (length os /= length os')) $
+        throwError $ MismatchedLengths () st0 st1
+
+    zipWithM_ pushConstraint ins ins'
+    zipWithM_ pushConstraint os os'
+
+    pure $ StackType (q <> q') ins os
 
 {-
 tyPattern :: Pattern a -> TypeM () (S.Set (Name ()), [KempeTy ()]) -- TODO: should this be a StackType for ease of use?
