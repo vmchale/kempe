@@ -8,21 +8,24 @@ module Kempe.TyAssign ( TypeM
                       , renameStack
                       ) where
 
-import           Control.Composition  (thread)
-import           Control.Monad.Except (ExceptT, runExceptT, throwError)
+import           Control.Composition        (thread)
+import           Control.Monad.Except       (ExceptT, runExceptT, throwError)
 import           Control.Monad.State
-import           Data.Foldable        (traverse_)
-import qualified Data.IntMap          as IM
-import           Data.List.NonEmpty   (NonEmpty (..))
-import           Data.Semigroup       ((<>))
-import qualified Data.Set             as S
-import qualified Data.Text            as T
+import           Control.Monad.Tardis.Class (getPast, getsPast, modifyForwards, sendFuture)
+import           Control.Monad.Trans.Tardis (TardisT, evalTardisT, mapTardisT)
+import           Data.Foldable              (traverse_)
+import qualified Data.IntMap                as IM
+import           Data.List.NonEmpty         (NonEmpty (..))
+import           Data.Semigroup             ((<>))
+import qualified Data.Set                   as S
+import qualified Data.Text                  as T
 import           Kempe.AST
 import           Kempe.Error
 import           Kempe.Name
 import           Kempe.Unique
-import           Lens.Micro           (Lens', over)
-import           Lens.Micro.Mtl       (modifying, (.=))
+import           Lens.Micro                 (Lens', over)
+import           Lens.Micro.Mtl             (modifying, (.=))
+import           Lens.Tardis
 
 type TyEnv a = IM.IntMap (StackType a)
 
@@ -32,6 +35,8 @@ data TyState a = TyState { maxU             :: Int -- ^ For renamer
                          , constructorTypes :: IM.IntMap (StackType a)
                          , constraints      :: S.Set (KempeTy a, KempeTy a) -- Just need equality between simple types? (do have tyapp but yeah)
                          }
+
+data TyFut a = TyFut (IM.IntMap (KempeTy a))
 
 emptyStackType :: StackType a
 emptyStackType = StackType mempty [] []
@@ -53,15 +58,18 @@ constraintsLens f s = fmap (\x -> s { constraints = x }) (f (constraints s))
 
 dummyName :: T.Text -> TypeM () (Name ())
 dummyName n = do
-    pSt <- gets maxU
+    pSt <- getsPast maxU
     Name n (Unique $ pSt + 1) ()
-        <$ modifying maxULens (+1)
+        <$ modifyingForwards maxULens (+1)
 
-type TypeM a = ExceptT (Error a) (State (TyState a))
+type TypeM a = TardisT (TyFut a) (TyState a) (Either (Error a))
 
 -- TODO: take constructor types as an argument?..
 runTypeM :: Int -> TypeM a x -> Either (Error a) x
-runTypeM maxInt = flip evalState (TyState maxInt mempty mempty mempty S.empty) . runExceptT
+runTypeM maxInt = flip evalTardisT (undefined, TyState maxInt mempty mempty mempty S.empty)
+
+throwType :: Error a -> TypeM a b
+throwType err = mapTardisT (const $ Left err) (pure () :: TypeM a ())
 
 -- alpha-equivalence (of 'StackType's?) (note it is quantified *only* on the "exterior" i.e.
 -- implicitly) -> except we have to then "back-instantiate"? hm
@@ -86,17 +94,17 @@ typeOfBuiltin Dup = do
 -- so I can literally just check it's 3 and then pass that back lololol
 tyLookup :: Name a -> TypeM a (StackType a)
 tyLookup n@(Name _ (Unique i) l) = do
-    st <- gets tyEnv
+    st <- getsPast tyEnv
     case IM.lookup i st of
         Just ty -> pure ty
-        Nothing -> throwError (PoorScope l n)
+        Nothing -> throwType (PoorScope l n)
 
 consLookup :: TyName a -> TypeM a (StackType a)
 consLookup tn@(Name _ (Unique i) l) = do
-    st <- gets constructorTypes
+    st <- getsPast constructorTypes
     case IM.lookup i st of
         Just ty -> pure ty
-        Nothing -> throwError (PoorScope l tn)
+        Nothing -> throwType (PoorScope l tn)
 
 dipify :: StackType () -> TypeM () (StackType ())
 dipify (StackType fvrs is os) = do
@@ -124,7 +132,7 @@ tyAtoms = foldM
 tyInsertLeaf :: Name a -- ^ type being declared
              -> S.Set (Name a) -> (TyName a, [KempeTy a]) -> TypeM () ()
 tyInsertLeaf n vars (Name _ (Unique i) _, ins) =
-    modifying constructorTypesLens (IM.insert i (voidStackType $ StackType vars ins [TyNamed undefined n]))
+    modifyingForwards constructorTypesLens (IM.insert i (voidStackType $ StackType vars ins [TyNamed undefined n]))
 
 extrVars :: KempeTy a -> [Name a]
 extrVars TyBuiltin{}      = []
@@ -143,16 +151,16 @@ tyInsert (FunDecl _ (Name _ (Unique i) _) ins out as) = do
     let sig = voidStackType $ StackType (freeVars (ins ++ out)) ins out
     inferred <- tyAtoms as
     reconcile <- mergeStackTypes sig inferred
-    modifying tyEnvLens (IM.insert i reconcile) -- lel microlens-tardis
+    modifyingForwards tyEnvLens (IM.insert i reconcile)
 tyInsert (ExtFnDecl _ (Name _ (Unique i) _) ins os _) = do
     sig <- renameStack $ voidStackType $ StackType S.empty ins os -- no free variables allowed in c functions
-    modifying tyEnvLens (IM.insert i sig)
+    modifyingForwards tyEnvLens (IM.insert i sig)
 
 
 -- Make sure you don't have cycles in the renames map!
 replaceUnique :: Unique -> TypeM a Unique
 replaceUnique u@(Unique i) = do
-    rSt <- gets renames
+    rSt <- getsPast renames
     case IM.lookup i rSt of
         Nothing -> pure u
         Just j  -> replaceUnique (Unique j)
@@ -169,19 +177,19 @@ renameIn (TyVar l (Name t u l')) = do
 -- has to use the max-iest maximum so we can't use withState
 withTyState :: (TyState a -> TyState a) -> TypeM a (StackType a) -> TypeM a (StackType a)
 withTyState modSt act = do
-    preSt <- get
-    modify modSt
+    preSt <- getPast
+    modifyForwards modSt
     res <- act
-    postMax <- gets maxU
-    put preSt
-    maxULens .= postMax
+    postMax <- getsPast maxU
+    sendFuture preSt
+    maxULens .=> postMax
     pure res
 
 withName :: Name a -> TypeM a (Name a, TyState a -> TyState a)
 withName (Name t (Unique i) l) = do
-    m <- gets maxU
+    m <- getsPast maxU
     let newUniq = m+1
-    maxULens .= newUniq
+    maxULens .=> newUniq
     pure (Name t (Unique newUniq) l, over renamesLens (IM.insert i (m+1)))
 
 -- freshen the names in a stack so there aren't overlaps in quanitified variables
@@ -204,7 +212,7 @@ mergeStackTypes st0@(StackType _ i0 o0) st1@(StackType _ i1 o1) = do
     (StackType q' ins' os') <- expandType toExpand =<< renameStack st1
 
     when ((length ins /= length ins') || (length os /= length os')) $
-        throwError $ MismatchedLengths () st0 st1
+        throwType $ MismatchedLengths () st0 st1
 
     zipWithM_ pushConstraint ins ins'
     zipWithM_ pushConstraint os os'
@@ -228,7 +236,7 @@ tyPattern (PatternCons _ tn ps) = do
 -- assumes they have been renamed...
 pushConstraint :: KempeTy a -> KempeTy a -> TypeM () ()
 pushConstraint ty ty' =
-    modifying constraintsLens (S.insert (void ty, void ty'))
+    modifyingForwards constraintsLens (S.insert (void ty, void ty'))
 
 mergeMany :: NonEmpty (StackType ()) -> TypeM () (StackType ())
 mergeMany (t :| ts) = foldM mergeStackTypes t ts
