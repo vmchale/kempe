@@ -96,9 +96,6 @@ runTypeM maxInt act =
         unifyM =<< gets constraints
         pure res
 
--- alpha-equivalence (of 'StackType's?) (note it is quantified *only* on the "exterior" i.e.
--- implicitly) -> except we have to then "back-instantiate"? hm
-
 -- monomorphization
 
 typeOfBuiltin :: BuiltinFn -> TypeM () (StackType ())
@@ -113,10 +110,6 @@ typeOfBuiltin Dup = do
     aN <- dummyName "a"
     pure $ StackType (S.singleton aN) [TyVar () aN] [TyVar () aN, TyVar () aN]
 
--- maybe constraints? e.g. ("a" = "b") and (3 = "a")
--- but maybe simpler since no function types? lol
---
--- so I can literally just check it's 3 and then pass that back lololol
 tyLookup :: Name a -> TypeM a (StackType a)
 tyLookup n@(Name _ (Unique i) l) = do
     st <- gets tyEnv
@@ -181,7 +174,6 @@ tyInsert (ExtFnDecl _ (Name _ (Unique i) _) ins os _) = do
     sig <- renameStack $ voidStackType $ StackType S.empty ins os -- no free variables allowed in c functions
     modifying tyEnvLens (IM.insert i sig)
 
-
 -- Make sure you don't have cycles in the renames map!
 replaceUnique :: Unique -> TypeM a Unique
 replaceUnique u@(Unique i) = do
@@ -227,7 +219,6 @@ renameStack (StackType qs ins outs) = do
     withTyState newBinds $
         StackType (S.fromList newNames) <$> traverse renameIn ins <*> traverse renameIn outs
 
--- dispatch constraints?
 mergeStackTypes :: StackType () -> StackType () -> TypeM () (StackType ())
 mergeStackTypes st0@(StackType _ i0 o0) st1@(StackType _ i1 o1) = do
     let toExpand = max (abs (length i0 - length i1)) (abs (length o0 - length o1))
