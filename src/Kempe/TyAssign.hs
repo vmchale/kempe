@@ -184,6 +184,9 @@ assignDecl (TyDecl _ tn ns ls) = TyDecl () (void tn) (void <$> ns) <$> traverse 
 assignDecl (FunDecl _ n ins os a) = do
     ty <- tyLookup (void n)
     FunDecl ty <$> assignName n <*> pure (void <$> ins) <*> pure (void <$> os) <*> traverse assignAtom a
+assignDecl (ExtFnDecl _ n ins os cn) = do
+    ty <- tyLookup (void n)
+    ExtFnDecl ty <$> assignName n <*> pure (void <$> ins) <*> pure (void <$> os) <*> pure cn
 
 -- TODO: traverse headers first
 tyInsert :: KempeDecl a b -> TypeM () ()
