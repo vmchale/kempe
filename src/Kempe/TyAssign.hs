@@ -10,7 +10,7 @@ import           Control.Monad        (foldM, replicateM, when, zipWithM_)
 import           Control.Monad.Except (throwError)
 import           Control.Monad.State  (StateT, evalStateT, get, gets, modify, put)
 import           Data.Foldable        (traverse_)
-import           Data.Functor         (void)
+import           Data.Functor         (void, ($>))
 import qualified Data.IntMap          as IM
 import           Data.List.NonEmpty   (NonEmpty (..))
 import           Data.Maybe           (fromMaybe)
@@ -133,6 +133,9 @@ dipify (StackType fvrs is os) = do
 assignAtom :: Atom a -> TypeM () (Atom (StackType ()))
 assignAtom _ = undefined
 
+assignName :: Name a -> TypeM () (Name (StackType ()))
+assignName n = do { ty <- tyLookup (void n) ; pure (n $> ty) }
+
 tyAtom :: Atom a -> TypeM () (StackType ())
 tyAtom (AtBuiltin _ b) = typeOfBuiltin b
 tyAtom BoolLit{}       = pure $ StackType mempty [] [TyBuiltin () TyBool]
@@ -151,8 +154,8 @@ tyAtoms = foldM
     (\seed a -> do { tys' <- renameStack =<< tyAtom a ; catTypes tys' seed })
     emptyStackType
 
-tyInsertLeaf :: Name a -- ^ type being declared
-             -> S.Set (Name a) -> (TyName a, [KempeTy a]) -> TypeM () ()
+tyInsertLeaf :: Name b -- ^ type being declared
+             -> S.Set (Name b) -> (TyName a, [KempeTy b]) -> TypeM () ()
 tyInsertLeaf n vars (Name _ (Unique i) _, ins) =
     modifying constructorTypesLens (IM.insert i (voidStackType $ StackType vars ins [TyNamed undefined n]))
 
@@ -167,7 +170,7 @@ freeVars :: [KempeTy a] -> S.Set (Name a)
 freeVars tys = S.fromList (concatMap extrVars tys)
 
 -- TODO: traverse headers first
-tyInsert :: KempeDecl a -> TypeM () ()
+tyInsert :: KempeDecl a b -> TypeM () ()
 tyInsert (TyDecl _ tn ns ls) = traverse_ (tyInsertLeaf tn (S.fromList ns)) ls
 tyInsert (FunDecl _ (Name _ (Unique i) _) ins out as) = do
     let sig = voidStackType $ StackType (freeVars (ins ++ out)) ins out
@@ -178,7 +181,7 @@ tyInsert (ExtFnDecl _ (Name _ (Unique i) _) ins os _) = do
     sig <- renameStack $ voidStackType $ StackType S.empty ins os -- no free variables allowed in c functions
     modifying tyEnvLens (IM.insert i sig)
 
-checkModule :: Module a -> TypeM () ()
+checkModule :: Module a b -> TypeM () ()
 checkModule = traverse_ tyInsert
 
 -- Make sure you don't have cycles in the renames map!

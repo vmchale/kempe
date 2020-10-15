@@ -93,14 +93,14 @@ brackets(p)
 parens(p)
     : lparen p rparen { $2 }
 
-Module :: { Module AlexPosn }
+Module :: { Module AlexPosn AlexPosn }
        : many(Decl) { (reverse $1) }
 
-Decl :: { KempeDecl AlexPosn }
+Decl :: { KempeDecl AlexPosn AlexPosn }
      : TyDecl { $1 }
      | FunDecl { $1 }
 
-TyDecl :: { KempeDecl AlexPosn }
+TyDecl :: { KempeDecl AlexPosn AlexPosn }
        : type tyName many(name) braces(sepBy(TyLeaf, vbar)) { TyDecl $1 $2 (reverse $3) (reverse $4) }
        | type tyName many(name) lbrace rbrace { TyDecl $1 $2 (reverse $3) [] } -- necessary since sepBy always has some "flesh"
 
@@ -111,7 +111,7 @@ Type :: { KempeTy AlexPosn }
      | int { TyBuiltin $1 TyInt }
      | ptr { TyBuiltin $1 TyPtr }
 
-FunDecl :: { KempeDecl AlexPosn }
+FunDecl :: { KempeDecl AlexPosn AlexPosn }
         : FunSig FunBody { uncurry4 FunDecl $1 $2 }
         | FunSig defEq cfun foreign { uncurry4 ExtFnDecl $1 $4 }
 
@@ -170,10 +170,10 @@ instance (Pretty a, Typeable a) => Exception (ParseError a)
 
 type Parse = ExceptT (ParseError AlexPosn) Alex
 
-parse :: BSL.ByteString -> Either (ParseError AlexPosn) (Module AlexPosn)
+parse :: BSL.ByteString -> Either (ParseError AlexPosn) (Module AlexPosn AlexPosn)
 parse = fmap snd . parseWithMax
 
-parseWithMax :: BSL.ByteString -> Either (ParseError AlexPosn) (Int, Module AlexPosn)
+parseWithMax :: BSL.ByteString -> Either (ParseError AlexPosn) (Int, Module AlexPosn AlexPosn)
 parseWithMax = fmap (first fst3) . runParse parseModule
 
 runParse :: Parse a -> BSL.ByteString -> Either (ParseError AlexPosn) (AlexUserState, a)

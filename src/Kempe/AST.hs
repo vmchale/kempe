@@ -51,16 +51,16 @@ instance Pretty BuiltinTy where
 --
 -- what about pattern matches that bind variables??
 
-data KempeTy a = TyBuiltin a BuiltinTy
-               | TyNamed a (TyName a)
-               | TyVar a (Name a)
-               | TyApp a (KempeTy a) (KempeTy a) -- type applied to another, e.g. Just Int
-               | TyTuple a [KempeTy a]
+data KempeTy b = TyBuiltin b BuiltinTy
+               | TyNamed b (TyName b)
+               | TyVar b (Name b)
+               | TyApp b (KempeTy b) (KempeTy b) -- type applied to another, e.g. Just Int
+               | TyTuple b [KempeTy b]
                deriving (Generic, NFData, Functor, Eq, Ord) -- questionable eq instance but eh
 
-data StackType a = StackType { quantify :: S.Set (Name a)
-                             , inTypes  :: [KempeTy a]
-                             , outTypes :: [KempeTy a]
+data StackType b = StackType { quantify :: S.Set (Name b)
+                             , inTypes  :: [KempeTy b]
+                             , outTypes :: [KempeTy b]
                              } deriving (Generic, NFData)
 
 instance Pretty (StackType a) where
@@ -99,9 +99,9 @@ data BuiltinFn = Drop
                | Dup
                deriving (Generic, NFData)
 
-data KempeDecl a = TyDecl a (TyName a) [Name a] [(TyName a, [KempeTy a])]
-                 | FunDecl a (Name a) [KempeTy a] [KempeTy a] [Atom a]
-                 | ExtFnDecl a (Name a) [KempeTy a] [KempeTy a] BSL.ByteString
-                 deriving (Generic, NFData)
+data KempeDecl a b = TyDecl a (TyName b) [Name b] [(TyName a, [KempeTy b])]
+                   | FunDecl a (Name a) [KempeTy b] [KempeTy b] [Atom a]
+                   | ExtFnDecl a (Name a) [KempeTy b] [KempeTy b] BSL.ByteString
+                   deriving (Generic, NFData)
 
-type Module a = [KempeDecl a]
+type Module a b = [KempeDecl a b]
