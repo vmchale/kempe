@@ -2,13 +2,11 @@
 
 module Main (main) where
 
-import           Control.Exception    (throwIO)
 import qualified Data.ByteString.Lazy as BSL
 import           Data.Foldable        (traverse_)
 import           Kempe.File
 import           Kempe.Lexer
 import           Kempe.Parser
-import           Kempe.TyAssign
 import           Prettyprinter        (pretty)
 import           Test.Tasty
 import           Test.Tasty.HUnit
