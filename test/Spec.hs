@@ -17,8 +17,11 @@ main = defaultMain $
             [ lexNoError "test/data/lex.kmp"
             , parseNoError "test/data/lex.kmp"
             ]
-        , tyInfer "test/data/ty.kmp"
-        , tyInfer "prelude/fn.kmp"
+        , testGroup "type assignment"
+            [ tyInfer "test/data/ty.kmp"
+            , tyInfer "prelude/fn.kmp"
+            , badType "test/err/merge.kmp" "could not unify type 'Int' with 'a_3'"
+            ]
         ]
 
 lexNoError :: FilePath -> TestTree
@@ -41,3 +44,10 @@ tyInfer fp = testCase ("Checks types (" ++ fp ++ ")") $ do
     case res of
         Left err -> assertFailure (show $ pretty err)
         Right{}  -> assertBool "Doesn't fail type-checkign" True
+
+badType :: FilePath -> String -> TestTree
+badType fp msg = testCase ("Detects error (" ++ fp ++ ")") $ do
+    res <- tcFile fp
+    case res of
+        Left err -> show (pretty err) @?= msg
+        Right{}  -> assertFailure "No error detected!"

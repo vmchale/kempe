@@ -41,8 +41,6 @@ instance Pretty BuiltinTy where
     pretty TyInt  = "Int"
     pretty TyBool = "Bool"
 
--- what to do about if, dip
---
 -- special cases w.r.t. codegen
 -- dk what tensor types are (or morphisms) but they look cool?
 --

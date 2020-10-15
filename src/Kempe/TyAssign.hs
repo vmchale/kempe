@@ -72,15 +72,17 @@ renameForward (k, ty) ((ty', ty''):tys) = (onType (k, ty) ty', onType (k, ty) ty
 
 unify :: [(KempeTy a, KempeTy a)] -> Either (Error ()) (IM.IntMap (KempeTy ()))
 unify [] = Right mempty
-unify ((ty@(TyBuiltin l b0), ty'@(TyBuiltin _ b1)):tys) | b0 == b1 = unify tys
+unify ((ty@(TyBuiltin _ b0), ty'@(TyBuiltin _ b1)):tys) | b0 == b1 = unify tys
                                                         | otherwise = Left (UnificationFailed () (void ty) (void ty'))
-unify ((ty@(TyNamed l n0), ty'@(TyNamed _ n1)):tys) | n0 == n1 = unify tys
+unify ((ty@(TyNamed _ n0), ty'@(TyNamed _ n1)):tys) | n0 == n1 = unify tys
                                                     | otherwise = Left (UnificationFailed () (void ty) (void ty'))
 unify ((ty@(TyNamed _ _), TyVar  _ (Name _ (Unique k) _)):tys) = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys)
 unify ((TyVar _ (Name _ (Unique k) _), ty@(TyNamed _ _)):tys) = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys)
 unify ((ty@(TyBuiltin _ _), TyVar  _ (Name _ (Unique k) _)):tys) = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys)
 unify ((TyVar _ (Name _ (Unique k) _), ty@(TyBuiltin _ _)):tys) = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys)
 unify ((TyVar _ (Name _ (Unique k) _), ty@(TyVar _ _)):tys) = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys)
+unify ((ty@TyBuiltin{}, ty'@TyNamed{}):_) = Left (UnificationFailed () (void ty) (void ty'))
+unify ((ty@TyNamed{}, ty'@TyBuiltin{}):_) = Left (UnificationFailed () (void ty) (void ty'))
 
 unifyM :: S.Set (KempeTy a, KempeTy a) -> TypeM () (IM.IntMap (KempeTy ()))
 unifyM s =
@@ -194,7 +196,7 @@ tyInsert (TyDecl _ tn ns ls) = traverse_ (tyInsertLeaf tn (S.fromList ns)) ls
 tyInsert (FunDecl _ (Name _ (Unique i) _) ins out as) = do
     let sig = voidStackType $ StackType (freeVars (ins ++ out)) ins out
     inferred <- tyAtoms as
-    reconcile <- mergeStackTypes sig inferred
+    reconcile <- mergeStackTypes sig inferred -- FIXME: need to verify the merged type is as general as the signature!
     modifying tyEnvLens (IM.insert i reconcile)
 tyInsert (ExtFnDecl _ (Name _ (Unique i) _) ins os _) = do
     sig <- renameStack $ voidStackType $ StackType S.empty ins os -- no free variables allowed in c functions
@@ -270,19 +272,12 @@ mergeStackTypes st0@(StackType _ i0 o0) st1@(StackType _ i1 o1) = do
 
     pure $ StackType (q <> q') ins os
 
-{-
 tyPattern :: Pattern a -> TypeM () (S.Set (Name ()), [KempeTy ()]) -- TODO: should this be a StackType for ease of use?
 tyPattern PatternWildcard{} = do
     aN <- dummyName "a"
     pure (S.singleton aN, [TyVar () aN])
 tyPattern PatternInt{} = pure (S.empty, [TyBuiltin () TyInt])
 tyPattern PatternBool{} = pure (S.empty, [TyBuiltin () TyBool])
-tyPattern (PatternCons _ tn ps) = do
-    consTy <- consLookup (void tn)
-    -- tyIn needs to be renamed...
-    -- TODO: if a pattern binds a TyVar, insert its type (locally)
-    pure undefined
--}
 
 mergeMany :: NonEmpty (StackType ()) -> TypeM () (StackType ())
 mergeMany (t :| ts) = foldM mergeStackTypes t ts
