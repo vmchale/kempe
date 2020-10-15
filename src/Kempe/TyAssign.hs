@@ -3,6 +3,7 @@
 module Kempe.TyAssign ( TypeM
                       , runTypeM
                       , checkModule
+                      , assignModule
                       ) where
 
 import           Control.Composition  (thread)
@@ -69,19 +70,19 @@ renameForward :: (Int, KempeTy a) -> [(KempeTy a, KempeTy a)] -> [(KempeTy a, Ke
 renameForward _ []                      = []
 renameForward (k, ty) ((ty', ty''):tys) = (onType (k, ty) ty', onType (k, ty) ty'') : renameForward (k, ty) tys
 
-unify :: [(KempeTy a, KempeTy a)] -> Either (Error a) (IM.IntMap (KempeTy a))
+unify :: [(KempeTy a, KempeTy a)] -> Either (Error ()) (IM.IntMap (KempeTy ()))
 unify [] = Right mempty
 unify ((ty@(TyBuiltin l b0), ty'@(TyBuiltin _ b1)):tys) | b0 == b1 = unify tys
-                                                        | otherwise = Left (UnificationFailed l ty ty')
+                                                        | otherwise = Left (UnificationFailed () (void ty) (void ty'))
 unify ((ty@(TyNamed l n0), ty'@(TyNamed _ n1)):tys) | n0 == n1 = unify tys
-                                                    | otherwise = Left (UnificationFailed l ty ty')
-unify ((ty@(TyNamed _ _), TyVar  _ (Name _ (Unique k) _)):tys) = IM.insert k ty <$> unify (renameForward (k, ty) tys)
-unify ((TyVar _ (Name _ (Unique k) _), ty@(TyNamed _ _)):tys) = IM.insert k ty <$> unify (renameForward (k, ty) tys)
-unify ((ty@(TyBuiltin _ _), TyVar  _ (Name _ (Unique k) _)):tys) = IM.insert k ty <$> unify (renameForward (k, ty) tys)
-unify ((TyVar _ (Name _ (Unique k) _), ty@(TyBuiltin _ _)):tys) = IM.insert k ty <$> unify (renameForward (k, ty) tys)
-unify ((TyVar _ (Name _ (Unique k) _), ty@(TyVar _ _)):tys) = IM.insert k ty <$> unify (renameForward (k, ty) tys)
+                                                    | otherwise = Left (UnificationFailed () (void ty) (void ty'))
+unify ((ty@(TyNamed _ _), TyVar  _ (Name _ (Unique k) _)):tys) = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys)
+unify ((TyVar _ (Name _ (Unique k) _), ty@(TyNamed _ _)):tys) = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys)
+unify ((ty@(TyBuiltin _ _), TyVar  _ (Name _ (Unique k) _)):tys) = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys)
+unify ((TyVar _ (Name _ (Unique k) _), ty@(TyBuiltin _ _)):tys) = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys)
+unify ((TyVar _ (Name _ (Unique k) _), ty@(TyVar _ _)):tys) = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys)
 
-unifyM :: S.Set (KempeTy a, KempeTy a) -> TypeM a (IM.IntMap (KempeTy a))
+unifyM :: S.Set (KempeTy a, KempeTy a) -> TypeM () (IM.IntMap (KempeTy ()))
 unifyM s =
     case unify (S.toList s) of
         Right x  -> pure x
@@ -90,11 +91,8 @@ unifyM s =
 -- TODO: take constructor types as an argument?..
 runTypeM :: Int -- ^ For renamer
          -> TypeM a x -> Either (Error a) x
-runTypeM maxInt act =
-    flip evalStateT (TyState maxInt mempty mempty mempty S.empty) $ do
-        res <- act
-        unifyM =<< gets constraints
-        pure res
+runTypeM maxInt =
+    flip evalStateT (TyState maxInt mempty mempty mempty S.empty)
 
 -- monomorphization
 
@@ -200,7 +198,13 @@ tyInsert (ExtFnDecl _ (Name _ (Unique i) _) ins os _) = do
     modifying tyEnvLens (IM.insert i sig)
 
 checkModule :: Module a b -> TypeM () ()
-checkModule = traverse_ tyInsert
+checkModule m = traverse_ tyInsert m <* (unifyM =<< gets constraints)
+
+assignModule :: Module a b -> TypeM () (Module () (StackType ()))
+assignModule m = do
+    traverse_ tyInsert m
+    backNames <- unifyM =<< gets constraints
+    fmap (fmap (substConstraintsStack backNames)) <$> traverse assignDecl m
 
 -- Make sure you don't have cycles in the renames map!
 replaceUnique :: Unique -> TypeM a Unique
