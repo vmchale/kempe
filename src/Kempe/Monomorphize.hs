@@ -1,9 +1,10 @@
 module Kempe.Monomorphize ( monomorphize
                           ) where
 
-import           Data.Functor (void)
-import qualified Data.IntSet  as IS
-import qualified Data.Set     as S
+import           Data.Functor   (void)
+import qualified Data.IntSet    as IS
+import           Data.Semigroup ((<>))
+import qualified Data.Set       as S
 import           Kempe.AST
 import           Kempe.Name
 
