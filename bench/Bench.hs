@@ -2,6 +2,7 @@ module Main (main) where
 
 import           Criterion.Main
 import qualified Data.ByteString.Lazy as BSL
+import           Kempe.File
 import           Kempe.Lexer
 import           Kempe.Parser
 
@@ -11,5 +12,6 @@ main =
                   bgroup "parser"
                       [ bench "lex"   $ nf lexKempe contents
                       , bench "parse" $ nf parse contents
+                      , bench "tcFile" $ nfIO (tcFile "test/data/ty.kmp")
                       ]
                 ]

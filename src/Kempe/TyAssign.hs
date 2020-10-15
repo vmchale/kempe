@@ -34,8 +34,6 @@ data TyState a = TyState { maxU             :: Int -- ^ For renamer
                          , constraints      :: S.Set (KempeTy a, KempeTy a) -- Just need equality between simple types? (do have tyapp but yeah)
                          }
 
-type TyFut a = IM.IntMap (KempeTy a)
-
 emptyStackType :: StackType a
 emptyStackType = StackType mempty [] []
 
