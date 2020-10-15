@@ -3,7 +3,6 @@
 module Main (main) where
 
 import qualified Data.ByteString.Lazy as BSL
-import           Data.Foldable        (traverse_)
 import           Kempe.File
 import           Kempe.Lexer
 import           Kempe.Parser

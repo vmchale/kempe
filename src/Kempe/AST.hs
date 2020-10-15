@@ -21,7 +21,6 @@ import qualified Data.ByteString.Lazy as BSL
 import           Data.Functor         (void)
 import           Data.List.NonEmpty   (NonEmpty)
 import qualified Data.Set             as S
-import           Data.Typeable        (Typeable)
 import           GHC.Generics         (Generic)
 import           Kempe.Name
 import           Prettyprinter        (Pretty (pretty), parens, sep, tupled, (<+>))
@@ -29,7 +28,7 @@ import           Prettyprinter        (Pretty (pretty), parens, sep, tupled, (<+
 data BuiltinTy = TyPtr
                | TyInt
                | TyBool
-               | TyArr Word
+               -- -- | TyArr Word
                deriving (Generic, NFData, Eq, Ord)
                -- tupling builtin for sake of case-matching on two+ things at
                -- once
