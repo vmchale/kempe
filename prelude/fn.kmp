@@ -4,5 +4,26 @@ trip : a -- a a a
 rotr : a b c -- c a b
      =: [ swap dip(swap) ]
 
+rotl : a b c -- c b a
+     =: [ dip(swap) swap ]
+
 over : a b -- a b a
      =: [ dip(dup) swap ]
+
+tuck : a b -- b a b
+     =: [ dup dip(swap) ]
+
+nip : a b -- b
+    =: [ dip(drop) ]
+
+dup2 : a b -- a b a b
+     =: [ over over ]
+
+dup3 : a b c -- a b c a b c
+     =: [ dip(dup2) dup dip(rotr) ]
+
+drop2 : a b --
+      =: [ drop drop ]
+
+drop3 : a b c --
+      =: [ drop drop drop ]
