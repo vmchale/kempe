@@ -51,11 +51,11 @@ instance Pretty BuiltinTy where
 --
 -- what about pattern matches that bind variables??
 
-data KempeTy b = TyBuiltin b BuiltinTy
-               | TyNamed b (TyName b)
-               | TyVar b (Name b)
-               | TyApp b (KempeTy b) (KempeTy b) -- type applied to another, e.g. Just Int
-               | TyTuple b [KempeTy b]
+data KempeTy a = TyBuiltin a BuiltinTy
+               | TyNamed a (TyName a)
+               | TyVar a (Name a)
+               | TyApp a (KempeTy a) (KempeTy a) -- type applied to another, e.g. Just Int
+               | TyTuple a [KempeTy a]
                deriving (Generic, NFData, Functor, Eq, Ord) -- questionable eq instance but eh
 
 data StackType b = StackType { quantify :: S.Set (Name b)
@@ -76,32 +76,33 @@ instance Pretty (KempeTy a) where
     pretty (TyApp _ ty ty') = parens (pretty ty <+> pretty ty')
     pretty (TyTuple _ tys)  = tupled (pretty <$> tys)
 
-data Pattern a = PatternInt a Integer
-               | PatternCons a (TyName a) [Pattern a] -- a constructed pattern
-               | PatternVar a (Name a)
-               | PatternWildcard a
-               | PatternBool a Bool
+data Pattern b = PatternInt b Integer
+               | PatternCons b (TyName b) [Pattern b] -- a constructed pattern
+               | PatternVar b (Name b)
+               | PatternWildcard b
+               | PatternBool b Bool
                -- -- | PatternTuple
-               deriving (Generic, NFData)
+               deriving (Generic, NFData, Functor)
 
-data Atom a = AtName a (Name a)
-            | Case a (NonEmpty (Pattern a, [Atom a]))
-            | If a [Atom a] [Atom a]
-            | Dip a [Atom a]
-            | IntLit a Integer
-            | BoolLit a Bool
-            | AtBuiltin a BuiltinFn
-            | AtCons a (TyName a)
-            deriving (Generic, NFData)
+data Atom b = AtName b (Name b)
+            | Case b (NonEmpty (Pattern b, [Atom b]))
+            | If b [Atom b] [Atom b]
+            | Dip b [Atom b]
+            | IntLit b Integer
+            | BoolLit b Bool
+            | AtBuiltin b BuiltinFn
+            | AtCons b (TyName b)
+            deriving (Generic, NFData, Functor)
 
 data BuiltinFn = Drop
                | Swap
                | Dup
                deriving (Generic, NFData)
 
-data KempeDecl a b = TyDecl a (TyName b) [Name b] [(TyName a, [KempeTy b])]
-                   | FunDecl a (Name a) [KempeTy b] [KempeTy b] [Atom a]
-                   | ExtFnDecl a (Name a) [KempeTy b] [KempeTy b] BSL.ByteString
+data KempeDecl a b = TyDecl a (TyName a) [Name a] [(TyName b, [KempeTy a])]
+                   | FunDecl b (Name b) [KempeTy a] [KempeTy a] [Atom b]
+                   | ExtFnDecl b (Name b) [KempeTy a] [KempeTy a] BSL.ByteString
                    deriving (Generic, NFData)
+                   -- bifunctor
 
 type Module a b = [KempeDecl a b]

@@ -4,7 +4,6 @@ module Kempe.File ( tcFile
 -- common b/w test suite and exec
 import           Control.Exception    (throwIO)
 import qualified Data.ByteString.Lazy as BSL
-import           Data.Foldable        (traverse_)
 import           Kempe.Error
 import           Kempe.Parser
 import           Kempe.TyAssign
