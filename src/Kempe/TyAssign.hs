@@ -1,5 +1,4 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecursiveDo       #-}
 
 module Kempe.TyAssign ( TypeM
                       , runTypeM
