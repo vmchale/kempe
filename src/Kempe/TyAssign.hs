@@ -62,12 +62,17 @@ dummyName n = do
 
 type TypeM a = TardisT (TyFut a) (TyState a) (Either (Error a))
 
-unify :: S.Set (KempeTy a, KempeTy a) -> Either (Error a) (IM.IntMap (KempeTy a))
-unify = undefined
+-- TODO: renameForward where we apply substitution to the part to be recursed
+unify :: [(KempeTy a, KempeTy a)] -> Either (Error a) (IM.IntMap (KempeTy a))
+unify [] = Right mempty
+unify ((ty@(TyBuiltin l b0), ty'@(TyBuiltin _ b1)):tys) | b0 == b1 = unify tys
+                                                        | otherwise = Left (UnificationFailed l ty ty')
+unify ((ty@(TyNamed l n0), ty'@(TyNamed _ n1)):tys) | n0 == n1 = unify tys
+                                                    | otherwise = Left (UnificationFailed l ty ty')
 
 unifyM :: S.Set (KempeTy a, KempeTy a) -> TypeM a (IM.IntMap (KempeTy a))
 unifyM s =
-    case unify s of
+    case unify (S.toList s) of
         Right x  -> pure x
         Left err -> throwType err
 
@@ -244,13 +249,13 @@ tyPattern (PatternCons _ tn ps) = do
     pure undefined
 -}
 
+mergeMany :: NonEmpty (StackType ()) -> TypeM () (StackType ())
+mergeMany (t :| ts) = foldM mergeStackTypes t ts
+
 -- assumes they have been renamed...
 pushConstraint :: KempeTy a -> KempeTy a -> TypeM () ()
 pushConstraint ty ty' =
     modifyingForwards constraintsLens (S.insert (void ty, void ty'))
-
-mergeMany :: NonEmpty (StackType ()) -> TypeM () (StackType ())
-mergeMany (t :| ts) = foldM mergeStackTypes t ts
 
 expandType :: Int -> StackType () -> TypeM () (StackType ())
 expandType n (StackType q i o) = do

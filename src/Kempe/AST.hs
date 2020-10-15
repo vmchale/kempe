@@ -55,7 +55,7 @@ instance Pretty BuiltinTy where
 data KempeTy a = TyBuiltin a BuiltinTy
                | TyNamed a (TyName a)
                | TyVar a (Name a)
-               | TyApp a (KempeTy a) (KempeTy a)
+               | TyApp a (KempeTy a) (KempeTy a) -- type applied to another, e.g. Just Int
                | TyTuple a [KempeTy a]
                deriving (Generic, NFData, Functor, Eq, Ord) -- questionable eq instance but eh
 
