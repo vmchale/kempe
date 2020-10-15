@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Kempe.Monomorphize ( monomorphize
                           ) where
 
@@ -5,10 +7,23 @@ import           Data.Functor   (void)
 import qualified Data.IntSet    as IS
 import           Data.Semigroup ((<>))
 import qualified Data.Set       as S
+import           Data.Text      as T
 import           Kempe.AST
 import           Kempe.Name
 
 type MonoStackType = (KempeTy (), KempeTy ())
+
+squishTypeName :: BuiltinTy -> T.Text
+squishTypeName TyPtr  = "ptr"
+squishTypeName TyInt  = "int"
+squishTypeName TyBool = "bool"
+
+squishType :: KempeTy a -> T.Text
+squishType (TyBuiltin _ b)          = squishTypeName b
+squishType (TyNamed _ (Name t _ _)) = T.toLower t
+squishType TyVar{}                  = error "not meant to be monomorphized!"
+squishType (TyTuple _ tys)          = foldMap squishType tys
+squishType (TyApp _ ty ty')         = squishType ty <> squishType ty'
 
 -- all names + their type at call site
 type Used = S.Set (Name (), StackType ()) -- should this contain only polymorphic stuff?
