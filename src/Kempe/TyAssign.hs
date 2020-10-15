@@ -4,8 +4,6 @@ module Kempe.TyAssign ( TypeM
                       , runTypeM
                       , tyAtoms
                       , tyInsert
-                      -- * Exported for testing
-                      , renameStack
                       ) where
 
 import           Control.Composition        (thread)
@@ -62,13 +60,27 @@ dummyName n = do
 
 type TypeM a = TardisT (TyFut a) (TyState a) (Either (Error a))
 
--- TODO: renameForward where we apply substitution to the part to be recursed
+onType :: (Int, KempeTy a) -> KempeTy a -> KempeTy a
+onType _ ty'@TyBuiltin{} = ty'
+onType _ ty'@TyNamed{}   = ty'
+onType (k, ty) ty'@(TyVar _ (Name _ (Unique i) _)) | i == k = ty
+                                                    | otherwise = ty'
+
+renameForward :: (Int, KempeTy a) -> [(KempeTy a, KempeTy a)] -> [(KempeTy a, KempeTy a)]
+renameForward _ []                      = []
+renameForward (k, ty) ((ty', ty''):tys) = (onType (k, ty) ty', onType (k, ty) ty'') : renameForward (k, ty) tys
+
 unify :: [(KempeTy a, KempeTy a)] -> Either (Error a) (IM.IntMap (KempeTy a))
 unify [] = Right mempty
 unify ((ty@(TyBuiltin l b0), ty'@(TyBuiltin _ b1)):tys) | b0 == b1 = unify tys
                                                         | otherwise = Left (UnificationFailed l ty ty')
 unify ((ty@(TyNamed l n0), ty'@(TyNamed _ n1)):tys) | n0 == n1 = unify tys
                                                     | otherwise = Left (UnificationFailed l ty ty')
+unify ((ty@(TyNamed _ _), TyVar  _ (Name _ (Unique k) _)):tys) = IM.insert k ty <$> unify (renameForward (k, ty) tys)
+unify ((TyVar _ (Name _ (Unique k) _), ty@(TyNamed _ _)):tys) = IM.insert k ty <$> unify (renameForward (k, ty) tys)
+unify ((ty@(TyBuiltin _ _), TyVar  _ (Name _ (Unique k) _)):tys) = IM.insert k ty <$> unify (renameForward (k, ty) tys)
+unify ((TyVar _ (Name _ (Unique k) _), ty@(TyBuiltin _ _)):tys) = IM.insert k ty <$> unify (renameForward (k, ty) tys)
+unify ((TyVar _ (Name _ (Unique k) _), ty@(TyVar _ _)):tys) = IM.insert k ty <$> unify (renameForward (k, ty) tys)
 
 unifyM :: S.Set (KempeTy a, KempeTy a) -> TypeM a (IM.IntMap (KempeTy a))
 unifyM s =
@@ -260,7 +272,7 @@ pushConstraint ty ty' =
 expandType :: Int -> StackType () -> TypeM () (StackType ())
 expandType n (StackType q i o) = do
     newVars <- replicateM n (dummyName "a")
-    let newTy = TyNamed () <$> newVars
+    let newTy = TyVar () <$> newVars
     pure $ StackType (q <> S.fromList newVars) (newTy ++ i) (newTy ++ o)
 
 -- do renaming before this
