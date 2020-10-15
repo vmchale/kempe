@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecursiveDo       #-}
 
 module Kempe.TyAssign ( TypeM
                       , runTypeM
@@ -8,11 +9,12 @@ module Kempe.TyAssign ( TypeM
 
 import           Control.Composition        (thread)
 import           Control.Monad.State
-import           Control.Monad.Tardis.Class (getPast, getsPast, modifyForwards, sendFuture, sendPast)
+import           Control.Monad.Tardis.Class (getFuture, getPast, getsPast, modifyForwards, sendFuture, sendPast)
 import           Control.Monad.Trans.Tardis (TardisT, evalTardisT, mapTardisT)
 import           Data.Foldable              (traverse_)
 import qualified Data.IntMap                as IM
 import           Data.List.NonEmpty         (NonEmpty (..))
+import           Data.Maybe                 (fromMaybe)
 import           Data.Semigroup             ((<>))
 import qualified Data.Set                   as S
 import qualified Data.Text                  as T
@@ -274,6 +276,12 @@ expandType n (StackType q i o) = do
     newVars <- replicateM n (dummyName "a")
     let newTy = TyVar () <$> newVars
     pure $ StackType (q <> S.fromList newVars) (newTy ++ i) (newTy ++ o)
+
+substConstraints :: IM.IntMap (KempeTy a) -> KempeTy a -> KempeTy a
+substConstraints _ ty@TyNamed{}                         = ty
+substConstraints _ ty@TyBuiltin{}                       = ty
+substConstraints tys ty@(TyVar _ (Name _ (Unique k) _)) =
+    fromMaybe ty (IM.lookup k tys)
 
 -- do renaming before this
 -- | Given @x@ and @y@, return the 'StackType' of @x y@
