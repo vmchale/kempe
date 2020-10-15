@@ -1,11 +1,15 @@
+{-# LANGUAGE DeriveAnyClass    #-}
+{-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Kempe.Error ( Error (..)
                    ) where
 
+import           Control.DeepSeq   (NFData)
 import           Control.Exception (Exception)
 import           Data.Semigroup    ((<>))
 import           Data.Typeable     (Typeable)
+import           GHC.Generics      (Generic)
 import           Kempe.AST
 import           Kempe.Name
 import           Prettyprinter     (Pretty (pretty), comma, squotes, (<+>))
@@ -15,6 +19,7 @@ data Error a = MismatchedTypes a (KempeTy a) (KempeTy a) -- TODO: include atom "
              | PoorScope a (Name a)
              | MismatchedLengths a (StackType a) (StackType a)
              | UnificationFailed a (KempeTy a) (KempeTy a)
+             deriving (Generic, NFData)
 
 instance (Pretty a) => Show (Error a) where
     show = show . pretty

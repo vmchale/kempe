@@ -62,7 +62,7 @@ data KempeTy a = TyBuiltin a BuiltinTy
 data StackType a = StackType { quantify :: S.Set (Name a)
                              , inTypes  :: [KempeTy a]
                              , outTypes :: [KempeTy a]
-                             }
+                             } deriving (Generic, NFData)
 
 instance Pretty (StackType a) where
     pretty (StackType _ ins outs) = sep (fmap pretty ins) <+> "--" <+> sep (fmap pretty outs)
