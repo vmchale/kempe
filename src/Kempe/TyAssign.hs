@@ -131,7 +131,13 @@ dipify (StackType fvrs is os) = do
     pure $ StackType (S.insert n fvrs) (TyNamed () n:is) (TyNamed () n:os)
 
 assignAtom :: Atom a -> TypeM () (Atom (StackType ()))
-assignAtom _ = undefined
+assignAtom a@(AtBuiltin _ b) = AtBuiltin <$> tyAtom a <*> pure b
+assignAtom a@(BoolLit _ b)   = BoolLit <$> tyAtom a <*> pure b
+assignAtom a@(IntLit _ i)    = IntLit <$> tyAtom a <*> pure i
+assignAtom a@(AtName _ n)    = AtName <$> tyAtom a <*> assignName n
+assignAtom a@(Dip _ as)      = Dip <$> tyAtom a <*> traverse assignAtom as
+assignAtom a@(AtCons _ tn)   = AtCons <$> tyAtom a <*> assignName tn
+assignAtom a@(If _ as as')   = If <$> tyAtom a <*> traverse assignAtom as <*> traverse assignAtom as'
 
 assignName :: Name a -> TypeM () (Name (StackType ()))
 assignName n = do { ty <- tyLookup (void n) ; pure (n $> ty) }
