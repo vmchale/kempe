@@ -142,6 +142,9 @@ assignAtom a@(If _ as as')   = If <$> tyAtom a <*> traverse assignAtom as <*> tr
 assignName :: Name a -> TypeM () (Name (StackType ()))
 assignName n = do { ty <- tyLookup (void n) ; pure (n $> ty) }
 
+assignCons :: Name a -> TypeM () (TyName (StackType ()))
+assignCons n = do { ty <- consLookup (void n) ; pure (n $> ty) }
+
 tyAtom :: Atom a -> TypeM () (StackType ())
 tyAtom (AtBuiltin _ b) = typeOfBuiltin b
 tyAtom BoolLit{}       = pure $ StackType mempty [] [TyBuiltin () TyBool]
@@ -174,6 +177,15 @@ extrVars (TyTuple _ tys)  = concatMap extrVars tys
 
 freeVars :: [KempeTy a] -> S.Set (Name a)
 freeVars tys = S.fromList (concatMap extrVars tys)
+
+assignLeaf :: (TyName a, [KempeTy b]) -> TypeM () (TyName (StackType ()), [KempeTy ()])
+assignLeaf (tn, tys) = (,) <$> assignCons tn <*> pure (void <$> tys)
+
+assignDecl :: KempeDecl a b -> TypeM () (KempeDecl () (StackType ()))
+assignDecl (TyDecl _ tn ns ls) = TyDecl () (void tn) (void <$> ns) <$> traverse assignLeaf ls
+assignDecl (FunDecl _ n ins os a) = do
+    ty <- tyLookup (void n)
+    FunDecl ty <$> assignName n <*> pure (void <$> ins) <*> pure (void <$> os) <*> traverse assignAtom a
 
 -- TODO: traverse headers first
 tyInsert :: KempeDecl a b -> TypeM () ()

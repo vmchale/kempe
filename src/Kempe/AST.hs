@@ -102,7 +102,7 @@ data BuiltinFn = Drop
 data KempeDecl a b = TyDecl a (TyName a) [Name a] [(TyName b, [KempeTy a])]
                    | FunDecl b (Name b) [KempeTy a] [KempeTy a] [Atom b]
                    | ExtFnDecl b (Name b) [KempeTy a] [KempeTy a] BSL.ByteString
-                   deriving (Generic, NFData)
+                   deriving (Generic, NFData, Functor)
                    -- bifunctor
 
 type Module a b = [KempeDecl a b]
