@@ -22,12 +22,11 @@ This presents the Kempe type system.
 
 \begin{grammar}
 <kind> ::= <type>
-\alt <stack>
+\alt <nat>
+\alt <kind> <kind>
 \end{grammar}
 
 \section{Judgments}
-
-% this is the part I'm sure about
 
 \begin{mathpar}
 \inferrule
