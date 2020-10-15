@@ -2,8 +2,7 @@
 
 module Kempe.TyAssign ( TypeM
                       , runTypeM
-                      , tyAtoms
-                      , tyInsert
+                      , checkModule
                       ) where
 
 import           Control.Composition  (thread)
@@ -89,7 +88,8 @@ unifyM s =
         Left err -> throwError err
 
 -- TODO: take constructor types as an argument?..
-runTypeM :: Int -> TypeM a x -> Either (Error a) x
+runTypeM :: Int -- ^ For renamer
+         -> TypeM a x -> Either (Error a) x
 runTypeM maxInt act =
     flip evalStateT (TyState maxInt mempty mempty mempty S.empty) $ do
         res <- act
@@ -124,10 +124,14 @@ consLookup tn@(Name _ (Unique i) l) = do
         Just ty -> pure ty
         Nothing -> throwError (PoorScope l tn)
 
+-- expandType 1
 dipify :: StackType () -> TypeM () (StackType ())
 dipify (StackType fvrs is os) = do
     n <- dummyName "a"
     pure $ StackType (S.insert n fvrs) (TyNamed () n:is) (TyNamed () n:os)
+
+assignAtom :: Atom a -> TypeM () (Atom (StackType ()))
+assignAtom _ = undefined
 
 tyAtom :: Atom a -> TypeM () (StackType ())
 tyAtom (AtBuiltin _ b) = typeOfBuiltin b
@@ -173,6 +177,9 @@ tyInsert (FunDecl _ (Name _ (Unique i) _) ins out as) = do
 tyInsert (ExtFnDecl _ (Name _ (Unique i) _) ins os _) = do
     sig <- renameStack $ voidStackType $ StackType S.empty ins os -- no free variables allowed in c functions
     modifying tyEnvLens (IM.insert i sig)
+
+checkModule :: Module a -> TypeM () ()
+checkModule = traverse_ tyInsert
 
 -- Make sure you don't have cycles in the renames map!
 replaceUnique :: Unique -> TypeM a Unique
@@ -268,6 +275,12 @@ substConstraints _ ty@TyNamed{}                         = ty
 substConstraints _ ty@TyBuiltin{}                       = ty
 substConstraints tys ty@(TyVar _ (Name _ (Unique k) _)) =
     fromMaybe ty (IM.lookup k tys)
+
+substConstraintsStack :: IM.IntMap (KempeTy a) -> StackType a -> StackType a
+substConstraintsStack tys (StackType _ is os) =
+    let is' = substConstraints tys <$> is
+        os' = substConstraints tys <$> os
+        in StackType (freeVars (is' ++ os')) is' os'
 
 -- do renaming before this
 -- | Given @x@ and @y@, return the 'StackType' of @x y@

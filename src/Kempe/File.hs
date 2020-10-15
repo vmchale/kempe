@@ -12,6 +12,6 @@ import           Kempe.TyAssign
 tcFile :: FilePath -> IO (Either (Error ()) ())
 tcFile fp = do
     contents <- BSL.readFile fp
-    (maxU, ds) <- yeetIO $ parseWithMax contents
-    pure $ runTypeM maxU (traverse_ tyInsert ds)
+    (maxU, m) <- yeetIO $ parseWithMax contents
+    pure $ runTypeM maxU (checkModule m)
     where yeetIO = either throwIO pure
