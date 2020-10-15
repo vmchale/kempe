@@ -28,6 +28,7 @@ import           Prettyprinter        (Pretty (pretty), parens, sep, tupled, (<+
 data BuiltinTy = TyPtr
                | TyInt
                | TyBool
+               -- -- | TyFloat
                -- -- | TyArr Word
                deriving (Generic, NFData, Eq, Ord)
                -- tupling builtin for sake of case-matching on two+ things at
@@ -61,7 +62,7 @@ data KempeTy a = TyBuiltin a BuiltinTy
 data StackType b = StackType { quantify :: S.Set (Name b)
                              , inTypes  :: [KempeTy b]
                              , outTypes :: [KempeTy b]
-                             } deriving (Generic, NFData)
+                             } deriving (Generic, NFData, Eq, Ord)
 
 instance Pretty (StackType a) where
     pretty (StackType _ ins outs) = sep (fmap pretty ins) <+> "--" <+> sep (fmap pretty outs)
@@ -97,6 +98,9 @@ data Atom b = AtName b (Name b)
 data BuiltinFn = Drop
                | Swap
                | Dup
+               -- -- | Plus
+               -- -- | Time
+               -- -- | IntEq
                deriving (Generic, NFData)
 
 data KempeDecl a b = TyDecl a (TyName a) [Name a] [(TyName b, [KempeTy a])]
