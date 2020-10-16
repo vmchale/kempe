@@ -71,18 +71,22 @@ renameForward _ []                      = []
 renameForward (k, ty) ((ty', ty''):tys) = (onType (k, ty) ty', onType (k, ty) ty'') : renameForward (k, ty) tys
 
 unify :: [(KempeTy a, KempeTy a)] -> Either (Error ()) (IM.IntMap (KempeTy ()))
-unify [] = Right mempty
-unify ((ty@(TyBuiltin _ b0), ty'@(TyBuiltin _ b1)):tys) | b0 == b1 = unify tys
+unify []                                                            = Right mempty
+unify ((ty@(TyBuiltin _ b0), ty'@(TyBuiltin _ b1)):tys) | b0 == b1  = unify tys
                                                         | otherwise = Left (UnificationFailed () (void ty) (void ty'))
-unify ((ty@(TyNamed _ n0), ty'@(TyNamed _ n1)):tys) | n0 == n1 = unify tys
-                                                    | otherwise = Left (UnificationFailed () (void ty) (void ty'))
-unify ((ty@(TyNamed _ _), TyVar  _ (Name _ (Unique k) _)):tys) = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys)
-unify ((TyVar _ (Name _ (Unique k) _), ty@(TyNamed _ _)):tys) = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys)
-unify ((ty@(TyBuiltin _ _), TyVar  _ (Name _ (Unique k) _)):tys) = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys)
-unify ((TyVar _ (Name _ (Unique k) _), ty@(TyBuiltin _ _)):tys) = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys)
-unify ((TyVar _ (Name _ (Unique k) _), ty@(TyVar _ _)):tys) = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys)
-unify ((ty@TyBuiltin{}, ty'@TyNamed{}):_) = Left (UnificationFailed () (void ty) (void ty'))
-unify ((ty@TyNamed{}, ty'@TyBuiltin{}):_) = Left (UnificationFailed () (void ty) (void ty'))
+unify ((ty@(TyNamed _ n0), ty'@(TyNamed _ n1)):tys) | n0 == n1      = unify tys
+                                                    | otherwise     = Left (UnificationFailed () (void ty) (void ty'))
+unify ((ty@(TyNamed _ _), TyVar  _ (Name _ (Unique k) _)):tys)      = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys)
+unify ((TyVar _ (Name _ (Unique k) _), ty@(TyNamed _ _)):tys)       = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys)
+unify ((ty@(TyBuiltin _ _), TyVar  _ (Name _ (Unique k) _)):tys)    = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys)
+unify ((TyVar _ (Name _ (Unique k) _), ty@(TyBuiltin _ _)):tys)     = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys)
+unify ((TyVar _ (Name _ (Unique k) _), ty@(TyVar _ _)):tys)         = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys)
+unify ((ty@TyBuiltin{}, ty'@TyNamed{}):_)                           = Left (UnificationFailed () (void ty) (void ty'))
+unify ((ty@TyNamed{}, ty'@TyBuiltin{}):_)                           = Left (UnificationFailed () (void ty) (void ty'))
+unify ((ty@TyBuiltin{}, ty'@TyApp{}):_)                             = Left (UnificationFailed () (void ty) (void ty'))
+unify ((ty@TyNamed{}, ty'@TyApp{}):_)                               = Left (UnificationFailed () (void ty) (void ty'))
+unify ((TyVar _ (Name _ (Unique k) _), ty@(TyApp _ _ _)):tys)       = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys)
+unify ((ty@(TyApp _ _ _), TyVar  _ (Name _ (Unique k) _)):tys)      = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys)
 
 unifyM :: S.Set (KempeTy a, KempeTy a) -> TypeM () (IM.IntMap (KempeTy ()))
 unifyM s =

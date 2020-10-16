@@ -110,6 +110,7 @@ Type :: { KempeTy AlexPosn }
      | bool { TyBuiltin $1 TyBool }
      | int { TyBuiltin $1 TyInt }
      | ptr { TyBuiltin $1 TyPtr }
+     | lparen Type Type rparen { TyApp $1 $2 $3 }
 
 FunDecl :: { KempeDecl AlexPosn AlexPosn }
         : FunSig FunBody { uncurry4 FunDecl $1 $2 }

@@ -21,6 +21,7 @@ main = defaultMain $
             [ tyInfer "test/data/ty.kmp"
             , tyInfer "prelude/fn.kmp"
             , badType "test/err/merge.kmp" "could not unify type 'Int' with 'a_3'"
+            , badType "test/err/kind.kmp" ""
             ]
         ]
 
