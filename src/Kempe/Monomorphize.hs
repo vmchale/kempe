@@ -18,7 +18,21 @@ mkModuleMap = IM.fromList . mapMaybe toInt where
     toInt _                                           = Nothing
 
 closure :: Module a b -> S.Set (Name b)
-closure _ = undefined
+closure m = undefined
+    where roots = exports m
+
+namesInDecl :: KempeDecl a b -> S.Set (Name b)
+namesInDecl TyDecl{}             = S.empty
+namesInDecl ExtFnDecl{}          = S.empty
+namesInDecl Export{}             = S.empty
+namesInDecl (FunDecl _ _ _ _ as) = foldMap namesInAtom as
+
+namesInAtom :: Atom a -> S.Set (Name a)
+namesInAtom AtBuiltin{}   = S.empty
+namesInAtom (If _ as as') = foldMap namesInAtom as <> foldMap namesInAtom as'
+namesInAtom (Dip _ as)    = foldMap namesInAtom as
+namesInAtom (AtName _ n)  = S.singleton n
+namesInAtom (AtCons _ tn) = S.singleton tn
 
 exports :: Module a b -> [Name b]
 exports = mapMaybe exportsDecl
