@@ -13,6 +13,7 @@ build-type:         Simple
 extra-source-files:
     test/data/*.kmp
     prelude/*.kmp
+    lib/*.kmp
 
 extra-doc-files:
     README.md
