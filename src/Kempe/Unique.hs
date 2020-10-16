@@ -5,5 +5,5 @@ module Kempe.Unique ( Unique (..)
 
 import           Prettyprinter (Pretty)
 
-newtype Unique = Unique Int
+newtype Unique = Unique { unUnique :: Int }
     deriving (Eq, Ord, Pretty)

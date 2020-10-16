@@ -1,7 +1,0 @@
-not : Bool -- Bool
-    =: [
-    { case
-        | True -> False
-        | False -> True
-    }
-]

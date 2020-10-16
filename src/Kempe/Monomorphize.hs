@@ -1,3 +1,5 @@
+{-# LANGUAGE TupleSections #-}
+
 module Kempe.Monomorphize ( monomorphize
                           , closedModule
                           -- * For testing
@@ -20,7 +22,9 @@ mkModuleMap :: Module a b -> ModuleMap a b
 mkModuleMap = IM.fromList . concatMap toInt where
     toInt d@(FunDecl _ (Name _ (Unique i) _) _ _ _)   = [(i, d)]
     toInt d@(ExtFnDecl _ (Name _ (Unique i) _) _ _ _) = [(i, d)]
-    toInt (TyDecl _ _ _ ds)                           = undefined
+    toInt d@(TyDecl _ _ _ ds)                         =
+        let us = unUnique . unique . fst <$> ds
+            in (, d) <$> us
     toInt _                                           = []
 
 type MonoStackType = ([KempeTy ()], [KempeTy ()])
