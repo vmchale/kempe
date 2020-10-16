@@ -69,6 +69,14 @@ tokens :-
         ","                      { mkSym Comma }
         \_                       { mkSym Underscore }
 
+        -- symbols/operators
+        "%"                      { mkSym Percent }
+        "*"                      { mkSym Times }
+        "/"                      { mkSym Div }
+        "+"                      { mkSym Plus }
+        "-"                      { mkSym Minus }
+        "="                      { mkSym Eq }
+
         type                     { mkKw KwType }
         import                   { mkKw KwImport }
         case                     { mkKw KwCase }

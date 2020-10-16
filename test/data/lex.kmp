@@ -49,4 +49,7 @@ aInt : a -- Int a
 randTwice : -- Int Int
           =: [ rand rand ]
 
+odd : Int -- Bool
+    =: [ % 2 0 = ]
+
 %foreign cabi randTwice

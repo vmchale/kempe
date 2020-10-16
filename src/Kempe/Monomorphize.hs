@@ -4,6 +4,7 @@ module Kempe.Monomorphize ( exports
 
 import qualified Data.IntMap  as IM
 import           Data.Maybe   (mapMaybe)
+import qualified Data.Set     as S
 import           Kempe.AST
 import           Kempe.Name
 import           Kempe.Unique
@@ -15,6 +16,9 @@ mkModuleMap = IM.fromList . mapMaybe toInt where
     toInt d@(FunDecl _ (Name _ (Unique i) _) _ _ _)   = Just (i, d)
     toInt d@(ExtFnDecl _ (Name _ (Unique i) _) _ _ _) = Just (i, d)
     toInt _                                           = Nothing
+
+closure :: Module a b -> S.Set (Name b)
+closure _ = undefined
 
 exports :: Module a b -> [Name b]
 exports = mapMaybe exportsDecl

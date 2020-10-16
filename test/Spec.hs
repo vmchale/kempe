@@ -20,6 +20,8 @@ main = defaultMain $
         , testGroup "type assignment"
             [ tyInfer "test/data/ty.kmp"
             , tyInfer "prelude/fn.kmp"
+            , tyInfer "lib/maybe.kmp"
+            , tyInfer "lib/either.kmp"
             , badType "test/err/merge.kmp" "could not unify type 'Int' with 'a_3'"
             , badType "test/err/kind.kmp" ""
             ]

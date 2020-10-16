@@ -23,7 +23,10 @@ trip : a -- a a a
 push3 : -- OS OS OS
       =: [ Linux trip ]
 
-sameRand : -- Int Int Int
-         =: [ rand trip ]
+odd : Int -- Bool
+    =: [ 2 % 0 = ]
 
-%foreign cabi sameRand
+randBool : -- Bool
+         =: [ rand odd ]
+
+%foreign cabi randBool

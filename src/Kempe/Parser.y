@@ -51,6 +51,13 @@ import Debug.Trace (traceShow)
     comma { TokSym $$ Comma }
     underscore { TokSym $$ Underscore }
 
+    plus { TokSym $$ Plus }
+    minus { TokSym $$ Minus }
+    times { TokSym $$ Times }
+    div { TokSym $$ Div }
+    percent { TokSym $$ Percent }
+    eq { TokSym $$ Eq }
+
     name { TokName _ $$ }
     tyName { TokTyName  _ $$ }
     foreignName { TokForeign _ $$ }
@@ -140,6 +147,12 @@ Atom :: { Atom AlexPosn }
      | dup { AtBuiltin $1 Dup }
      | drop { AtBuiltin $1 Drop }
      | swap { AtBuiltin $1 Swap }
+     | plus { AtBuiltin $1 IntPlus }
+     | minus { AtBuiltin $1 IntMinus }
+     | times { AtBuiltin $1 IntTimes }
+     | div { AtBuiltin $1 IntDiv }
+     | percent { AtBuiltin $1 IntMod }
+     | eq { AtBuiltin $1 IntEq }
 
 CaseLeaf :: { (Pattern AlexPosn, [Atom AlexPosn]) }
          : vbar Pattern caseArr many(Atom) { ($2, reverse $4) }

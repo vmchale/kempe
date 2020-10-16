@@ -97,9 +97,12 @@ data Atom b = AtName b (Name b)
 data BuiltinFn = Drop
                | Swap
                | Dup
-               -- -- | Plus
-               -- -- | Time
-               -- -- | IntEq
+               | IntPlus
+               | IntMinus
+               | IntTimes
+               | IntDiv
+               | IntMod
+               | IntEq
                deriving (Generic, NFData)
 
 data ABI = Cabi
