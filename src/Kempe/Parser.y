@@ -53,7 +53,7 @@ import Debug.Trace (traceShow)
 
     name { TokName _ $$ }
     tyName { TokTyName  _ $$ }
-    foreign { TokForeign _ $$ }
+    foreignName { TokForeign _ $$ }
 
     intLit { $$@(TokInt _ _) }
 
@@ -61,6 +61,8 @@ import Debug.Trace (traceShow)
     case { TokKeyword $$ KwCase }
     cfun { TokKeyword $$ KwCfun }
     if { TokKeyword $$ KwIf }
+    foreign { TokKeyword $$ KwForeign }
+    cabi { TokKeyword $$ KwCabi }
 
     dip { TokBuiltin $$ BuiltinDip }
     boolLit { $$@(TokBuiltin _ (BuiltinBoolLit _)) }
@@ -96,9 +98,13 @@ parens(p)
 Module :: { Module AlexPosn AlexPosn }
        : many(Decl) { (reverse $1) }
 
+ABI :: { ABI }
+    : cabi { Cabi }
+
 Decl :: { KempeDecl AlexPosn AlexPosn }
      : TyDecl { $1 }
      | FunDecl { $1 }
+     | foreign ABI name { Export $1 $2 $3 }
 
 TyDecl :: { KempeDecl AlexPosn AlexPosn }
        : type tyName many(name) braces(sepBy(TyLeaf, vbar)) { TyDecl $1 $2 (reverse $3) (reverse $4) }
@@ -114,7 +120,7 @@ Type :: { KempeTy AlexPosn }
 
 FunDecl :: { KempeDecl AlexPosn AlexPosn }
         : FunSig FunBody { uncurry4 FunDecl $1 $2 }
-        | FunSig defEq cfun foreign { uncurry4 ExtFnDecl $1 $4 }
+        | FunSig defEq cfun foreignName { uncurry4 ExtFnDecl $1 $4 }
 
 
 FunSig :: { (AlexPosn, Name AlexPosn, [KempeTy AlexPosn], [KempeTy AlexPosn]) }

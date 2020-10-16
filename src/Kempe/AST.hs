@@ -11,6 +11,7 @@ module Kempe.AST ( BuiltinTy (..)
                  , BuiltinFn (..)
                  , KempeDecl (..)
                  , Pattern (..)
+                 , ABI (..)
                  , Module
                  -- * I resent this...
                  , voidStackType
@@ -101,9 +102,13 @@ data BuiltinFn = Drop
                -- -- | IntEq
                deriving (Generic, NFData)
 
+data ABI = Cabi
+         deriving (Generic, NFData)
+
 data KempeDecl a b = TyDecl a (TyName a) [Name a] [(TyName b, [KempeTy a])]
                    | FunDecl b (Name b) [KempeTy a] [KempeTy a] [Atom b]
                    | ExtFnDecl b (Name b) [KempeTy a] [KempeTy a] BSL.ByteString
+                   | Export a ABI (Name b)
                    deriving (Generic, NFData, Functor)
                    -- bifunctor
 

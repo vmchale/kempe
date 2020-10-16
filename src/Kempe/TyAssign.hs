@@ -85,8 +85,8 @@ unify ((ty@TyBuiltin{}, ty'@TyNamed{}):_)                           = Left (Unif
 unify ((ty@TyNamed{}, ty'@TyBuiltin{}):_)                           = Left (UnificationFailed () (void ty) (void ty'))
 unify ((ty@TyBuiltin{}, ty'@TyApp{}):_)                             = Left (UnificationFailed () (void ty) (void ty'))
 unify ((ty@TyNamed{}, ty'@TyApp{}):_)                               = Left (UnificationFailed () (void ty) (void ty'))
-unify ((TyVar _ (Name _ (Unique k) _), ty@(TyApp _ _ _)):tys)       = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys)
-unify ((ty@(TyApp _ _ _), TyVar  _ (Name _ (Unique k) _)):tys)      = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys)
+unify ((TyVar _ (Name _ (Unique k) _), ty@(TyApp {})):tys)       = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys)
+unify ((ty@(TyApp {}), TyVar  _ (Name _ (Unique k) _)):tys)      = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys)
 
 unifyM :: S.Set (KempeTy a, KempeTy a) -> TypeM () (IM.IntMap (KempeTy ()))
 unifyM s =
@@ -193,6 +193,7 @@ assignDecl (FunDecl _ n ins os a) = do
 assignDecl (ExtFnDecl _ n ins os cn) = do
     ty <- tyLookup (void n)
     ExtFnDecl ty <$> assignName n <*> pure (void <$> ins) <*> pure (void <$> os) <*> pure cn
+assignDecl (Export _ abi n) = Export () abi <$> assignName n
 
 -- TODO: traverse headers first
 tyInsert :: KempeDecl a b -> TypeM () ()
@@ -205,6 +206,7 @@ tyInsert (FunDecl _ (Name _ (Unique i) _) ins out as) = do
 tyInsert (ExtFnDecl _ (Name _ (Unique i) _) ins os _) = do
     sig <- renameStack $ voidStackType $ StackType S.empty ins os -- no free variables allowed in c functions
     modifying tyEnvLens (IM.insert i sig)
+tyInsert Export{} = pure ()
 
 checkModule :: Module a b -> TypeM () ()
 checkModule m = traverse_ tyInsert m <* (unifyM =<< gets constraints)

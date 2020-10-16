@@ -74,6 +74,8 @@ tokens :-
         case                     { mkKw KwCase }
         "$cfun"                  { mkKw KwCfun }
         if                       { mkKw KwIf }
+        "%foreign"               { mkKw KwForeign }
+        "cabi"                   { mkKw KwCabi }
 
         -- builtin
         dip                      { mkBuiltin BuiltinDip }
@@ -189,14 +191,18 @@ data Keyword = KwType
              | KwCase
              | KwCfun
              | KwIf
+             | KwForeign
+             | KwCabi
              deriving (Generic, NFData)
 
 instance Pretty Keyword where
-    pretty KwType   = "type"
-    pretty KwImport = "import"
-    pretty KwCase   = "case"
-    pretty KwCfun   = "$cfun"
-    pretty KwIf     = "if"
+    pretty KwType    = "type"
+    pretty KwImport  = "import"
+    pretty KwCase    = "case"
+    pretty KwCfun    = "$cfun"
+    pretty KwIf      = "if"
+    pretty KwForeign = "%foreign"
+    pretty KwCabi    = "cabi"
 
 data Builtin = BuiltinBool
              | BuiltinBoolLit { bool :: !Bool }

@@ -22,3 +22,8 @@ trip : a -- a a a
 
 push3 : -- OS OS OS
       =: [ Linux trip ]
+
+sameRand : -- Int Int Int
+         =: [ rand trip ]
+
+%foreign cabi sameRand

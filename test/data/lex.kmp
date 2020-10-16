@@ -45,3 +45,8 @@ push3 : -- OS OS OS
 
 aInt : a -- Int a
      =: [ dip(3) ]
+
+randTwice : -- Int Int
+          =: [ rand rand ]
+
+%foreign cabi randTwice
