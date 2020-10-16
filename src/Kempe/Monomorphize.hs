@@ -9,9 +9,10 @@ import           Data.Semigroup ((<>))
 import qualified Data.Set       as S
 import           Data.Text      as T
 import           Kempe.AST
+import           Kempe.Error
 import           Kempe.Name
 
-type MonoStackType = (KempeTy (), KempeTy ())
+type MonoStackType = ([KempeTy ()], [KempeTy ()])
 
 squishTypeName :: BuiltinTy -> T.Text
 squishTypeName TyPtr  = "ptr"
@@ -45,6 +46,13 @@ usedDecl (FunDecl _ _ _ _ as) = foldMap usedAtom as
 used :: Module () (StackType ()) -> Used
 used = foldMap usedDecl
 
+discard :: StackType () -> Either (Error ()) MonoStackType
+discard (StackType qs is os) | S.null qs = Right (is, os)
+                             | otherwise = Left $ TyVarExt ()
+
+monomorphizeDecl :: KempeDecl () (StackType ()) -> Either (Error ()) (KempeDecl () MonoStackType)
+monomorphizeDecl (ExtFnDecl l (Name t u l') is os cn) = ExtFnDecl <$> discard l <*> (Name t u <$> discard l') <*> undefined <*> undefined <*> pure cn
+
 -- decide which versions we need?
-monomorphize :: Module () (StackType ()) -> Module () MonoStackType
-monomorphize _ = undefined
+monomorphize :: Module () (StackType ()) -> Either (Error ()) (Module () MonoStackType)
+monomorphize = traverse monomorphizeDecl
