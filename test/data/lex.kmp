@@ -27,6 +27,14 @@ osNum : OS -- Int
     }
 ]
 
+not : Bool -- Bool
+    =: [
+    { case
+        | True -> False
+        | False -> True
+    }
+]
+
 rand : -- Int
      =: $cfun"rand"
 
