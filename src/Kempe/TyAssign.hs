@@ -202,7 +202,9 @@ assignDecl (FunDecl _ n ins os a) = do
 assignDecl (ExtFnDecl _ n ins os cn) = do
     ty <- tyLookup (void n)
     ExtFnDecl ty <$> assignName n <*> pure (void <$> ins) <*> pure (void <$> os) <*> pure cn
-assignDecl (Export _ abi n) = Export () abi <$> assignName n
+assignDecl (Export _ abi n) = do
+    ty <- tyLookup (void n)
+    Export ty abi <$> assignName n
 
 -- TODO: traverse headers first
 tyInsert :: KempeDecl a b -> TypeM () ()

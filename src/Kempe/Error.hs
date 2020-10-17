@@ -28,6 +28,6 @@ instance Pretty (Error a) where
     pretty (PoorScope _ n)               = "name" <+> squotes (pretty n) <+> "not in scope"
     pretty (MismatchedLengths _ st0 st1) = "mismatched type lengths" <+> pretty st0 <> comma <+> pretty st1
     pretty (UnificationFailed _ ty ty')  = "could not unify type" <+> squotes (pretty ty) <+> "with" <+> squotes (pretty ty')
-    pretty (TyVarExt _)                  = "Type variables may not occur in external functions."
+    pretty (TyVarExt _)                  = "Type variables may not occur in external or exported functions."
 
 instance (Pretty a, Typeable a) => Exception (Error a)

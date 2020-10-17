@@ -111,7 +111,7 @@ data ABI = Cabi
 data KempeDecl a b = TyDecl a (TyName a) [Name a] [(TyName b, [KempeTy a])]
                    | FunDecl b (Name b) [KempeTy a] [KempeTy a] [Atom b]
                    | ExtFnDecl b (Name b) [KempeTy a] [KempeTy a] BSL.ByteString
-                   | Export a ABI (Name b)
+                   | Export b ABI (Name b)
                    deriving (Generic, NFData, Functor)
                    -- bifunctor
 

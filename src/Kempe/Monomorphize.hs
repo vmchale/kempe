@@ -1,16 +1,19 @@
-{-# LANGUAGE TupleSections #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TupleSections     #-}
 
-module Kempe.Monomorphize ( monomorphize
-                          , closedModule
+module Kempe.Monomorphize ( closedModule
                           -- * For testing
                           , mkModuleMap
                           , closure
                           ) where
 
+import           Data.Functor (void)
 import qualified Data.IntMap  as IM
 import           Data.Maybe   (mapMaybe)
 import qualified Data.Set     as S
+import qualified Data.Text    as T
 import           Kempe.AST
+import           Kempe.Error
 import           Kempe.Name
 import           Kempe.Unique
 
@@ -29,10 +32,21 @@ mkModuleMap = IM.fromList . concatMap toInt where
 
 type MonoStackType = ([KempeTy ()], [KempeTy ()])
 
-monomorphize :: Module () (StackType ()) -> Module () MonoStackType
-monomorphize = undefined
+squishTypeName :: BuiltinTy -> T.Text
+squishTypeName TyPtr  = "ptr"
+squishTypeName TyInt  = "int"
+squishTypeName TyBool = "bool"
+
+squishType :: KempeTy a -> T.Text
+squishType (TyBuiltin _ b)          = squishTypeName b
+squishType (TyNamed _ (Name t _ _)) = T.toLower t
+squishType TyVar{}                  = error "not meant to be monomorphized!"
+squishType (TyTuple _ tys)          = foldMap squishType tys
+squishType (TyApp _ ty ty')         = squishType ty <> squishType ty'
 
 -- | Filter so that only the 'KempeDecl's necessary for exports are there
+--
+-- This will throw an exception on ill-typed programs.
 closedModule :: Module a b -> Module a b
 closedModule m = map pickDecl roots
     where key = mkModuleMap m
@@ -42,7 +56,7 @@ closedModule m = map pickDecl roots
                 Just decl -> decl
                 Nothing   -> error "Internal error! module map should contain all names."
 
-closure :: (Module a b, ModuleMap a b) -> S.Set (Name b)
+closure :: (Module a b, ModuleMap a b) -> S.Set (Name b) -- FIXME: set of names: should it be names with their type at site? b/c this will squash "duplicates"
 closure (m, key) = loop roots
     where roots = S.fromList (exports m)
           loop ns =
@@ -76,3 +90,38 @@ exports = mapMaybe exportsDecl
 exportsDecl :: KempeDecl a b -> Maybe (Name b)
 exportsDecl (Export _ _ n) = Just n
 exportsDecl _              = Nothing
+
+{-
+--- all names + their type at call site
+type Uses = S.Set (Name (), StackType ()) -- should this contain only polymorphic stuff?
+
+usesAtom :: Atom (StackType ()) -> Uses
+usesAtom AtBuiltin{}                = mempty
+usesAtom BoolLit{}                  = mempty
+usesAtom IntLit{}                   = mempty
+usesAtom (AtName _ n@(Name _ _ l))  = S.singleton (void n, l)
+usesAtom (If _ as as')              = foldMap usesAtom as <> foldMap usesAtom as'
+usesAtom (Dip _ as)                 = foldMap usesAtom as
+usesAtom (AtCons _ tn@(Name _ _ l)) = S.singleton (void tn, l)
+
+usesDecl :: KempeDecl () (StackType ()) -> Uses
+usesDecl TyDecl{}             = mempty
+usesDecl ExtFnDecl{}          = mempty
+usesDecl (FunDecl _ _ _ _ as) = foldMap usesAtom as
+
+uses :: Module () (StackType ()) -> Uses
+uses = foldMap usesDecl
+
+-- | Convert a 'StackType' of an 'ExtFnDecl' to a 'MonoStackType'
+retypeExt :: StackType () -> Either (Error ()) MonoStackType
+retypeExt (StackType qs is os) | S.null qs = Right (is, os)
+                               | otherwise = Left $ TyVarExt ()
+
+checkDecl :: KempeDecl () (StackType ()) -> Either (Error ()) (KempeDecl () MonoStackType)
+checkDecl (ExtFnDecl l (Name t u l') is os cn) = ExtFnDecl <$> retypeExt l <*> (Name t u <$> retypeExt l') <*> pure is <*> pure os <*> pure cn
+checkDecl (Export l abi (Name t u l'))         = Export <$> retypeExt l <*> pure abi <*> (Name t u <$> retypeExt l')
+
+--- decide which versions we need?
+checkExt :: Module () (StackType ()) -> Either (Error ()) (Module () MonoStackType)
+checkExt = traverse checkDecl
+-}
