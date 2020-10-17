@@ -181,16 +181,6 @@ tyInsertLeaf :: Name b -- ^ type being declared
 tyInsertLeaf n vars (Name _ (Unique i) _, ins) =
     modifying constructorTypesLens (IM.insert i (voidStackType $ StackType vars ins [TyNamed undefined n]))
 
-extrVars :: KempeTy a -> [Name a]
-extrVars TyBuiltin{}      = []
-extrVars TyNamed{}        = []
-extrVars (TyVar _ n)      = [n]
-extrVars (TyApp _ ty ty') = extrVars ty ++ extrVars ty'
-extrVars (TyTuple _ tys)  = concatMap extrVars tys
-
-freeVars :: [KempeTy a] -> S.Set (Name a)
-freeVars tys = S.fromList (concatMap extrVars tys)
-
 assignLeaf :: (TyName a, [KempeTy b]) -> TypeM () (TyName (StackType ()), [KempeTy ()])
 assignLeaf (tn, tys) = (,) <$> assignCons tn <*> pure (void <$> tys)
 

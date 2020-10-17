@@ -13,6 +13,7 @@ module Kempe.AST ( BuiltinTy (..)
                  , Pattern (..)
                  , ABI (..)
                  , Module
+                 , freeVars
                  -- * I resent this...
                  , voidStackType
                  ) where
@@ -116,3 +117,15 @@ data KempeDecl a b = TyDecl a (TyName a) [Name a] [(TyName b, [KempeTy a])]
                    -- bifunctor
 
 type Module a b = [KempeDecl a b]
+
+extrVars :: KempeTy a -> [Name a]
+extrVars TyBuiltin{}      = []
+extrVars TyNamed{}        = []
+extrVars (TyVar _ n)      = [n]
+extrVars (TyApp _ ty ty') = extrVars ty ++ extrVars ty'
+extrVars (TyTuple _ tys)  = concatMap extrVars tys
+
+freeVars :: [KempeTy a] -> S.Set (Name a)
+freeVars tys = S.fromList (concatMap extrVars tys)
+
+

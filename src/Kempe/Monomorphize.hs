@@ -7,15 +7,25 @@ module Kempe.Monomorphize ( closedModule
                           , closure
                           ) where
 
-import           Data.Functor (void)
-import qualified Data.IntMap  as IM
-import           Data.Maybe   (mapMaybe)
-import qualified Data.Set     as S
-import qualified Data.Text    as T
+import           Control.Monad.Except (throwError)
+import           Control.Monad.State  (StateT, evalStateT)
+import qualified Data.IntMap          as IM
+import           Data.Maybe           (mapMaybe)
+import           Data.Semigroup       ((<>))
+import qualified Data.Set             as S
+import qualified Data.Text            as T
 import           Kempe.AST
 import           Kempe.Error
 import           Kempe.Name
 import           Kempe.Unique
+
+-- | New function names, also max state threaded through.
+type RenameEnv = (Int, IM.IntMap Int)
+
+type MonoM = StateT RenameEnv (Either (Error ()))
+
+runMonoM :: Int -> MonoM a -> Either (Error ()) a
+runMonoM maxI = flip evalStateT (maxI, mempty)
 
 -- | A 'ModuleMap' is a map which retrives the 'KempeDecl' associated with
 -- a given 'Name'
@@ -44,21 +54,29 @@ squishType TyVar{}                  = error "not meant to be monomorphized!"
 squishType (TyTuple _ tys)          = foldMap squishType tys
 squishType (TyApp _ ty ty')         = squishType ty <> squishType ty'
 
+squishMonoStackType :: MonoStackType -> T.Text
+squishMonoStackType (is, os) = foldMap squishType is <> "TT" <> foldMap squishType os
+
+tryMono :: StackType () -> MonoM MonoStackType
+tryMono (StackType _ is os) | S.null (freeVars (is ++ os)) = pure (is, os)
+                            | otherwise = throwError $ MonoFailed ()
+
+tyEquiv :: StackType () -> MonoStackType -> Bool
+tyEquiv (StackType _ is os) (is', os') =
+    is == is' && os == os'
+
 -- | Filter so that only the 'KempeDecl's necessary for exports are there
 --
 -- This will throw an exception on ill-typed programs.
 closedModule :: Ord b => Module a b -> Module a b
-closedModule m = map pickDecl roots
+closedModule m = fmap pickDecl roots
     where key = mkModuleMap m
-          roots = fmap fst $ S.toList $ closure (m, key)
-          pickDecl (Name _ (Unique i) _) =
+          roots = S.toList $ closure (m, key)
+          pickDecl (Name _ (Unique i) _, _) =
             case IM.lookup i key of
-                Just decl -> decl -- TODO: replace this with specialize; allow mult. decl from one decl!
+                Just decl -> decl
                 Nothing   -> error "Internal error! module map should contain all names."
 
--- | Specialize a function declaration for a particular 'MonoStackType'
-specialize :: KempeDecl () (StackType ()) -> MonoStackType -> KempeDecl () MonoStackType
-specialize _ _ = undefined
 
 closure :: Ord b => (Module a b, ModuleMap a b) -> S.Set (Name b, b)
 closure (m, key) = loop roots
