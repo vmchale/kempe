@@ -23,6 +23,9 @@ trip : a -- a a a
 push3 : -- OS OS OS
       =: [ Linux trip ]
 
+trint : -- Int Int Int
+      =: [ 0 trip ]
+
 odd : Int -- Bool
     =: [ 2 % 0 = ]
 

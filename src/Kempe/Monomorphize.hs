@@ -47,20 +47,24 @@ squishType (TyApp _ ty ty')         = squishType ty <> squishType ty'
 -- | Filter so that only the 'KempeDecl's necessary for exports are there
 --
 -- This will throw an exception on ill-typed programs.
-closedModule :: Module a b -> Module a b
+closedModule :: Ord b => Module a b -> Module a b
 closedModule m = map pickDecl roots
     where key = mkModuleMap m
-          roots = S.toList $ closure (m, key)
+          roots = fmap fst $ S.toList $ closure (m, key)
           pickDecl (Name _ (Unique i) _) =
             case IM.lookup i key of
-                Just decl -> decl
+                Just decl -> decl -- TODO: replace this with specialize; allow mult. decl from one decl!
                 Nothing   -> error "Internal error! module map should contain all names."
 
-closure :: (Module a b, ModuleMap a b) -> S.Set (Name b) -- FIXME: set of names: should it be names with their type at site? b/c this will squash "duplicates"
+-- | Specialize a function declaration for a particular 'MonoStackType'
+specialize :: KempeDecl () (StackType ()) -> MonoStackType -> KempeDecl () MonoStackType
+specialize _ _ = undefined
+
+closure :: Ord b => (Module a b, ModuleMap a b) -> S.Set (Name b, b)
 closure (m, key) = loop roots
     where roots = S.fromList (exports m)
           loop ns =
-            let res = foldMap step ns
+            let res = foldMap step (S.map fst ns)
                 in if res == ns
                     then res -- test it doesn't bottom on cyclic lookups...
                     else ns <> loop (res S.\\ ns)
@@ -69,27 +73,27 @@ closure (m, key) = loop roots
                 Just decl -> namesInDecl decl
                 Nothing   -> error "Internal error! module map should contain all names."
 
-namesInDecl :: KempeDecl a b -> S.Set (Name b)
+namesInDecl :: Ord b => KempeDecl a b -> S.Set (Name b, b)
 namesInDecl TyDecl{}             = S.empty
 namesInDecl ExtFnDecl{}          = S.empty
 namesInDecl Export{}             = S.empty
 namesInDecl (FunDecl _ _ _ _ as) = foldMap namesInAtom as
 
-namesInAtom :: Atom a -> S.Set (Name a)
-namesInAtom AtBuiltin{}   = S.empty
-namesInAtom (If _ as as') = foldMap namesInAtom as <> foldMap namesInAtom as'
-namesInAtom (Dip _ as)    = foldMap namesInAtom as
-namesInAtom (AtName _ n)  = S.singleton n
-namesInAtom (AtCons _ tn) = S.singleton tn
-namesInAtom IntLit{}      = S.empty
-namesInAtom BoolLit{}     = S.empty
+namesInAtom :: Ord a => Atom a -> S.Set (Name a, a)
+namesInAtom AtBuiltin{}                = S.empty
+namesInAtom (If _ as as')              = foldMap namesInAtom as <> foldMap namesInAtom as'
+namesInAtom (Dip _ as)                 = foldMap namesInAtom as
+namesInAtom (AtName _ n@(Name _ _ l))  = S.singleton (n, l)
+namesInAtom (AtCons _ tn@(Name _ _ l)) = S.singleton (tn, l)
+namesInAtom IntLit{}                   = S.empty
+namesInAtom BoolLit{}                  = S.empty
 
-exports :: Module a b -> [Name b]
+exports :: Module a b -> [(Name b, b)]
 exports = mapMaybe exportsDecl
 
-exportsDecl :: KempeDecl a b -> Maybe (Name b)
-exportsDecl (Export _ _ n) = Just n
-exportsDecl _              = Nothing
+exportsDecl :: KempeDecl a b -> Maybe (Name b, b)
+exportsDecl (Export _ _ n@(Name _ _ l)) = Just (n, l)
+exportsDecl _                           = Nothing
 
 {-
 --- all names + their type at call site
