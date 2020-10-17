@@ -32,6 +32,7 @@ type MonoStackType = ([KempeTy ()], [KempeTy ()])
 monomorphize :: Module () (StackType ()) -> Module () MonoStackType
 monomorphize = undefined
 
+-- | Filter so that only the 'KempeDecl's necessary for exports are there
 closedModule :: Module a b -> Module a b
 closedModule m = map pickDecl roots
     where key = mkModuleMap m
@@ -40,7 +41,6 @@ closedModule m = map pickDecl roots
             case IM.lookup i key of
                 Just decl -> decl
                 Nothing   -> error "Internal error! module map should contain all names."
-
 
 closure :: (Module a b, ModuleMap a b) -> S.Set (Name b)
 closure (m, key) = loop roots

@@ -4,6 +4,7 @@ import           Control.Exception    (throwIO)
 import           Criterion.Main
 import qualified Data.ByteString.Lazy as BSL
 import           Kempe.Lexer
+import           Kempe.Monomorphize
 import           Kempe.Parser
 import           Kempe.TyAssign
 
@@ -18,6 +19,7 @@ main =
                     bgroup "type assignment"
                       [ bench "check" $ nf runCheck p
                       , bench "assign" $ nf runAssign p
+                      , bench "closure" $ nf closedModule (snd p)
                       ]
                 ]
     where parsedM = yeetIO . parseWithMax =<< BSL.readFile "test/data/ty.kmp"
