@@ -2,14 +2,17 @@
 {-# LANGUAGE TupleSections     #-}
 
 module Kempe.Monomorphize ( closedModule
+                          , MonoM
+                          , runMonoM
                           -- * For testing
                           , mkModuleMap
                           , closure
                           ) where
 
 import           Control.Monad.Except (throwError)
-import           Control.Monad.State  (StateT, evalStateT)
+import           Control.Monad.State  (StateT, evalStateT, gets)
 import qualified Data.IntMap          as IM
+import qualified Data.Map             as M
 import           Data.Maybe           (mapMaybe)
 import           Data.Semigroup       ((<>))
 import qualified Data.Set             as S
@@ -18,14 +21,24 @@ import           Kempe.AST
 import           Kempe.Error
 import           Kempe.Name
 import           Kempe.Unique
+import           Lens.Micro           (_1, _2)
+import           Lens.Micro.Mtl       (modifying)
 
--- | New function names, also max state threaded through.
-type RenameEnv = (Int, IM.IntMap Int)
+-- | New function names, keyed by name + specialized type
+--
+-- also max state threaded through.
+type RenameEnv = (Int, M.Map (Unique, MonoStackType) Unique)
 
 type MonoM = StateT RenameEnv (Either (Error ()))
 
 runMonoM :: Int -> MonoM a -> Either (Error ()) a
 runMonoM maxI = flip evalStateT (maxI, mempty)
+
+freshName :: T.Text -> a -> MonoM (Name a)
+freshName n ty = do
+    pSt <- gets fst
+    Name n (Unique $ pSt + 1) ty
+        <$ modifying _1 (+1)
 
 -- | A 'ModuleMap' is a map which retrives the 'KempeDecl' associated with
 -- a given 'Name'
@@ -65,24 +78,33 @@ tyEquiv :: StackType () -> MonoStackType -> Bool
 tyEquiv (StackType _ is os) (is', os') =
     is == is' && os == os'
 
--- | Filter so that only the 'KempeDecl's necessary for exports are there
+-- | Filter so that only the 'KempeDecl's necessary for exports are there.
 --
 -- This will throw an exception on ill-typed programs.
-closedModule :: Ord b => Module a b -> Module a b
-closedModule m = fmap pickDecl roots
+closedModule :: Module () (StackType ()) -> MonoM (Module () (StackType ()))
+closedModule m = traverse pickDecl roots
     where key = mkModuleMap m
           roots = S.toList $ closure (m, key)
-          pickDecl (Name _ (Unique i) _, _) =
+          pickDecl (Name _ (Unique i) _, ty) =
             case IM.lookup i key of
-                Just decl -> decl
+                Just decl -> specializeDecl decl ty
                 Nothing   -> error "Internal error! module map should contain all names."
 
+specializeDecl :: KempeDecl () (StackType ()) -> StackType () -> MonoM (KempeDecl () (StackType ()))
+specializeDecl = undefined -- TODO: is it possible to specialize everything at this phase? -> might have to re-type-assign everything lol
+
+renamed :: Name a -> MonoStackType -> MonoM (Name MonoStackType)
+renamed (Name t i _) sty = do
+    let t' = t <> squishMonoStackType sty
+    newTA@(Name _ j _) <- freshName t' sty
+    modifying _2 (M.insert (i, sty) j)
+    pure newTA
 
 closure :: Ord b => (Module a b, ModuleMap a b) -> S.Set (Name b, b)
 closure (m, key) = loop roots
     where roots = S.fromList (exports m)
           loop ns =
-            let res = foldMap step (S.map fst ns)
+            let res = foldMap (step . fst) ns
                 in if res == ns
                     then res -- test it doesn't bottom on cyclic lookups...
                     else ns <> loop (res S.\\ ns)

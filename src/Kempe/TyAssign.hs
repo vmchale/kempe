@@ -9,7 +9,8 @@ module Kempe.TyAssign ( TypeM
 import           Control.Composition  (thread)
 import           Control.Monad        (foldM, replicateM, when, zipWithM_)
 import           Control.Monad.Except (throwError)
-import           Control.Monad.State  (StateT, evalStateT, get, gets, modify, put)
+import           Control.Monad.State  (StateT, get, gets, modify, put, runStateT)
+import           Data.Bifunctor       (second)
 import           Data.Foldable        (traverse_)
 import           Data.Functor         (void, ($>))
 import qualified Data.IntMap          as IM
@@ -96,9 +97,9 @@ unifyM s =
 
 -- TODO: take constructor types as an argument?..
 runTypeM :: Int -- ^ For renamer
-         -> TypeM a x -> Either (Error a) x
-runTypeM maxInt =
-    flip evalStateT (TyState maxInt mempty mempty mempty S.empty)
+         -> TypeM a x -> Either (Error a) (x, Int)
+runTypeM maxInt = fmap (second maxU) .
+    flip runStateT (TyState maxInt mempty mempty mempty S.empty)
 
 -- monomorphization
 

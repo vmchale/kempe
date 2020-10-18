@@ -12,5 +12,5 @@ tcFile :: FilePath -> IO (Either (Error ()) ())
 tcFile fp = do
     contents <- BSL.readFile fp
     (maxU, m) <- yeetIO $ parseWithMax contents
-    pure $ runTypeM maxU (checkModule m)
+    pure $ fst <$> runTypeM maxU (checkModule m)
     where yeetIO = either throwIO pure
