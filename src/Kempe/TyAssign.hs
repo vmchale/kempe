@@ -65,7 +65,7 @@ onType :: (Int, KempeTy a) -> KempeTy a -> KempeTy a
 onType _ ty'@TyBuiltin{} = ty'
 onType _ ty'@TyNamed{}   = ty'
 onType (k, ty) ty'@(TyVar _ (Name _ (Unique i) _)) | i == k = ty
-                                                    | otherwise = ty'
+                                                   | otherwise = ty'
 
 renameForward :: (Int, KempeTy a) -> [(KempeTy a, KempeTy a)] -> [(KempeTy a, KempeTy a)]
 renameForward _ []                      = []

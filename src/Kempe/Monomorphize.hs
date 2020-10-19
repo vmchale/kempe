@@ -4,9 +4,6 @@
 module Kempe.Monomorphize ( closedModule
                           , MonoM
                           , runMonoM
-                          -- * For testing
-                          , mkModuleMap
-                          , closure
                           ) where
 
 import           Control.Monad.Except (throwError)
@@ -74,13 +71,11 @@ tryMono :: StackType () -> MonoM MonoStackType
 tryMono (StackType _ is os) | S.null (freeVars (is ++ os)) = pure (is, os)
                             | otherwise = throwError $ MonoFailed ()
 
-tyEquiv :: StackType () -> MonoStackType -> Bool
-tyEquiv (StackType _ is os) (is', os') =
-    is == is' && os == os'
-
 -- | Filter so that only the 'KempeDecl's necessary for exports are there.
 --
 -- This will throw an exception on ill-typed programs.
+--
+-- The 'Module' returned will still have to be renamed.
 closedModule :: Module () (StackType ()) -> MonoM (Module () (StackType ()))
 closedModule m = traverse pickDecl roots
     where key = mkModuleMap m
@@ -91,8 +86,24 @@ closedModule m = traverse pickDecl roots
                 Nothing   -> error "Internal error! module map should contain all names."
 
 specializeDecl :: KempeDecl () (StackType ()) -> StackType () -> MonoM (KempeDecl () (StackType ()))
-specializeDecl = undefined -- TODO: is it possible to specialize everything at this phase? -> might have to re-type-assign everything lol
+specializeDecl (FunDecl _ n _ _ as) sty = do
+    mTy <- tryMono sty
+    (Name t u (is, os)) <- renamed n mTy
+    let newStackType = StackType S.empty is os
+    pure $ FunDecl newStackType (Name t u newStackType) is os as
 
+{-
+-- | Convert a 'StackType' of an 'ExtFnDecl' to a 'MonoStackType'
+retypeExt :: StackType () -> MonoM MonoStackType
+retypeExt (StackType qs is os) | S.null qs = pure (is, os)
+                               | otherwise = throwError $ TyVarExt ()
+
+checkDecl :: KempeDecl () (StackType ()) -> Either (Error ()) (KempeDecl () MonoStackType)
+checkDecl (ExtFnDecl l (Name t u l') is os cn) = ExtFnDecl <$> retypeExt l <*> (Name t u <$> retypeExt l') <*> pure is <*> pure os <*> pure cn
+checkDecl (Export l abi (Name t u l'))         = Export <$> retypeExt l <*> pure abi <*> (Name t u <$> retypeExt l')
+-}
+
+-- | Insert a specialized rename.
 renamed :: Name a -> MonoStackType -> MonoM (Name MonoStackType)
 renamed (Name t i _) sty = do
     let t' = t <> squishMonoStackType sty
@@ -134,38 +145,3 @@ exports = mapMaybe exportsDecl
 exportsDecl :: KempeDecl a b -> Maybe (Name b, b)
 exportsDecl (Export _ _ n@(Name _ _ l)) = Just (n, l)
 exportsDecl _                           = Nothing
-
-{-
---- all names + their type at call site
-type Uses = S.Set (Name (), StackType ()) -- should this contain only polymorphic stuff?
-
-usesAtom :: Atom (StackType ()) -> Uses
-usesAtom AtBuiltin{}                = mempty
-usesAtom BoolLit{}                  = mempty
-usesAtom IntLit{}                   = mempty
-usesAtom (AtName _ n@(Name _ _ l))  = S.singleton (void n, l)
-usesAtom (If _ as as')              = foldMap usesAtom as <> foldMap usesAtom as'
-usesAtom (Dip _ as)                 = foldMap usesAtom as
-usesAtom (AtCons _ tn@(Name _ _ l)) = S.singleton (void tn, l)
-
-usesDecl :: KempeDecl () (StackType ()) -> Uses
-usesDecl TyDecl{}             = mempty
-usesDecl ExtFnDecl{}          = mempty
-usesDecl (FunDecl _ _ _ _ as) = foldMap usesAtom as
-
-uses :: Module () (StackType ()) -> Uses
-uses = foldMap usesDecl
-
--- | Convert a 'StackType' of an 'ExtFnDecl' to a 'MonoStackType'
-retypeExt :: StackType () -> Either (Error ()) MonoStackType
-retypeExt (StackType qs is os) | S.null qs = Right (is, os)
-                               | otherwise = Left $ TyVarExt ()
-
-checkDecl :: KempeDecl () (StackType ()) -> Either (Error ()) (KempeDecl () MonoStackType)
-checkDecl (ExtFnDecl l (Name t u l') is os cn) = ExtFnDecl <$> retypeExt l <*> (Name t u <$> retypeExt l') <*> pure is <*> pure os <*> pure cn
-checkDecl (Export l abi (Name t u l'))         = Export <$> retypeExt l <*> pure abi <*> (Name t u <$> retypeExt l')
-
---- decide which versions we need?
-checkExt :: Module () (StackType ()) -> Either (Error ()) (Module () MonoStackType)
-checkExt = traverse checkDecl
--}

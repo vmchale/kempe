@@ -127,5 +127,3 @@ extrVars (TyTuple _ tys)  = concatMap extrVars tys
 
 freeVars :: [KempeTy a] -> S.Set (Name a)
 freeVars tys = S.fromList (concatMap extrVars tys)
-
-
