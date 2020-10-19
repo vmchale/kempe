@@ -4,6 +4,9 @@
 module Kempe.Monomorphize ( closedModule
                           , MonoM
                           , runMonoM
+                          -- * Benchmark
+                          , closure
+                          , mkModuleMap
                           ) where
 
 import           Control.Monad.Except (throwError)
@@ -24,7 +27,7 @@ import           Lens.Micro.Mtl       (modifying)
 -- | New function names, keyed by name + specialized type
 --
 -- also max state threaded through.
-type RenameEnv = (Int, M.Map (Unique, MonoStackType) Unique)
+type RenameEnv = (Int, M.Map (Unique, StackType ()) Unique)
 
 type MonoM = StateT RenameEnv (Either (Error ()))
 
@@ -88,8 +91,7 @@ closedModule m = traverse pickDecl roots
 specializeDecl :: KempeDecl () (StackType ()) -> StackType () -> MonoM (KempeDecl () (StackType ()))
 specializeDecl (FunDecl _ n _ _ as) sty = do
     mTy <- tryMono sty
-    (Name t u (is, os)) <- renamed n mTy
-    let newStackType = StackType S.empty is os
+    (Name t u newStackType@(StackType _ is os)) <- renamed n mTy
     pure $ FunDecl newStackType (Name t u newStackType) is os as
 
 {-
@@ -104,12 +106,13 @@ checkDecl (Export l abi (Name t u l'))         = Export <$> retypeExt l <*> pure
 -}
 
 -- | Insert a specialized rename.
-renamed :: Name a -> MonoStackType -> MonoM (Name MonoStackType)
-renamed (Name t i _) sty = do
+renamed :: Name a -> MonoStackType -> MonoM (Name (StackType ()))
+renamed (Name t i _) sty@(is, os) = do
     let t' = t <> squishMonoStackType sty
-    newTA@(Name _ j _) <- freshName t' sty
-    modifying _2 (M.insert (i, sty) j)
-    pure newTA
+    (Name _ j _) <- freshName t' sty
+    let newStackType = StackType S.empty is os
+    modifying _2 (M.insert (i, newStackType) j)
+    pure (Name t' j newStackType)
 
 closure :: Ord b => (Module a b, ModuleMap a b) -> S.Set (Name b, b)
 closure (m, key) = loop roots

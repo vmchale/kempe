@@ -3,6 +3,7 @@ module Main (main) where
 import           Control.Exception    (throwIO)
 import           Criterion.Main
 import qualified Data.ByteString.Lazy as BSL
+import           Data.Functor         (void)
 import           Kempe.Lexer
 import           Kempe.Monomorphize
 import           Kempe.Parser
@@ -19,7 +20,8 @@ main =
                     bgroup "type assignment"
                       [ bench "check" $ nf runCheck p
                       , bench "assign" $ nf runAssign p
-                      , bench "closure" $ nf (runSpecialize =<<) (runAssign p)
+                      , bench "closedModule" $ nf (runSpecialize =<<) (runAssign p)
+                      , bench "closure" $ nf (\m -> closure (m, mkModuleMap m)) (void <$> snd p)
                       ]
                 ]
     where parsedM = yeetIO . parseWithMax =<< BSL.readFile "test/data/ty.kmp"
