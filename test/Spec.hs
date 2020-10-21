@@ -2,10 +2,14 @@
 
 module Main (main) where
 
+import           Control.Exception    (Exception, throwIO)
 import qualified Data.ByteString.Lazy as BSL
+import           Kempe.AST
 import           Kempe.File
 import           Kempe.Lexer
+import           Kempe.Monomorphize
 import           Kempe.Parser
+import           Kempe.TyAssign
 import           Prettyprinter        (pretty)
 import           Test.Tasty
 import           Test.Tasty.HUnit
@@ -24,6 +28,8 @@ main = defaultMain $
             , tyInfer "lib/either.kmp"
             , badType "test/err/merge.kmp" "could not unify type 'Int' with 'a_3'"
             , badType "test/err/kind.kmp" ""
+            , testAssignment "test/data/ty.kmp"
+            , monoTest "test/data/ty.kmp"
             ]
         ]
 
@@ -54,3 +60,24 @@ badType fp msg = testCase ("Detects error (" ++ fp ++ ")") $ do
     case res of
         Left err -> show (pretty err) @?= msg
         Right{}  -> assertFailure "No error detected!"
+
+testAssignment :: FilePath -> TestTree
+testAssignment fp = testCase ("Annotates " ++ fp ++ " with types") $
+    assignTypes fp *> assertBool "Does not throw an exception" True
+
+assignTypes :: FilePath -> IO (Module () (StackType ()), Int)
+assignTypes fp = do
+    contents <- BSL.readFile fp
+    (maxU, m) <- yeetIO $ parseWithMax contents
+    yeetIO $ runTypeM maxU (assignModule m)
+    where yeetIO :: Exception e => Either e a -> IO a
+          yeetIO = either throwIO pure
+
+monoTest :: FilePath -> TestTree
+monoTest fp = testCase ("Monomorphizes " ++ fp ++ " without error") $ monoFile fp
+
+monoFile :: FilePath -> Assertion
+monoFile fp = do
+    (tyM, i) <- assignTypes fp
+    let res = runMonoM i (flattenModule tyM)
+    assertBool "Doesn't throw any exceptions" (res `seq` True)

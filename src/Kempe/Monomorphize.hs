@@ -4,13 +4,16 @@
 module Kempe.Monomorphize ( closedModule
                           , MonoM
                           , runMonoM
+                          , flattenModule
                           -- * Benchmark
                           , closure
                           , mkModuleMap
                           ) where
 
+import           Control.Monad        ((<=<))
 import           Control.Monad.Except (throwError)
-import           Control.Monad.State  (StateT, evalStateT, gets)
+import           Control.Monad.State  (StateT, gets, runStateT)
+import           Data.Bifunctor       (second)
 import qualified Data.IntMap          as IM
 import qualified Data.Map             as M
 import           Data.Maybe           (mapMaybe)
@@ -31,8 +34,8 @@ type RenameEnv = (Int, M.Map (Unique, StackType ()) Unique)
 
 type MonoM = StateT RenameEnv (Either (Error ()))
 
-runMonoM :: Int -> MonoM a -> Either (Error ()) a
-runMonoM maxI = flip evalStateT (maxI, mempty)
+runMonoM :: Int -> MonoM a -> Either (Error ()) (a, Int)
+runMonoM maxI = fmap (second fst) . flip runStateT (maxI, mempty)
 
 freshName :: T.Text -> a -> MonoM (Name a)
 freshName n ty = do
@@ -74,11 +77,35 @@ tryMono :: StackType () -> MonoM MonoStackType
 tryMono (StackType _ is os) | S.null (freeVars (is ++ os)) = pure (is, os)
                             | otherwise = throwError $ MonoFailed ()
 
--- | Filter so that only the 'KempeDecl's necessary for exports are there.
+renameAtom :: Atom (StackType ()) -> MonoM (Atom (StackType ()))
+renameAtom a@AtBuiltin{}            = pure a
+renameAtom (If ty as as')           = If ty <$> traverse renameAtom as <*> traverse renameAtom as'
+renameAtom a@IntLit{}               = pure a
+renameAtom a@BoolLit{}              = pure a
+renameAtom (Dip ty as)              = Dip ty <$> traverse renameAtom as
+renameAtom (AtName ty (Name t u l)) = do
+    mSt <- gets snd
+    let u' = M.findWithDefault (error "Internal error!") (u, ty) mSt
+    pure $ AtName ty (Name t u' l)
+
+renameDecl :: KempeDecl () (StackType ()) -> MonoM (KempeDecl () (StackType ()))
+renameDecl (FunDecl l n is os as) = FunDecl l n is os <$> traverse renameAtom as
+renameDecl d@Export{}             = pure d
+renameDecl d@ExtFnDecl{}          = pure d
+
+flattenModule :: Module () (StackType ()) -> MonoM (Module () (StackType ()))
+flattenModule = renameMonoM <=< closedModule
+
+-- | To be called after 'closedModule'
+renameMonoM :: Module () (StackType ()) -> MonoM (Module () (StackType ()))
+renameMonoM = traverse renameDecl
+
+-- | Filter so that only the 'KempeDecl's necessary for exports are there, and
+-- fan out top-level functions into all necessary specializations.
 --
 -- This will throw an exception on ill-typed programs.
 --
--- The 'Module' returned will still have to be renamed.
+-- The 'Module' returned will have to be renamed.
 closedModule :: Module () (StackType ()) -> MonoM (Module () (StackType ()))
 closedModule m = traverse pickDecl roots
     where key = mkModuleMap m
@@ -90,9 +117,11 @@ closedModule m = traverse pickDecl roots
 
 specializeDecl :: KempeDecl () (StackType ()) -> StackType () -> MonoM (KempeDecl () (StackType ()))
 specializeDecl (FunDecl _ n _ _ as) sty = do
-    mTy <- tryMono sty
-    (Name t u newStackType@(StackType _ is os)) <- renamed n mTy
+    (Name t u newStackType@(StackType _ is os)) <- renamed n =<< tryMono sty
     pure $ FunDecl newStackType (Name t u newStackType) is os as
+specializeDecl d@ExtFnDecl{} _ = pure d
+specializeDecl d@Export{} _    = pure d
+-- leave exports and foreign imports alone (have to be monomorphic)
 
 {-
 -- | Convert a 'StackType' of an 'ExtFnDecl' to a 'MonoStackType'

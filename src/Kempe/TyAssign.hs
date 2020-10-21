@@ -129,14 +129,14 @@ tyLookup n@(Name _ (Unique i) l) = do
     st <- gets tyEnv
     case IM.lookup i st of
         Just ty -> pure ty
-        Nothing -> throwError (PoorScope l n)
+        Nothing -> throwError $ PoorScope l n
 
 consLookup :: TyName a -> TypeM a (StackType a)
 consLookup tn@(Name _ (Unique i) l) = do
     st <- gets constructorTypes
     case IM.lookup i st of
         Just ty -> pure ty
-        Nothing -> throwError (PoorScope l tn)
+        Nothing -> throwError $ PoorScope l tn
 
 -- expandType 1
 dipify :: StackType () -> TypeM () (StackType ())
@@ -150,7 +150,7 @@ assignAtom a@(BoolLit _ b)   = BoolLit <$> tyAtom a <*> pure b
 assignAtom a@(IntLit _ i)    = IntLit <$> tyAtom a <*> pure i
 assignAtom a@(AtName _ n)    = AtName <$> tyAtom a <*> assignName n
 assignAtom a@(Dip _ as)      = Dip <$> tyAtom a <*> traverse assignAtom as
-assignAtom a@(AtCons _ tn)   = AtCons <$> tyAtom a <*> assignName tn
+assignAtom a@(AtCons _ tn)   = AtCons <$> tyAtom a <*> assignCons tn
 assignAtom a@(If _ as as')   = If <$> tyAtom a <*> traverse assignAtom as <*> traverse assignAtom as'
 
 assignName :: Name a -> TypeM () (Name (StackType ()))

@@ -20,9 +20,6 @@ drop3 : a b c --
 trip : a -- a a a
      =: [ dup dup ]
 
-push3 : -- OS OS OS
-      =: [ Linux trip ]
-
 trint : -- Int Int Int
       =: [ 0 trip ]
 
@@ -31,5 +28,8 @@ odd : Int -- Bool
 
 randBool : -- Bool
          =: [ rand odd ]
+
+push3 : -- OS OS OS
+      =: [ Linux trip ]
 
 %foreign cabi randBool
