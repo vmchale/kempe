@@ -1,10 +1,10 @@
 module Kempe.Shuttle ( monomorphize
                      ) where
 
-import Kempe.AST
-import Kempe.Specialize
-import Kempe.TyAssign
-import Kempe.Error
+import           Kempe.AST
+import           Kempe.Error
+import           Kempe.Specialize
+import           Kempe.TyAssign
 
 monomorphize :: Int
              -> Module a b

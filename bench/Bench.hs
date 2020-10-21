@@ -5,8 +5,8 @@ import           Criterion.Main
 import qualified Data.ByteString.Lazy as BSL
 import           Data.Functor         (void)
 import           Kempe.Lexer
-import           Kempe.Specialize
 import           Kempe.Parser
+import           Kempe.Specialize
 import           Kempe.TyAssign
 
 main :: IO ()
