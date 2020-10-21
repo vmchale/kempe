@@ -30,7 +30,7 @@ library
         Kempe.AST
         Kempe.TyAssign
         Kempe.File
-        Kempe.Monomorphize
+        Kempe.Specialize
 
     build-tool-depends: alex:alex -any, happy:happy -any
     hs-source-dirs:     src

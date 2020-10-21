@@ -7,7 +7,7 @@ import qualified Data.ByteString.Lazy as BSL
 import           Kempe.AST
 import           Kempe.File
 import           Kempe.Lexer
-import           Kempe.Monomorphize
+import           Kempe.Specialize
 import           Kempe.Parser
 import           Kempe.TyAssign
 import           Prettyprinter        (pretty)

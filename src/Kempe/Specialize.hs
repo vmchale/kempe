@@ -1,14 +1,14 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TupleSections     #-}
 
-module Kempe.Monomorphize ( closedModule
-                          , MonoM
-                          , runMonoM
-                          , flattenModule
-                          -- * Benchmark
-                          , closure
-                          , mkModuleMap
-                          ) where
+module Kempe.Specialize ( closedModule
+                        , MonoM
+                        , runMonoM
+                        , flattenModule
+                        -- * Benchmark
+                        , closure
+                        , mkModuleMap
+                        ) where
 
 import           Control.Monad        ((<=<))
 import           Control.Monad.Except (throwError)
