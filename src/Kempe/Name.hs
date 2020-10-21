@@ -1,4 +1,6 @@
+{-# LANGUAGE DeriveFoldable    #-}
 {-# LANGUAGE DeriveFunctor     #-}
+{-# LANGUAGE DeriveTraversable #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Kempe.Name ( Name (..)
@@ -14,7 +16,7 @@ import           Prettyprinter   (Pretty (pretty))
 data Name a = Name { name   :: T.Text
                    , unique :: !Unique
                    , loc    :: a
-                   } deriving (Functor)
+                   } deriving (Functor, Foldable, Traversable)
 
 instance Eq (Name a) where
     (==) (Name _ u _) (Name _ u' _) = u == u'

@@ -1,6 +1,8 @@
 {-# LANGUAGE DeriveAnyClass    #-}
+{-# LANGUAGE DeriveFoldable    #-}
 {-# LANGUAGE DeriveFunctor     #-}
 {-# LANGUAGE DeriveGeneric     #-}
+{-# LANGUAGE DeriveTraversable #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 -- | Frontend AST
@@ -83,7 +85,7 @@ data Pattern b = PatternInt b Integer
                | PatternWildcard b
                | PatternBool b Bool
                -- -- | PatternTuple
-               deriving (Generic, NFData, Functor)
+               deriving (Generic, NFData, Functor, Foldable, Traversable)
 
 data Atom b = AtName b (Name b)
             | Case b (NonEmpty (Pattern b, [Atom b]))
@@ -93,7 +95,7 @@ data Atom b = AtName b (Name b)
             | BoolLit b Bool
             | AtBuiltin b BuiltinFn
             | AtCons b (TyName b)
-            deriving (Generic, NFData, Functor)
+            deriving (Generic, NFData, Functor, Foldable, Traversable)
 
 data BuiltinFn = Drop
                | Swap
@@ -113,7 +115,7 @@ data KempeDecl a b = TyDecl a (TyName a) [Name a] [(TyName b, [KempeTy a])]
                    | FunDecl b (Name b) [KempeTy a] [KempeTy a] [Atom b]
                    | ExtFnDecl b (Name b) [KempeTy a] [KempeTy a] BSL.ByteString
                    | Export b ABI (Name b)
-                   deriving (Generic, NFData, Functor)
+                   deriving (Generic, NFData, Functor, Foldable, Traversable)
                    -- bifunctor
 
 type Module a b = [KempeDecl a b]

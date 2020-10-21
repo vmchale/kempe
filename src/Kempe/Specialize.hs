@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts  #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TupleSections     #-}
 
@@ -5,13 +6,14 @@ module Kempe.Specialize ( closedModule
                         , MonoM
                         , runMonoM
                         , flattenModule
+                        , tryMono
                         -- * Benchmark
                         , closure
                         , mkModuleMap
                         ) where
 
 import           Control.Monad        ((<=<))
-import           Control.Monad.Except (throwError)
+import           Control.Monad.Except (MonadError, throwError)
 import           Control.Monad.State  (StateT, gets, runStateT)
 import           Data.Bifunctor       (second)
 import qualified Data.IntMap          as IM
@@ -73,7 +75,7 @@ squishType (TyApp _ ty ty')         = squishType ty <> squishType ty'
 squishMonoStackType :: MonoStackType -> T.Text
 squishMonoStackType (is, os) = foldMap squishType is <> "TT" <> foldMap squishType os
 
-tryMono :: StackType () -> MonoM MonoStackType
+tryMono :: MonadError (Error ()) m => StackType () -> m MonoStackType
 tryMono (StackType _ is os) | S.null (freeVars (is ++ os)) = pure (is, os)
                             | otherwise = throwError $ MonoFailed ()
 
