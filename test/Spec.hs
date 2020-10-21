@@ -8,6 +8,7 @@ import           Kempe.AST
 import           Kempe.File
 import           Kempe.Lexer
 import           Kempe.Specialize
+import           Kempe.Shuttle
 import           Kempe.Parser
 import           Kempe.TyAssign
 import           Prettyprinter        (pretty)
@@ -30,6 +31,7 @@ main = defaultMain $
             , badType "test/err/kind.kmp" ""
             , testAssignment "test/data/ty.kmp"
             , monoTest "test/data/ty.kmp"
+            , pipelineWorks "test/data/ty.kmp"
             ]
         ]
 
@@ -70,8 +72,9 @@ assignTypes fp = do
     contents <- BSL.readFile fp
     (maxU, m) <- yeetIO $ parseWithMax contents
     yeetIO $ runTypeM maxU (assignModule m)
-    where yeetIO :: Exception e => Either e a -> IO a
-          yeetIO = either throwIO pure
+
+yeetIO :: Exception e => Either e a -> IO a
+yeetIO = either throwIO pure
 
 monoTest :: FilePath -> TestTree
 monoTest fp = testCase ("Monomorphizes " ++ fp ++ " without error") $ monoFile fp
@@ -81,3 +84,12 @@ monoFile fp = do
     (tyM, i) <- assignTypes fp
     let res = runMonoM i (flattenModule tyM)
     assertBool "Doesn't throw any exceptions" (res `seq` True)
+
+pipelineWorks :: FilePath -> TestTree
+pipelineWorks fp = testCase ("Functions in " ++ fp ++ " can be specialized") $ do
+    contents <- BSL.readFile fp
+    (maxU, m) <- yeetIO $ parseWithMax contents
+    let res = monomorphize maxU m
+    case res of
+        Left err -> assertFailure (show $ pretty err)
+        Right{}  -> assertBool "Doesn't fail type-checkign" True

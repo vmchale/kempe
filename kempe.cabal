@@ -31,6 +31,7 @@ library
         Kempe.TyAssign
         Kempe.File
         Kempe.Specialize
+        Kempe.Shuttle
 
     build-tool-depends: alex:alex -any, happy:happy -any
     hs-source-dirs:     src

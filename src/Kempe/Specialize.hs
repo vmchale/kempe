@@ -7,6 +7,7 @@ module Kempe.Specialize ( closedModule
                         , runMonoM
                         , flattenModule
                         , tryMono
+                        , MonoStackType
                         -- * Benchmark
                         , closure
                         , mkModuleMap
