@@ -126,17 +126,6 @@ specializeDecl d@ExtFnDecl{} _ = pure d
 specializeDecl d@Export{} _    = pure d
 -- leave exports and foreign imports alone (have to be monomorphic)
 
-{-
--- | Convert a 'StackType' of an 'ExtFnDecl' to a 'MonoStackType'
-retypeExt :: StackType () -> MonoM MonoStackType
-retypeExt (StackType qs is os) | S.null qs = pure (is, os)
-                               | otherwise = throwError $ TyVarExt ()
-
-checkDecl :: KempeDecl () (StackType ()) -> Either (Error ()) (KempeDecl () MonoStackType)
-checkDecl (ExtFnDecl l (Name t u l') is os cn) = ExtFnDecl <$> retypeExt l <*> (Name t u <$> retypeExt l') <*> pure is <*> pure os <*> pure cn
-checkDecl (Export l abi (Name t u l'))         = Export <$> retypeExt l <*> pure abi <*> (Name t u <$> retypeExt l')
--}
-
 -- | Insert a specialized rename.
 renamed :: Name a -> MonoStackType -> MonoM (Name (StackType ()))
 renamed (Name t i _) sty@(is, os) = do
