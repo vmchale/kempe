@@ -7,7 +7,6 @@ module Kempe.Specialize ( closedModule
                         , runMonoM
                         , flattenModule
                         , tryMono
-                        , MonoStackType
                         -- * Benchmark
                         , closure
                         , mkModuleMap
@@ -58,8 +57,6 @@ mkModuleMap = IM.fromList . concatMap toInt where
         let us = unUnique . unique . fst <$> ds
             in (, d) <$> us
     toInt _                                           = []
-
-type MonoStackType = ([KempeTy ()], [KempeTy ()])
 
 squishTypeName :: BuiltinTy -> T.Text
 squishTypeName TyPtr  = "ptr"

@@ -16,6 +16,7 @@ module Kempe.AST ( BuiltinTy (..)
                  , ABI (..)
                  , Module
                  , freeVars
+                 , MonoStackType
                  -- * I resent this...
                  , voidStackType
                  ) where
@@ -65,6 +66,8 @@ data StackType b = StackType { quantify :: S.Set (Name b)
                              , inTypes  :: [KempeTy b]
                              , outTypes :: [KempeTy b]
                              } deriving (Generic, NFData, Eq, Ord)
+
+type MonoStackType = ([KempeTy ()], [KempeTy ()])
 
 instance Pretty (StackType a) where
     pretty (StackType _ ins outs) = sep (fmap pretty ins) <+> "--" <+> sep (fmap pretty outs)
