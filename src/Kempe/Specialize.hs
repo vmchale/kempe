@@ -88,7 +88,7 @@ renameAtom a@BoolLit{}              = pure a
 renameAtom (Dip ty as)              = Dip ty <$> traverse renameAtom as
 renameAtom (AtName ty (Name t u l)) = do
     mSt <- gets snd
-    let u' = M.findWithDefault (error "Internal error!") (u, ty) mSt
+    let u' = M.findWithDefault u (u, ty) mSt
     pure $ AtName ty (Name t u' l)
 
 renameDecl :: KempeDecl () (StackType ()) -> MonoM (KempeDecl () (StackType ()))
