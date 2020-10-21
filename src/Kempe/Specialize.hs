@@ -93,6 +93,7 @@ renameDecl (FunDecl l n is os as) = FunDecl l n is os <$> traverse renameAtom as
 renameDecl d@Export{}             = pure d
 renameDecl d@ExtFnDecl{}          = pure d
 
+-- | Call 'closedModule' and perform any necessary renamings
 flattenModule :: Module () (StackType ()) -> MonoM (Module () (StackType ()))
 flattenModule = renameMonoM <=< closedModule
 
