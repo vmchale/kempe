@@ -6,25 +6,25 @@ module Kempe.TyAssign ( TypeM
                       , assignModule
                       ) where
 
-import           Control.Composition  (thread)
-import           Control.Monad        (foldM, replicateM, when, zipWithM_)
-import           Control.Monad.Except (throwError)
-import           Control.Monad.State  (StateT, get, gets, modify, put, runStateT)
-import           Data.Bifunctor       (second)
-import           Data.Foldable        (traverse_)
-import           Data.Functor         (void, ($>))
-import qualified Data.IntMap          as IM
-import           Data.List.NonEmpty   (NonEmpty (..))
-import           Data.Maybe           (fromMaybe)
-import           Data.Semigroup       ((<>))
-import qualified Data.Set             as S
-import qualified Data.Text            as T
+import           Control.Composition        (thread)
+import           Control.Monad              (foldM, replicateM, when, zipWithM_)
+import           Control.Monad.Except       (throwError)
+import           Control.Monad.State.Strict (StateT, get, gets, modify, put, runStateT)
+import           Data.Bifunctor             (second)
+import           Data.Foldable              (traverse_)
+import           Data.Functor               (void, ($>))
+import qualified Data.IntMap                as IM
+import           Data.List.NonEmpty         (NonEmpty (..))
+import           Data.Maybe                 (fromMaybe)
+import           Data.Semigroup             ((<>))
+import qualified Data.Set                   as S
+import qualified Data.Text                  as T
 import           Kempe.AST
 import           Kempe.Error
 import           Kempe.Name
 import           Kempe.Unique
-import           Lens.Micro           (Lens', over)
-import           Lens.Micro.Mtl       (modifying, (.=))
+import           Lens.Micro                 (Lens', over)
+import           Lens.Micro.Mtl             (modifying, (.=))
 
 type TyEnv a = IM.IntMap (StackType a)
 
