@@ -1,7 +1,7 @@
-module Kempe.AbsAsm ( size
-                    , writeAtom
-                    , Statement (..)
-                    ) where
+module Kempe.IR ( size
+                , writeAtom
+                , Statement (..)
+                ) where
 
 import           Data.Int  (Int64)
 import           Data.Word (Word8)
