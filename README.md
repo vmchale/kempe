@@ -14,3 +14,7 @@ For shell completions but the following in your `~/.bashrc` or
 ```
 eval "$(kc --bash-completion-script kc)"
 ```
+
+## Known Bugs & Defects
+
+Right now there is no kind checker so kind-checking always fails
