@@ -1,6 +1,10 @@
 module Kempe.IR ( size
+                , stackPointer
                 , writeAtom
                 , Statement (..)
+                , Expression (..)
+                , RelBinOp (..)
+                , IntBinOp (..)
                 ) where
 
 import           Data.Int  (Int64)
