@@ -11,6 +11,8 @@ data Label
 
 data Temp
 
+-- Stack pointer?
+
 data Statement = MovTemp Temp Expression
                | StmExpression Expression
                | Seq Statement Statement
@@ -41,6 +43,7 @@ writeAtom = undefined
 
 size :: KempeTy a -> Int
 size (TyBuiltin _ TyInt)  = 8 -- since we're only targeting x86_64 and aarch64 we have 64-bit 'Int's
+size (TyBuiltin _ TyPtr)  = 8
 size (TyBuiltin _ TyBool) = 1
 size TyVar{}              = error "Internal error: type variables not allowed at this stage."
 size (TyTuple _ tys)      = sum (fmap size tys)
