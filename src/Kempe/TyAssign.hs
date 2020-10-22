@@ -80,7 +80,7 @@ unify ((ty@(TyBuiltin _ b0), ty'@(TyBuiltin _ b1)):tys) | b0 == b1   = unify tys
                                                         | otherwise  = Left (UnificationFailed () (void ty) (void ty'))
 unify ((ty@(TyNamed _ n0), ty'@(TyNamed _ n1)):tys) | n0 == n1       = unify tys
                                                     | otherwise      = Left (UnificationFailed () (void ty) (void ty'))
-unify ((ty@(TyNamed _ _), TyVar  _ (Name _ (Unique k) _)):tys)       = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys)
+unify ((ty@(TyNamed _ _), TyVar  _ (Name _ (Unique k) _)):tys)       = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys) -- is this O(n^2) or something bad?
 unify ((TyVar _ (Name _ (Unique k) _), ty@(TyNamed _ _)):tys)        = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys)
 unify ((ty@(TyBuiltin _ _), TyVar  _ (Name _ (Unique k) _)):tys)     = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys)
 unify ((TyVar _ (Name _ (Unique k) _), ty@(TyBuiltin _ _)):tys)      = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys)
@@ -89,10 +89,20 @@ unify ((ty@TyBuiltin{}, ty'@TyNamed{}):_)                            = Left (Uni
 unify ((ty@TyNamed{}, ty'@TyBuiltin{}):_)                            = Left (UnificationFailed () (void ty) (void ty'))
 unify ((ty@TyBuiltin{}, ty'@TyApp{}):_)                              = Left (UnificationFailed () (void ty) (void ty'))
 unify ((ty@TyNamed{}, ty'@TyApp{}):_)                                = Left (UnificationFailed () (void ty) (void ty'))
+unify ((ty@TyApp{}, ty'@TyBuiltin{}):_)                              = Left (UnificationFailed () (void ty) (void ty'))
 unify ((TyVar _ (Name _ (Unique k) _), ty@TyApp{}):tys)              = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys)
 unify ((ty@TyApp{}, TyVar  _ (Name _ (Unique k) _)):tys)             = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys)
 unify ((TyApp _ ty ty', TyApp _ ty'' ty'''):tys)                     = unify ((ty, ty'') : (ty', ty''') : tys) -- TODO: I think this is right?
 unify ((ty@TyApp{}, ty'@TyNamed{}):_)                                = Left (UnificationFailed () (void ty) (void ty'))
+unify ((TyTuple _ tys, TyTuple _ tys'):tys'')                        = unify (zip tys tys' ++ tys'')
+unify ((ty@(TyTuple _ _), TyVar  _ (Name _ (Unique k) _)):tys)       = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys)
+unify ((TyVar _ (Name _ (Unique k) _), ty@(TyTuple _ _)):tys)        = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys)
+unify ((ty@TyBuiltin{}, ty'@TyTuple{}):_)                            = Left (UnificationFailed () (void ty) (void ty'))
+unify ((ty@TyNamed{}, ty'@TyTuple{}):_)                              = Left (UnificationFailed () (void ty) (void ty'))
+unify ((ty@TyTuple{}, ty'@TyBuiltin{}):_)                            = Left (UnificationFailed () (void ty) (void ty'))
+unify ((ty@TyTuple{}, ty'@TyNamed{}):_)                              = Left (UnificationFailed () (void ty) (void ty'))
+unify ((ty@TyApp{}, ty'@TyTuple{}):_)                                = Left (UnificationFailed () (void ty) (void ty'))
+unify ((ty@TyTuple{}, ty'@TyApp{}):_)                                = Left (UnificationFailed () (void ty) (void ty'))
 
 unifyM :: S.Set (KempeTy a, KempeTy a) -> TypeM () (IM.IntMap (KempeTy ()))
 unifyM s =
