@@ -83,8 +83,7 @@ instance Pretty (KempeTy a) where
     pretty (TyTuple _ tys)  = tupled (pretty <$> tys)
 
 data Pattern b = PatternInt b Integer
-               | PatternCons b (TyName b) [Pattern b] -- a constructed pattern
-               | PatternVar b (Name b)
+               | PatternCons b (TyName b) -- a constructed pattern
                | PatternWildcard b
                | PatternBool b Bool
                -- -- | PatternTuple

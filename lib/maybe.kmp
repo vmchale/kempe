@@ -1,6 +1,6 @@
 type Maybe a { Just a | Nothing }
 
-isJust : Maybe a -- Bool
+isJust : (Maybe a) -- Bool
        =: [
     { case
         | Just -> drop True
@@ -8,7 +8,7 @@ isJust : Maybe a -- Bool
     }
 ]
 
-isNothing : Maybe a -- Bool
+isNothing : (Maybe a) -- Bool
           =: [
     { case
         | Nothing -> True

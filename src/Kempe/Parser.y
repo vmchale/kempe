@@ -158,8 +158,7 @@ CaseLeaf :: { (Pattern AlexPosn, [Atom AlexPosn]) }
          : vbar Pattern caseArr many(Atom) { ($2, reverse $4) }
 
 Pattern :: { Pattern AlexPosn }
-        : tyName many(Pattern) { PatternCons (Name.loc $1) $1 $2 }
-        | name { PatternVar (Name.loc $1) $1 }
+        : tyName { PatternCons (Name.loc $1) $1 }
         | underscore { PatternWildcard $1 }
         | intLit { PatternInt (loc $1) (int $1) }
         | boolLit { PatternBool (loc $1) (bool $ builtin $1) }

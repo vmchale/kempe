@@ -13,6 +13,7 @@ import           Control.Monad.State.Strict (StateT, get, gets, modify, put, run
 import           Data.Bifunctor             (second)
 import           Data.Foldable              (traverse_)
 import           Data.Functor               (void, ($>))
+import Data.List (foldl')
 import qualified Data.IntMap                as IM
 import           Data.List.NonEmpty         (NonEmpty (..))
 import           Data.Maybe                 (fromMaybe)
@@ -66,28 +67,31 @@ onType _ ty'@TyBuiltin{} = ty'
 onType _ ty'@TyNamed{}   = ty'
 onType (k, ty) ty'@(TyVar _ (Name _ (Unique i) _)) | i == k = ty
                                                    | otherwise = ty'
+onType (k, ty) (TyApp l ty' ty'') = TyApp l (onType (k, ty) ty') (onType (k, ty) ty'')
 
 renameForward :: (Int, KempeTy a) -> [(KempeTy a, KempeTy a)] -> [(KempeTy a, KempeTy a)]
 renameForward _ []                      = []
 renameForward (k, ty) ((ty', ty''):tys) = (onType (k, ty) ty', onType (k, ty) ty'') : renameForward (k, ty) tys
 
 unify :: [(KempeTy a, KempeTy a)] -> Either (Error ()) (IM.IntMap (KempeTy ()))
-unify []                                                            = Right mempty
-unify ((ty@(TyBuiltin _ b0), ty'@(TyBuiltin _ b1)):tys) | b0 == b1  = unify tys
-                                                        | otherwise = Left (UnificationFailed () (void ty) (void ty'))
-unify ((ty@(TyNamed _ n0), ty'@(TyNamed _ n1)):tys) | n0 == n1      = unify tys
-                                                    | otherwise     = Left (UnificationFailed () (void ty) (void ty'))
-unify ((ty@(TyNamed _ _), TyVar  _ (Name _ (Unique k) _)):tys)      = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys)
-unify ((TyVar _ (Name _ (Unique k) _), ty@(TyNamed _ _)):tys)       = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys)
-unify ((ty@(TyBuiltin _ _), TyVar  _ (Name _ (Unique k) _)):tys)    = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys)
-unify ((TyVar _ (Name _ (Unique k) _), ty@(TyBuiltin _ _)):tys)     = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys)
-unify ((TyVar _ (Name _ (Unique k) _), ty@(TyVar _ _)):tys)         = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys)
-unify ((ty@TyBuiltin{}, ty'@TyNamed{}):_)                           = Left (UnificationFailed () (void ty) (void ty'))
-unify ((ty@TyNamed{}, ty'@TyBuiltin{}):_)                           = Left (UnificationFailed () (void ty) (void ty'))
-unify ((ty@TyBuiltin{}, ty'@TyApp{}):_)                             = Left (UnificationFailed () (void ty) (void ty'))
-unify ((ty@TyNamed{}, ty'@TyApp{}):_)                               = Left (UnificationFailed () (void ty) (void ty'))
-unify ((TyVar _ (Name _ (Unique k) _), ty@TyApp {}):tys)            = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys)
-unify ((ty@TyApp {}, TyVar  _ (Name _ (Unique k) _)):tys)           = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys)
+unify []                                                             = Right mempty
+unify ((ty@(TyBuiltin _ b0), ty'@(TyBuiltin _ b1)):tys) | b0 == b1   = unify tys
+                                                        | otherwise  = Left (UnificationFailed () (void ty) (void ty'))
+unify ((ty@(TyNamed _ n0), ty'@(TyNamed _ n1)):tys) | n0 == n1       = unify tys
+                                                    | otherwise      = Left (UnificationFailed () (void ty) (void ty'))
+unify ((ty@(TyNamed _ _), TyVar  _ (Name _ (Unique k) _)):tys)       = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys)
+unify ((TyVar _ (Name _ (Unique k) _), ty@(TyNamed _ _)):tys)        = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys)
+unify ((ty@(TyBuiltin _ _), TyVar  _ (Name _ (Unique k) _)):tys)     = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys)
+unify ((TyVar _ (Name _ (Unique k) _), ty@(TyBuiltin _ _)):tys)      = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys)
+unify ((TyVar _ (Name _ (Unique k) _), ty@(TyVar _ _)):tys)          = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys)
+unify ((ty@TyBuiltin{}, ty'@TyNamed{}):_)                            = Left (UnificationFailed () (void ty) (void ty'))
+unify ((ty@TyNamed{}, ty'@TyBuiltin{}):_)                            = Left (UnificationFailed () (void ty) (void ty'))
+unify ((ty@TyBuiltin{}, ty'@TyApp{}):_)                              = Left (UnificationFailed () (void ty) (void ty'))
+unify ((ty@TyNamed{}, ty'@TyApp{}):_)                                = Left (UnificationFailed () (void ty) (void ty'))
+unify ((TyVar _ (Name _ (Unique k) _), ty@TyApp{}):tys)              = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys)
+unify ((ty@TyApp{}, TyVar  _ (Name _ (Unique k) _)):tys)             = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys)
+unify ((TyApp _ ty@TyNamed{} ty', TyApp _ ty''@TyNamed{} ty'''):tys) = unify ((ty, ty'') : (ty', ty''') : tys)
+unify ((ty@TyApp{}, ty'@TyNamed{}):_)                                = Left (UnificationFailed () (void ty) (void ty'))
 
 unifyM :: S.Set (KempeTy a, KempeTy a) -> TypeM () (IM.IntMap (KempeTy ()))
 unifyM s =
@@ -159,6 +163,13 @@ assignName n = do { ty <- tyLookup (void n) ; pure (n $> ty) }
 assignCons :: Name a -> TypeM () (TyName (StackType ()))
 assignCons n = do { ty <- consLookup (void n) ; pure (n $> ty) }
 
+tyLeaf :: (Pattern a, [Atom a]) -> TypeM () (StackType ())
+tyLeaf (p, as) = do
+    -- TODO: Rename here?
+    tyP <- tyPattern p
+    tyA <- tyAtoms as
+    catTypes tyP tyA
+
 tyAtom :: Atom a -> TypeM () (StackType ())
 tyAtom (AtBuiltin _ b) = typeOfBuiltin b
 tyAtom BoolLit{}       = pure $ StackType mempty [] [TyBuiltin () TyBool]
@@ -171,6 +182,9 @@ tyAtom (If _ as as')   = do
     tys' <- tyAtoms as'
     (StackType vars ins out) <- mergeStackTypes tys tys'
     pure $ StackType vars (TyBuiltin () TyBool:ins) out
+tyAtom (Case _ ls) = do
+    tyLs <- traverse tyLeaf ls
+    mergeMany tyLs
 
 tyAtoms :: [Atom a] -> TypeM () (StackType ())
 tyAtoms = foldM
@@ -180,7 +194,11 @@ tyAtoms = foldM
 tyInsertLeaf :: Name b -- ^ type being declared
              -> S.Set (Name b) -> (TyName a, [KempeTy b]) -> TypeM () ()
 tyInsertLeaf n vars (Name _ (Unique i) _, ins) =
-    modifying constructorTypesLens (IM.insert i (voidStackType $ StackType vars ins [TyNamed undefined n]))
+    modifying constructorTypesLens (IM.insert i (voidStackType $ StackType vars ins [app (TyNamed undefined n) (S.toList vars)]))
+
+app :: KempeTy a -> [Name a] -> KempeTy a
+app = foldl' (\ty n -> TyApp undefined ty (TyNamed undefined n))
+
 
 assignLeaf :: (TyName a, [KempeTy b]) -> TypeM () (TyName (StackType ()), [KempeTy ()])
 assignLeaf (tn, tys) = (,) <$> assignCons tn <*> pure (void <$> tys)
@@ -203,7 +221,7 @@ tyInsert (TyDecl _ tn ns ls) = traverse_ (tyInsertLeaf tn (S.fromList ns)) ls
 tyInsert (FunDecl _ (Name _ (Unique i) _) ins out as) = do
     let sig = voidStackType $ StackType (freeVars (ins ++ out)) ins out
     inferred <- tyAtoms as
-    reconcile <- mergeStackTypes sig inferred -- FIXME: need to verify the merged type is as general as the signature!
+    reconcile <- mergeStackTypes sig inferred -- FIXME: need to verify the merged type is as general as the signature?
     modifying tyEnvLens (IM.insert i reconcile)
 tyInsert (ExtFnDecl _ (Name _ (Unique i) _) ins os _) = do
     sig <- renameStack $ voidStackType $ StackType S.empty ins os -- no free variables allowed in c functions
@@ -280,12 +298,16 @@ mergeStackTypes st0@(StackType _ i0 o0) st1@(StackType _ i1 o1) = do
 
     pure $ StackType (q <> q') ins os
 
-tyPattern :: Pattern a -> TypeM () (S.Set (Name ()), [KempeTy ()]) -- TODO: should this be a StackType for ease of use?
+tyPattern :: Pattern a -> TypeM () (StackType ())
 tyPattern PatternWildcard{} = do
     aN <- dummyName "a"
-    pure (S.singleton aN, [TyVar () aN])
-tyPattern PatternInt{} = pure (S.empty, [TyBuiltin () TyInt])
-tyPattern PatternBool{} = pure (S.empty, [TyBuiltin () TyBool])
+    pure $ StackType (S.singleton aN) [TyVar () aN] []
+tyPattern PatternInt{} = pure $ StackType S.empty [TyBuiltin () TyInt] []
+tyPattern PatternBool{} = pure $ StackType S.empty [TyBuiltin () TyBool] []
+tyPattern (PatternCons _ tn) = flipStackType <$> consLookup (void tn)
+
+flipStackType :: StackType () -> StackType ()
+flipStackType (StackType vars is os) = StackType vars os is
 
 mergeMany :: NonEmpty (StackType ()) -> TypeM () (StackType ())
 mergeMany (t :| ts) = foldM mergeStackTypes t ts
