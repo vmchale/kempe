@@ -21,11 +21,12 @@ stackPointer = undefined
 
 -- FIXME push/pop not mov? in IR
 data Statement = Push Expression
-               | Pop Expression
+               | Pop Expression Temp
                | Labeled Label
                -- -- | Seq Statement Statement
                | Jump Label
                | CJump Expression Label Label
+               -- -- | CCall
 
 data Expression = ConstInt Int64
                 | ConstantPtr Int64
@@ -48,6 +49,7 @@ data IntBinOp = IntPlus
               | IntMod
 
 
+-- need monad for fresh 'Temp's
 writeAtom :: Atom MonoStackType -> [Statement]
 writeAtom (IntLit _ i)  = [Push (ConstInt $ fromInteger i)]
 writeAtom (BoolLit _ b) = [Push (ConstBool $ toByte b)]
