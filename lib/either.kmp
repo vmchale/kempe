@@ -1,1 +1,17 @@
 type Either a b { Left a | Right b }
+
+isLeft : ((Either a) b) -- Bool
+       =: [
+    { case
+        | Left  -> drop True
+        | Right -> drop False
+    }
+]
+
+isRight : ((Either a) b) -- Bool
+        =: [
+    { case
+        | Right -> drop True
+        | Left  -> drop False
+    }
+]
