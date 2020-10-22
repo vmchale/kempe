@@ -1,1 +1,18 @@
 type Maybe a { Just a | Nothing }
+
+isJust : Maybe a -- Bool
+       =: [
+    { case
+        | Just -> drop True
+        | Nothing -> False
+    }
+]
+
+isNothing : Maybe a -- Bool
+          =: [
+    { case
+        | Nothing -> True
+        | Just -> drop False
+    }
+]
+
