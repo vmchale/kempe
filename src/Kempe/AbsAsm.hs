@@ -11,21 +11,24 @@ data Label
 
 data Temp
 
--- Stack pointer?
+-- defined on aarch64 and x86_64
+stackPointer :: Temp
+stackPointer = undefined
 
-data Statement = MovTemp Temp Expression
-               | StmExpression Expression
-               | Seq Statement Statement
+-- FIXME push/pop not mov? in IR
+data Statement = Push Temp
+               | Pop Temp
+               | MovTmp Expression
                | LabeledStm Label
+               | Jump Expression [Label] -- [Label] is all the possible targets; Expression is the address we're jumping to
 
 data Expression = ConstInt Int64
+                | ConstantPtr Int64
                 | ConstBool Word8
                 | Named Label
                 | Do Statement Expression
                 | ExprIntBinOp IntBinOp Expression Expression
                 | ExprIntRel RelBinOp Expression Expression
-                | MemGet Expression
-                | Jump Expression [Label] -- [Label] is all the possible targets; Expression is the address we're jumping to
 
 data RelBinOp = IntEq
               | IntNeq
