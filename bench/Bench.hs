@@ -6,6 +6,7 @@ import qualified Data.ByteString.Lazy as BSL
 import           Data.Functor         (void)
 import           Kempe.Lexer
 import           Kempe.Parser
+import           Kempe.Shuttle
 import           Kempe.Specialize
 import           Kempe.TyAssign
 
@@ -22,6 +23,7 @@ main =
                       , bench "assign" $ nf runAssign p
                       , bench "closedModule" $ nf (runSpecialize =<<) (runAssign p)
                       , bench "closure" $ nf (\m -> closure (m, mkModuleMap m)) (void <$> snd p)
+                      , bench "shuttle" $ nf (uncurry monomorphize) p
                       ]
                 ]
     where parsedM = yeetIO . parseWithMax =<< BSL.readFile "test/data/ty.kmp"
