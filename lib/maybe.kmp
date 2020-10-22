@@ -15,4 +15,3 @@ isNothing : Maybe a -- Bool
         | Just -> drop False
     }
 ]
-
