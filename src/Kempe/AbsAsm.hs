@@ -18,7 +18,7 @@ stackPointer = undefined
 -- FIXME push/pop not mov? in IR
 data Statement = Push Temp
                | Pop Temp
-               | MovTmp Expression
+               | MovTmp Temp Expression
                -- -- | LabeledStm Label
                -- -- | Seq Statement Statement
                | Jump Expression [Label] -- [Label] is all the possible targets; Expression is the address we're jumping to
