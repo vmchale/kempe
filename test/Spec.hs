@@ -30,6 +30,7 @@ main = defaultMain $
             , badType "test/err/merge.kmp" "could not unify type 'Int' with 'a_3'"
             , badType "test/err/kind.kmp" ""
             , testAssignment "test/data/ty.kmp"
+            , testAssignment "lib/either.kmp"
             , monoTest "test/data/ty.kmp"
             , pipelineWorks "test/data/ty.kmp"
             ]

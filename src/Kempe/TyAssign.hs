@@ -13,8 +13,8 @@ import           Control.Monad.State.Strict (StateT, get, gets, modify, put, run
 import           Data.Bifunctor             (second)
 import           Data.Foldable              (traverse_)
 import           Data.Functor               (void, ($>))
-import Data.List (foldl')
 import qualified Data.IntMap                as IM
+import           Data.List                  (foldl')
 import           Data.List.NonEmpty         (NonEmpty (..))
 import           Data.Maybe                 (fromMaybe)
 import           Data.Semigroup             ((<>))
@@ -67,7 +67,8 @@ onType _ ty'@TyBuiltin{} = ty'
 onType _ ty'@TyNamed{}   = ty'
 onType (k, ty) ty'@(TyVar _ (Name _ (Unique i) _)) | i == k = ty
                                                    | otherwise = ty'
-onType (k, ty) (TyApp l ty' ty'') = TyApp l (onType (k, ty) ty') (onType (k, ty) ty'')
+onType (k, ty) (TyApp l ty' ty'') = TyApp l (onType (k, ty) ty') (onType (k, ty) ty'') -- I think this is right
+onType (k, ty) (TyTuple l tys) = TyTuple l (onType (k, ty) <$> tys)
 
 renameForward :: (Int, KempeTy a) -> [(KempeTy a, KempeTy a)] -> [(KempeTy a, KempeTy a)]
 renameForward _ []                      = []
@@ -148,6 +149,12 @@ dipify (StackType fvrs is os) = do
     n <- dummyName "a"
     pure $ StackType (S.insert n fvrs) (TyNamed () n:is) (TyNamed () n:os)
 
+assignPattern :: Pattern a -> TypeM () (Pattern (StackType ()))
+assignPattern p = do { ty <- tyPattern p ; pure (p $> ty) }
+
+assignCase :: (Pattern a, [Atom a]) -> TypeM () (Pattern (StackType ()), [Atom (StackType ())])
+assignCase (p, as) = (,) <$> assignPattern p <*> traverse assignAtom as
+
 assignAtom :: Atom a -> TypeM () (Atom (StackType ()))
 assignAtom a@(AtBuiltin _ b) = AtBuiltin <$> tyAtom a <*> pure b
 assignAtom a@(BoolLit _ b)   = BoolLit <$> tyAtom a <*> pure b
@@ -156,6 +163,7 @@ assignAtom a@(AtName _ n)    = AtName <$> tyAtom a <*> assignName n
 assignAtom a@(Dip _ as)      = Dip <$> tyAtom a <*> traverse assignAtom as
 assignAtom a@(AtCons _ tn)   = AtCons <$> tyAtom a <*> assignCons tn
 assignAtom a@(If _ as as')   = If <$> tyAtom a <*> traverse assignAtom as <*> traverse assignAtom as'
+assignAtom a@(Case _ ls)     = Case <$> tyAtom a <*> traverse assignCase ls
 
 assignName :: Name a -> TypeM () (Name (StackType ()))
 assignName n = do { ty <- tyLookup (void n) ; pure (n $> ty) }
@@ -200,7 +208,6 @@ tyInsertLeaf n vars (Name _ (Unique i) _, ins) | S.null vars =
 
 app :: KempeTy a -> [Name a] -> KempeTy a
 app = foldl' (\ty n -> TyApp undefined ty (TyNamed undefined n))
-
 
 assignLeaf :: (TyName a, [KempeTy b]) -> TypeM () (TyName (StackType ()), [KempeTy ()])
 assignLeaf (tn, tys) = (,) <$> assignCons tn <*> pure (void <$> tys)
@@ -332,6 +339,8 @@ substConstraints tys ty@(TyVar _ (Name _ (Unique k) _)) =
     fromMaybe ty (IM.lookup k tys)
 substConstraints tys (TyApp l ty ty')                   =
     TyApp l (substConstraints tys ty) (substConstraints tys ty')
+substConstraints tys (TyTuple l tys')                   =
+    TyTuple l (substConstraints tys <$> tys')
 
 substConstraintsStack :: IM.IntMap (KempeTy a) -> StackType a -> StackType a
 substConstraintsStack tys (StackType _ is os) =

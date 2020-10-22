@@ -160,6 +160,7 @@ namesInAtom (AtName _ n@(Name _ _ l))  = S.singleton (n, l)
 namesInAtom (AtCons _ tn@(Name _ _ l)) = S.singleton (tn, l)
 namesInAtom IntLit{}                   = S.empty
 namesInAtom BoolLit{}                  = S.empty
+namesInAtom (Case _ as)                = foldMap namesInAtom (foldMap snd as) -- don't need patterns since we're destructing them here?
 
 exports :: Module a b -> [(Name b, b)]
 exports = mapMaybe exportsDecl
