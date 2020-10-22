@@ -77,6 +77,9 @@ tryMono :: MonadError (Error ()) m => StackType () -> m MonoStackType
 tryMono (StackType _ is os) | S.null (freeVars (is ++ os)) = pure (is, os)
                             | otherwise = throwError $ MonoFailed ()
 
+renameCase :: (Pattern (StackType ()), [Atom (StackType ())]) -> MonoM (Pattern (StackType ()), [Atom (StackType ())])
+renameCase (p, as) = (p,) <$> traverse renameAtom as
+
 renameAtom :: Atom (StackType ()) -> MonoM (Atom (StackType ()))
 renameAtom a@AtBuiltin{}            = pure a
 renameAtom (If ty as as')           = If ty <$> traverse renameAtom as <*> traverse renameAtom as'
@@ -87,6 +90,7 @@ renameAtom (AtName ty (Name t u l)) = do
     mSt <- gets snd
     let u' = M.findWithDefault u (u, ty) mSt
     pure $ AtName ty (Name t u' l)
+renameAtom (Case ty ls)             = Case ty <$> traverse renameCase ls
 
 renameDecl :: KempeDecl () (StackType ()) -> MonoM (KempeDecl () (StackType ()))
 renameDecl (FunDecl l n is os as) = FunDecl l n is os <$> traverse renameAtom as
@@ -111,7 +115,7 @@ closedModule :: Module () (StackType ()) -> MonoM (Module () (StackType ()))
 closedModule m = traverse pickDecl roots
     where key = mkModuleMap m
           roots = S.toList $ closure (m, key)
-          pickDecl (Name _ (Unique i) _, ty) =
+          pickDecl (Name _ (Unique i) _, ty) = -- TODO: findWithDefault?
             case IM.lookup i key of
                 Just decl -> specializeDecl decl ty
                 Nothing   -> error "Internal error! module map should contain all names."
