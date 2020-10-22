@@ -12,22 +12,22 @@ module Kempe.Specialize ( closedModule
                         , mkModuleMap
                         ) where
 
-import           Control.Monad        ((<=<))
-import           Control.Monad.Except (MonadError, throwError)
-import           Control.Monad.State  (StateT, gets, runStateT)
-import           Data.Bifunctor       (second)
-import qualified Data.IntMap          as IM
-import qualified Data.Map             as M
-import           Data.Maybe           (mapMaybe)
-import           Data.Semigroup       ((<>))
-import qualified Data.Set             as S
-import qualified Data.Text            as T
+import           Control.Monad              ((<=<))
+import           Control.Monad.Except       (MonadError, throwError)
+import           Control.Monad.State.Strict (StateT, gets, runStateT)
+import           Data.Bifunctor             (second)
+import qualified Data.IntMap                as IM
+import qualified Data.Map                   as M
+import           Data.Maybe                 (mapMaybe)
+import           Data.Semigroup             ((<>))
+import qualified Data.Set                   as S
+import qualified Data.Text                  as T
 import           Kempe.AST
 import           Kempe.Error
 import           Kempe.Name
 import           Kempe.Unique
-import           Lens.Micro           (_1, _2)
-import           Lens.Micro.Mtl       (modifying)
+import           Lens.Micro                 (_1, _2)
+import           Lens.Micro.Mtl             (modifying)
 
 -- | New function names, keyed by name + specialized type
 --
