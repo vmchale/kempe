@@ -19,7 +19,8 @@ stackPointer = undefined
 data Statement = Push Temp
                | Pop Temp
                | MovTmp Expression
-               | LabeledStm Label
+               -- -- | LabeledStm Label
+               -- -- | Seq Statement Statement
                | Jump Expression [Label] -- [Label] is all the possible targets; Expression is the address we're jumping to
 
 data Expression = ConstInt Int64
