@@ -16,8 +16,8 @@ stackPointer :: Temp
 stackPointer = undefined
 
 -- FIXME push/pop not mov? in IR
-data Statement = Push Temp
-               | Pop Temp
+data Statement = Push Expression
+               | Pop Expression
                | MovTmp Temp Expression
                -- -- | LabeledStm Label
                -- -- | Seq Statement Statement
