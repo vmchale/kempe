@@ -22,15 +22,16 @@ stackPointer = undefined
 -- FIXME push/pop not mov? in IR
 data Statement = Push Expression
                | Pop Expression
-               | MovTmp Temp Expression
-               -- -- | LabeledStm Label
+               | Labeled Label
                -- -- | Seq Statement Statement
-               | Jump Expression [Label] -- [Label] is all the possible targets; Expression is the address we're jumping to
+               | Jump Label
+               | CJump Expression Label Label
 
 data Expression = ConstInt Int64
                 | ConstantPtr Int64
                 | ConstBool Word8
                 | Named Label
+                | Reg Temp
                 | Do Statement Expression
                 | ExprIntBinOp IntBinOp Expression Expression
                 | ExprIntRel RelBinOp Expression Expression
@@ -46,9 +47,16 @@ data IntBinOp = IntPlus
               | IntMinus
               | IntMod
 
-writeAtom :: Atom MonoStackType -> [Statement]
-writeAtom = undefined
 
+writeAtom :: Atom MonoStackType -> [Statement]
+writeAtom (IntLit _ i)  = [Push (ConstInt $ fromInteger i)]
+writeAtom (BoolLit _ b) = [Push (ConstBool $ toByte b)]
+
+toByte :: Bool -> Word8
+toByte True  = 1
+toByte False = 0
+
+-- need env with size?
 size :: KempeTy a -> Int
 size (TyBuiltin _ TyInt)  = 8 -- since we're only targeting x86_64 and aarch64 we have 64-bit 'Int's
 size (TyBuiltin _ TyPtr)  = 8
