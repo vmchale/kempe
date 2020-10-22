@@ -193,7 +193,9 @@ tyAtoms = foldM
 
 tyInsertLeaf :: Name b -- ^ type being declared
              -> S.Set (Name b) -> (TyName a, [KempeTy b]) -> TypeM () ()
-tyInsertLeaf n vars (Name _ (Unique i) _, ins) =
+tyInsertLeaf n vars (Name _ (Unique i) _, ins) | S.null vars =
+    modifying constructorTypesLens (IM.insert i (voidStackType $ StackType vars ins [TyNamed undefined n]))
+                                               | otherwise =
     modifying constructorTypesLens (IM.insert i (voidStackType $ StackType vars ins [app (TyNamed undefined n) (S.toList vars)]))
 
 app :: KempeTy a -> [Name a] -> KempeTy a
@@ -328,6 +330,8 @@ substConstraints _ ty@TyNamed{}                         = ty
 substConstraints _ ty@TyBuiltin{}                       = ty
 substConstraints tys ty@(TyVar _ (Name _ (Unique k) _)) =
     fromMaybe ty (IM.lookup k tys)
+substConstraints tys (TyApp l ty ty')                   =
+    TyApp l (substConstraints tys ty) (substConstraints tys ty')
 
 substConstraintsStack :: IM.IntMap (KempeTy a) -> StackType a -> StackType a
 substConstraintsStack tys (StackType _ is os) =
