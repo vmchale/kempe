@@ -1,5 +1,9 @@
 - [ ] Fix Dickinson modules? lol
 - [ ] Take notes on phases, revisit Appel book
+# Examples
+- [ ] delink?
+- [ ] splitmix random number generator? (or rather any pseudorandom number
+  generator...)
 # Pipeline
 - [ ] IR (abstract assembly?)
 # Features
