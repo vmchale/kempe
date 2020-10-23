@@ -7,7 +7,7 @@ module Kempe.TyAssign ( TypeM
                       ) where
 
 import           Control.Composition        (thread)
-import           Control.Monad              (foldM, replicateM, when, zipWithM_)
+import           Control.Monad              (foldM, replicateM, unless, when, zipWithM_)
 import           Control.Monad.Except       (throwError)
 import           Control.Monad.State.Strict (StateT, get, gets, modify, put, runStateT)
 import           Data.Bifunctor             (second)
@@ -199,7 +199,7 @@ tyAtom (If _ as as')   = do
     tys <- tyAtoms as
     tys' <- tyAtoms as'
     (StackType vars ins out) <- mergeStackTypes tys tys'
-    pure $ StackType vars (TyBuiltin () TyBool:ins) out
+    pure $ StackType vars (ins ++ [TyBuiltin () TyBool]) out
 tyAtom (Case _ ls) = do
     tyLs <- traverse tyLeaf ls
     mergeMany tyLs
@@ -234,6 +234,18 @@ assignDecl (Export _ abi n) = do
     ty <- tyLookup (void n)
     Export ty abi <$> assignName n
 
+tyHeader :: KempeDecl a b -> TypeM () ()
+tyHeader Export{} = pure ()
+tyHeader (FunDecl _ (Name _ (Unique i) _) ins out _) = do
+    sig <- renameStack $ voidStackType $ StackType (freeVars (ins ++ out)) ins out
+    modifying tyEnvLens (IM.insert i sig)
+tyHeader (ExtFnDecl _ (Name _ (Unique i) _) ins os _) = do
+    unless (null $ freeVars (ins ++ os)) $
+        throwError $ TyVarExt ()
+    let sig = voidStackType $ StackType S.empty ins os -- no free variables allowed in c functions
+    modifying tyEnvLens (IM.insert i sig)
+tyHeader TyDecl{} = pure ()
+
 -- TODO: traverse headers first
 tyInsert :: KempeDecl a b -> TypeM () ()
 tyInsert (TyDecl _ tn ns ls) = traverse_ (tyInsertLeaf tn (S.fromList ns)) ls
@@ -243,16 +255,19 @@ tyInsert (FunDecl _ (Name _ (Unique i) _) ins out as) = do
     reconcile <- mergeStackTypes sig inferred -- FIXME: need to verify the merged type is as general as the signature?
     modifying tyEnvLens (IM.insert i reconcile)
 tyInsert (ExtFnDecl _ (Name _ (Unique i) _) ins os _) = do
-    sig <- renameStack $ voidStackType $ StackType S.empty ins os -- no free variables allowed in c functions
+    let sig = voidStackType $ StackType S.empty ins os -- free variables already checked
     modifying tyEnvLens (IM.insert i sig)
 tyInsert Export{} = pure ()
 
+tyModule :: Module a b -> TypeM () ()
+tyModule m = traverse_ tyHeader m *> traverse_ tyInsert m
+
 checkModule :: Module a b -> TypeM () ()
-checkModule m = traverse_ tyInsert m <* (unifyM =<< gets constraints)
+checkModule m = tyModule m <* (unifyM =<< gets constraints)
 
 assignModule :: Module a b -> TypeM () (Module () (StackType ()))
 assignModule m = do
-    traverse_ tyInsert m
+    tyModule m
     backNames <- unifyM =<< gets constraints
     fmap (fmap (substConstraintsStack backNames)) <$> traverse assignDecl m
 

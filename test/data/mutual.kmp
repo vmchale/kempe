@@ -1,0 +1,19 @@
+not : Bool -- Bool
+    =: [
+    { case
+        | True -> False
+        | False -> True
+    }
+]
+
+odd : Int -- Bool
+    =: [ dup 0 =
+            if( drop False
+              , even not )
+       ]
+
+even : Int -- Bool
+     =: [ dup 0 =
+            if( drop True
+              , odd not )
+        ]

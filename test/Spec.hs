@@ -27,10 +27,11 @@ main = defaultMain $
             , tyInfer "prelude/fn.kmp"
             , tyInfer "lib/maybe.kmp"
             , tyInfer "lib/either.kmp"
-            , badType "test/err/merge.kmp" "could not unify type 'Int' with 'a_3'"
+            , badType "test/err/merge.kmp" "could not unify type 'Int' with 'a_4'"
             , badType "test/err/kind.kmp" ""
             , testAssignment "test/data/ty.kmp"
             , testAssignment "lib/either.kmp"
+            , tyInfer "test/data/mutual.kmp"
             , monoTest "test/data/ty.kmp"
             , pipelineWorks "test/data/ty.kmp"
             ]
