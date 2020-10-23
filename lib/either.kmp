@@ -1,3 +1,6 @@
+; I'm not sure how useful this module is but I have it as a test for the
+; typechecker and I guess to show how pattern matching works.
+
 type Either a b { Left a | Right b }
 
 isLeft : ((Either a) b) -- Bool
