@@ -82,21 +82,21 @@ instance Pretty (KempeTy a) where
     pretty (TyApp _ ty ty') = parens (pretty ty <+> pretty ty')
     pretty (TyTuple _ tys)  = tupled (pretty <$> tys)
 
-data Pattern b = PatternInt b Integer
-               | PatternCons b (TyName b) -- a constructed pattern
-               | PatternWildcard b
-               | PatternBool b Bool
+data Pattern b = PatternInt { patternLoc :: b, patternInt :: Integer }
+               | PatternCons { patternLoc :: b, patternConstructor :: TyName b } -- a constructed pattern
+               | PatternWildcard { patternLoc :: b }
+               | PatternBool { patternLoc :: b, patternBool :: Bool }
                -- -- | PatternTuple
                deriving (Generic, NFData, Functor, Foldable, Traversable)
 
-data Atom b = AtName b (Name b)
-            | Case b (NonEmpty (Pattern b, [Atom b]))
-            | If b [Atom b] [Atom b]
-            | Dip b [Atom b]
-            | IntLit b Integer
-            | BoolLit b Bool
-            | AtBuiltin b BuiltinFn
-            | AtCons b (TyName b)
+data Atom b = AtName { atomLoc :: b, atomName :: Name b }
+            | Case { atomLoc :: b, atomCases :: NonEmpty (Pattern b, [Atom b]) }
+            | If { atomLoc :: b, atomDoTrue :: [Atom b], atomDoFalse :: [Atom b] }
+            | Dip { atomLoc :: b, atomsDipped :: [Atom b] }
+            | IntLit { atomLoc :: b, atomInt :: Integer }
+            | BoolLit { atomLoc :: b, atomBool :: Bool }
+            | AtBuiltin { atomLoc :: b, atomBuiltin :: BuiltinFn }
+            | AtCons { atomLoc :: b, atomConstructor :: TyName b }
             deriving (Generic, NFData, Functor, Foldable, Traversable)
 
 data BuiltinFn = Drop
