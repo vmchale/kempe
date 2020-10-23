@@ -5,6 +5,8 @@
 - [ ] Fortran?
 # Examples
 - [ ] delink?
+- [ ] Primality test (and link to C...)
+  - [ ] Needs sensible float support!
 - [ ] splitmix random number generator? (or rather any pseudorandom number
   generator...)
   - [ ] http://prng.di.unimi.it/xoroshiro128plus.c
@@ -15,6 +17,7 @@
 # Features
 - [ ] REPL for type inspection?
 - [ ] Pattern match exhaustiveness checker
+- [ ] Error messages should have line numbers
 # Test Cases
 - [ ] Unit tests for type merge?
 - [ ] Unit tests for catTypes?

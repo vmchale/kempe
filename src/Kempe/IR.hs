@@ -19,7 +19,7 @@ data Temp
 stackPointer :: Temp
 stackPointer = undefined
 
--- FIXME push/pop not mov? in IR
+-- TODO figure out dip
 data Statement = Push Expression
                | Pop Expression Temp
                | Labeled Label

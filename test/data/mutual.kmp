@@ -1,3 +1,4 @@
+; TODO: not# builtin
 not : Bool -- Bool
     =: [
     { case
