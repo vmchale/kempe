@@ -13,15 +13,15 @@ isUnix : OS -- Bool
        =: [
     { case
         | Windows -> False
-        | _ -> True
+        | _       -> True
     }
 ]
 
 osNum : OS -- Int
       =: [
     { case
-        | Macos -> 1
-        | Linux -> 2
+        | Macos   -> 1
+        | Linux   -> 2
         | Windows -> 3
         | Freebsd -> 4
     }
@@ -30,7 +30,7 @@ osNum : OS -- Int
 not : Bool -- Bool
     =: [
     { case
-        | True -> False
+        | True  -> False
         | False -> True
     }
 ]
