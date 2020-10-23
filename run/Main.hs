@@ -12,7 +12,7 @@ data Command = TypeCheck !FilePath
 
 run :: Command -> IO ()
 run (TypeCheck fp) = either throwIO pure =<< tcFile fp
-run (Compile _ _)  = pure ()
+run (Compile _ _)  = putStrLn "Compiler currently does nothing; try 'typecheck'"
 
 kmpFile :: Parser FilePath
 kmpFile = argument str
