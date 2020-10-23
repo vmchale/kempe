@@ -53,6 +53,7 @@ library
         bytestring -any,
         containers -any,
         deepseq -any,
+        extra,
         text -any,
         mtl -any,
         microlens -any,

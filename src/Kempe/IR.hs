@@ -1,14 +1,17 @@
 module Kempe.IR ( size
                 , stackPointer
-                , writeAtom
+                , writeAtoms
                 , Statement (..)
                 , Expression (..)
                 , RelBinOp (..)
                 , IntBinOp (..)
                 ) where
 
-import           Data.Int  (Int64)
-import           Data.Word (Word8)
+import           Control.Monad.State (State, gets, modify)
+import           Data.Bifunctor      (first, second)
+import           Data.Foldable       (fold)
+import           Data.Int            (Int64)
+import           Data.Word           (Word8)
 import           Kempe.AST
 
 data Label
@@ -19,14 +22,22 @@ data Temp
 stackPointer :: Temp
 stackPointer = undefined
 
+type TempM = State ([Label], [Temp])
+
+getTemp :: TempM Temp
+getTemp = gets (head . snd) <* modify (second tail)
+
+newLabel :: TempM Label
+newLabel = gets (head . fst) <* modify (first tail)
+
 -- TODO figure out dip
 data Statement = Push Expression
-               | Pop Expression Temp
+               | Pop (KempeTy ()) Temp
                | Labeled Label
                -- -- | Seq Statement Statement
                | Jump Label
                | CJump Expression Label Label
-               -- -- | CCall
+               -- -- | CCall MonoStackType
 
 data Expression = ConstInt Int64
                 | ConstantPtr Int64
@@ -49,10 +60,14 @@ data IntBinOp = IntPlus
               | IntMod
 
 
+writeAtoms :: [Atom MonoStackType] -> TempM [Statement]
+writeAtoms = foldMapA writeAtom where
+    foldMapA = (fmap fold .) . traverse
+
 -- need monad for fresh 'Temp's
-writeAtom :: Atom MonoStackType -> [Statement]
-writeAtom (IntLit _ i)  = [Push (ConstInt $ fromInteger i)]
-writeAtom (BoolLit _ b) = [Push (ConstBool $ toByte b)]
+writeAtom :: Atom MonoStackType -> TempM [Statement]
+writeAtom (IntLit _ i)  = pure [Push (ConstInt $ fromInteger i)]
+writeAtom (BoolLit _ b) = pure [Push (ConstBool $ toByte b)]
 
 toByte :: Bool -> Word8
 toByte True  = 1
