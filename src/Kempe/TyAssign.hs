@@ -54,10 +54,10 @@ renamesLens f s = fmap (\x -> s { renames = x }) (f (renames s))
 constraintsLens :: Lens' (TyState a) (S.Set (KempeTy a, KempeTy a))
 constraintsLens f s = fmap (\x -> s { constraints = x }) (f (constraints s))
 
-dummyName :: T.Text -> TypeM () (Name ())
-dummyName n = do
+dummyName :: a -> T.Text -> TypeM a (Name a)
+dummyName l n = do
     pSt <- gets maxU
-    Name n (Unique $ pSt + 1) ()
+    Name n (Unique $ pSt + 1) l
         <$ modifying maxULens (+1)
 
 type TypeM a = StateT (TyState a) (Either (Error a))
@@ -120,14 +120,14 @@ runTypeM maxInt = fmap (second maxU) .
 
 typeOfBuiltin :: BuiltinFn -> TypeM () (StackType ())
 typeOfBuiltin Drop = do
-    aN <- dummyName "a"
+    aN <- dummyName () "a"
     pure $ StackType (S.singleton aN) [TyVar () aN] []
 typeOfBuiltin Swap = do
-    aN <- dummyName "a"
-    bN <- dummyName "b"
+    aN <- dummyName () "a"
+    bN <- dummyName () "b"
     pure $ StackType (S.fromList [aN, bN]) [TyVar () aN, TyVar () bN] [TyVar () bN, TyVar () aN]
 typeOfBuiltin Dup = do
-    aN <- dummyName "a"
+    aN <- dummyName () "a"
     pure $ StackType (S.singleton aN) [TyVar () aN] [TyVar () aN, TyVar () aN]
 typeOfBuiltin IntEq     = pure $ StackType S.empty [TyBuiltin () TyInt, TyBuiltin () TyInt] [TyBuiltin () TyBool]
 typeOfBuiltin IntMod    = pure intBinOp
@@ -159,7 +159,7 @@ consLookup tn@(Name _ (Unique i) l) = do
 -- expandType 1
 dipify :: StackType () -> TypeM () (StackType ())
 dipify (StackType fvrs is os) = do
-    n <- dummyName "a"
+    n <- dummyName () "a"
     pure $ StackType (S.insert n fvrs) (TyNamed () n:is) (TyNamed () n:os)
 
 assignPattern :: Pattern a -> TypeM () (Pattern (StackType ()))
@@ -189,7 +189,7 @@ tyLeaf (p, as) = do
     -- TODO: Rename here?
     tyP <- tyPattern p
     tyA <- tyAtoms as
-    catTypes tyP tyA
+    catTypes () tyP tyA
 
 tyAtom :: Atom a -> TypeM () (StackType ())
 tyAtom (AtBuiltin _ b) = typeOfBuiltin b
@@ -209,7 +209,7 @@ tyAtom (Case _ ls) = do
 
 tyAtoms :: [Atom a] -> TypeM () (StackType ())
 tyAtoms = foldM
-    (\seed a -> do { tys' <- renameStack =<< tyAtom a ; catTypes tys' seed })
+    (\seed a -> do { tys' <- renameStack =<< tyAtom a ; catTypes () tys' seed })
     emptyStackType
 
 tyInsertLeaf :: Name b -- ^ type being declared
@@ -325,8 +325,8 @@ mergeStackTypes st0@(StackType _ i0 o0) st1@(StackType _ i1 o1) = do
     let toExpand = max (abs (length i0 - length i1)) (abs (length o0 - length o1))
 
     -- freshen stack types (free vars) so no clashing/overwriting happens
-    (StackType q ins os) <- expandType toExpand =<< renameStack st0
-    (StackType q' ins' os') <- expandType toExpand =<< renameStack st1
+    (StackType q ins os) <- expandType () toExpand =<< renameStack st0
+    (StackType q' ins' os') <- expandType () toExpand =<< renameStack st1
 
     when ((length ins /= length ins') || (length os /= length os')) $
         throwError $ MismatchedLengths () st0 st1
@@ -338,7 +338,7 @@ mergeStackTypes st0@(StackType _ i0 o0) st1@(StackType _ i1 o1) = do
 
 tyPattern :: Pattern a -> TypeM () (StackType ())
 tyPattern PatternWildcard{} = do
-    aN <- dummyName "a"
+    aN <- dummyName () "a"
     pure $ StackType (S.singleton aN) [TyVar () aN] []
 tyPattern PatternInt{} = pure $ StackType S.empty [TyBuiltin () TyInt] []
 tyPattern PatternBool{} = pure $ StackType S.empty [TyBuiltin () TyBool] []
@@ -351,14 +351,14 @@ mergeMany :: NonEmpty (StackType ()) -> TypeM () (StackType ())
 mergeMany (t :| ts) = foldM mergeStackTypes t ts
 
 -- assumes they have been renamed...
-pushConstraint :: KempeTy a -> KempeTy a -> TypeM () ()
+pushConstraint :: Ord a => KempeTy a -> KempeTy a -> TypeM a ()
 pushConstraint ty ty' =
-    modifying constraintsLens (S.insert (void ty, void ty'))
+    modifying constraintsLens (S.insert (ty, ty'))
 
-expandType :: Int -> StackType () -> TypeM () (StackType ())
-expandType n (StackType q i o) = do
-    newVars <- replicateM n (dummyName "a")
-    let newTy = TyVar () <$> newVars
+expandType :: a -> Int -> StackType a -> TypeM a (StackType a)
+expandType l n (StackType q i o) = do
+    newVars <- replicateM n (dummyName l "a")
+    let newTy = TyVar l <$> newVars
     pure $ StackType (q <> S.fromList newVars) (newTy ++ i) (newTy ++ o)
 
 substConstraints :: IM.IntMap (KempeTy a) -> KempeTy a -> KempeTy a
@@ -379,16 +379,18 @@ substConstraintsStack tys (StackType _ is os) =
 
 -- do renaming before this
 -- | Given @x@ and @y@, return the 'StackType' of @x y@
-catTypes :: StackType () -- ^ @x@
-         -> StackType () -- ^ @y@
-         -> TypeM () (StackType ())
-catTypes st0@(StackType _ _ osX) (StackType q1 insY osY) = do
+catTypes :: Ord a
+         => a
+         -> StackType a -- ^ @x@
+         -> StackType a -- ^ @y@
+         -> TypeM a (StackType a)
+catTypes l st0@(StackType _ _ osX) (StackType q1 insY osY) = do
     let lY = length insY
         lDiff = lY - length osX
 
     -- all of the "ins" of y have to come from x, so we expand x as needed
     (StackType q0 insX osX') <- if lDiff > 0
-        then expandType lDiff st0
+        then expandType l lDiff st0
         else pure st0
 
     -- zip the last (length insY) of osX' with insY
