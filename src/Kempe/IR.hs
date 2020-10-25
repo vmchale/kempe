@@ -1,3 +1,4 @@
+-- | IR from Appel book
 module Kempe.IR ( size
                 , stackPointer
                 , writeDecl
@@ -26,6 +27,9 @@ data Temp
 -- defined on aarch64 and x86_64
 stackPointer :: Temp
 stackPointer = undefined
+
+framePointer :: Temp
+framePointer = undefined
 
 data TempSt = TempSt { labels     :: [Label]
                      , tempSupply :: [Temp]
@@ -67,13 +71,18 @@ data Statement = Push Expression
                -- -- | Seq Statement Statement
                | Jump Label
                | CJump Expression Label Label
+               | MJump Expression Label
                | CCall MonoStackType BSL.ByteString -- TODO: ShortByteString?
+               | KCall Label
+               | MovTemp Temp Expression
+               | MovMem Expression Expression
 
 data Expression = ConstInt Int64
                 | ConstantPtr Int64
                 | ConstBool Word8
                 | Named Label
                 | Reg Temp
+                | Mem Expression
                 | Do Statement Expression
                 | ExprIntBinOp IntBinOp Expression Expression
                 | ExprIntRel RelBinOp Expression Expression
@@ -102,7 +111,7 @@ writeAtoms = foldMapA writeAtom where
 writeAtom :: Atom MonoStackType -> TempM [Statement]
 writeAtom (IntLit _ i)  = pure [Push (ConstInt $ fromInteger i)]
 writeAtom (BoolLit _ b) = pure [Push (ConstBool $ toByte b)]
-writeAtom (AtName _ n)  = pure . Jump <$> lookupName n -- TODO: when to do tco?
+writeAtom (AtName _ n)  = pure . KCall <$> lookupName n -- TODO: when to do tco?
 
 toByte :: Bool -> Word8
 toByte True  = 1
