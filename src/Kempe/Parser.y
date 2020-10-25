@@ -57,6 +57,8 @@ import Debug.Trace (traceShow)
     div { TokSym $$ Div }
     percent { TokSym $$ Percent }
     eq { TokSym $$ Eq }
+    shiftr { TokSym $$ ShiftR }
+    shiftl { TokSym $$ ShiftL }
 
     name { TokName _ $$ }
     tyName { TokTyName  _ $$ }
@@ -79,6 +81,7 @@ import Debug.Trace (traceShow)
     dup { TokBuiltin $$ BuiltinDup }
     swap { TokBuiltin $$ BuiltinSwap }
     drop { TokBuiltin $$ BuiltinDrop }
+    intXor { TokBuiltin $$ BuiltinIntXor }
 
 %%
 
@@ -153,6 +156,9 @@ Atom :: { Atom AlexPosn }
      | div { AtBuiltin $1 IntDiv }
      | percent { AtBuiltin $1 IntMod }
      | eq { AtBuiltin $1 IntEq }
+     | shiftl { AtBuiltin $1 IntShiftL }
+     | shiftr { AtBuiltin $1 IntShiftR }
+     | intXor { AtBuiltin $1 IntXor }
 
 CaseLeaf :: { (Pattern AlexPosn, [Atom AlexPosn]) }
          : vbar Pattern caseArr many(Atom) { ($2, reverse $4) }

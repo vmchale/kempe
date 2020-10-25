@@ -34,7 +34,7 @@ class Architecture a where
 data TempSt = TempSt { labels     :: [Label]
                      , tempSupply :: [Temp]
                      , atLabels   :: IM.IntMap Label
-                     -- TODO: type sizes in state?
+                     -- TODO: type sizes in state
                      }
 
 runTempM :: TempM a -> a
@@ -43,19 +43,19 @@ runTempM = flip evalState (TempSt [1..] [1..] mempty)
 atLabelsLens :: Lens' TempSt (IM.IntMap Label)
 atLabelsLens f s = fmap (\x -> s { atLabels = x }) (f (atLabels s))
 
-mapLabels :: ([Label] -> [Label]) -> TempSt -> TempSt
-mapLabels f (TempSt ls ts ats) = TempSt (f ls) ts ats
+nextLabels :: TempSt -> TempSt
+nextLabels (TempSt ls ts ats) = TempSt (tail ls) ts ats
 
-mapTemps :: ([Temp] -> [Temp]) -> TempSt -> TempSt
-mapTemps f (TempSt ls ts ats) = TempSt ls (f ts) ats
+nextTemps :: TempSt -> TempSt
+nextTemps (TempSt ls ts ats) = TempSt ls (tail ts) ats
 
 type TempM = State TempSt
 
 getTemp :: TempM Temp
-getTemp = gets (head . tempSupply) <* modify (mapTemps tail)
+getTemp = gets (head . tempSupply) <* modify nextTemps
 
 newLabel :: TempM Label
-newLabel = gets (head . labels) <* modify (mapLabels tail)
+newLabel = gets (head . labels) <* modify nextLabels
 
 broadcastName :: Unique -> TempM Label
 broadcastName (Unique i) = do
@@ -141,12 +141,13 @@ intRel cons = do
     t0 <- getTemp
     t1 <- getTemp
     pure
-        [ Pop tyInt t0
+        [ Pop tyInt t0 -- TODO: maybe plain mov is better/nicer than pop
         , Pop tyInt t1
         , Push tyBool $ ExprIntRel cons (Reg t0) (Reg t1)
         ]
 
 -- need monad for fresh 'Temp's
+-- | This throws exceptions on nonsensical input.
 writeAtom :: Atom MonoStackType -> TempM [Stmt]
 writeAtom (IntLit _ i)              = pure [Push tyInt (ConstInt $ fromInteger i)]
 writeAtom (BoolLit _ b)             = pure [Push tyBool (ConstBool $ toByte b)]

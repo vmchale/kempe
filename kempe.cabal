@@ -45,6 +45,7 @@ library
         Kempe.Unique
         Kempe.Name
         Kempe.Error
+        Kempe.Asm.X86
 
     default-language: Haskell2010
     other-extensions:

@@ -108,6 +108,9 @@ data BuiltinFn = Drop
                | IntDiv
                | IntMod
                | IntEq
+               | IntShiftR
+               | IntShiftL
+               | IntXor
                -- TODO: IntLt and such
                deriving (Generic, NFData)
 

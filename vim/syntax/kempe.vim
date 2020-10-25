@@ -13,6 +13,7 @@ syntax match kempeType "\v[A-Z][a-zA-Z0-9]*"
 syntax match kempeExternal "\".*\""
 
 syntax match kempeNum "\v[0-9]+"
+syntax match kempeNum "\v0x[0-9a-z]+"
 
 syntax match kempeKeyword "type"
 syntax match kempeKeyword "case"

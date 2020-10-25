@@ -30,6 +30,7 @@ import Data.Text.Encoding (decodeUtf8)
 import GHC.Generics (Generic)
 import Kempe.Name
 import Kempe.Unique
+import Numeric (readHex)
 import Prettyprinter (Pretty (pretty), (<+>), colon, dquotes, squotes)
 
 }
@@ -37,6 +38,8 @@ import Prettyprinter (Pretty (pretty), (<+>), colon, dquotes, squotes)
 %wrapper "monadUserState-bytestring"
 
 $digit = [0-9]
+
+$hexit = [0-9a-z]
 
 $latin = [a-zA-Z]
 
@@ -76,6 +79,8 @@ tokens :-
         "+"                      { mkSym Plus }
         "-"                      { mkSym Minus }
         "="                      { mkSym Eq }
+        "<<"                     { mkSym ShiftL }
+        ">>"                     { mkSym ShiftR }
 
         type                     { mkKw KwType }
         import                   { mkKw KwImport }
@@ -95,8 +100,10 @@ tokens :-
         dup                      { mkBuiltin BuiltinDup }
         drop                     { mkBuiltin BuiltinDrop }
         swap                     { mkBuiltin BuiltinSwap }
+        xori                     { mkBuiltin BuiltinIntXor }
 
         $digit+                  { tok (\p s -> alex $ TokInt p (read $ ASCII.unpack s)) }
+        "0x"$hexit+              { tok (\p s -> TokInt p <$> readHex' (BSL.drop 2 s)) }
 
         @name                    { tok (\p s -> TokName p <$> newIdentAlex p (mkText s)) }
         @tyname                  { tok (\p s -> TokTyName p <$> newIdentAlex p (mkText s)) }
@@ -105,6 +112,12 @@ tokens :-
     }
 
 {
+
+readHex' :: (Eq a, Num a) => BSL.ByteString -> Alex a
+readHex' bs = 
+    case readHex (ASCII.unpack bs) of
+        []        -> alexError "Invalid hexadecimal literal"
+        ((i,_):_) -> pure i
 
 alex :: a -> Alex a
 alex = pure
@@ -158,6 +171,8 @@ data Sym = Arrow
          | Times
          | DefEq
          | Eq
+         | ShiftL
+         | ShiftR
          | Colon
          | LBrace
          | RBrace
@@ -193,6 +208,8 @@ instance Pretty Sym where
     pretty RParen     = ")"
     pretty Comma      = ","
     pretty Underscore = "_"
+    pretty ShiftR     = ">>"
+    pretty ShiftL     = "<<"
 
 data Keyword = KwType
              | KwImport
@@ -220,6 +237,7 @@ data Builtin = BuiltinBool
              | BuiltinDrop
              | BuiltinSwap
              | BuiltinDup
+             | BuiltinIntXor
              deriving (Generic, NFData)
 
 instance Pretty Builtin where
@@ -231,6 +249,7 @@ instance Pretty Builtin where
     pretty BuiltinDrop        = "drop"
     pretty BuiltinSwap        = "swap"
     pretty BuiltinDup         = "dup"
+    pretty BuiltinIntXor      = "xori"
 
 data Token a = EOF { loc :: a }
              | TokSym { loc :: a, _sym :: Sym }

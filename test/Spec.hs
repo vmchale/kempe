@@ -21,7 +21,9 @@ main = defaultMain $
     testGroup "Kempe compiler tests"
         [ testGroup "Parser golden tests"
             [ lexNoError "test/data/lex.kmp"
+            , lexNoError "test/data/splitmix.kmp"
             , parseNoError "test/data/lex.kmp"
+            , parseNoError "test/data/splitmix.kmp"
             ]
         , testGroup "type assignment"
             [ tyInfer "test/data/ty.kmp"
@@ -34,16 +36,18 @@ main = defaultMain $
             , testAssignment "lib/either.kmp"
             , tyInfer "test/data/mutual.kmp"
             , monoTest "test/data/ty.kmp"
+            , monoTest "test/data/splitmix.kmp"
             , pipelineWorks "test/data/ty.kmp"
             , irNoYeet "test/data/export.kmp"
+            , irNoYeet "test/data/splitmix.kmp"
             ]
         ]
 
 irNoYeet :: FilePath -> TestTree
 irNoYeet fp = testCase ("Generates IR without throwing an exception (" ++ fp ++ ")") $ do
-    contents <- BSL.readFile fp
-    (i, m) <- yeetIO $ parseWithMax contents
-    let res = irGen i m
+    (tyM, i) <- assignTypes fp
+    (flattened, j) <- yeetIO $ runMonoM i (flattenModule tyM)
+    let res = irGen j flattened
     assertBool "Worked without failure" (last res `seq` True)
 
 lexNoError :: FilePath -> TestTree

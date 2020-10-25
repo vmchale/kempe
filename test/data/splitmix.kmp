@@ -1,0 +1,6 @@
+next : Int -- Int
+     =: [ 0x9e3779b97f4a7c16 +
+          dup 30 >> xori
+        ]
+
+%foreign cabi next
