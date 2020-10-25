@@ -169,7 +169,7 @@ assignCase :: (Pattern a, [Atom a]) -> TypeM () (Pattern (StackType ()), [Atom (
 assignCase (p, as) = (,) <$> assignPattern p <*> traverse assignAtom as
 
 assignAtom :: Atom a -> TypeM () (Atom (StackType ()))
-assignAtom a@(AtBuiltin _ b) = AtBuiltin <$> tyAtom a <*> pure b
+assignAtom a@(AtBuiltin _ b) = AtBuiltin <$> tyAtom a <*> pure b -- FIXME: this clones and thus can't handle subst. :\
 assignAtom a@(BoolLit _ b)   = BoolLit <$> tyAtom a <*> pure b
 assignAtom a@(IntLit _ i)    = IntLit <$> tyAtom a <*> pure i
 assignAtom a@(AtName _ n)    = AtName <$> tyAtom a <*> assignName n

@@ -38,6 +38,7 @@ main = defaultMain $
             , monoTest "test/data/ty.kmp"
             , monoTest "test/data/splitmix.kmp"
             , pipelineWorks "test/data/ty.kmp"
+            , pipelineWorks "test/data/splitmix.kmp"
             , irNoYeet "test/data/export.kmp"
             , irNoYeet "test/data/splitmix.kmp"
             ]
@@ -45,9 +46,9 @@ main = defaultMain $
 
 irNoYeet :: FilePath -> TestTree
 irNoYeet fp = testCase ("Generates IR without throwing an exception (" ++ fp ++ ")") $ do
-    (tyM, i) <- assignTypes fp
-    (flattened, j) <- yeetIO $ runMonoM i (flattenModule tyM)
-    let res = irGen j flattened
+    contents <- BSL.readFile fp
+    (i, m) <- yeetIO $ parseWithMax contents
+    let res = irGen i m
     assertBool "Worked without failure" (last res `seq` True)
 
 lexNoError :: FilePath -> TestTree
@@ -107,4 +108,4 @@ pipelineWorks fp = testCase ("Functions in " ++ fp ++ " can be specialized") $ d
     let res = monomorphize maxU m
     case res of
         Left err -> assertFailure (show $ pretty err)
-        Right{}  -> assertBool "Doesn't fail type-checkign" True
+        Right{}  -> assertBool "Doesn't fail type-checking" True

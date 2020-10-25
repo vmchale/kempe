@@ -12,6 +12,6 @@ monomorphize :: Int
 monomorphize ctx m = do
     (mTy, i) <- runTypeM ctx (assignModule m)
     (flat, j) <- runMonoM i (flattenModule mTy)
-    -- assign types again lol
+    -- assign types again
     (flatTy, _) <- runTypeM j (assignModule flat)
     traverse (traverse tryMono) flatTy
