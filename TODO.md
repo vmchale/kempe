@@ -14,6 +14,7 @@
 - [ ] IR (abstract assembly?)
   - [ ] https://www.cs.princeton.edu/courses/archive/spr19/cos217/lectures/13_Assembly1.pdf (von neumann -> c where int ptrs, ATS & such are useful...)
   - [ ] https://www.cs.virginia.edu/~evans/cs216/guides/x86.html
+- [ ] http://hackage.haskell.org/package/x86-64bit-0.4.6.1/docs/CodeGen-X86.html
 # Features
 - [ ] REPL for type inspection?
 - [ ] Pattern match exhaustiveness checker

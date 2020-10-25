@@ -8,7 +8,7 @@ import           Options.Applicative
 import qualified Paths_kempe         as P
 
 data Command = TypeCheck !FilePath
-             | Compile !FilePath !FilePath
+             | Compile !FilePath !FilePath -- TODO: take arch on cli
 
 run :: Command -> IO ()
 run (TypeCheck fp) = either throwIO pure =<< tcFile fp

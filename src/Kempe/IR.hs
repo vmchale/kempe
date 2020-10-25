@@ -7,16 +7,17 @@ module Kempe.IR ( size
                 , IntBinOp (..)
                 ) where
 
-import           Control.Monad.State (State, gets, modify)
-import           Data.Foldable       (fold)
-import           Data.Int            (Int64)
-import qualified Data.IntMap         as IM
-import           Data.Word           (Word8)
+import           Control.Monad.State  (State, gets, modify)
+import qualified Data.ByteString.Lazy as BSL
+import           Data.Foldable        (fold)
+import           Data.Int             (Int64)
+import qualified Data.IntMap          as IM
+import           Data.Word            (Word8)
 import           Kempe.AST
 import           Kempe.Name
 import           Kempe.Unique
-import           Lens.Micro          (Lens')
-import           Lens.Micro.Mtl      (modifying)
+import           Lens.Micro           (Lens')
+import           Lens.Micro.Mtl       (modifying)
 
 data Label
 
@@ -66,7 +67,7 @@ data Statement = Push Expression
                -- -- | Seq Statement Statement
                | Jump Label
                | CJump Expression Label Label
-               -- -- | CCall MonoStackType
+               | CCall MonoStackType BSL.ByteString -- TODO: ShortByteString?
 
 data Expression = ConstInt Int64
                 | ConstantPtr Int64
