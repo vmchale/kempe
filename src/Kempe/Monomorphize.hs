@@ -2,6 +2,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TupleSections     #-}
 
+-- | This module is kind of half-assed. I don't have any references but it should work.
 module Kempe.Monomorphize ( closedModule
                           , MonoM
                           , runMonoM
