@@ -1,0 +1,4 @@
+even : Int -- Bool
+    =: [ 2 % 0 = ]
+
+%foreign cabi even

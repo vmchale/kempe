@@ -36,6 +36,7 @@ library
         Kempe.TyAssign
         Kempe.File
         Kempe.Monomorphize
+        Kempe.Pipeline
         Kempe.Shuttle
         Kempe.IR
 

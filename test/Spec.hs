@@ -9,6 +9,7 @@ import           Kempe.File
 import           Kempe.Lexer
 import           Kempe.Monomorphize
 import           Kempe.Parser
+import           Kempe.Pipeline
 import           Kempe.Shuttle
 import           Kempe.TyAssign
 import           Prettyprinter        (pretty)
@@ -34,8 +35,16 @@ main = defaultMain $
             , tyInfer "test/data/mutual.kmp"
             , monoTest "test/data/ty.kmp"
             , pipelineWorks "test/data/ty.kmp"
+            , irNoYeet "test/data/export.kmp"
             ]
         ]
+
+irNoYeet :: FilePath -> TestTree
+irNoYeet fp = testCase ("Generates IR without throwing an exception (" ++ fp ++ ")") $ do
+    contents <- BSL.readFile fp
+    (i, m) <- yeetIO $ parseWithMax contents
+    let res = irGen i m
+    assertBool "Worked without failure" (last res `seq` True)
 
 lexNoError :: FilePath -> TestTree
 lexNoError fp = testCase ("Lexing doesn't fail (" ++ fp ++ ")") $ do

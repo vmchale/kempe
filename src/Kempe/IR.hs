@@ -7,9 +7,11 @@ module Kempe.IR ( size
                 , Exp (..)
                 , RelBinOp (..)
                 , IntBinOp (..)
+                , runTempM
+                , TempM
                 ) where
 
-import           Control.Monad.State  (State, gets, modify)
+import           Control.Monad.State  (State, evalState, gets, modify)
 import qualified Data.ByteString.Lazy as BSL
 import           Data.Foldable        (fold)
 import           Data.Int             (Int64)
@@ -21,9 +23,9 @@ import           Kempe.Unique
 import           Lens.Micro           (Lens')
 import           Lens.Micro.Mtl       (modifying)
 
-data Label
+type Label = Word
 
-data Temp
+type Temp = Int
 
 class Architecture a where
     stackPointer :: a -> Temp
@@ -34,6 +36,9 @@ data TempSt = TempSt { labels     :: [Label]
                      , atLabels   :: IM.IntMap Label
                      -- TODO: type sizes in state?
                      }
+
+runTempM :: TempM a -> a
+runTempM = flip evalState (TempSt [1..] [1..] mempty)
 
 atLabelsLens :: Lens' TempSt (IM.IntMap Label)
 atLabelsLens f s = fmap (\x -> s { atLabels = x }) (f (atLabels s))
@@ -64,7 +69,7 @@ lookupName (Name _ (Unique i) _) =
         (IM.findWithDefault (error "Internal error in IR phase: could not look find label for name") i . atLabels)
 
 -- TODO figure out dip
-data Stmt = Push Exp
+data Stmt = Push (KempeTy ()) Exp
           | Pop (KempeTy ()) Temp
           | Labeled Label
           -- -- | Seq Stmt Stmt
@@ -81,22 +86,22 @@ data Exp = ConstInt Int64
          | ConstantPtr Int64
          | ConstBool Word8
          | Named Label
-         | Reg Temp
+         | Reg Temp -- TODO: size?
          | Mem Exp
          | Do Stmt Exp
          | ExprIntBinOp IntBinOp Exp Exp
          | ExprIntRel RelBinOp Exp Exp
 
-data RelBinOp = IntEq
-              | IntNeq
-              | IntLt
-              | IntGt
+data RelBinOp = IntEqIR
+              | IntNeqIR
+              | IntLtIR
+              | IntGtIR
 
-data IntBinOp = IntPlus
-              | IntTimes
-              | IntDiv
-              | IntMinus
-              | IntMod
+data IntBinOp = IntPlusIR
+              | IntTimesIR
+              | IntDivIR
+              | IntMinusIR
+              | IntModIR
 
 writeModule :: Module () MonoStackType -> TempM [Stmt]
 writeModule = foldMapA writeDecl
@@ -112,12 +117,40 @@ writeAtoms = foldMapA writeAtom
 foldMapA :: (Applicative f, Traversable t, Monoid m) => (a -> f m) -> t a -> f m
 foldMapA = (fmap fold .) . traverse
 
+tyInt :: KempeTy ()
+tyInt = TyBuiltin () TyInt
+
+tyBool :: KempeTy ()
+tyBool = TyBuiltin () TyBool
+
+intOp :: IntBinOp -> TempM [Stmt]
+intOp cons = do
+    t0 <- getTemp
+    t1 <- getTemp
+    pure
+        [ Pop tyInt t0
+        , Pop tyInt t1
+        , Push tyInt $ ExprIntBinOp cons (Reg t0) (Reg t1)
+        ]
+
+intRel :: RelBinOp -> TempM [Stmt]
+intRel cons = do
+    t0 <- getTemp
+    t1 <- getTemp
+    pure
+        [ Pop tyInt t0
+        , Pop tyInt t1
+        , Push tyBool $ ExprIntRel cons (Reg t0) (Reg t1)
+        ]
+
 -- need monad for fresh 'Temp's
 writeAtom :: Atom MonoStackType -> TempM [Stmt]
-writeAtom (IntLit _ i)             = pure [Push (ConstInt $ fromInteger i)]
-writeAtom (BoolLit _ b)            = pure [Push (ConstBool $ toByte b)]
+writeAtom (IntLit _ i)             = pure [Push tyInt (ConstInt $ fromInteger i)]
+writeAtom (BoolLit _ b)            = pure [Push tyBool (ConstBool $ toByte b)]
 writeAtom (AtName _ n)             = pure . KCall <$> lookupName n -- TODO: when to do tco?
 writeAtom (AtBuiltin ([], _) Drop) = error "Internal error: Ill-typed drop!"
+writeAtom (AtBuiltin _ IntMod)     = intOp IntModIR
+writeAtom (AtBuiltin _ IntEq)      = intRel IntEqIR
 
 toByte :: Bool -> Word8
 toByte True  = 1
