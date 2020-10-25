@@ -1,7 +1,6 @@
 -- | IR from Appel book
 module Kempe.IR ( size
-                , stackPointer
-                , framePointer
+                , Architecture (..)
                 , writeModule
                 , Stmt (..)
                 , Exp (..)
@@ -30,6 +29,7 @@ type Temp = Int
 class Architecture a where
     stackPointer :: a -> Temp
     framePointer :: a -> Temp
+    cRet :: a -> Exp -- register that has c return value?
 
 data TempSt = TempSt { labels     :: [Label]
                      , tempSupply :: [Temp]
