@@ -1,9 +1,10 @@
 -- | IR from Appel book
 module Kempe.IR ( size
                 , stackPointer
-                , writeDecl
+                , framePointer
+                , writeModule
                 , Statement (..)
-                , Expression (..)
+                , Exp (..)
                 , RelBinOp (..)
                 , IntBinOp (..)
                 ) where
@@ -24,16 +25,14 @@ data Label
 
 data Temp
 
--- defined on aarch64 and x86_64
-stackPointer :: Temp
-stackPointer = undefined
-
-framePointer :: Temp
-framePointer = undefined
+class Architecture a where
+    stackPointer :: a -> Temp
+    framePointer :: a -> Temp
 
 data TempSt = TempSt { labels     :: [Label]
                      , tempSupply :: [Temp]
                      , atLabels   :: IM.IntMap Label
+                     -- TODO: type sizes in state?
                      }
 
 atLabelsLens :: Lens' TempSt (IM.IntMap Label)
@@ -65,27 +64,27 @@ lookupName (Name _ (Unique i) _) =
         (IM.findWithDefault (error "Internal error in IR phase: could not look find label for name") i . atLabels)
 
 -- TODO figure out dip
-data Statement = Push Expression
+data Statement = Push Exp
                | Pop (KempeTy ()) Temp
                | Labeled Label
                -- -- | Seq Statement Statement
                | Jump Label
-               | CJump Expression Label Label
-               | MJump Expression Label
+               | CJump Exp Label Label
+               | MJump Exp Label
                | CCall MonoStackType BSL.ByteString -- TODO: ShortByteString?
-               | KCall Label
-               | MovTemp Temp Expression
-               | MovMem Expression Expression
+               | KCall Label -- KCall is a jump to a Kempe procedure (and jump back, later)
+               | MovTemp Temp Exp
+               | MovMem Exp Exp
 
-data Expression = ConstInt Int64
-                | ConstantPtr Int64
-                | ConstBool Word8
-                | Named Label
-                | Reg Temp
-                | Mem Expression
-                | Do Statement Expression
-                | ExprIntBinOp IntBinOp Expression Expression
-                | ExprIntRel RelBinOp Expression Expression
+data Exp = ConstInt Int64
+         | ConstantPtr Int64
+         | ConstBool Word8
+         | Named Label
+         | Reg Temp
+         | Mem Exp
+         | Do Statement Exp
+         | ExprIntBinOp IntBinOp Exp Exp
+         | ExprIntRel RelBinOp Exp Exp
 
 data RelBinOp = IntEq
               | IntNeq
@@ -98,14 +97,19 @@ data IntBinOp = IntPlus
               | IntMinus
               | IntMod
 
+writeModule :: Module () MonoStackType -> TempM [Statement]
+writeModule = foldMapA writeDecl
+
 writeDecl :: KempeDecl () MonoStackType -> TempM [Statement]
 writeDecl (FunDecl _ (Name _ u _) _ _ as) = do
     bl <- broadcastName u
     (Labeled bl:) <$> writeAtoms as
 
 writeAtoms :: [Atom MonoStackType] -> TempM [Statement]
-writeAtoms = foldMapA writeAtom where
-    foldMapA = (fmap fold .) . traverse
+writeAtoms = foldMapA writeAtom
+
+foldMapA :: (Applicative f, Traversable t, Monoid m) => (a -> f m) -> t a -> f m
+foldMapA = (fmap fold .) . traverse
 
 -- need monad for fresh 'Temp's
 writeAtom :: Atom MonoStackType -> TempM [Statement]
@@ -122,5 +126,5 @@ size :: KempeTy a -> Int
 size (TyBuiltin _ TyInt)  = 8 -- since we're only targeting x86_64 and aarch64 we have 64-bit 'Int's
 size (TyBuiltin _ TyPtr)  = 8
 size (TyBuiltin _ TyBool) = 1
-size TyVar{}              = error "Internal error: type variables not allowed at this stage."
+size TyVar{}              = error "Internal error: type variables should not be present at this stage."
 size (TyTuple _ tys)      = sum (fmap size tys)
