@@ -3,7 +3,7 @@ module Kempe.Shuttle ( monomorphize
 
 import           Kempe.AST
 import           Kempe.Error
-import           Kempe.Specialize
+import           Kempe.Monomorphize
 import           Kempe.TyAssign
 
 monomorphize :: Int

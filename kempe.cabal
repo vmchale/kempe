@@ -35,7 +35,7 @@ library
         Kempe.AST
         Kempe.TyAssign
         Kempe.File
-        Kempe.Specialize
+        Kempe.Monomorphize
         Kempe.Shuttle
         Kempe.IR
 
