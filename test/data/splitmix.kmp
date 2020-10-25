@@ -1,6 +1,10 @@
+; from here: http://prng.di.unimi.it/splitmix64.c
+
 next : Int -- Int
      =: [ 0x9e3779b97f4a7c16 +
-          dup 30 >> xori
+          dup 30 >> xori 0xbf58476d1ce4e5b9 *
+          dup 27 >> xori 0x94d049bb133111eb *
+          dup 32 >> xori
         ]
 
 %foreign cabi next

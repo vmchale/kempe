@@ -169,7 +169,7 @@ assignCase :: (Pattern a, [Atom a]) -> TypeM () (Pattern (StackType ()), [Atom (
 assignCase (p, as) = (,) <$> assignPattern p <*> traverse assignAtom as
 
 assignAtom :: Atom a -> TypeM () (Atom (StackType ()))
-assignAtom a@(AtBuiltin _ b) = AtBuiltin <$> tyAtom a <*> pure b -- FIXME: this clones and thus can't handle subst. :\
+assignAtom a@(AtBuiltin _ b) = AtBuiltin <$> tyAtom a <*> pure b -- FIXME: this clones and thus can't handle subst. in e.g. dup :\
 assignAtom a@(BoolLit _ b)   = BoolLit <$> tyAtom a <*> pure b
 assignAtom a@(IntLit _ i)    = IntLit <$> tyAtom a <*> pure i
 assignAtom a@(AtName _ n)    = AtName <$> tyAtom a <*> assignName n
@@ -272,6 +272,7 @@ assignModule :: Module a b -> TypeM () (Module () (StackType ()))
 assignModule m = do
     tyModule m
     backNames <- unifyM =<< gets constraints
+    -- TODO: do assignment right
     fmap (fmap (substConstraintsStack backNames)) <$> traverse assignDecl m
 
 -- Make sure you don't have cycles in the renames map!
