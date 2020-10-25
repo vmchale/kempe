@@ -108,6 +108,7 @@ data BuiltinFn = Drop
                | IntDiv
                | IntMod
                | IntEq
+               -- TODO: IntLt and such
                deriving (Generic, NFData)
 
 data ABI = Cabi

@@ -148,12 +148,19 @@ intRel cons = do
 
 -- need monad for fresh 'Temp's
 writeAtom :: Atom MonoStackType -> TempM [Stmt]
-writeAtom (IntLit _ i)             = pure [Push tyInt (ConstInt $ fromInteger i)]
-writeAtom (BoolLit _ b)            = pure [Push tyBool (ConstBool $ toByte b)]
-writeAtom (AtName _ n)             = pure . KCall <$> lookupName n -- TODO: when to do tco?
-writeAtom (AtBuiltin ([], _) Drop) = error "Internal error: Ill-typed drop!"
-writeAtom (AtBuiltin _ IntMod)     = intOp IntModIR
-writeAtom (AtBuiltin _ IntEq)      = intRel IntEqIR
+writeAtom (IntLit _ i)              = pure [Push tyInt (ConstInt $ fromInteger i)]
+writeAtom (BoolLit _ b)             = pure [Push tyBool (ConstBool $ toByte b)]
+writeAtom (AtName _ n)              = pure . KCall <$> lookupName n -- TODO: when to do tco?
+writeAtom (AtBuiltin ([], _) Drop)  = error "Internal error: Ill-typed drop!"
+writeAtom (AtBuiltin ([], _) Swap)  = error "Internal error: Ill-typed swap!"
+writeAtom (AtBuiltin ([_], _) Swap) = error "Internal error: Ill-typed swap!"
+writeAtom (AtBuiltin ([], _) Dup)   = error "Internal error: Ill-typed dup!"
+writeAtom (AtBuiltin _ IntPlus)     = intOp IntPlusIR
+writeAtom (AtBuiltin _ IntMinus)    = intOp IntMinusIR
+writeAtom (AtBuiltin _ IntTimes)    = intOp IntTimesIR
+writeAtom (AtBuiltin _ IntDiv)      = intOp IntDivIR
+writeAtom (AtBuiltin _ IntMod)      = intOp IntModIR
+writeAtom (AtBuiltin _ IntEq)       = intRel IntEqIR -- what to do on failure?
 
 toByte :: Bool -> Word8
 toByte True  = 1
