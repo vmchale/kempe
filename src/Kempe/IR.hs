@@ -3,7 +3,7 @@ module Kempe.IR ( size
                 , stackPointer
                 , framePointer
                 , writeModule
-                , Statement (..)
+                , Stmt (..)
                 , Exp (..)
                 , RelBinOp (..)
                 , IntBinOp (..)
@@ -64,17 +64,18 @@ lookupName (Name _ (Unique i) _) =
         (IM.findWithDefault (error "Internal error in IR phase: could not look find label for name") i . atLabels)
 
 -- TODO figure out dip
-data Statement = Push Exp
-               | Pop (KempeTy ()) Temp
-               | Labeled Label
-               -- -- | Seq Statement Statement
-               | Jump Label
-               | CJump Exp Label Label
-               | MJump Exp Label
-               | CCall MonoStackType BSL.ByteString -- TODO: ShortByteString?
-               | KCall Label -- KCall is a jump to a Kempe procedure (and jump back, later)
-               | MovTemp Temp Exp
-               | MovMem Exp Exp
+data Stmt = Push Exp
+          | Pop (KempeTy ()) Temp
+          | Labeled Label
+          -- -- | Seq Stmt Stmt
+          | Jump Label
+          -- conditional jump for ifs
+          | CJump Exp Label Label
+          | MJump Exp Label
+          | CCall MonoStackType BSL.ByteString -- TODO: ShortByteString?
+          | KCall Label -- KCall is a jump to a Kempe procedure (and jump back, later)
+          | MovTemp Temp Exp
+          | MovMem Exp Exp
 
 data Exp = ConstInt Int64
          | ConstantPtr Int64
@@ -82,7 +83,7 @@ data Exp = ConstInt Int64
          | Named Label
          | Reg Temp
          | Mem Exp
-         | Do Statement Exp
+         | Do Stmt Exp
          | ExprIntBinOp IntBinOp Exp Exp
          | ExprIntRel RelBinOp Exp Exp
 
@@ -97,25 +98,26 @@ data IntBinOp = IntPlus
               | IntMinus
               | IntMod
 
-writeModule :: Module () MonoStackType -> TempM [Statement]
+writeModule :: Module () MonoStackType -> TempM [Stmt]
 writeModule = foldMapA writeDecl
 
-writeDecl :: KempeDecl () MonoStackType -> TempM [Statement]
+writeDecl :: KempeDecl () MonoStackType -> TempM [Stmt]
 writeDecl (FunDecl _ (Name _ u _) _ _ as) = do
     bl <- broadcastName u
     (Labeled bl:) <$> writeAtoms as
 
-writeAtoms :: [Atom MonoStackType] -> TempM [Statement]
+writeAtoms :: [Atom MonoStackType] -> TempM [Stmt]
 writeAtoms = foldMapA writeAtom
 
 foldMapA :: (Applicative f, Traversable t, Monoid m) => (a -> f m) -> t a -> f m
 foldMapA = (fmap fold .) . traverse
 
 -- need monad for fresh 'Temp's
-writeAtom :: Atom MonoStackType -> TempM [Statement]
-writeAtom (IntLit _ i)  = pure [Push (ConstInt $ fromInteger i)]
-writeAtom (BoolLit _ b) = pure [Push (ConstBool $ toByte b)]
-writeAtom (AtName _ n)  = pure . KCall <$> lookupName n -- TODO: when to do tco?
+writeAtom :: Atom MonoStackType -> TempM [Stmt]
+writeAtom (IntLit _ i)             = pure [Push (ConstInt $ fromInteger i)]
+writeAtom (BoolLit _ b)            = pure [Push (ConstBool $ toByte b)]
+writeAtom (AtName _ n)             = pure . KCall <$> lookupName n -- TODO: when to do tco?
+writeAtom (AtBuiltin ([], _) Drop) = error "Internal error: Ill-typed drop!"
 
 toByte :: Bool -> Word8
 toByte True  = 1
