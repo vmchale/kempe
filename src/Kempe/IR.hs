@@ -110,6 +110,9 @@ writeDecl :: KempeDecl () MonoStackType -> TempM [Stmt]
 writeDecl (FunDecl _ (Name _ u _) _ _ as) = do
     bl <- broadcastName u
     (Labeled bl:) <$> writeAtoms as
+writeDecl (ExtFnDecl ty (Name _ u _) _ _ cName) = do
+    bl <- broadcastName u
+    pure [Labeled bl, CCall ty cName]
 
 writeAtoms :: [Atom MonoStackType] -> TempM [Stmt]
 writeAtoms = foldMapA writeAtom

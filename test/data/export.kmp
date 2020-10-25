@@ -1,4 +1,11 @@
 even : Int -- Bool
     =: [ 2 % 0 = ]
 
+rand : -- Int
+     =: $cfun"rand"
+
+randBool : -- Bool
+         =: [ rand even ]
+
 %foreign cabi even
+%foreign cabi randBool
