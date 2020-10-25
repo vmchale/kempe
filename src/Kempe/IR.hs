@@ -1,6 +1,6 @@
 module Kempe.IR ( size
                 , stackPointer
-                , writeAtoms
+                , writeDecl
                 , Statement (..)
                 , Expression (..)
                 , RelBinOp (..)
@@ -8,11 +8,15 @@ module Kempe.IR ( size
                 ) where
 
 import           Control.Monad.State (State, gets, modify)
-import           Data.Bifunctor      (first, second)
 import           Data.Foldable       (fold)
 import           Data.Int            (Int64)
+import qualified Data.IntMap         as IM
 import           Data.Word           (Word8)
 import           Kempe.AST
+import           Kempe.Name
+import           Kempe.Unique
+import           Lens.Micro          (Lens')
+import           Lens.Micro.Mtl      (modifying)
 
 data Label
 
@@ -22,13 +26,38 @@ data Temp
 stackPointer :: Temp
 stackPointer = undefined
 
-type TempM = State ([Label], [Temp])
+data TempSt = TempSt { labels     :: [Label]
+                     , tempSupply :: [Temp]
+                     , atLabels   :: IM.IntMap Label
+                     }
+
+atLabelsLens :: Lens' TempSt (IM.IntMap Label)
+atLabelsLens f s = fmap (\x -> s { atLabels = x }) (f (atLabels s))
+
+mapLabels :: ([Label] -> [Label]) -> TempSt -> TempSt
+mapLabels f (TempSt ls ts ats) = TempSt (f ls) ts ats
+
+mapTemps :: ([Temp] -> [Temp]) -> TempSt -> TempSt
+mapTemps f (TempSt ls ts ats) = TempSt ls (f ts) ats
+
+type TempM = State TempSt
 
 getTemp :: TempM Temp
-getTemp = gets (head . snd) <* modify (second tail)
+getTemp = gets (head . tempSupply) <* modify (mapTemps tail)
 
 newLabel :: TempM Label
-newLabel = gets (head . fst) <* modify (first tail)
+newLabel = gets (head . labels) <* modify (mapLabels tail)
+
+broadcastName :: Unique -> TempM Label
+broadcastName (Unique i) = do
+    l <- newLabel
+    modifying atLabelsLens (IM.insert i l)
+    pure l
+
+lookupName :: Name a -> TempM Label
+lookupName (Name _ (Unique i) _) =
+    gets
+        (IM.findWithDefault (error "Internal error in IR phase: could not look find label for name") i . atLabels)
 
 -- TODO figure out dip
 data Statement = Push Expression
@@ -59,6 +88,10 @@ data IntBinOp = IntPlus
               | IntMinus
               | IntMod
 
+writeDecl :: KempeDecl () MonoStackType -> TempM [Statement]
+writeDecl (FunDecl _ (Name _ u _) _ _ as) = do
+    bl <- broadcastName u
+    (Labeled bl:) <$> writeAtoms as
 
 writeAtoms :: [Atom MonoStackType] -> TempM [Statement]
 writeAtoms = foldMapA writeAtom where
@@ -68,6 +101,7 @@ writeAtoms = foldMapA writeAtom where
 writeAtom :: Atom MonoStackType -> TempM [Statement]
 writeAtom (IntLit _ i)  = pure [Push (ConstInt $ fromInteger i)]
 writeAtom (BoolLit _ b) = pure [Push (ConstBool $ toByte b)]
+writeAtom (AtName _ n)  = pure . Jump <$> lookupName n -- TODO: when to do tco?
 
 toByte :: Bool -> Word8
 toByte True  = 1
