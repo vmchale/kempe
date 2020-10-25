@@ -54,10 +54,10 @@ push3 : -- OS OS OS
 aInt : a -- Int a
      =: [ dip(3) ]
 
-randTwice : -- Bool
+randTwice : -- Int Int
           =: [ rand rand ]
 
 odd : Int -- Bool
-    =: [ % 2 0 = ]
+    =: [ 2 % 0 = ]
 
 %foreign cabi randTwice
