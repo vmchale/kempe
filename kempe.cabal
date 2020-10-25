@@ -47,8 +47,9 @@ library
 
     default-language: Haskell2010
     other-extensions:
-        DeriveAnyClass DeriveFunctor DeriveGeneric StandaloneDeriving
-        OverloadedStrings
+        DeriveFoldable DeriveFunctor DeriveGeneric DeriveTraversable
+        FlexibleContexts GeneralizedNewtypeDeriving OverloadedStrings
+        StandaloneDeriving TupleSections
 
     ghc-options:      -Wall -O2
     build-depends:
