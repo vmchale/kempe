@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TupleSections     #-}
 
 module Kempe.TyAssign ( TypeM
                       , runTypeM
@@ -162,21 +163,11 @@ dipify (StackType fvrs is os) = do
     n <- dummyName () "a"
     pure $ StackType (S.insert n fvrs) (TyNamed () n:is) (TyNamed () n:os)
 
-assignPattern :: Pattern a -> TypeM () (Pattern (StackType ()))
-assignPattern p = do { ty <- tyPattern p ; pure (p $> ty) }
+-- assignPattern :: Pattern a -> TypeM () (Pattern (StackType ()))
+-- assignPattern p = do { ty <- tyPattern p ; pure (p $> ty) }
 
-assignCase :: (Pattern a, [Atom a]) -> TypeM () (Pattern (StackType ()), [Atom (StackType ())])
-assignCase (p, as) = (,) <$> assignPattern p <*> traverse assignAtom as
-
-assignAtom :: Atom a -> TypeM () (Atom (StackType ()))
-assignAtom a@(AtBuiltin _ b) = AtBuiltin <$> tyAtom a <*> pure b -- FIXME: this clones and thus can't handle subst. in e.g. dup :\
-assignAtom a@(BoolLit _ b)   = BoolLit <$> tyAtom a <*> pure b
-assignAtom a@(IntLit _ i)    = IntLit <$> tyAtom a <*> pure i
-assignAtom a@(AtName _ n)    = AtName <$> tyAtom a <*> assignName n
-assignAtom a@(Dip _ as)      = Dip <$> tyAtom a <*> traverse assignAtom as
-assignAtom a@(AtCons _ tn)   = AtCons <$> tyAtom a <*> assignCons tn
-assignAtom a@(If _ as as')   = If <$> tyAtom a <*> traverse assignAtom as <*> traverse assignAtom as'
-assignAtom a@(Case _ ls)     = Case <$> tyAtom a <*> traverse assignCase ls
+-- assignCase :: (Pattern a, [Atom a]) -> TypeM () (Pattern (StackType ()), [Atom (StackType ())])
+-- assignCase (p, as) = (,) <$> assignPattern p <*> traverse assignAtom as
 
 assignName :: Name a -> TypeM () (Name (StackType ()))
 assignName n = do { ty <- tyLookup (void n) ; pure (n $> ty) }
@@ -207,14 +198,33 @@ tyAtom (Case _ ls) = do
     tyLs <- traverse tyLeaf ls
     mergeMany tyLs
 
-assignAtom' :: Atom a -> TypeM () (StackType (), Atom (StackType ()))
-assignAtom' (AtBuiltin _ b) = do { ty <- typeOfBuiltin b ; pure (ty, AtBuiltin ty b) }
-assignAtom' (BoolLit _ b)   =
+assignAtom :: Atom a -> TypeM () (StackType (), Atom (StackType ()))
+assignAtom (AtBuiltin _ b) = do { ty <- typeOfBuiltin b ; pure (ty, AtBuiltin ty b) }
+assignAtom (BoolLit _ b)   =
     let sTy = StackType mempty [] [TyBuiltin () TyBool]
         in pure (sTy, BoolLit sTy b)
+assignAtom (IntLit _ i)    =
+    let sTy = StackType mempty [] [TyBuiltin () TyInt]
+        in pure (sTy, IntLit sTy i)
+assignAtom (AtName _ n) = do
+    sTy <- tyLookup (void n)
+    pure (sTy, AtName sTy (n $> sTy))
+assignAtom (AtCons _ tn) = do
+    sTy <- consLookup (void tn)
+    pure (sTy, AtCons sTy (tn $> sTy))
+assignAtom (Dip _ as)    = do { (as', ty) <- assignAtoms as ; tyDipped <- dipify ty ; pure (tyDipped, Dip tyDipped as') }
+assignAtom (If _ as0 as1) = do
+    (as0', tys) <- assignAtoms as0
+    (as1', tys') <- assignAtoms as1
+    (StackType vars ins out) <- mergeStackTypes tys tys'
+    let resType = StackType vars (ins ++ [TyBuiltin () TyBool]) out
+    pure (resType, If resType as0' as1')
 
 assignAtoms :: [Atom a] -> TypeM () ([Atom (StackType ())], StackType ())
-assignAtoms = undefined
+assignAtoms = foldM
+    -- TODO: rename after assignment?
+    (\seed a -> do { (ty, r) <- assignAtom a ; (fst seed ++ [r] ,) <$> catTypes () ty (snd seed) })
+    ([], emptyStackType)
 
 tyAtoms :: [Atom a] -> TypeM () (StackType ())
 tyAtoms = foldM
@@ -238,7 +248,8 @@ assignDecl :: KempeDecl a b -> TypeM () (KempeDecl () (StackType ()))
 assignDecl (TyDecl _ tn ns ls) = TyDecl () (void tn) (void <$> ns) <$> traverse assignLeaf ls
 assignDecl (FunDecl _ n ins os a) = do
     ty <- tyLookup (void n)
-    FunDecl ty <$> assignName n <*> pure (void <$> ins) <*> pure (void <$> os) <*> traverse assignAtom a
+    (inferred, as) <- assignAtoms a
+    FunDecl ty <$> assignName n <*> pure (void <$> ins) <*> pure (void <$> os) <*> pure inferred
 assignDecl (ExtFnDecl _ n ins os cn) = do
     ty <- tyLookup (void n)
     ExtFnDecl ty <$> assignName n <*> pure (void <$> ins) <*> pure (void <$> os) <*> pure cn
