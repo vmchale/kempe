@@ -1,0 +1,4 @@
+--langdef=KEMPE
+--langmap=KEMPE:.kmp
+--regex-KEMPE=/([[:lower:]][[:alnum:]]+ *:)/\1/f,function/
+--regex-KEMPE=/type *([[:upper:]][[:alnum:]]+) */\1/t,type/
