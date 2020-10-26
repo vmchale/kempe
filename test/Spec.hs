@@ -21,9 +21,9 @@ main = defaultMain $
     testGroup "Kempe compiler tests"
         [ testGroup "Parser golden tests"
             [ lexNoError "test/data/lex.kmp"
-            , lexNoError "test/data/splitmix.kmp"
+            , lexNoError "examples/splitmix.kmp"
             , parseNoError "test/data/lex.kmp"
-            , parseNoError "test/data/splitmix.kmp"
+            , parseNoError "examples/splitmix.kmp"
             ]
         , testGroup "type assignment"
             [ tyInfer "test/data/ty.kmp"
@@ -35,12 +35,13 @@ main = defaultMain $
             , testAssignment "test/data/ty.kmp"
             , testAssignment "lib/either.kmp"
             , tyInfer "test/data/mutual.kmp"
+            , tyInfer "examples/factorial.kmp"
             , monoTest "test/data/ty.kmp"
-            , monoTest "test/data/splitmix.kmp"
+            , monoTest "examples/splitmix.kmp"
             , pipelineWorks "test/data/ty.kmp"
             , pipelineWorks "test/data/splitmix.kmp"
             , irNoYeet "test/data/export.kmp"
-            , irNoYeet "test/data/splitmix.kmp"
+            , irNoYeet "examples/splitmix.kmp"
             ]
         ]
 
