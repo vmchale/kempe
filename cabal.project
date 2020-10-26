@@ -1,3 +1,6 @@
 packages: ./
 
 haddock-internal: True
+
+allow-newer:
+  x86-64bit:base
