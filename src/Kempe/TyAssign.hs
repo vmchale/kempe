@@ -49,8 +49,11 @@ infixr 6 <#>
 instance Pretty (TyState a) where
     pretty (TyState _ te r _ cs) =
         "type environment:" <#> vsep (prettyBound <$> IM.toList te)
-            <#> "renames" <#*> prettyDumpBinds r
-            <#> "constraints:" <#> vsep (prettyEq <$> S.toList cs)
+            <#> "renames:" <#*> prettyDumpBinds r
+            <#> "constraints:" <#> prettyConstraints cs
+
+prettyConstraints :: S.Set (KempeTy a, KempeTy a) -> Doc ann
+prettyConstraints cs = vsep (prettyEq <$> S.toList cs)
 
 prettyBound :: (Int, StackType a) -> Doc b
 prettyBound (i, e) = pretty i <+> "←" <#*> pretty e
@@ -109,7 +112,7 @@ unify ((ty@(TyBuiltin _ b0), ty'@(TyBuiltin _ b1)):tys) | b0 == b1   = unify tys
 unify ((ty@(TyNamed _ n0), ty'@(TyNamed _ n1)):tys) | n0 == n1       = unify tys
                                                     | otherwise      = Left (UnificationFailed () (void ty) (void ty'))
 unify ((ty@(TyNamed _ _), TyVar  _ (Name _ (Unique k) _)):tys)       = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys) -- is this O(n^2) or something bad?
-unify ((TyVar _ (Name _ (Unique k) _), ty@(TyNamed _ _)):tys)        = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys)
+unify ((TyVar _ (Name _ (Unique k) _), ty@(TyNamed _ _)):tys)        = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys) -- FIXME: is renameForward enough?
 unify ((ty@(TyBuiltin _ _), TyVar  _ (Name _ (Unique k) _)):tys)     = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys)
 unify ((TyVar _ (Name _ (Unique k) _), ty@(TyBuiltin _ _)):tys)      = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys)
 unify ((TyVar _ (Name _ (Unique k) _), ty@(TyVar _ _)):tys)          = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys)
@@ -143,8 +146,6 @@ runTypeM :: Int -- ^ For renamer
          -> TypeM a x -> Either (Error a) (x, Int)
 runTypeM maxInt = fmap (second maxU) .
     flip runStateT (TyState maxInt mempty mempty mempty S.empty)
-
--- monomorphization
 
 typeOfBuiltin :: BuiltinFn -> TypeM () (StackType ())
 typeOfBuiltin Drop = do
