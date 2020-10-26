@@ -241,6 +241,7 @@ assignAtom (Dip _ as)    = do { (as', ty) <- assignAtoms as ; tyDipped <- dipify
 assignAtom (If _ as0 as1) = do
     (as0', tys) <- assignAtoms as0
     (as1', tys') <- assignAtoms as1
+    -- TODO: I think this "forgets" renames that should be scoped back to atoms?
     (StackType vars ins out) <- mergeStackTypes tys tys'
     let resType = StackType vars (ins ++ [TyBuiltin () TyBool]) out
     pure (resType, If resType as0' as1')

@@ -68,9 +68,6 @@ lookupName (Name _ (Unique i) _) =
     gets
         (IM.findWithDefault (error "Internal error in IR phase: could not look find label for name") i . atLabels)
 
-push :: KempeTy () -> Exp -> Stmt
-push = undefined
-
 -- TODO figure out dip
 data Stmt = Push (KempeTy ()) Exp
           | Pop (KempeTy ()) Temp
@@ -82,6 +79,8 @@ data Stmt = Push (KempeTy ()) Exp
           | MJump Exp Label
           | CCall MonoStackType BSL.ByteString -- TODO: ShortByteString?
           | KCall Label -- KCall is a jump to a Kempe procedure (and jump back, later)
+          -- TODO: KCallRec (i.e. Kempe recursive call, should be easy
+          -- enough...)
           | MovTemp Temp Exp
           | MovMem Exp Exp -- MovMem
 
