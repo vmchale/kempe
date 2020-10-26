@@ -89,6 +89,12 @@ data Pattern b = PatternInt b Integer
                -- -- | PatternTuple
                deriving (Generic, NFData, Functor, Foldable, Traversable)
 
+instance Pretty (Pattern a) where
+    pretty (PatternInt _ i)   = pretty i
+    pretty (PatternBool _ b)  = pretty b
+    pretty PatternWildcard{}  = "_"
+    pretty (PatternCons _ tn) = pretty tn
+
 data Atom b = AtName b (Name b)
             | Case b (NonEmpty (Pattern b, [Atom b]))
             | If b [Atom b] [Atom b]
@@ -114,8 +120,25 @@ data BuiltinFn = Drop
                -- TODO: IntLt and such
                deriving (Generic, NFData)
 
+instance Pretty BuiltinFn where
+    pretty Drop      = "drop"
+    pretty Swap      = "swap"
+    pretty Dup       = "dup"
+    pretty IntPlus   = "+"
+    pretty IntMinus  = "-"
+    pretty IntTimes  = "*"
+    pretty IntDiv    = "/"
+    pretty IntMod    = "%"
+    pretty IntEq     = "="
+    pretty IntShiftR = ">>"
+    pretty IntShiftL = "<<"
+    pretty IntXor    = "xori"
+
 data ABI = Cabi
          deriving (Generic, NFData)
+
+instance Pretty ABI where
+    pretty Cabi = "cabi"
 
 data KempeDecl a b = TyDecl a (TyName a) [Name a] [(TyName b, [KempeTy a])]
                    | FunDecl b (Name b) [KempeTy a] [KempeTy a] [Atom b]
