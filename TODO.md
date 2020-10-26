@@ -20,6 +20,7 @@
 - [ ] REPL for type inspection?
 - [ ] Pattern match exhaustiveness checker
 - [ ] Error messages should have line numbers
+- [ ] Tail-call optimization (easier than I thought?)
 # Test Cases
 - [ ] Unit tests for type merge?
 - [ ] Unit tests for catTypes?
