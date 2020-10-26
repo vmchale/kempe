@@ -68,6 +68,9 @@ lookupName (Name _ (Unique i) _) =
     gets
         (IM.findWithDefault (error "Internal error in IR phase: could not look find label for name") i . atLabels)
 
+push :: KempeTy () -> Exp -> Stmt
+push = undefined
+
 -- TODO figure out dip
 data Stmt = Push (KempeTy ()) Exp
           | Pop (KempeTy ()) Temp
@@ -80,7 +83,7 @@ data Stmt = Push (KempeTy ()) Exp
           | CCall MonoStackType BSL.ByteString -- TODO: ShortByteString?
           | KCall Label -- KCall is a jump to a Kempe procedure (and jump back, later)
           | MovTemp Temp Exp
-          | MovMem Exp Exp
+          | MovMem Exp Exp -- MovMem
 
 data Exp = ConstInt Int64
          | ConstantPtr Int64
@@ -102,6 +105,9 @@ data IntBinOp = IntPlusIR
               | IntDivIR
               | IntMinusIR
               | IntModIR
+              | IntXorIR
+              | IntShiftRIR
+              | IntShiftLIR
 
 writeModule :: Module () MonoStackType -> TempM [Stmt]
 writeModule = foldMapA writeDecl
@@ -159,9 +165,14 @@ writeAtom (AtBuiltin ([], _) Dup)   = error "Internal error: Ill-typed dup!"
 writeAtom (AtBuiltin _ IntPlus)     = intOp IntPlusIR
 writeAtom (AtBuiltin _ IntMinus)    = intOp IntMinusIR
 writeAtom (AtBuiltin _ IntTimes)    = intOp IntTimesIR
-writeAtom (AtBuiltin _ IntDiv)      = intOp IntDivIR
+writeAtom (AtBuiltin _ IntDiv)      = intOp IntDivIR -- what to do on failure?
 writeAtom (AtBuiltin _ IntMod)      = intOp IntModIR
-writeAtom (AtBuiltin _ IntEq)       = intRel IntEqIR -- what to do on failure?
+writeAtom (AtBuiltin _ IntXor)      = intOp IntXorIR
+writeAtom (AtBuiltin _ IntShiftR)   = intOp IntShiftRIR
+writeAtom (AtBuiltin _ IntShiftL)   = intOp IntShiftLIR
+writeAtom (AtBuiltin _ IntEq)       = intRel IntEqIR
+
+-- stack pointer
 
 toByte :: Bool -> Word8
 toByte True  = 1
