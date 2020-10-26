@@ -37,11 +37,12 @@ main = defaultMain $
             , tyInfer "test/data/mutual.kmp"
             , tyInfer "examples/factorial.kmp"
             , monoTest "test/data/ty.kmp"
-            , monoTest "examples/splitmix.kmp"
             , pipelineWorks "test/data/ty.kmp"
             , pipelineWorks "examples/splitmix.kmp"
+            , pipelineWorks "examples/factorial.kmp"
             , irNoYeet "test/data/export.kmp"
             , irNoYeet "examples/splitmix.kmp"
+            , irNoYeet "examples/factorial.kmp"
             ]
         ]
 
