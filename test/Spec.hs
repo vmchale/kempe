@@ -39,7 +39,7 @@ main = defaultMain $
             , monoTest "test/data/ty.kmp"
             , monoTest "examples/splitmix.kmp"
             , pipelineWorks "test/data/ty.kmp"
-            , pipelineWorks "export/splitmix.kmp"
+            , pipelineWorks "examples/splitmix.kmp"
             , irNoYeet "test/data/export.kmp"
             , irNoYeet "examples/splitmix.kmp"
             ]

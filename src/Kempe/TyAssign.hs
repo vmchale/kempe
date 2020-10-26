@@ -163,17 +163,8 @@ dipify (StackType fvrs is os) = do
     n <- dummyName () "a"
     pure $ StackType (S.insert n fvrs) (TyNamed () n:is) (TyNamed () n:os)
 
--- assignPattern :: Pattern a -> TypeM () (Pattern (StackType ()))
--- assignPattern p = do { ty <- tyPattern p ; pure (p $> ty) }
-
--- assignCase :: (Pattern a, [Atom a]) -> TypeM () (Pattern (StackType ()), [Atom (StackType ())])
--- assignCase (p, as) = (,) <$> assignPattern p <*> traverse assignAtom as
-
 assignName :: Name a -> TypeM () (Name (StackType ()))
 assignName n = do { ty <- tyLookup (void n) ; pure (n $> ty) }
-
-assignCons :: Name a -> TypeM () (TyName (StackType ()))
-assignCons n = do { ty <- consLookup (void n) ; pure (n $> ty) }
 
 tyLeaf :: (Pattern a, [Atom a]) -> TypeM () (StackType ())
 tyLeaf (p, as) = do
@@ -181,6 +172,12 @@ tyLeaf (p, as) = do
     tyP <- tyPattern p
     tyA <- tyAtoms as
     catTypes () tyP tyA
+
+assignCase :: (Pattern a, [Atom a]) -> TypeM () (StackType (), Pattern (StackType ()), [Atom (StackType ())])
+assignCase (p, as) = do
+    (tyP, p') <- assignPattern p
+    (as', tyA) <- assignAtoms as
+    (,,) <$> catTypes () tyP tyA <*> pure p' <*> pure as'
 
 tyAtom :: Atom a -> TypeM () (StackType ())
 tyAtom (AtBuiltin _ b) = typeOfBuiltin b
@@ -196,6 +193,7 @@ tyAtom (If _ as as')   = do
     pure $ StackType vars (ins ++ [TyBuiltin () TyBool]) out
 tyAtom (Case _ ls) = do
     tyLs <- traverse tyLeaf ls
+    -- TODO: one-pass fold?
     mergeMany tyLs
 
 assignAtom :: Atom a -> TypeM () (StackType (), Atom (StackType ()))
@@ -219,11 +217,18 @@ assignAtom (If _ as0 as1) = do
     (StackType vars ins out) <- mergeStackTypes tys tys'
     let resType = StackType vars (ins ++ [TyBuiltin () TyBool]) out
     pure (resType, If resType as0' as1')
+assignAtom (Case _ ls) = do
+    lRes <- traverse assignCase ls
+    resType <- mergeMany (fst3 <$> lRes)
+    let newLeaves = fmap dropFst lRes
+    pure (resType, Case resType newLeaves)
+    where dropFst (_, y, z) = (y, z)
+          fst3 ~(x, _, _) = x
 
 assignAtoms :: [Atom a] -> TypeM () ([Atom (StackType ())], StackType ())
 assignAtoms = foldM
     -- TODO: rename after assignment?
-    (\seed a -> do { (ty, r) <- assignAtom a ; (fst seed ++ [r] ,) <$> catTypes () ty (snd seed) })
+    (\seed a -> do { (ty, r) <- assignAtom a ; ty' <- renameStack ty ; r' <- traverse renameStack r ; (fst seed ++ [r'] ,) <$> catTypes () ty' (snd seed) })
     ([], emptyStackType)
 
 tyAtoms :: [Atom a] -> TypeM () (StackType ())
@@ -238,21 +243,32 @@ tyInsertLeaf n vars (Name _ (Unique i) _, ins) | S.null vars =
                                                | otherwise =
     modifying constructorTypesLens (IM.insert i (voidStackType $ StackType vars ins [app (TyNamed undefined n) (S.toList vars)]))
 
+assignTyLeaf :: Name b
+             -> S.Set (Name b)
+             -> (TyName a, [KempeTy b])
+             -> TypeM () (TyName (StackType ()), [KempeTy ()])
+assignTyLeaf n vars (tn@(Name _ (Unique i) _), ins) | S.null vars =
+    let ty = voidStackType $ StackType vars ins [TyNamed undefined n] in
+    modifying constructorTypesLens (IM.insert i ty) $> (tn $> ty, fmap void ins)
+                                               | otherwise =
+    let ty = voidStackType $ StackType vars ins [app (TyNamed undefined n) (S.toList vars)] in
+    modifying constructorTypesLens (IM.insert i ty) $> (tn $> ty, fmap void ins)
+
 app :: KempeTy a -> [Name a] -> KempeTy a
 app = foldl' (\ty n -> TyApp undefined ty (TyNamed undefined n))
 
-assignLeaf :: (TyName a, [KempeTy b]) -> TypeM () (TyName (StackType ()), [KempeTy ()])
-assignLeaf (tn, tys) = (,) <$> assignCons tn <*> pure (void <$> tys)
-
 assignDecl :: KempeDecl a b -> TypeM () (KempeDecl () (StackType ()))
-assignDecl (TyDecl _ tn ns ls) = TyDecl () (void tn) (void <$> ns) <$> traverse assignLeaf ls
+assignDecl (TyDecl _ tn ns ls) = TyDecl () (void tn) (void <$> ns) <$> traverse (assignTyLeaf tn (S.fromList ns)) ls
 assignDecl (FunDecl _ n ins os a) = do
-    ty <- tyLookup (void n)
-    (inferred, as) <- assignAtoms a
-    FunDecl ty <$> assignName n <*> pure (void <$> ins) <*> pure (void <$> os) <*> pure inferred
+    let sig = voidStackType $ StackType (freeVars (ins ++ os)) ins os
+    (as, inferred) <- assignAtoms a
+    reconcile <- mergeStackTypes sig inferred -- FIXME: need to verify the merged type is as general as the signature?
+    -- assign comes after tyInsert
+    pure $ FunDecl reconcile (n $> reconcile) (void <$> ins) (void <$> os) as
 assignDecl (ExtFnDecl _ n ins os cn) = do
-    ty <- tyLookup (void n)
-    ExtFnDecl ty <$> assignName n <*> pure (void <$> ins) <*> pure (void <$> os) <*> pure cn
+    let sig = voidStackType $ StackType S.empty ins os
+    -- assign always comes after tyInsert
+    pure $ ExtFnDecl sig (n $> sig) (void <$> ins) (void <$> os) cn
 assignDecl (Export _ abi n) = do
     ty <- tyLookup (void n)
     Export ty abi <$> assignName n
@@ -269,17 +285,13 @@ tyHeader (ExtFnDecl _ (Name _ (Unique i) _) ins os _) = do
     modifying tyEnvLens (IM.insert i sig)
 tyHeader TyDecl{} = pure ()
 
--- TODO: traverse headers first
 tyInsert :: KempeDecl a b -> TypeM () ()
 tyInsert (TyDecl _ tn ns ls) = traverse_ (tyInsertLeaf tn (S.fromList ns)) ls
-tyInsert (FunDecl _ (Name _ (Unique i) _) ins out as) = do
+tyInsert (FunDecl _ _ ins out as) = do
     let sig = voidStackType $ StackType (freeVars (ins ++ out)) ins out
     inferred <- tyAtoms as
-    reconcile <- mergeStackTypes sig inferred -- FIXME: need to verify the merged type is as general as the signature?
-    modifying tyEnvLens (IM.insert i reconcile)
-tyInsert (ExtFnDecl _ (Name _ (Unique i) _) ins os _) = do
-    let sig = voidStackType $ StackType S.empty ins os -- free variables already checked
-    modifying tyEnvLens (IM.insert i sig)
+    void $ mergeStackTypes sig inferred -- FIXME: need to verify the merged type is as general as the signature?
+tyInsert ExtFnDecl{} = pure ()
 tyInsert Export{} = pure ()
 
 tyModule :: Module a b -> TypeM () ()
@@ -290,10 +302,11 @@ checkModule m = tyModule m <* (unifyM =<< gets constraints)
 
 assignModule :: Module a b -> TypeM () (Module () (StackType ()))
 assignModule m = do
-    tyModule m
+    traverse_ tyHeader m
+    m' <- traverse assignDecl m
     backNames <- unifyM =<< gets constraints
     -- TODO: do assignment right
-    fmap (fmap (substConstraintsStack backNames)) <$> traverse assignDecl m
+    pure $ fmap (substConstraintsStack backNames) <$> m'
 
 -- Make sure you don't have cycles in the renames map!
 replaceUnique :: Unique -> TypeM a Unique
@@ -363,6 +376,19 @@ tyPattern PatternWildcard{} = do
 tyPattern PatternInt{} = pure $ StackType S.empty [TyBuiltin () TyInt] []
 tyPattern PatternBool{} = pure $ StackType S.empty [TyBuiltin () TyBool] []
 tyPattern (PatternCons _ tn) = flipStackType <$> consLookup (void tn)
+
+assignPattern :: Pattern a -> TypeM () (StackType (), Pattern (StackType ()))
+assignPattern (PatternInt _ i) =
+    let sTy = StackType S.empty [TyBuiltin () TyInt] []
+        in pure (sTy, PatternInt sTy i)
+assignPattern (PatternBool _ i) =
+    let sTy = StackType S.empty [TyBuiltin () TyBool] []
+        in pure (sTy, PatternBool sTy i)
+assignPattern (PatternCons _ tn) = do { ty <- flipStackType <$> consLookup (void tn) ; pure (ty, PatternCons ty (tn $> ty)) }
+assignPattern PatternWildcard{} = do
+    aN <- dummyName () "a"
+    let resType = StackType (S.singleton aN) [TyVar () aN] []
+    pure (resType, PatternWildcard resType)
 
 flipStackType :: StackType () -> StackType ()
 flipStackType (StackType vars is os) = StackType vars os is
