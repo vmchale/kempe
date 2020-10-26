@@ -26,10 +26,10 @@ type Label = Word
 
 type Temp = Int
 
-class Architecture a where
-    stackPointer :: a -> Temp
-    framePointer :: a -> Temp
-    cRet :: a -> Exp -- register that has c return value?
+data Architecture = Architecture { stackPointer :: Temp
+                                 , framePointer :: Temp
+                                 , cRet :: Exp
+                                 }
 
 data TempSt = TempSt { labels     :: [Label]
                      , tempSupply :: [Temp]
@@ -82,8 +82,8 @@ data Stmt = Push (KempeTy ()) Exp
           | MJump Exp Label
           | CCall MonoStackType BSL.ByteString -- TODO: ShortByteString?
           | KCall Label -- KCall is a jump to a Kempe procedure (and jump back, later)
-          | MovTemp Temp Exp
-          | MovMem Exp Exp -- MovMem
+          | MovTemp Temp Exp -- fetch from loc given by Exp
+          | MovMem Exp Exp -- store e2 and address given by e1
 
 data Exp = ConstInt Int64
          | ConstantPtr Int64
