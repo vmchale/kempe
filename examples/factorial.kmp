@@ -1,5 +1,5 @@
 fac : Int -- Int
     =: [ dup 0 =
          if( drop 1
-           , 1 - fac )
+           , dup 1 - fac * )
        ]
