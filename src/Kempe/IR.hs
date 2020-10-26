@@ -82,7 +82,7 @@ data Stmt = Push (KempeTy ()) Exp
           | MJump Exp Label
           | CCall MonoStackType BSL.ByteString -- TODO: ShortByteString?
           | KCall Label -- KCall is a jump to a Kempe procedure (and jump back, later)
-          | MovTemp Temp Exp -- fetch from loc given by Exp
+          | MovTemp Temp Exp
           | MovMem Exp Exp -- store e2 and address given by e1
 
 data Exp = ConstInt Int64
