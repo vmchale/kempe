@@ -26,10 +26,10 @@ type Label = Word
 
 type Temp = Int
 
-class Architecture a where
-    stackPointer :: a -> Temp
-    framePointer :: a -> Temp
-    cRet :: a -> Exp -- register that has c return value?
+data Architecture = Architecture { stackPointer :: Temp
+                                 , framePointer :: Temp
+                                 , cRet :: Exp
+                                 }
 
 data TempSt = TempSt { labels     :: [Label]
                      , tempSupply :: [Temp]
@@ -82,7 +82,7 @@ data Stmt = Push (KempeTy ()) Exp
           -- TODO: KCallRec (i.e. Kempe recursive call, should be easy
           -- enough...)
           | MovTemp Temp Exp
-          | MovMem Exp Exp -- MovMem
+          | MovMem Exp Exp -- store e2 and address given by e1
 
 data Exp = ConstInt Int64
          | ConstantPtr Int64
