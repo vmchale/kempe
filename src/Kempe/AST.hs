@@ -71,7 +71,7 @@ data StackType b = StackType { quantify :: S.Set (Name b)
 type MonoStackType = ([KempeTy ()], [KempeTy ()])
 
 prettyMonoStackType :: MonoStackType -> Doc a
-prettyMonoStackType (is, os) = sep (fmap pretty ins) <+> "--" <+> sep (fmap pretty outs)
+prettyMonoStackType (is, os) = sep (fmap pretty is) <+> "--" <+> sep (fmap pretty os)
 
 instance Pretty (StackType a) where
     pretty (StackType _ ins outs) = sep (fmap pretty ins) <+> "--" <+> sep (fmap pretty outs)
