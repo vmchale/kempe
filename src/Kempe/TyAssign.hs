@@ -207,6 +207,15 @@ tyAtom (Case _ ls) = do
     tyLs <- traverse tyLeaf ls
     mergeMany tyLs
 
+assignAtom' :: Atom a -> TypeM () (StackType (), Atom (StackType ()))
+assignAtom' (AtBuiltin _ b) = do { ty <- typeOfBuiltin b ; pure (ty, AtBuiltin ty b) }
+assignAtom' (BoolLit _ b)   =
+    let sTy = StackType mempty [] [TyBuiltin () TyBool]
+        in pure (sTy, BoolLit sTy b)
+
+assignAtoms :: [Atom a] -> TypeM () ([Atom (StackType ())], StackType ())
+assignAtoms = undefined
+
 tyAtoms :: [Atom a] -> TypeM () (StackType ())
 tyAtoms = foldM
     (\seed a -> do { tys' <- renameStack =<< tyAtom a ; catTypes () tys' seed })
