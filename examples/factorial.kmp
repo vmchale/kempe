@@ -3,3 +3,5 @@ fac : Int -- Int
          if( drop 1
            , dup 1 - fac * )
        ]
+
+%foreign cabi fac
