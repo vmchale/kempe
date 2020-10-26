@@ -17,6 +17,7 @@ module Kempe.AST ( BuiltinTy (..)
                  , Module
                  , freeVars
                  , MonoStackType
+                 , prettyMonoStackType
                  -- * I resent this...
                  , voidStackType
                  ) where
@@ -28,7 +29,7 @@ import           Data.List.NonEmpty   (NonEmpty)
 import qualified Data.Set             as S
 import           GHC.Generics         (Generic)
 import           Kempe.Name
-import           Prettyprinter        (Pretty (pretty), parens, sep, tupled, (<+>))
+import           Prettyprinter        (Doc, Pretty (pretty), parens, sep, tupled, (<+>))
 
 data BuiltinTy = TyPtr
                | TyInt
@@ -68,6 +69,9 @@ data StackType b = StackType { quantify :: S.Set (Name b)
                              } deriving (Generic, NFData, Eq, Ord)
 
 type MonoStackType = ([KempeTy ()], [KempeTy ()])
+
+prettyMonoStackType :: MonoStackType -> Doc a
+prettyMonoStackType (is, os) = sep (fmap pretty ins) <+> "--" <+> sep (fmap pretty outs)
 
 instance Pretty (StackType a) where
     pretty (StackType _ ins outs) = sep (fmap pretty ins) <+> "--" <+> sep (fmap pretty outs)
