@@ -28,7 +28,7 @@ type Temp = Int
 
 data Architecture = Architecture { stackPointer :: Temp
                                  , framePointer :: Temp
-                                 , cRet :: Exp
+                                 , cRet         :: Exp
                                  }
 
 data TempSt = TempSt { labels     :: [Label]
@@ -82,7 +82,7 @@ data Stmt = Push (KempeTy ()) Exp
           -- TODO: KCallRec (i.e. Kempe recursive call, should be easy
           -- enough...)
           | MovTemp Temp Exp
-          | MovMem Exp Exp -- store e2 and address given by e1
+          | MovMem Exp Exp -- store e2 at address given by e1
 
 data Exp = ConstInt Int64
          | ConstantPtr Int64
