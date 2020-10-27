@@ -258,7 +258,7 @@ assignAtoms :: [Atom a] -> TypeM () ([Atom (StackType ())], StackType ())
 assignAtoms = foldM
     -- TODO: do I really need traverse renameStack r? (it's slower)
     -- should r' use same renames as ty?
-    (\seed a -> do { (ty, r) <- assignAtom a ; (ty', r') <- renameStackAndAtom ty r ; (fst seed ++ [r'] ,) <$> catTypes ty' (snd seed) })
+    (\seed a -> do { (ty, r) <- assignAtom a ; (ty', r') <- renameStackAndAtoms ty [r] ; (fst seed ++ r' ,) <$> catTypes ty' (snd seed) })
     ([], emptyStackType)
 
 tyAtoms :: [Atom a] -> TypeM () (StackType ())
@@ -388,15 +388,15 @@ renameStack (StackType qs ins outs) = do
     withTyState newBinds $
         StackType (S.fromList newNames) <$> traverse renameIn ins <*> traverse renameIn outs
 
-renameStackAndAtom :: StackType () -> Atom (StackType ()) -> TypeM () (StackType (), Atom (StackType ()))
-renameStackAndAtom (StackType qs ins outs) a = do
+renameStackAndAtoms :: StackType () -> [Atom (StackType ())] -> TypeM () (StackType (), [Atom (StackType ())])
+renameStackAndAtoms (StackType qs ins outs) as = do
     newQs <- traverse withName (S.toList qs)
     let localRenames = snd <$> newQs
         newNames = fst <$> newQs
         newBinds = thread localRenames
     withTyState newBinds $ do
         sty <- StackType (S.fromList newNames) <$> traverse renameIn ins <*> traverse renameIn outs
-        as' <- traverse renameStackIn a
+        as' <- traverse (traverse renameStackIn) as
         pure (sty, as')
 
 mergeStackTypes :: StackType () -> StackType () -> TypeM () (StackType ())
