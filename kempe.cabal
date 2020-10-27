@@ -46,6 +46,7 @@ library
         Kempe.Name
         Kempe.Error
         Kempe.Asm.X86
+        Prettyprinter.Ext
 
     default-language: Haskell2010
     other-extensions:

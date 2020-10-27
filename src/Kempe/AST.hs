@@ -18,6 +18,8 @@ module Kempe.AST ( BuiltinTy (..)
                  , freeVars
                  , MonoStackType
                  , prettyMonoStackType
+                 , prettyTyped
+                 , prettyTypedModule
                  -- * I resent this...
                  , voidStackType
                  ) where
@@ -29,7 +31,7 @@ import           Data.List.NonEmpty   (NonEmpty)
 import qualified Data.Set             as S
 import           GHC.Generics         (Generic)
 import           Kempe.Name
-import           Prettyprinter        (Doc, Pretty (pretty), parens, sep, tupled, (<+>))
+import           Prettyprinter        (Doc, Pretty (pretty), align, brackets, fillSep, parens, sep, tupled, (<+>))
 
 data BuiltinTy = TyPtr
                | TyInt
@@ -99,6 +101,15 @@ instance Pretty (Pattern a) where
     pretty PatternWildcard{}  = "_"
     pretty (PatternCons _ tn) = pretty tn
 
+prettyTyped :: Atom (StackType ()) -> Doc ann
+prettyTyped (AtName ty n)    = parens (pretty n <+> ":" <+> pretty ty)
+prettyTyped (Dip _ as)       = "dip(" <> fillSep (prettyTyped <$> as) <> ")"
+prettyTyped (AtBuiltin ty b) = parens (pretty b <+> ":" <+> pretty ty)
+prettyTyped (AtCons ty tn)   = parens (pretty tn <+> ":" <+> pretty ty)
+prettyTyped (If _ as as')    = "if(" <> align (fillSep (prettyTyped <$> as)) <> ", " <> align (fillSep (prettyTyped <$> as')) <> ")"
+prettyTyped (IntLit _ i)     = pretty i
+prettyTyped (BoolLit _ b)    = pretty b
+
 data Atom b = AtName b (Name b)
             | Case b (NonEmpty (Pattern b, [Atom b]))
             | If b [Atom b] [Atom b]
@@ -144,12 +155,22 @@ data ABI = Cabi
 instance Pretty ABI where
     pretty Cabi = "cabi"
 
+prettyKempeDecl :: (Atom b -> Doc ann) -> KempeDecl a b -> Doc ann
+prettyKempeDecl atomizer (FunDecl _ n is os as) = pretty n <+> ":" <+> sep (fmap pretty is) <+> "--" <+> sep (fmap pretty os) <+> " =:" <+> brackets (align (fillSep (atomizer <$> as)))
+prettyKempeDecl _ (Export _ abi n)              = "%foreign" <+> pretty abi <+> pretty n
+
 data KempeDecl a b = TyDecl a (TyName a) [Name a] [(TyName b, [KempeTy a])]
                    | FunDecl b (Name b) [KempeTy a] [KempeTy a] [Atom b]
                    | ExtFnDecl b (Name b) [KempeTy a] [KempeTy a] BSL.ByteString -- TODO: ShortByteString?
                    | Export b ABI (Name b)
                    deriving (Generic, NFData, Functor, Foldable, Traversable)
                    -- bifunctor
+
+prettyModule :: (Atom b -> Doc ann) -> Module a b -> Doc ann
+prettyModule atomizer = sep . fmap (prettyKempeDecl atomizer)
+
+prettyTypedModule :: Module () (StackType ()) -> Doc ann
+prettyTypedModule = prettyModule prettyTyped
 
 type Module a b = [KempeDecl a b]
 
