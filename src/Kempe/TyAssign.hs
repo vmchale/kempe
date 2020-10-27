@@ -457,7 +457,7 @@ substConstraints :: IM.IntMap (KempeTy a) -> KempeTy a -> KempeTy a
 substConstraints _ ty@TyNamed{}                         = ty
 substConstraints _ ty@TyBuiltin{}                       = ty
 substConstraints tys ty@(TyVar _ (Name _ (Unique k) _)) =
-    fromMaybe ty (IM.lookup k tys)
+    fromMaybe ty (IM.lookup k tys) -- TODO: should this loop?
 substConstraints tys (TyApp l ty ty')                   =
     TyApp l (substConstraints tys ty) (substConstraints tys ty')
 substConstraints tys (TyTuple l tys')                   =
