@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+bench 'gcc -fsyntax-only benchmarks/splitmix64.c' \
+    'clang -fsyntax-only benchmarks/splitmix64.c' \
+    'icc -fsyntax-only benchmarks/splitmix64.c' \
+    'ghc -fno-code benchmarks/Splitmix.hs' \
+    'kc typecheck examples/splitmix.kmp' \
+    'gcc -O0 -c benchmarks/splitmix64.c' \
+    'clang -O0 -c benchmarks/splitmix64.c' \
+    'icc -O0 -c benchmarks/splitmix64.c' \
+    'pgcc -O0 -c benchmarks/splitmix64.c' \
+    'ghc -O0 benchmarks/Splitmix.hs' \
+    'rustc --crate-type=lib --emit=dep-info,metadata benchmarks/splitmix.rs' \
+    'rustc --crate-type=lib benchmarks/splitmix.rs'

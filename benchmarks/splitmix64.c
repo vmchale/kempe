@@ -1,4 +1,5 @@
-#include <stdint.h>
+typedef unsigned long int __uint64_t;
+typedef __uint64_t uint64_t;
 
 // modified to have ""multiple return"" since C doesn't really have that
 uint64_t next(uint64_t x, uint64_t* y) {
