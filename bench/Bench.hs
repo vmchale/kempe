@@ -21,12 +21,12 @@ main =
                     bgroup "type assignment"
                       [ bench "check (test/data/ty.kmp)" $ nf runCheck p
                       , bench "check (prelude/fn.kmp)" $ nf runCheck prel
-                      , bench "assign (test/data/ty.kmp)" $ nf runAssign p
-                      , bench "assign (prelude/fn.kmp)" $ nf runAssign prel
                       , bench "closedModule" $ nf (runSpecialize =<<) (runAssign p)
                       , bench "closure" $ nf (\m -> closure (m, mkModuleMap m)) (void <$> snd p)
                       , bench "shuttle (test/data/ty.kmp)" $ nf (uncurry monomorphize) p
                       , bench "shuttle (examples/splitmix.kmp)" $ nf (uncurry monomorphize) s
+                      , bench "assign (test/data/ty.kmp)" $ nf runAssign p
+                      , bench "assign (prelude/fn.kmp)" $ nf runAssign prel
                       ]
                 ]
     where parsedM = yeetIO . parseWithMax =<< BSL.readFile "test/data/ty.kmp"
