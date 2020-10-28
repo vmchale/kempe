@@ -134,7 +134,7 @@ unify ((ty@TyTuple{}, ty'@TyApp{}):_)                                = Left (Uni
 
 unifyM :: S.Set (KempeTy a, KempeTy a) -> TypeM () (IM.IntMap (KempeTy ()))
 unifyM s =
-    case unify (S.toList s) of
+    case {-# SCC "unify" #-} unify (S.toList s) of
         Right x  -> pure x
         Left err -> throwError err
 

@@ -85,8 +85,9 @@ badType fp msg = testCase ("Detects error (" ++ fp ++ ")") $ do
         Right{}  -> assertFailure "No error detected!"
 
 testAssignment :: FilePath -> TestTree
-testAssignment fp = testCase ("Annotates " ++ fp ++ " with types") $
-    assignTypes fp *> assertBool "Does not throw an exception" True
+testAssignment fp = testCase ("Annotates " ++ fp ++ " with types") $ do
+    (m, i) <- assignTypes fp
+    assertBool "Does not throw an exception" (m `seq` i `seq` True)
 
 assignTypes :: FilePath -> IO (Module () (StackType ()), Int)
 assignTypes fp = do
