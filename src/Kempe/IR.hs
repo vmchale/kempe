@@ -79,10 +79,10 @@ data Stmt = Push (KempeTy ()) Exp
           | MJump Exp Label
           | CCall MonoStackType BSL.ByteString -- TODO: ShortByteString?
           | KCall Label -- KCall is a jump to a Kempe procedure (and jump back, later)
-          -- TODO: KCallRec (i.e. Kempe recursive call, should be easy
           -- enough...)
           | MovTemp Temp Exp
           | MovMem Exp Exp -- store e2 at address given by e1
+          | Eff Exp -- evaluate an expression for its effects
 
 data Exp = ConstInt Int64
          | ConstantPtr Int64
@@ -93,6 +93,7 @@ data Exp = ConstInt Int64
          | Do Stmt Exp
          | ExprIntBinOp IntBinOp Exp Exp
          | ExprIntRel RelBinOp Exp Exp
+         | StackPointer
 
 data RelBinOp = IntEqIR
               | IntNeqIR
@@ -170,6 +171,9 @@ writeAtom (AtBuiltin _ IntXor)      = intOp IntXorIR
 writeAtom (AtBuiltin _ IntShiftR)   = intOp IntShiftRIR
 writeAtom (AtBuiltin _ IntShiftL)   = intOp IntShiftLIR
 writeAtom (AtBuiltin _ IntEq)       = intRel IntEqIR
+writeAtom (AtBuiltin (is, _) Drop)  =
+    let sz = size (last is) in
+        pure [Eff (ExprIntBinOp IntPlusIR StackPointer (ExprIntBinOp IntPlusIR StackPointer (ConstInt sz)))]
 
 -- stack pointer
 
@@ -178,7 +182,7 @@ toByte True  = 1
 toByte False = 0
 
 -- need env with size?
-size :: KempeTy a -> Int
+size :: KempeTy a -> Int64
 size (TyBuiltin _ TyInt)  = 8 -- since we're only targeting x86_64 and aarch64 we have 64-bit 'Int's
 size (TyBuiltin _ TyPtr)  = 8
 size (TyBuiltin _ TyBool) = 1
