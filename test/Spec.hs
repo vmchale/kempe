@@ -2,6 +2,7 @@
 
 module Main (main) where
 
+import           Control.DeepSeq      (deepseq)
 import           Control.Exception    (Exception, throwIO)
 import qualified Data.ByteString.Lazy as BSL
 import           Kempe.AST
@@ -54,7 +55,7 @@ irNoYeet fp = testCase ("Generates IR without throwing an exception (" ++ fp ++ 
     contents <- BSL.readFile fp
     (i, m) <- yeetIO $ parseWithMax contents
     let res = irGen i m
-    assertBool "Worked without failure" (last res `seq` True)
+    assertBool "Worked without failure" (last res `deepseq` True)
 
 lexNoError :: FilePath -> TestTree
 lexNoError fp = testCase ("Lexing doesn't fail (" ++ fp ++ ")") $ do
@@ -87,7 +88,7 @@ badType fp msg = testCase ("Detects error (" ++ fp ++ ")") $ do
 testAssignment :: FilePath -> TestTree
 testAssignment fp = testCase ("Annotates " ++ fp ++ " with types") $ do
     (m, i) <- assignTypes fp
-    assertBool "Does not throw an exception" (m `seq` i `seq` True)
+    assertBool "Does not throw an exception" (m `deepseq` i `seq` True)
 
 assignTypes :: FilePath -> IO (Module () (StackType ()), Int)
 assignTypes fp = do
@@ -105,7 +106,7 @@ monoFile :: FilePath -> Assertion
 monoFile fp = do
     (tyM, i) <- assignTypes fp
     let res = runMonoM i (flattenModule tyM)
-    assertBool "Doesn't throw any exceptions" (res `seq` True)
+    assertBool "Doesn't throw any exceptions" (res `deepseq` True)
 
 pipelineWorks :: FilePath -> TestTree
 pipelineWorks fp = testCase ("Functions in " ++ fp ++ " can be specialized") $ do

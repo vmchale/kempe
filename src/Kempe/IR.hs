@@ -1,3 +1,6 @@
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric  #-}
+
 -- | IR from Appel book
 module Kempe.IR ( size
                 , Architecture (..)
@@ -10,12 +13,14 @@ module Kempe.IR ( size
                 , TempM
                 ) where
 
+import           Control.DeepSeq      (NFData)
 import           Control.Monad.State  (State, evalState, gets, modify)
 import qualified Data.ByteString.Lazy as BSL
 import           Data.Foldable        (fold)
 import           Data.Int             (Int64)
 import qualified Data.IntMap          as IM
 import           Data.Word            (Word8)
+import           GHC.Generics         (Generic)
 import           Kempe.AST
 import           Kempe.Name
 import           Kempe.Unique
@@ -83,6 +88,7 @@ data Stmt = Push (KempeTy ()) Exp
           | MovTemp Temp Exp
           | MovMem Exp Exp -- store e2 at address given by e1
           | Eff Exp -- evaluate an expression for its effects
+          deriving (Generic, NFData)
 
 data Exp = ConstInt Int64
          | ConstantPtr Int64
@@ -94,6 +100,7 @@ data Exp = ConstInt Int64
          | ExprIntBinOp IntBinOp Exp Exp
          | ExprIntRel RelBinOp Exp Exp
          | StackPointer
+          deriving (Generic, NFData)
 
 data RelBinOp = IntEqIR
               | IntNeqIR

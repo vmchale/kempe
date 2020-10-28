@@ -327,7 +327,7 @@ checkModule :: Module a b -> TypeM () ()
 checkModule m = tyModule m <* (unifyM =<< gets constraints)
 
 assignModule :: Module a b -> TypeM () (Module () (StackType ()))
-assignModule m = do
+assignModule m = {-# SCC "assignModule" #-} do
     traverse_ tyHeader m
     m' <- traverse assignDecl m
     backNames <- unifyM =<< gets constraints
@@ -436,7 +436,7 @@ substConstraints _ ty@TyNamed{}                         = ty
 substConstraints _ ty@TyBuiltin{}                       = ty
 substConstraints tys ty@(TyVar _ (Name _ (Unique k) _)) =
     case IM.lookup k tys of
-        Just ty'@TyVar{} -> substConstraints tys ty'
+        Just ty'@TyVar{} -> substConstraints (IM.delete k tys) ty' -- TODO: this is to prevent cyclic lookups: is it right?
         Just ty'         -> ty'
         Nothing          -> ty
 substConstraints tys (TyApp l ty ty')                   =
@@ -445,7 +445,7 @@ substConstraints tys (TyTuple l tys')                   =
     TyTuple l (substConstraints tys <$> tys')
 
 substConstraintsStack :: IM.IntMap (KempeTy a) -> StackType a -> StackType a
-substConstraintsStack tys (StackType _ is os) =
+substConstraintsStack tys (StackType _ is os) = {-# SCC "substConstraintsStack" #-}
     let is' = substConstraints tys <$> is
         os' = substConstraints tys <$> os
         in StackType (freeVars (is' ++ os')) is' os'
