@@ -183,6 +183,10 @@ writeAtom (AtBuiltin _ IntEq)       = intRel IntEqIR
 writeAtom (AtBuiltin (is, _) Drop)  =
     let sz = size (last is) in
         pure [Eff (ExprIntBinOp IntPlusIR StackPointer (ExprIntBinOp IntPlusIR StackPointer (ConstInt sz)))]
+writeAtom (AtBuiltin (is, _) Dup)   =
+    let sz = size (last is) in
+        pure [ Eff (ExprIntBinOp IntPlusIR StackPointer (ExprIntBinOp IntMinusIR StackPointer (ConstInt sz))) -- allocate sz bytes on the stack
+             , undefined ]
 
 -- stack pointer
 

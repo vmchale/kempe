@@ -55,7 +55,7 @@ irNoYeet fp = testCase ("Generates IR without throwing an exception (" ++ fp ++ 
     contents <- BSL.readFile fp
     (i, m) <- yeetIO $ parseWithMax contents
     let res = irGen i m
-    assertBool "Worked without failure" (last res `deepseq` True)
+    assertBool "Worked without failure" (res `deepseq` True)
 
 lexNoError :: FilePath -> TestTree
 lexNoError fp = testCase ("Lexing doesn't fail (" ++ fp ++ ")") $ do
