@@ -186,8 +186,8 @@ writeAtom (AtBuiltin (is, _) Drop)  =
 writeAtom (AtBuiltin (is, _) Dup)   =
     let sz = size (last is) in
         pure ( Eff (ExprIntBinOp IntPlusIR StackPointer (ExprIntBinOp IntMinusIR StackPointer (ConstInt sz))) -- allocate sz bytes on the stack
-             : flip fmap [1..sz] (\i ->
-                MovMem (stackPointerOffset (i - sz)) (Mem $ stackPointerOffset i))
+             : fmap (\i ->
+                MovMem (stackPointerOffset (i - sz)) (Mem $ stackPointerOffset i)) [1..sz]
              )
 
 stackPointerOffset :: Int64 -> Exp
