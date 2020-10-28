@@ -30,16 +30,19 @@ main = defaultMain $
             , tyInfer "prelude/fn.kmp"
             , tyInfer "lib/maybe.kmp"
             , tyInfer "lib/either.kmp"
+            , tyInfer "test/data/mutual.kmp"
+            , tyInfer "examples/factorial.kmp"
             , badType "test/err/merge.kmp" "could not unify type 'Int' with 'a_4'"
             , badType "test/err/kind.kmp" ""
             , testAssignment "test/data/ty.kmp"
             , testAssignment "lib/either.kmp"
-            , tyInfer "test/data/mutual.kmp"
-            , tyInfer "examples/factorial.kmp"
+            , testAssignment "prelude/fn.kmp"
+            , testAssignment "test/data/mutual.kmp"
             , monoTest "test/data/ty.kmp"
             , pipelineWorks "test/data/ty.kmp"
             , pipelineWorks "examples/splitmix.kmp"
             , pipelineWorks "examples/factorial.kmp"
+            , pipelineWorks "test/data/mutual.kmp"
             , irNoYeet "test/data/export.kmp"
             , irNoYeet "examples/splitmix.kmp"
             , irNoYeet "examples/factorial.kmp"
@@ -72,7 +75,7 @@ tyInfer fp = testCase ("Checks types (" ++ fp ++ ")") $ do
     res <- tcFile fp
     case res of
         Left err -> assertFailure (show $ pretty err)
-        Right{}  -> assertBool "Doesn't fail type-checkign" True
+        Right{}  -> assertBool "Doesn't fail type-checking" True
 
 badType :: FilePath -> String -> TestTree
 badType fp msg = testCase ("Detects error (" ++ fp ++ ")") $ do

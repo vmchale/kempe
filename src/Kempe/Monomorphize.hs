@@ -144,7 +144,7 @@ closure (m, key) = loop roots
           loop ns =
             let res = foldMap (step . fst) ns
                 in if res == ns
-                    then res -- test it doesn't bottom on cyclic lookups...
+                    then res -- FIXME I think this blows up on cyclic lookups?
                     else ns <> loop (res S.\\ ns)
           step (Name _ (Unique i) _) =
             case IM.lookup i key of

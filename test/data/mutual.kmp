@@ -18,3 +18,5 @@ even : Int -- Bool
             if( drop True
               , odd not )
         ]
+
+%foreign cabi even
