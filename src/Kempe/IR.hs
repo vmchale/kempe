@@ -106,6 +106,7 @@ data RelBinOp = IntEqIR
               | IntNeqIR
               | IntLtIR
               | IntGtIR
+              deriving (Generic, NFData)
 
 data IntBinOp = IntPlusIR
               | IntTimesIR
@@ -115,6 +116,7 @@ data IntBinOp = IntPlusIR
               | IntXorIR
               | IntShiftRIR
               | IntShiftLIR
+              deriving (Generic, NFData)
 
 writeModule :: Module () MonoStackType -> TempM [Stmt]
 writeModule = foldMapA writeDecl
