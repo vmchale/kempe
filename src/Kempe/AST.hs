@@ -28,6 +28,7 @@ import           Control.DeepSeq      (NFData)
 import qualified Data.ByteString.Lazy as BSL
 import           Data.Functor         (void)
 import           Data.List.NonEmpty   (NonEmpty)
+import           Data.Semigroup
 import qualified Data.Set             as S
 import           GHC.Generics         (Generic)
 import           Kempe.Name

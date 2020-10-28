@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TupleSections     #-}
 
+-- | Constraint-based typing from the presentation in Pierce's book.
 module Kempe.TyAssign ( TypeM
                       , runTypeM
                       , checkModule
