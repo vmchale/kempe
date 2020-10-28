@@ -25,8 +25,6 @@ import qualified Kempe.Name as Name
 import Kempe.Name hiding (loc)
 import Prettyprinter (Pretty (pretty), (<+>))
 
-import Debug.Trace (traceShow)
-
 }
 
 %name parseModule Module

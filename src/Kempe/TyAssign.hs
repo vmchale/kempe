@@ -28,6 +28,7 @@ import           Kempe.Unique
 import           Lens.Micro                 (Lens', over)
 import           Lens.Micro.Mtl             (modifying, (.=))
 import           Prettyprinter              (Doc, Pretty (pretty), hardline, indent, vsep, (<+>))
+import           Prettyprinter.Ext
 
 type TyEnv a = IM.IntMap (StackType a)
 
@@ -37,11 +38,6 @@ data TyState a = TyState { maxU             :: Int -- ^ For renamer
                          , constructorTypes :: IM.IntMap (StackType a)
                          , constraints      :: S.Set (KempeTy a, KempeTy a) -- Just need equality between simple types? (do have tyapp but yeah)
                          }
-
-infixr 6 <#>
-
-(<#>) :: Doc a -> Doc a -> Doc a
-(<#>) x y = x <> hardline <> y
 
 (<#*>) :: Doc a -> Doc a -> Doc a
 (<#*>) x y = x <> hardline <> indent 2 y
