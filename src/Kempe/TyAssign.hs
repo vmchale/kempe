@@ -187,12 +187,8 @@ dipify (StackType fvrs is os) = do
     n <- dummyName "a"
     pure $ StackType (S.insert n fvrs) (TyNamed () n:is) (TyNamed () n:os)
 
-assignName :: Name a -> TypeM () (Name (StackType ()))
-assignName n = do { ty <- tyLookup (void n) ; pure (n $> ty) }
-
 tyLeaf :: (Pattern a, [Atom a]) -> TypeM () (StackType ())
 tyLeaf (p, as) = do
-    -- TODO: Rename here?
     tyP <- tyPattern p
     tyA <- tyAtoms as
     catTypes tyP tyA
@@ -207,9 +203,9 @@ tyAtom :: Atom a -> TypeM () (StackType ())
 tyAtom (AtBuiltin _ b) = typeOfBuiltin b
 tyAtom BoolLit{}       = pure $ StackType mempty [] [TyBuiltin () TyBool]
 tyAtom IntLit{}        = pure $ StackType mempty [] [TyBuiltin () TyInt]
-tyAtom (AtName _ n)    = tyLookup (void n)
+tyAtom (AtName _ n)    = renameStack =<< tyLookup (void n)
 tyAtom (Dip _ as)      = dipify =<< tyAtoms as
-tyAtom (AtCons _ tn)   = consLookup (void tn)
+tyAtom (AtCons _ tn)   = renameStack =<< consLookup (void tn)
 tyAtom (If _ as as')   = do
     tys <- tyAtoms as
     tys' <- tyAtoms as'
@@ -229,16 +225,15 @@ assignAtom (IntLit _ i)    =
     let sTy = StackType mempty [] [TyBuiltin () TyInt]
         in pure (sTy, IntLit sTy i)
 assignAtom (AtName _ n) = do
-    sTy <- tyLookup (void n)
+    sTy <- renameStack =<< tyLookup (void n)
     pure (sTy, AtName sTy (n $> sTy))
 assignAtom (AtCons _ tn) = do
-    sTy <- consLookup (void tn)
+    sTy <- renameStack =<< consLookup (void tn)
     pure (sTy, AtCons sTy (tn $> sTy))
 assignAtom (Dip _ as)    = do { (as', ty) <- assignAtoms as ; tyDipped <- dipify ty ; pure (tyDipped, Dip tyDipped as') }
 assignAtom (If _ as0 as1) = do
     (as0', tys) <- assignAtoms as0
     (as1', tys') <- assignAtoms as1
-    -- TODO: I think this "forgets" renames that should be scoped back to atoms?
     (StackType vars ins out) <- mergeStackTypes tys tys'
     let resType = StackType vars (ins ++ [TyBuiltin () TyBool]) out
     pure (resType, If resType as0' as1')
@@ -254,12 +249,12 @@ assignAtoms :: [Atom a] -> TypeM () ([Atom (StackType ())], StackType ())
 assignAtoms = foldM
     -- TODO: do I really need traverse renameStack r? (it's slower)
     -- should r' use same renames as ty?
-    (\seed a -> do { (ty, r) <- assignAtom a ; (ty', r') <- renameStackAndAtoms ty [r] ; (fst seed ++ r' ,) <$> catTypes ty' (snd seed) })
+    (\seed a -> do { (ty, r) <- assignAtom a ; (fst seed ++ [r] ,) <$> catTypes ty (snd seed) })
     ([], emptyStackType)
 
 tyAtoms :: [Atom a] -> TypeM () (StackType ())
 tyAtoms = foldM
-    (\seed a -> do { tys' <- renameStack =<< tyAtom a ; catTypes tys' seed })
+    (\seed a -> do { tys' <- tyAtom a ; catTypes tys' seed })
     emptyStackType
 
 tyInsertLeaf :: Name b -- ^ type being declared
@@ -286,9 +281,9 @@ app = foldl' (\ty n -> TyApp undefined ty (TyNamed undefined n))
 assignDecl :: KempeDecl a b -> TypeM () (KempeDecl () (StackType ()))
 assignDecl (TyDecl _ tn ns ls) = TyDecl () (void tn) (void <$> ns) <$> traverse (assignTyLeaf tn (S.fromList ns)) ls
 assignDecl (FunDecl _ n ins os a) = do
-    let sig = voidStackType $ StackType (freeVars (ins ++ os)) ins os
+    sig <- renameStack $ voidStackType $ StackType (freeVars (ins ++ os)) ins os
     (as, inferred) <- assignAtoms a
-    reconcile <- mergeStackTypes sig inferred -- FIXME: need to verify the merged type is as general as the signature?
+    reconcile <- mergeStackTypes sig inferred
     -- assign comes after tyInsert
     pure $ FunDecl reconcile (n $> reconcile) (void <$> ins) (void <$> os) as
 assignDecl (ExtFnDecl _ n ins os cn) = do
@@ -299,10 +294,14 @@ assignDecl (Export _ abi n) = do
     ty <- tyLookup (void n)
     Export ty abi <$> assignName n
 
+-- don't need to rename cuz it's only for exports (in theory)
+assignName :: Name a -> TypeM () (Name (StackType ()))
+assignName n = do { ty <- tyLookup (void n) ; pure (n $> ty) }
+
 tyHeader :: KempeDecl a b -> TypeM () ()
 tyHeader Export{} = pure ()
 tyHeader (FunDecl _ (Name _ (Unique i) _) ins out _) = do
-    sig <- renameStack $ voidStackType $ StackType (freeVars (ins ++ out)) ins out
+    let sig = voidStackType $ StackType (freeVars (ins ++ out)) ins out
     modifying tyEnvLens (IM.insert i sig)
 tyHeader (ExtFnDecl _ (Name _ (Unique i) _) ins os _) = do
     unless (null $ freeVars (ins ++ os)) $
@@ -314,7 +313,7 @@ tyHeader TyDecl{} = pure ()
 tyInsert :: KempeDecl a b -> TypeM () ()
 tyInsert (TyDecl _ tn ns ls) = traverse_ (tyInsertLeaf tn (S.fromList ns)) ls
 tyInsert (FunDecl _ _ ins out as) = do
-    let sig = voidStackType $ StackType (freeVars (ins ++ out)) ins out
+    sig <- renameStack $ voidStackType $ StackType (freeVars (ins ++ out)) ins out
     inferred <- tyAtoms as
     void $ mergeStackTypes sig inferred -- FIXME: need to verify the merged type is as general as the signature?
 tyInsert ExtFnDecl{} = pure ()
@@ -350,12 +349,6 @@ renameIn (TyVar l (Name t u l')) = do
     u' <- replaceUnique u
     pure $ TyVar l (Name t u' l')
 
-renameStackIn :: StackType a -> TypeM a (StackType a)
-renameStackIn (StackType _ is os) = do
-    is' <- traverse renameIn is
-    os' <- traverse renameIn os
-    pure (StackType (freeVars (is' ++ os')) is' os')
-
 -- has to use the max-iest maximum so we can't use withState
 withTyState :: (TyState a -> TyState a) -> TypeM a x -> TypeM a x
 withTyState modSt act = do
@@ -384,24 +377,12 @@ renameStack (StackType qs ins outs) = do
     withTyState newBinds $
         StackType (S.fromList newNames) <$> traverse renameIn ins <*> traverse renameIn outs
 
-renameStackAndAtoms :: StackType () -> [Atom (StackType ())] -> TypeM () (StackType (), [Atom (StackType ())])
-renameStackAndAtoms (StackType qs ins outs) as = do
-    newQs <- traverse withName (S.toList qs)
-    let localRenames = snd <$> newQs
-        newNames = fst <$> newQs
-        newBinds = thread localRenames
-    withTyState newBinds $ do
-        sty <- StackType (S.fromList newNames) <$> traverse renameIn ins <*> traverse renameIn outs
-        as' <- traverse (traverse renameStackIn) as
-        pure (sty, as')
-
 mergeStackTypes :: StackType () -> StackType () -> TypeM () (StackType ())
 mergeStackTypes st0@(StackType _ i0 o0) st1@(StackType _ i1 o1) = do
     let toExpand = max (abs (length i0 - length i1)) (abs (length o0 - length o1))
 
-    -- freshen stack types (free vars) so no clashing/overwriting happens
-    (StackType q ins os) <- expandType toExpand =<< renameStack st0
-    (StackType q' ins' os') <- expandType toExpand =<< renameStack st1
+    (StackType q ins os) <- expandType toExpand st0
+    (StackType q' ins' os') <- expandType toExpand st1
 
     when ((length ins /= length ins') || (length os /= length os')) $
         throwError $ MismatchedLengths () st0 st1
@@ -417,7 +398,7 @@ tyPattern PatternWildcard{} = do
     pure $ StackType (S.singleton aN) [TyVar () aN] []
 tyPattern PatternInt{} = pure $ StackType S.empty [TyBuiltin () TyInt] []
 tyPattern PatternBool{} = pure $ StackType S.empty [TyBuiltin () TyBool] []
-tyPattern (PatternCons _ tn) = flipStackType <$> consLookup (void tn)
+tyPattern (PatternCons _ tn) = renameStack =<< (flipStackType <$> consLookup (void tn))
 
 assignPattern :: Pattern a -> TypeM () (StackType (), Pattern (StackType ()))
 assignPattern (PatternInt _ i) =
@@ -426,7 +407,7 @@ assignPattern (PatternInt _ i) =
 assignPattern (PatternBool _ i) =
     let sTy = StackType S.empty [TyBuiltin () TyBool] []
         in pure (sTy, PatternBool sTy i)
-assignPattern (PatternCons _ tn) = do { ty <- flipStackType <$> consLookup (void tn) ; pure (ty, PatternCons ty (tn $> ty)) }
+assignPattern (PatternCons _ tn) = do { ty <- renameStack =<< (flipStackType <$> consLookup (void tn)) ; pure (ty, PatternCons ty (tn $> ty)) }
 assignPattern PatternWildcard{} = do
     aN <- dummyName "a"
     let resType = StackType (S.singleton aN) [TyVar () aN] []
