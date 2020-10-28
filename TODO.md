@@ -10,6 +10,8 @@
 - [ ] splitmix random number generator? (or rather any pseudorandom number
   generator...)
   - [ ] http://prng.di.unimi.it/xoroshiro128plus.c
+# Bugs
+- [ ] The current setup ignores extern imports
 # Pipeline
 - [ ] Inliner (all non-recursive?)
 - [ ] IR (abstract assembly?)

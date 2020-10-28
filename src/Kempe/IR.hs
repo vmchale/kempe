@@ -95,7 +95,7 @@ data Exp = ConstInt Int64
          | ConstBool Word8
          | Named Label
          | Reg Temp -- TODO: size?
-         | Mem Exp
+         | Mem Exp -- fetch from address
          | Do Stmt Exp
          | ExprIntBinOp IntBinOp Exp Exp
          | ExprIntRel RelBinOp Exp Exp
@@ -185,8 +185,13 @@ writeAtom (AtBuiltin (is, _) Drop)  =
         pure [Eff (ExprIntBinOp IntPlusIR StackPointer (ExprIntBinOp IntPlusIR StackPointer (ConstInt sz)))]
 writeAtom (AtBuiltin (is, _) Dup)   =
     let sz = size (last is) in
-        pure [ Eff (ExprIntBinOp IntPlusIR StackPointer (ExprIntBinOp IntMinusIR StackPointer (ConstInt sz))) -- allocate sz bytes on the stack
-             , undefined ]
+        pure ( Eff (ExprIntBinOp IntPlusIR StackPointer (ExprIntBinOp IntMinusIR StackPointer (ConstInt sz))) -- allocate sz bytes on the stack
+             : flip fmap [1..sz] (\i ->
+                MovMem (stackPointerOffset (i - sz)) (Mem $ stackPointerOffset i))
+             )
+
+stackPointerOffset :: Int64 -> Exp
+stackPointerOffset off = ExprIntBinOp IntPlusIR StackPointer (ConstInt off)
 
 -- stack pointer
 
