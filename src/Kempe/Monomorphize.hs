@@ -139,13 +139,13 @@ renamed (Name t i _) sty@(is, os) = do
     pure (Name t' j newStackType)
 
 closure :: Ord b => (Module a b, ModuleMap a b) -> S.Set (Name b, b)
-closure (m, key) = loop roots
+closure (m, key) = loop roots S.empty
     where roots = S.fromList (exports m)
-          loop ns =
-            let res = foldMap (step . fst) ns
+          loop ns avoid =
+            let res = foldMap (step . fst) (ns S.\\ avoid)
                 in if res == ns
-                    then res -- FIXME I think this blows up on cyclic lookups?
-                    else ns <> loop (res S.\\ ns)
+                    then res
+                    else ns <> loop res (ns <> avoid)
           step (Name _ (Unique i) _) =
             case IM.lookup i key of
                 Just decl -> namesInDecl decl
