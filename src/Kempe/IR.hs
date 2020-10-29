@@ -89,16 +89,16 @@ data Stmt a = Push a (KempeTy ()) (Exp a)
             | Eff a (Exp a) -- evaluate an expression for its effects
             deriving (Generic, NFData)
 
-data Exp a = ConstInt a Int64
-           | ConstantPtr a Int64
-           | ConstBool a Word8
-           | Named a Label
-           | Reg a Temp -- TODO: size?
-           | Mem a (Exp a) -- fetch from address
-           | Do a (Stmt a) (Exp a)
-           | ExprIntBinOp IntBinOp (Exp a) (Exp a)
-           | ExprIntRel RelBinOp (Exp a) (Exp a)
-           | StackPointer a
+data Exp a = ConstInt { expCost :: a, expI :: Int64 }
+           | ConstantPtr { expCost :: a, expP :: Int64 }
+           | ConstBool { expCost :: a, expB :: Word8 }
+           | Named { expCost :: a, expLabel :: Label }
+           | Reg { expCost :: a, expReg :: Temp } -- TODO: size?
+           | Mem { expCost :: a, expAddr :: Exp a } -- fetch from address
+           | Do { expCost :: a, expStmt :: Stmt a, expSeq :: Exp a }
+           | ExprIntBinOp { expCost :: a, expBinOp :: IntBinOp, exp0 :: Exp a, exp1 :: Exp a }
+           | ExprIntRel { expCost :: a, expRelOp :: RelBinOp, exp0 :: Exp a, exp1 :: Exp a }
+           | StackPointer { expCost :: a }
            deriving (Generic, NFData)
 
 data RelBinOp = IntEqIR
@@ -147,7 +147,7 @@ intOp cons = do
     pure
         [ Pop () tyInt t0
         , Pop () tyInt t1
-        , Push () tyInt $ ExprIntBinOp cons (Reg () t0) (Reg () t1)
+        , Push () tyInt $ ExprIntBinOp () cons (Reg () t0) (Reg () t1)
         ]
 
 intRel :: RelBinOp -> TempM [Stmt ()]
@@ -157,7 +157,7 @@ intRel cons = do
     pure
         [ Pop () tyInt t0 -- TODO: maybe plain mov is better/nicer than pop
         , Pop () tyInt t1
-        , Push () tyBool $ ExprIntRel cons (Reg () t0) (Reg () t1)
+        , Push () tyBool $ ExprIntRel () cons (Reg () t0) (Reg () t1)
         ]
 
 -- need monad for fresh 'Temp's
@@ -181,10 +181,10 @@ writeAtom (AtBuiltin _ IntShiftL)   = intOp IntShiftLIR
 writeAtom (AtBuiltin _ IntEq)       = intRel IntEqIR
 writeAtom (AtBuiltin (is, _) Drop)  =
     let sz = size (last is) in
-        pure [Eff () (ExprIntBinOp IntPlusIR (StackPointer ()) (ExprIntBinOp IntPlusIR (StackPointer ()) (ConstInt () sz)))]
+        pure [Eff () (ExprIntBinOp () IntPlusIR (StackPointer ()) (ExprIntBinOp () IntPlusIR (StackPointer ()) (ConstInt () sz)))]
 writeAtom (AtBuiltin (is, _) Dup)   =
     let sz = size (last is) in
-        pure ( Eff () (ExprIntBinOp IntPlusIR (StackPointer ()) (ExprIntBinOp IntMinusIR (StackPointer ()) (ConstInt () sz))) -- allocate sz bytes on the stack
+        pure ( Eff () (ExprIntBinOp () IntPlusIR (StackPointer ()) (ExprIntBinOp () IntMinusIR (StackPointer ()) (ConstInt () sz))) -- allocate sz bytes on the stack
              : [ MovMem () (stackPointerOffset (i - sz)) (Mem () $ stackPointerOffset i) | i <- [1..sz] ]
              )
 writeAtom (If _ as as') = do
@@ -197,7 +197,7 @@ writeAtom (If _ as as') = do
     pure $ ifIR : (Labeled () l0 : asIR) ++ (Labeled () l1 : asIR')
 
 stackPointerOffset :: Int64 -> Exp ()
-stackPointerOffset off = ExprIntBinOp IntPlusIR (StackPointer ()) (ConstInt () off)
+stackPointerOffset off = ExprIntBinOp () IntPlusIR (StackPointer ()) (ConstInt () off)
 
 toByte :: Bool -> Word8
 toByte True  = 1
