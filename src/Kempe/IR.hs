@@ -32,7 +32,7 @@ type Label = Word
 
 type Temp = Int
 
-newtype Architecture = Architecture { cRet :: Exp }
+newtype Architecture = Architecture { cRet :: Exp Int }
 
 data TempSt = TempSt { labels     :: [Label]
                      , tempSupply :: [Temp]
@@ -72,33 +72,34 @@ lookupName (Name _ (Unique i) _) =
         (IM.findWithDefault (error "Internal error in IR phase: could not look find label for name") i . atLabels)
 
 -- TODO figure out dip
-data Stmt = Push (KempeTy ()) Exp
-          | Pop (KempeTy ()) Temp
-          | Labeled Label
-          -- -- | Seq Stmt Stmt
-          | Jump Label
-          -- conditional jump for ifs
-          | CJump Exp Label Label
-          | MJump Exp Label
-          | CCall MonoStackType BSL.ByteString -- TODO: ShortByteString?
-          | KCall Label -- KCall is a jump to a Kempe procedure (and jump back, later)
-          -- enough...)
-          | MovTemp Temp Exp
-          | MovMem Exp Exp -- store e2 at address given by e1
-          | Eff Exp -- evaluate an expression for its effects
-          deriving (Generic, NFData)
+-- | Type parameter @a@ so we can annotate with 'Int's later.
+data Stmt a = Push a (KempeTy ()) (Exp a)
+            | Pop a (KempeTy ()) Temp
+            | Labeled a Label
+            -- -- | Seq Stmt Stmt
+            | Jump a Label
+            -- conditional jump for ifs
+            | CJump a (Exp a) Label Label
+            | MJump a (Exp a) Label
+            | CCall a MonoStackType BSL.ByteString -- TODO: ShortByteString?
+            | KCall a Label -- KCall is a jump to a Kempe procedure (and jump back, later)
+            -- enough...)
+            | MovTemp a Temp (Exp a)
+            | MovMem a (Exp a) (Exp a) -- store e2 at address given by e1
+            | Eff a (Exp a) -- evaluate an expression for its effects
+            deriving (Generic, NFData)
 
-data Exp = ConstInt Int64
-         | ConstantPtr Int64
-         | ConstBool Word8
-         | Named Label
-         | Reg Temp -- TODO: size?
-         | Mem Exp -- fetch from address
-         | Do Stmt Exp
-         | ExprIntBinOp IntBinOp Exp Exp
-         | ExprIntRel RelBinOp Exp Exp
-         | StackPointer
-         deriving (Generic, NFData)
+data Exp a = ConstInt a Int64
+           | ConstantPtr a Int64
+           | ConstBool a Word8
+           | Named a Label
+           | Reg a Temp -- TODO: size?
+           | Mem a (Exp a) -- fetch from address
+           | Do a (Stmt a) (Exp a)
+           | ExprIntBinOp IntBinOp (Exp a) (Exp a)
+           | ExprIntRel RelBinOp (Exp a) (Exp a)
+           | StackPointer a
+           deriving (Generic, NFData)
 
 data RelBinOp = IntEqIR
               | IntNeqIR
@@ -110,24 +111,24 @@ data IntBinOp = IntPlusIR
               | IntTimesIR
               | IntDivIR
               | IntMinusIR
-              | IntModIR
+              | IntModIR -- rem?
               | IntXorIR
               | IntShiftRIR
               | IntShiftLIR
               deriving (Generic, NFData)
 
-writeModule :: Module () MonoStackType -> TempM [Stmt]
+writeModule :: Module () MonoStackType -> TempM [Stmt ()]
 writeModule = foldMapA writeDecl
 
-writeDecl :: KempeDecl () MonoStackType -> TempM [Stmt]
+writeDecl :: KempeDecl () MonoStackType -> TempM [Stmt ()]
 writeDecl (FunDecl _ (Name _ u _) _ _ as) = do
     bl <- broadcastName u
-    (Labeled bl:) <$> writeAtoms as
+    (Labeled () bl:) <$> writeAtoms as
 writeDecl (ExtFnDecl ty (Name _ u _) _ _ cName) = do
     bl <- broadcastName u
-    pure [Labeled bl, CCall ty cName]
+    pure [Labeled () bl, CCall () ty cName]
 
-writeAtoms :: [Atom MonoStackType] -> TempM [Stmt]
+writeAtoms :: [Atom MonoStackType] -> TempM [Stmt ()]
 writeAtoms = foldMapA writeAtom
 
 foldMapA :: (Applicative f, Traversable t, Monoid m) => (a -> f m) -> t a -> f m
@@ -139,32 +140,32 @@ tyInt = TyBuiltin () TyInt
 tyBool :: KempeTy ()
 tyBool = TyBuiltin () TyBool
 
-intOp :: IntBinOp -> TempM [Stmt]
+intOp :: IntBinOp -> TempM [Stmt ()]
 intOp cons = do
     t0 <- getTemp
     t1 <- getTemp
     pure
-        [ Pop tyInt t0
-        , Pop tyInt t1
-        , Push tyInt $ ExprIntBinOp cons (Reg t0) (Reg t1)
+        [ Pop () tyInt t0
+        , Pop () tyInt t1
+        , Push () tyInt $ ExprIntBinOp cons (Reg () t0) (Reg () t1)
         ]
 
-intRel :: RelBinOp -> TempM [Stmt]
+intRel :: RelBinOp -> TempM [Stmt ()]
 intRel cons = do
     t0 <- getTemp
     t1 <- getTemp
     pure
-        [ Pop tyInt t0 -- TODO: maybe plain mov is better/nicer than pop
-        , Pop tyInt t1
-        , Push tyBool $ ExprIntRel cons (Reg t0) (Reg t1)
+        [ Pop () tyInt t0 -- TODO: maybe plain mov is better/nicer than pop
+        , Pop () tyInt t1
+        , Push () tyBool $ ExprIntRel cons (Reg () t0) (Reg () t1)
         ]
 
 -- need monad for fresh 'Temp's
 -- | This throws exceptions on nonsensical input.
-writeAtom :: Atom MonoStackType -> TempM [Stmt]
-writeAtom (IntLit _ i)              = pure [Push tyInt (ConstInt $ fromInteger i)]
-writeAtom (BoolLit _ b)             = pure [Push tyBool (ConstBool $ toByte b)]
-writeAtom (AtName _ n)              = pure . KCall <$> lookupName n -- TODO: when to do tco?
+writeAtom :: Atom MonoStackType -> TempM [Stmt ()]
+writeAtom (IntLit _ i)              = pure [Push () tyInt (ConstInt () $ fromInteger i)]
+writeAtom (BoolLit _ b)             = pure [Push () tyBool (ConstBool () $ toByte b)]
+writeAtom (AtName _ n)              = pure . KCall () <$> lookupName n -- TODO: when to do tco?
 writeAtom (AtBuiltin ([], _) Drop)  = error "Internal error: Ill-typed drop!"
 writeAtom (AtBuiltin ([], _) Swap)  = error "Internal error: Ill-typed swap!"
 writeAtom (AtBuiltin ([_], _) Swap) = error "Internal error: Ill-typed swap!"
@@ -180,15 +181,15 @@ writeAtom (AtBuiltin _ IntShiftL)   = intOp IntShiftLIR
 writeAtom (AtBuiltin _ IntEq)       = intRel IntEqIR
 writeAtom (AtBuiltin (is, _) Drop)  =
     let sz = size (last is) in
-        pure [Eff (ExprIntBinOp IntPlusIR StackPointer (ExprIntBinOp IntPlusIR StackPointer (ConstInt sz)))]
+        pure [Eff () (ExprIntBinOp IntPlusIR (StackPointer ()) (ExprIntBinOp IntPlusIR (StackPointer ()) (ConstInt () sz)))]
 writeAtom (AtBuiltin (is, _) Dup)   =
     let sz = size (last is) in
-        pure ( Eff (ExprIntBinOp IntPlusIR StackPointer (ExprIntBinOp IntMinusIR StackPointer (ConstInt sz))) -- allocate sz bytes on the stack
-             : [ MovMem (stackPointerOffset (i - sz)) (Mem $ stackPointerOffset i) | i <- [1..sz] ]
+        pure ( Eff () (ExprIntBinOp IntPlusIR (StackPointer ()) (ExprIntBinOp IntMinusIR (StackPointer ()) (ConstInt () sz))) -- allocate sz bytes on the stack
+             : [ MovMem () (stackPointerOffset (i - sz)) (Mem () $ stackPointerOffset i) | i <- [1..sz] ]
              )
 
-stackPointerOffset :: Int64 -> Exp
-stackPointerOffset off = ExprIntBinOp IntPlusIR StackPointer (ConstInt off)
+stackPointerOffset :: Int64 -> Exp ()
+stackPointerOffset off = ExprIntBinOp IntPlusIR (StackPointer ()) (ConstInt () off)
 
 toByte :: Bool -> Word8
 toByte True  = 1
