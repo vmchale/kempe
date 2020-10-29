@@ -187,6 +187,14 @@ writeAtom (AtBuiltin (is, _) Dup)   =
         pure ( Eff () (ExprIntBinOp IntPlusIR (StackPointer ()) (ExprIntBinOp IntMinusIR (StackPointer ()) (ConstInt () sz))) -- allocate sz bytes on the stack
              : [ MovMem () (stackPointerOffset (i - sz)) (Mem () $ stackPointerOffset i) | i <- [1..sz] ]
              )
+writeAtom (If _ as as') = do
+    l0 <- newLabel
+    l1 <- newLabel
+    let reg = stackPointerOffset (-1)
+        ifIR = CJump () reg l0 l1
+    asIR <- writeAtoms as
+    asIR' <- writeAtoms as'
+    pure $ ifIR : (Labeled () l0 : asIR) ++ (Labeled () l1 : asIR')
 
 stackPointerOffset :: Int64 -> Exp ()
 stackPointerOffset off = ExprIntBinOp IntPlusIR (StackPointer ()) (ConstInt () off)
