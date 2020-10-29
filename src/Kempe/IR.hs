@@ -14,7 +14,8 @@ module Kempe.IR ( size
                 ) where
 
 import           Control.DeepSeq      (NFData)
-import           Control.Monad.State  (State, evalState, gets, modify)
+-- TODO: benchmark state (strict?) to make sure it's fastest
+import           Control.Monad.State.Strict  (State, evalState, gets, modify)
 import qualified Data.ByteString.Lazy as BSL
 import           Data.Foldable        (fold)
 import           Data.Int             (Int64)
@@ -189,13 +190,11 @@ writeAtom (AtBuiltin (is, _) Dup)   =
 stackPointerOffset :: Int64 -> Exp
 stackPointerOffset off = ExprIntBinOp IntPlusIR StackPointer (ConstInt off)
 
--- stack pointer
-
 toByte :: Bool -> Word8
 toByte True  = 1
 toByte False = 0
 
--- need env with size?
+-- need env with size for constructors
 size :: KempeTy a -> Int64
 size (TyBuiltin _ TyInt)  = 8 -- since we're only targeting x86_64 and aarch64 we have 64-bit 'Int's
 size (TyBuiltin _ TyPtr)  = 8
