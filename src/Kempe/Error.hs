@@ -20,6 +20,7 @@ data Error a = PoorScope a (Name a)
              | UnificationFailed a (KempeTy a) (KempeTy a) -- TODO: include atom expression?
              | TyVarExt a
              | MonoFailed a
+             | TyMismatch a (StackType a) (StackType a)
              deriving (Generic, NFData)
 
 instance (Pretty a) => Show (Error a) where
@@ -31,5 +32,6 @@ instance Pretty (Error a) where
     pretty (UnificationFailed _ ty ty')  = "could not unify type" <+> squotes (pretty ty) <+> "with" <+> squotes (pretty ty')
     pretty (TyVarExt _)                  = "Type variables may not occur in external or exported functions."
     pretty (MonoFailed _)                = "Monomorphization step failed"
+    pretty (TyMismatch _ sty sty')       = "Mismatched types" <+> pretty sty <+> "and" <+> pretty sty'
 
 instance (Pretty a, Typeable a) => Exception (Error a)

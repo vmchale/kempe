@@ -18,7 +18,6 @@ import           Data.Functor               (void, ($>))
 import qualified Data.IntMap                as IM
 import           Data.List                  (foldl')
 import           Data.List.NonEmpty         (NonEmpty (..))
-import           Data.Maybe                 (fromMaybe)
 import           Data.Semigroup             ((<>))
 import qualified Data.Set                   as S
 import qualified Data.Text                  as T
@@ -248,8 +247,6 @@ assignAtom (Case _ ls) = do
 
 assignAtoms :: [Atom a] -> TypeM () ([Atom (StackType ())], StackType ())
 assignAtoms = foldM
-    -- TODO: do I really need traverse renameStack r? (it's slower)
-    -- should r' use same renames as ty?
     (\seed a -> do { (ty, r) <- assignAtom a ; (fst seed ++ [r] ,) <$> catTypes ty (snd seed) })
     ([], emptyStackType)
 
@@ -316,6 +313,8 @@ tyInsert (TyDecl _ tn ns ls) = traverse_ (tyInsertLeaf tn (S.fromList ns)) ls
 tyInsert (FunDecl _ _ ins out as) = do
     sig <- renameStack $ voidStackType $ StackType (freeVars (ins ++ out)) ins out
     inferred <- tyAtoms as
+    unless (alphaEquiv sig inferred) $
+        throwError $ TyMismatch () sig inferred
     void $ mergeStackTypes sig inferred -- FIXME: need to verify the merged type is as general as the signature?
 tyInsert ExtFnDecl{} = pure ()
 tyInsert Export{} = pure ()
