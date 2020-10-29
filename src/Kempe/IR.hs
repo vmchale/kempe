@@ -13,20 +13,20 @@ module Kempe.IR ( size
                 , TempM
                 ) where
 
-import           Control.DeepSeq      (NFData)
+import           Control.DeepSeq            (NFData)
 -- TODO: benchmark state (strict?) to make sure it's fastest
-import           Control.Monad.State.Strict  (State, evalState, gets, modify)
-import qualified Data.ByteString.Lazy as BSL
-import           Data.Foldable        (fold)
-import           Data.Int             (Int64)
-import qualified Data.IntMap          as IM
-import           Data.Word            (Word8)
-import           GHC.Generics         (Generic)
+import           Control.Monad.State.Strict (State, evalState, gets, modify)
+import qualified Data.ByteString.Lazy       as BSL
+import           Data.Foldable              (fold)
+import           Data.Int                   (Int64)
+import qualified Data.IntMap                as IM
+import           Data.Word                  (Word8)
+import           GHC.Generics               (Generic)
 import           Kempe.AST
 import           Kempe.Name
 import           Kempe.Unique
-import           Lens.Micro           (Lens')
-import           Lens.Micro.Mtl       (modifying)
+import           Lens.Micro                 (Lens')
+import           Lens.Micro.Mtl             (modifying)
 
 type Label = Word
 
