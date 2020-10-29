@@ -311,11 +311,17 @@ tyHeader TyDecl{} = pure ()
 lessGeneral :: StackType a -> StackType a -> Bool
 lessGeneral (StackType _ is os) (StackType _ is' os') = lessGenerals (is ++ os) (is' ++ os')
     where lessGeneralAtom :: KempeTy a -> KempeTy a -> Bool
-          lessGeneralAtom TyBuiltin{} TyVar{} = True
-          lessGeneralAtom _ _                 = False
+          lessGeneralAtom TyBuiltin{} TyVar{}                   = True
+          lessGeneralAtom TyTuple{} TyVar{}                     = True
+          lessGeneralAtom TyApp{} TyVar{}                       = True
+          lessGeneralAtom (TyTuple _ tys) (TyTuple _ tys')      = lessGenerals tys tys'
+          lessGeneralAtom (TyApp _ ty ty') (TyApp _ ty'' ty''') = lessGeneralAtom ty ty'' || lessGeneralAtom ty' ty''' -- lazy pattern match?
+          lessGeneralAtom _ _                                   = False
           lessGenerals :: [KempeTy a] -> [KempeTy a] -> Bool
           lessGenerals [] []               = False
           lessGenerals (ty:tys) (ty':tys') = lessGeneralAtom ty ty' || lessGenerals tys tys'
+          lessGenerals _ []                = False -- shouldn't happen; will be caught later
+          lessGenerals [] _                = False
 
 tyInsert :: KempeDecl a b -> TypeM () ()
 tyInsert (TyDecl _ tn ns ls) = traverse_ (tyInsertLeaf tn (S.fromList ns)) ls
