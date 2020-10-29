@@ -17,7 +17,6 @@ module Kempe.AST ( BuiltinTy (..)
                  , Module
                  , freeVars
                  , MonoStackType
-                 , alphaEquiv
                  , prettyMonoStackType
                  , prettyTyped
                  , prettyTypedModule
@@ -26,10 +25,8 @@ module Kempe.AST ( BuiltinTy (..)
                  ) where
 
 import           Control.DeepSeq      (NFData)
-import           Data.Bifunctor       (second)
 import qualified Data.ByteString.Lazy as BSL
 import           Data.Functor         (void)
-import qualified Data.IntMap          as IM
 import           Data.List.NonEmpty   (NonEmpty)
 import           Data.Semigroup
 import qualified Data.Set             as S
@@ -78,19 +75,6 @@ type MonoStackType = ([KempeTy ()], [KempeTy ()])
 
 prettyMonoStackType :: MonoStackType -> Doc a
 prettyMonoStackType (is, os) = sep (fmap pretty is) <+> "--" <+> sep (fmap pretty os)
-
-replaceStackType :: Eq a => IM.IntMap Int -> KempeTy a -> KempeTy a -> (IM.IntMap Int, Bool)
-replaceStackType tyEnv ty@TyBuiltin{} ty'@TyBuiltin{} = (tyEnv, ty == ty')
-replaceStackType tyEnv ty@TyNamed{} ty'@TyNamed{}     = (tyEnv, ty == ty')
-
-alphaEquiv :: Eq a => StackType a -> StackType a -> Bool
-alphaEquiv (StackType _ is os) (StackType _ is' os') = snd $ compareTypeSequence mempty (is ++ os) (is' ++ os') where
-    compareTypeSequence :: Eq a => IM.IntMap Int -> [KempeTy a] -> [KempeTy a] -> (IM.IntMap Int, Bool)
-    compareTypeSequence tyEnv [] []               = (tyEnv, True)
-    compareTypeSequence _ _ []                    = (undefined, False)
-    compareTypeSequence _ [] _                    = (undefined, False)
-    compareTypeSequence tyEnv (ty:tys) (ty':tys') = let (tyEnv', res) = replaceStackType tyEnv ty ty' in second (res &&) $ compareTypeSequence tyEnv' tys tys'
--- TODO: stack type alpa-equivalence
 
 instance Pretty (StackType a) where
     pretty (StackType _ ins outs) = sep (fmap pretty ins) <+> "--" <+> sep (fmap pretty outs)

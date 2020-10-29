@@ -308,14 +308,23 @@ tyHeader (ExtFnDecl _ (Name _ (Unique i) _) ins os _) = do
     modifying tyEnvLens (IM.insert i sig)
 tyHeader TyDecl{} = pure ()
 
+lessGeneral :: StackType a -> StackType a -> Bool
+lessGeneral (StackType _ is os) (StackType _ is' os') = lessGenerals (is ++ os) (is' ++ os')
+    where lessGeneralAtom :: KempeTy a -> KempeTy a -> Bool
+          lessGeneralAtom TyBuiltin{} TyVar{} = True
+          lessGeneralAtom _ _                 = False
+          lessGenerals :: [KempeTy a] -> [KempeTy a] -> Bool
+          lessGenerals [] []               = False
+          lessGenerals (ty:tys) (ty':tys') = lessGeneralAtom ty ty' || lessGenerals tys tys'
+
 tyInsert :: KempeDecl a b -> TypeM () ()
 tyInsert (TyDecl _ tn ns ls) = traverse_ (tyInsertLeaf tn (S.fromList ns)) ls
 tyInsert (FunDecl _ _ ins out as) = do
     sig <- renameStack $ voidStackType $ StackType (freeVars (ins ++ out)) ins out
     inferred <- tyAtoms as
-    unless (alphaEquiv sig inferred) $
-        throwError $ TyMismatch () sig inferred
-    void $ mergeStackTypes sig inferred -- FIXME: need to verify the merged type is as general as the signature?
+    _ <- mergeStackTypes sig inferred -- FIXME: need to verify the merged type is as general as the signature?
+    when (inferred `lessGeneral` sig) $
+        throwError $ LessGeneral () sig inferred
 tyInsert ExtFnDecl{} = pure ()
 tyInsert Export{} = pure ()
 
