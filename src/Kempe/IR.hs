@@ -90,7 +90,7 @@ data Exp a = ConstInt { expCost :: a, expI :: Int64 }
            | ConstantPtr { expCost :: a, expP :: Int64 }
            | ConstBool { expCost :: a, expB :: Word8 }
            | Named { expCost :: a, expLabel :: Label }
-           | Reg { expCost :: a, expReg :: Temp } -- TODO: size?
+           | Reg { expCost :: a, regSize :: Int, expReg :: Temp } -- TODO: size?
            | Mem { expCost :: a, expAddr :: Exp a } -- fetch from address
            | Do { expCost :: a, expStmt :: Stmt a, expSeq :: Exp a }
            | ExprIntBinOp { expCost :: a, expBinOp :: IntBinOp, exp0 :: Exp a, exp1 :: Exp a }
@@ -144,7 +144,7 @@ intOp cons = do
     pure
         [ Pop () tyInt t0
         , Pop () tyInt t1
-        , Push () tyInt $ ExprIntBinOp () cons (Reg () t0) (Reg () t1)
+        , Push () tyInt $ ExprIntBinOp () cons (Reg () 4 t0) (Reg () 4 t1) -- registers are 4 bytes for integers
         ]
 
 intRel :: RelBinOp -> TempM [Stmt ()]
@@ -154,7 +154,7 @@ intRel cons = do
     pure
         [ Pop () tyInt t0 -- TODO: maybe plain mov is better/nicer than pop
         , Pop () tyInt t1
-        , Push () tyBool $ ExprIntRel () cons (Reg () t0) (Reg () t1)
+        , Push () tyBool $ ExprIntRel () cons (Reg () 4 t0) (Reg () 4 t1)
         ]
 
 -- | This throws exceptions on nonsensical input.
@@ -186,7 +186,7 @@ writeAtom (AtBuiltin (is, _) Dup)   =
 writeAtom (If _ as as') = do
     l0 <- newLabel
     l1 <- newLabel
-    let reg = stackPointerOffset (-1)
+    let reg = stackPointerOffset (-1) -- one byte for bool
         ifIR = CJump () reg l0 l1
     asIR <- writeAtoms as
     asIR' <- writeAtoms as'
