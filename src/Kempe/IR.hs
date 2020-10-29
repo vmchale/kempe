@@ -1,7 +1,7 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric  #-}
 
--- | IR from Appel book
+-- | IR loosely based on Appel book.
 module Kempe.IR ( size
                 , Architecture (..)
                 , writeModule

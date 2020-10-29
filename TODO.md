@@ -7,11 +7,11 @@
 - [ ] delink?
 - [ ] Primality test (and link to C...)
   - [ ] Needs sensible float support!
-- [ ] splitmix random number generator? (or rather any pseudorandom number
+- [x] splitmix random number generator? (or rather any pseudorandom number
   generator...)
   - [ ] http://prng.di.unimi.it/xoroshiro128plus.c
 # Bugs
-- [ ] The current setup ignores extern imports
+- [x] The current setup ignores extern imports -> no it doesn't
 # Pipeline
 - [ ] Inliner (all non-recursive?)
 - [ ] IR (abstract assembly?)
@@ -21,8 +21,10 @@
 # Features
 - [ ] REPL for type inspection?
 - [ ] Pattern match exhaustiveness checker
+- [ ] Tuples (?)
 - [ ] Error messages should have line numbers
 - [ ] Tail-call optimization (easier than I thought?)
+  - [ ]  Mutually recursive function optimization
 # Test Cases
 - [ ] Unit tests for type merge?
 - [ ] Unit tests for catTypes?
