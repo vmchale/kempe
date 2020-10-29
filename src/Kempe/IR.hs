@@ -31,10 +31,7 @@ type Label = Word
 
 type Temp = Int
 
-data Architecture = Architecture { stackPointer :: Temp
-                                 , framePointer :: Temp
-                                 , cRet         :: Exp
-                                 }
+newtype Architecture = Architecture { cRet :: Exp }
 
 data TempSt = TempSt { labels     :: [Label]
                      , tempSupply :: [Temp]
@@ -100,7 +97,7 @@ data Exp = ConstInt Int64
          | ExprIntBinOp IntBinOp Exp Exp
          | ExprIntRel RelBinOp Exp Exp
          | StackPointer
-          deriving (Generic, NFData)
+         deriving (Generic, NFData)
 
 data RelBinOp = IntEqIR
               | IntNeqIR
