@@ -3,7 +3,6 @@
 
 -- | IR loosely based on Appel book.
 module Kempe.IR ( size
-                , Architecture (..)
                 , writeModule
                 , Stmt (..)
                 , Exp (..)
@@ -31,8 +30,6 @@ import           Lens.Micro.Mtl             (modifying)
 type Label = Word
 
 type Temp = Int
-
-newtype Architecture = Architecture { cRet :: Exp Int }
 
 data TempSt = TempSt { labels     :: [Label]
                      , tempSupply :: [Temp]
@@ -73,20 +70,20 @@ lookupName (Name _ (Unique i) _) =
 
 -- TODO figure out dip
 -- | Type parameter @a@ so we can annotate with 'Int's later.
-data Stmt a = Push a (KempeTy ()) (Exp a)
-            | Pop a (KempeTy ()) Temp
-            | Labeled a Label
+data Stmt a = Push { stmtCost :: a, stmtTy :: KempeTy (), stmtExp :: Exp a }
+            | Pop { stmtCost :: a, stmtTy :: KempeTy (), stmtTemp :: Temp }
+            | Labeled { stmtCost :: a, stmtLabel :: Label }
             -- -- | Seq Stmt Stmt
-            | Jump a Label
+            | Jump { stmtCost :: a, stmtJmp :: Label }
             -- conditional jump for ifs
-            | CJump a (Exp a) Label Label
-            | MJump a (Exp a) Label
-            | CCall a MonoStackType BSL.ByteString -- TODO: ShortByteString?
-            | KCall a Label -- KCall is a jump to a Kempe procedure (and jump back, later)
+            | CJump { stmtCost :: a, stmtSwitch :: Exp a, stmtJmp0 :: Label, stmtJmp1 :: Label }
+            | MJump { stmtCost :: a, stmtM :: Exp a, stmtLabel :: Label }
+            | CCall { stmtCost :: a, stmtExtTy :: MonoStackType, stmtCCall :: BSL.ByteString } -- TODO: ShortByteString?
+            | KCall { stmtCost :: a, stmtCall :: Label } -- KCall is a jump to a Kempe procedure (and jump back, later)
             -- enough...)
-            | MovTemp a Temp (Exp a)
-            | MovMem a (Exp a) (Exp a) -- store e2 at address given by e1
-            | Eff a (Exp a) -- evaluate an expression for its effects
+            | MovTemp { stmtCost :: a, stmtTemp :: Temp, stmtExp :: Exp a }
+            | MovMem { stmtCost :: a, stmtExp0 :: Exp a, stmtExp1 :: Exp a } -- store e2 at address given by e1
+            | Eff { stmtCost :: a, stmtExp :: Exp a } -- evaluate an expression for its effects
             deriving (Generic, NFData)
 
 data Exp a = ConstInt { expCost :: a, expI :: Int64 }
