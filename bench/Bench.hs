@@ -1,13 +1,13 @@
 module Main (main) where
 
-import           Control.Exception    (throwIO, throw)
+import           Control.Exception    (throw, throwIO)
 import           Criterion.Main
 import qualified Data.ByteString.Lazy as BSL
 import           Data.Functor         (void)
+import           Kempe.IR
 import           Kempe.Lexer
 import           Kempe.Monomorphize
 import           Kempe.Parser
-import           Kempe.IR
 import           Kempe.Shuttle
 import           Kempe.TyAssign
 
@@ -22,12 +22,14 @@ main =
                     bgroup "type assignment"
                       [ bench "check (test/data/ty.kmp)" $ nf runCheck p
                       , bench "check (prelude/fn.kmp)" $ nf runCheck prel
-                      , bench "closedModule" $ nf (runSpecialize =<<) (runAssign p)
-                      , bench "closure" $ nf (\m -> closure (m, mkModuleMap m)) (void <$> snd p)
-                      , bench "shuttle (test/data/ty.kmp)" $ nf (uncurry monomorphize) p
-                      , bench "shuttle (examples/splitmix.kmp)" $ nf (uncurry monomorphize) s
+                      , bench "assign (test/data/ty.kmp)" $ nf runAssign p
                       , bench "assign (test/data/ty.kmp)" $ nf runAssign p
                       , bench "assign (prelude/fn.kmp)" $ nf runAssign prel
+                      , bench "assign (prelude/fn.kmp)" $ nf runAssign prel
+                      , bench "shuttle (test/data/ty.kmp)" $ nf (uncurry monomorphize) p
+                      , bench "shuttle (examples/splitmix.kmp)" $ nf (uncurry monomorphize) s
+                      , bench "closedModule" $ nf (runSpecialize =<<) (runAssign p)
+                      , bench "closure" $ nf (\m -> closure (m, mkModuleMap m)) (void <$> snd p)
                       ]
                   , env splitmixMono $ \s ->
                       bgroup "IR"
