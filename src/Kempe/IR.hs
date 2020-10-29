@@ -13,7 +13,7 @@ module Kempe.IR ( size
                 ) where
 
 import           Control.DeepSeq            (NFData)
--- TODO: benchmark state (strict?) to make sure it's fastest
+-- strict b/c it's faster according to benchmarks
 import           Control.Monad.State.Strict (State, evalState, gets, modify)
 import qualified Data.ByteString.Lazy       as BSL
 import           Data.Foldable              (fold)
@@ -157,7 +157,6 @@ intRel cons = do
         , Push () tyBool $ ExprIntRel () cons (Reg () t0) (Reg () t1)
         ]
 
--- need monad for fresh 'Temp's
 -- | This throws exceptions on nonsensical input.
 writeAtom :: Atom MonoStackType -> TempM [Stmt ()]
 writeAtom (IntLit _ i)              = pure [Push () tyInt (ConstInt () $ fromInteger i)]
