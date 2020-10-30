@@ -23,8 +23,6 @@ main =
                       [ bench "check (test/data/ty.kmp)" $ nf runCheck p
                       , bench "check (prelude/fn.kmp)" $ nf runCheck prel
                       , bench "assign (test/data/ty.kmp)" $ nf runAssign p
-                      , bench "assign (test/data/ty.kmp)" $ nf runAssign p
-                      , bench "assign (prelude/fn.kmp)" $ nf runAssign prel
                       , bench "assign (prelude/fn.kmp)" $ nf runAssign prel
                       , bench "shuttle (test/data/ty.kmp)" $ nf (uncurry monomorphize) p
                       , bench "shuttle (examples/splitmix.kmp)" $ nf (uncurry monomorphize) s
