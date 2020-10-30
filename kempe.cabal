@@ -67,7 +67,8 @@ library
         transformers -any,
         prettyprinter >=1.7.0,
         composition-prelude >=1.1.0.1,
-        microlens-mtl -any
+        microlens-mtl -any,
+        recursion >=2.2.3.0
 
     if !flag(cross)
         build-tool-depends: alex:alex -any, happy:happy -any

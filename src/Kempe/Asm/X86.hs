@@ -3,7 +3,8 @@ module Kempe.Asm.X86 ( X86 (..)
                      , AbsReg
                      ) where
 
-import           Data.Int (Int64)
+import           Control.Recursion (cata)
+import           Data.Int          (Int64)
 import           Kempe.IR
 
 data AbsReg
@@ -15,14 +16,23 @@ data X86 reg = PushReg reg
              | SubRR reg reg
              | PushConst Int64
 
+-- how to represent a 'tiling'?? a 'tile' is an 'X86 AbsReg'?
+
 -- first pass (bottom-up): annotate optimum tilings of subtrees w/ cost, use
 -- that to annotate node with cost
 -- second pass: write code
 
+-- I'm kind of making up these instruction costs, I should look at the Agner
+-- guides.
+expCostAnn :: Exp () -> Exp Int
+expCostAnn = cata a where -- TODO: bench overhead from recursion schemes?
+    a StackPointerF{} = StackPointer 0
+    a (MemF _ e)      = Mem (1 + expCost e) e
+
 irCosts :: Stmt () -> Stmt Int
-irCosts = undefined
+irCosts (Eff _ e) = let e' = expCostAnn e in Eff (expCost e') e'
 
-irEmit :: Stmt () -> [X86 AbsReg]
+-- does this need a monad for labels/intermediaries?
+irEmit :: Stmt Int -> [X86 AbsReg]
 irEmit = undefined
-
--- pretty-printer for intel asm?
+-- I wonder if I could use a hylo.?

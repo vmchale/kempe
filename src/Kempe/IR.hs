@@ -1,11 +1,13 @@
 {-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveFunctor  #-}
 {-# LANGUAGE DeriveGeneric  #-}
+{-# LANGUAGE TypeFamilies   #-}
 
 -- | IR loosely based on Appel book.
-module Kempe.IR ( size
-                , writeModule
+module Kempe.IR ( writeModule
                 , Stmt (..)
                 , Exp (..)
+                , ExpF (..)
                 , RelBinOp (..)
                 , IntBinOp (..)
                 , runTempM
@@ -16,6 +18,7 @@ module Kempe.IR ( size
 import           Control.DeepSeq            (NFData)
 -- strict b/c it's faster according to benchmarks
 import           Control.Monad.State.Strict (State, evalState, gets, modify)
+import           Control.Recursion          (Base, Recursive)
 import qualified Data.ByteString            as BS
 import qualified Data.ByteString.Lazy       as BSL
 import           Data.Foldable              (fold)
@@ -93,7 +96,7 @@ data Stmt a = Push { stmtCost :: a, stmtTy :: Int, stmtExp :: Exp a }
             deriving (Generic, NFData)
 
 data Exp a = ConstInt { expCost :: a, expI :: Int64 }
-           | ConstantPtr { expCost :: a, expP :: Int64 }
+           | ConstPtr { expCost :: a, expP :: Int64 }
            | ConstBool { expCost :: a, expB :: Word8 }
            | Named { expCost :: a, expLabel :: Label }
            | Reg { expCost :: a, regSize :: Int, expReg :: Temp } -- TODO: size?
@@ -101,7 +104,20 @@ data Exp a = ConstInt { expCost :: a, expI :: Int64 }
            | ExprIntBinOp { expCost :: a, expBinOp :: IntBinOp, exp0 :: Exp a, exp1 :: Exp a }
            | ExprIntRel { expCost :: a, expRelOp :: RelBinOp, exp0 :: Exp a, exp1 :: Exp a }
            | StackPointer { expCost :: a }
-           deriving (Generic, NFData)
+           deriving (Generic, NFData, Recursive)
+
+data ExpF a x = ConstIntF a Int64
+              | ConstPtrF a Int64
+              | ConstBoolF a Word8
+              | NamedF a Label
+              | RegF a Int Temp
+              | MemF a x
+              | ExprIntBinOpF a IntBinOp x x
+              | ExprIntRelF a RelBinOp x x
+              | StackPointerF a
+              deriving (Functor, Generic)
+
+type instance Base (Exp a) = ExpF a
 
 data RelBinOp = IntEqIR
               | IntNeqIR
