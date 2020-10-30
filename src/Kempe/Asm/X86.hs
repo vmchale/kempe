@@ -30,7 +30,8 @@ expCostAnn = cata a where -- TODO: bench overhead from recursion schemes?
     a (MemF _ e)      = Mem (1 + expCost e) e
 
 irCosts :: Stmt () -> Stmt Int
-irCosts (Eff _ e) = let e' = expCostAnn e in Eff (expCost e') e'
+irCosts (Eff _ e)  = let e' = expCostAnn e in Eff (expCost e') e'
+irCosts (Jump _ l) = Jump 1 l
 
 -- does this need a monad for labels/intermediaries?
 irEmit :: Stmt Int -> [X86 AbsReg]
