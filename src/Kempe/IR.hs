@@ -170,6 +170,7 @@ writeAtom (AtBuiltin ([], _) Drop)  = error "Internal error: Ill-typed drop!"
 writeAtom (AtBuiltin ([], _) Swap)  = error "Internal error: Ill-typed swap!"
 writeAtom (AtBuiltin ([_], _) Swap) = error "Internal error: Ill-typed swap!"
 writeAtom (AtBuiltin ([], _) Dup)   = error "Internal error: Ill-typed dup!"
+writeAtom (Dip ([], _) _)           = error "Internal error: Ill-typed dip()!"
 writeAtom (AtBuiltin _ IntPlus)     = intOp IntPlusIR
 writeAtom (AtBuiltin _ IntMinus)    = intOp IntMinusIR
 writeAtom (AtBuiltin _ IntTimes)    = intOp IntTimesIR
