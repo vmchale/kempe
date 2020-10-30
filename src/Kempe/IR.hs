@@ -10,7 +10,7 @@ module Kempe.IR ( size
                 , IntBinOp (..)
                 , runTempM
                 , TempM
-                -- , foldStmt
+                , foldStmt
                 ) where
 
 import           Control.DeepSeq            (NFData)
@@ -71,12 +71,12 @@ lookupName (Name _ (Unique i) _) =
     gets
         (IM.findWithDefault (error "Internal error in IR phase: could not look find label for name") i . atLabels)
 
--- foldStmt :: NonEmpty (Stmt ()) -> Stmt ()
--- foldStmt (s :| ss) = foldr (Seq ()) s ss
+foldStmt :: NonEmpty (Stmt ()) -> Stmt ()
+foldStmt (s :| ss) = foldr (Seq ()) s ss
 
 -- | Type parameter @a@ so we can annotate with 'Int's later.
-data Stmt a = Push { stmtCost :: a, stmtTy :: KempeTy (), stmtExp :: Exp a }
-            | Pop { stmtCost :: a, stmtTy :: KempeTy (), stmtTemp :: Temp }
+data Stmt a = Push { stmtCost :: a, stmtTy :: Int, stmtExp :: Exp a }
+            | Pop { stmtCost :: a, stmtTySz :: Int, stmtTemp :: Temp }
             | Labeled { stmtCost :: a, stmtLabel :: Label }
             -- -- | BsLabel { stmtCost :: a, stmtLabelBS :: BS.ByteString }
             | Jump { stmtCost :: a, stmtJmp :: Label }
@@ -88,7 +88,7 @@ data Stmt a = Push { stmtCost :: a, stmtTy :: KempeTy (), stmtExp :: Exp a }
             | MovTemp { stmtCost :: a, stmtTemp :: Temp, stmtExp :: Exp a }
             | MovMem { stmtCost :: a, stmtExp0 :: Exp a, stmtExp1 :: Exp a } -- store e2 at address given by e1
             | Eff { stmtCost :: a, stmtExp :: Exp a } -- evaluate an expression for its effects
-            -- -- | Seq a (Stmt a) (Stmt a)
+            | Seq { stmtCost :: a, stmt0 :: Stmt a, stmt1 :: Stmt a }
             -- -- | MJump { stmtCost :: a, stmtM :: Exp a, stmtLabel :: Label } -- for optimizations/fallthrough?
             deriving (Generic, NFData)
 
@@ -137,20 +137,14 @@ writeAtoms = foldMapA writeAtom
 foldMapA :: (Applicative f, Traversable t, Monoid m) => (a -> f m) -> t a -> f m
 foldMapA = (fmap fold .) . traverse
 
-tyInt :: KempeTy ()
-tyInt = TyBuiltin () TyInt
-
-tyBool :: KempeTy ()
-tyBool = TyBuiltin () TyBool
-
 intOp :: IntBinOp -> TempM [Stmt ()]
 intOp cons = do
     t0 <- getTemp
     t1 <- getTemp
     pure
-        [ Pop () tyInt t0
-        , Pop () tyInt t1
-        , Push () tyInt $ ExprIntBinOp () cons (Reg () 4 t0) (Reg () 4 t1) -- registers are 4 bytes for integers
+        [ Pop () 4 t0
+        , Pop () 4 t1
+        , Push () 4 $ ExprIntBinOp () cons (Reg () 4 t0) (Reg () 4 t1) -- registers are 4 bytes for integers
         ]
 
 intRel :: RelBinOp -> TempM [Stmt ()]
@@ -158,15 +152,15 @@ intRel cons = do
     t0 <- getTemp
     t1 <- getTemp
     pure
-        [ Pop () tyInt t0 -- TODO: maybe plain mov is better/nicer than pop
-        , Pop () tyInt t1
-        , Push () tyBool $ ExprIntRel () cons (Reg () 4 t0) (Reg () 4 t1)
+        [ Pop () 4 t0 -- TODO: maybe plain mov is better/nicer than pop
+        , Pop () 4 t1
+        , Push () 1 $ ExprIntRel () cons (Reg () 4 t0) (Reg () 4 t1)
         ]
 
 -- | This throws exceptions on nonsensical input.
 writeAtom :: Atom MonoStackType -> TempM [Stmt ()]
-writeAtom (IntLit _ i)              = pure [Push () tyInt (ConstInt () $ fromInteger i)]
-writeAtom (BoolLit _ b)             = pure [Push () tyBool (ConstBool () $ toByte b)]
+writeAtom (IntLit _ i)              = pure [Push () 4 (ConstInt () $ fromInteger i)]
+writeAtom (BoolLit _ b)             = pure [Push () 1 (ConstBool () $ toByte b)]
 writeAtom (AtName _ n)              = pure . KCall () <$> lookupName n -- TODO: when to do tco?
 writeAtom (AtBuiltin ([], _) Drop)  = error "Internal error: Ill-typed drop!"
 writeAtom (AtBuiltin ([], _) Swap)  = error "Internal error: Ill-typed swap!"
