@@ -1,8 +1,6 @@
 # kempe
 
-Kempe is a stack-based language and compiler.
-
-I wrote this to learn how to write a compiler backend.
+Kempe is a stack-based language and compiler for x86_64 and Aarch64.
 
 Inspiration is primarily from [Mirth](https://github.com/mirth-lang/mirth).
 

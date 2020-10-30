@@ -10,12 +10,13 @@ module Kempe.IR ( size
                 , IntBinOp (..)
                 , runTempM
                 , TempM
-                , foldStmt
+                -- , foldStmt
                 ) where
 
 import           Control.DeepSeq            (NFData)
 -- strict b/c it's faster according to benchmarks
 import           Control.Monad.State.Strict (State, evalState, gets, modify)
+import qualified Data.ByteString            as BS
 import qualified Data.ByteString.Lazy       as BSL
 import           Data.Foldable              (fold)
 import           Data.Int                   (Int64)
@@ -70,14 +71,14 @@ lookupName (Name _ (Unique i) _) =
     gets
         (IM.findWithDefault (error "Internal error in IR phase: could not look find label for name") i . atLabels)
 
-foldStmt :: NonEmpty (Stmt ()) -> Stmt ()
-foldStmt (s :| ss) = foldr (Seq ()) s ss
+-- foldStmt :: NonEmpty (Stmt ()) -> Stmt ()
+-- foldStmt (s :| ss) = foldr (Seq ()) s ss
 
--- TODO figure out dip
 -- | Type parameter @a@ so we can annotate with 'Int's later.
 data Stmt a = Push { stmtCost :: a, stmtTy :: KempeTy (), stmtExp :: Exp a }
             | Pop { stmtCost :: a, stmtTy :: KempeTy (), stmtTemp :: Temp }
             | Labeled { stmtCost :: a, stmtLabel :: Label }
+            -- -- | BsLabel { stmtCost :: a, stmtLabelBS :: BS.ByteString }
             | Jump { stmtCost :: a, stmtJmp :: Label }
             -- conditional jump for ifs
             | CJump { stmtCost :: a, stmtSwitch :: Exp a, stmtJmp0 :: Label, stmtJmp1 :: Label }
@@ -87,7 +88,7 @@ data Stmt a = Push { stmtCost :: a, stmtTy :: KempeTy (), stmtExp :: Exp a }
             | MovTemp { stmtCost :: a, stmtTemp :: Temp, stmtExp :: Exp a }
             | MovMem { stmtCost :: a, stmtExp0 :: Exp a, stmtExp1 :: Exp a } -- store e2 at address given by e1
             | Eff { stmtCost :: a, stmtExp :: Exp a } -- evaluate an expression for its effects
-            | Seq a (Stmt a) (Stmt a)
+            -- -- | Seq a (Stmt a) (Stmt a)
             -- -- | MJump { stmtCost :: a, stmtM :: Exp a, stmtLabel :: Label } -- for optimizations/fallthrough?
             deriving (Generic, NFData)
 
@@ -128,6 +129,7 @@ writeDecl (FunDecl _ (Name _ u _) _ _ as) = do
 writeDecl (ExtFnDecl ty (Name _ u _) _ _ cName) = do
     bl <- broadcastName u
     pure [Labeled () bl, CCall () ty cName]
+-- FIXME: this names will be illegible/not match up
 
 writeAtoms :: [Atom MonoStackType] -> TempM [Stmt ()]
 writeAtoms = foldMapA writeAtom
