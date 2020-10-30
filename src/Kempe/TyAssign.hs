@@ -394,10 +394,12 @@ renameStack (StackType qs ins outs) = do
 
 mergeStackTypes :: StackType () -> StackType () -> TypeM () (StackType ())
 mergeStackTypes st0@(StackType _ i0 o0) st1@(StackType _ i1 o1) = do
-    let toExpand = max (abs (length i0 - length i1)) (abs (length o0 - length o1))
+    let li0 = length i0
+        li1 = length i1
+        toExpand = max (abs (li0 - li1)) (abs (length o0 - length o1))
 
-    (StackType q ins os) <- expandType toExpand st0
-    (StackType q' ins' os') <- expandType toExpand st1
+    (StackType q ins os) <- (if li0 < li1 then expandType toExpand else pure) st0
+    (StackType q' ins' os') <- (if li1 < li0 then expandType toExpand else pure) st1
 
     when ((length ins /= length ins') || (length os /= length os')) $
         throwError $ MismatchedLengths () st0 st1

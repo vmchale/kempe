@@ -10,6 +10,7 @@ module Kempe.IR ( size
                 , IntBinOp (..)
                 , runTempM
                 , TempM
+                , foldStmt
                 ) where
 
 import           Control.DeepSeq            (NFData)
@@ -19,6 +20,7 @@ import qualified Data.ByteString.Lazy       as BSL
 import           Data.Foldable              (fold)
 import           Data.Int                   (Int64)
 import qualified Data.IntMap                as IM
+import           Data.List.NonEmpty         (NonEmpty (..))
 import           Data.Word                  (Word8)
 import           GHC.Generics               (Generic)
 import           Kempe.AST
@@ -68,22 +70,25 @@ lookupName (Name _ (Unique i) _) =
     gets
         (IM.findWithDefault (error "Internal error in IR phase: could not look find label for name") i . atLabels)
 
+foldStmt :: NonEmpty (Stmt ()) -> Stmt ()
+foldStmt (s :| ss) = foldr (Seq ()) s ss
+
 -- TODO figure out dip
 -- | Type parameter @a@ so we can annotate with 'Int's later.
 data Stmt a = Push { stmtCost :: a, stmtTy :: KempeTy (), stmtExp :: Exp a }
             | Pop { stmtCost :: a, stmtTy :: KempeTy (), stmtTemp :: Temp }
             | Labeled { stmtCost :: a, stmtLabel :: Label }
-            -- -- | Seq Stmt Stmt
             | Jump { stmtCost :: a, stmtJmp :: Label }
             -- conditional jump for ifs
             | CJump { stmtCost :: a, stmtSwitch :: Exp a, stmtJmp0 :: Label, stmtJmp1 :: Label }
-            | MJump { stmtCost :: a, stmtM :: Exp a, stmtLabel :: Label }
             | CCall { stmtCost :: a, stmtExtTy :: MonoStackType, stmtCCall :: BSL.ByteString } -- TODO: ShortByteString?
             | KCall { stmtCost :: a, stmtCall :: Label } -- KCall is a jump to a Kempe procedure (and jump back, later)
             -- enough...)
             | MovTemp { stmtCost :: a, stmtTemp :: Temp, stmtExp :: Exp a }
             | MovMem { stmtCost :: a, stmtExp0 :: Exp a, stmtExp1 :: Exp a } -- store e2 at address given by e1
             | Eff { stmtCost :: a, stmtExp :: Exp a } -- evaluate an expression for its effects
+            | Seq a (Stmt a) (Stmt a)
+            -- -- | MJump { stmtCost :: a, stmtM :: Exp a, stmtLabel :: Label } -- for optimizations/fallthrough?
             deriving (Generic, NFData)
 
 data Exp a = ConstInt { expCost :: a, expI :: Int64 }
@@ -92,7 +97,6 @@ data Exp a = ConstInt { expCost :: a, expI :: Int64 }
            | Named { expCost :: a, expLabel :: Label }
            | Reg { expCost :: a, regSize :: Int, expReg :: Temp } -- TODO: size?
            | Mem { expCost :: a, expAddr :: Exp a } -- fetch from address
-           | Do { expCost :: a, expStmt :: Stmt a, expSeq :: Exp a }
            | ExprIntBinOp { expCost :: a, expBinOp :: IntBinOp, exp0 :: Exp a, exp1 :: Exp a }
            | ExprIntRel { expCost :: a, expRelOp :: RelBinOp, exp0 :: Exp a, exp1 :: Exp a }
            | StackPointer { expCost :: a }
@@ -191,6 +195,18 @@ writeAtom (If _ as as') = do
     asIR <- writeAtoms as
     asIR' <- writeAtoms as'
     pure $ ifIR : (Labeled () l0 : asIR) ++ (Labeled () l1 : asIR')
+writeAtom (Dip (is, _) as) =
+    let sz = size (last is)
+        -- TODO: is there a guarantee the "discarded" parts of the stack won't
+        -- be written over?
+        shiftNext = Eff () (ExprIntBinOp () IntPlusIR (StackPointer ()) (stackPointerOffset $ negate sz))
+        shiftBack = Eff () (ExprIntBinOp () IntPlusIR (StackPointer ()) (stackPointerOffset sz))
+    in
+        do
+            aStmt <- writeAtoms as
+            pure ((shiftNext : aStmt) ++ [shiftBack])
+            -- TODO: possible optimization: don't shift stack pointer but rather
+            -- grab Stmts and shift them over to use sz bytes over or whatever?
 
 stackPointerOffset :: Int64 -> Exp ()
 stackPointerOffset off = ExprIntBinOp () IntPlusIR (StackPointer ()) (ConstInt () off)

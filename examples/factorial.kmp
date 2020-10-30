@@ -1,3 +1,13 @@
+loop : Int Int -- Int Int
+     =: [ dup 0 =
+          if(
+            , dup dip(*) 1 - loop
+            )
+        ]
+
+fac_rec : Int -- Int
+        =: [ 1 loop dip(drop) ]
+
 fac : Int -- Int
     =: [ dup 0 =
          if( drop 1
@@ -5,3 +15,4 @@ fac : Int -- Int
        ]
 
 %foreign cabi fac
+%foreign cabi fac_rec

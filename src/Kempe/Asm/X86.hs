@@ -6,3 +6,5 @@ data X86 reg = PushReg reg
              | PopReg reg
              | AddRR reg reg
              | SubRR reg reg
+
+-- pretty-printer for intel asm?

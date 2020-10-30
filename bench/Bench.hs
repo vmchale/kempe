@@ -31,13 +31,15 @@ main =
                       , bench "closedModule" $ nf (runSpecialize =<<) (runAssign p)
                       , bench "closure" $ nf (\m -> closure (m, mkModuleMap m)) (void <$> snd p)
                       ]
-                  , env splitmixMono $ \s ->
+                  , env irEnv $ \ ~(s, f) ->
                       bgroup "IR"
                         [ bench "IR pipeline (examples/splitmix.kmp)" $ nf runIR s
+                        , bench "IR pipeline (examples/factorial.kmp)" $ nf runIR f
                         ]
                 ]
     where parsedM = yeetIO . parseWithMax =<< BSL.readFile "test/data/ty.kmp"
           splitmix = yeetIO . parseWithMax =<< BSL.readFile "examples/splitmix.kmp"
+          fac = yeetIO . parseWithMax =<< BSL.readFile "examples/factorial.kmp"
           prelude = yeetIO . parseWithMax =<< BSL.readFile "prelude/fn.kmp"
           forTyEnv = (,,) <$> parsedM <*> splitmix <*> prelude
           yeetIO = either throwIO pure
@@ -45,4 +47,6 @@ main =
           runAssign (maxU, m) = runTypeM maxU (assignModule m)
           runSpecialize (m, i) = runMonoM i (closedModule m)
           splitmixMono = either throw id . uncurry monomorphize <$> splitmix
+          facMono = either throw id . uncurry monomorphize <$> fac
+          irEnv = (,) <$> splitmixMono <*> facMono
           runIR = runTempM . writeModule
