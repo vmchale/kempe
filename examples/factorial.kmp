@@ -1,8 +1,6 @@
 loop : Int Int -- Int Int
      =: [ dup 0 =
-          if(
-            , dup dip(*) 1 - loop
-            )
+          if(, dup dip(*) 1 - loop)
         ]
 
 fac_rec : Int -- Int
