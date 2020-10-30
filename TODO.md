@@ -13,6 +13,7 @@
 # Bugs
 - [x] The current setup ignores extern imports -> no it doesn't
 # Pipeline
+- [ ] FORTRAN backend? :p
 - [ ] Inliner (all non-recursive?)
 - [ ] IR (abstract assembly?)
   - [ ] https://www.cs.princeton.edu/courses/archive/spr19/cos217/lectures/13_Assembly1.pdf (von neumann -> c where int ptrs, ATS & such are useful...)
