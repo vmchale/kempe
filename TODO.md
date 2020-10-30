@@ -10,6 +10,10 @@
 - [x] splitmix random number generator? (or rather any pseudorandom number
   generator...)
   - [ ] http://prng.di.unimi.it/xoroshiro128plus.c
+# Performance
+## Data Structures
+- [ ] Difference lists when laying down atoms/IR
+- [ ] Do sets actually help?
 # Bugs
 - [x] The current setup ignores extern imports -> no it doesn't
 # Pipeline
