@@ -1,5 +1,8 @@
 ; from mirth
 
+id : a -- a
+   =: [ ]
+
 trip : a -- a a a
      =: [ dup dup ]
 
