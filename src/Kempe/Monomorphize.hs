@@ -17,6 +17,7 @@ import           Control.Monad              ((<=<))
 import           Control.Monad.Except       (MonadError, throwError)
 import           Control.Monad.State.Strict (StateT, gets, runStateT)
 import           Data.Bifunctor             (second)
+import           Data.Functor               ((<&>))
 import qualified Data.IntMap                as IM
 import qualified Data.Map                   as M
 import           Data.Maybe                 (mapMaybe)
@@ -95,7 +96,10 @@ renameAtom (Case ty ls)             = Case ty <$> traverse renameCase ls
 
 renameDecl :: KempeDecl () (StackType ()) -> MonoM (KempeDecl () (StackType ()))
 renameDecl (FunDecl l n is os as) = FunDecl l n is os <$> traverse renameAtom as
-renameDecl d@Export{}             = pure d
+renameDecl (Export ty abi (Name t u l)) = do
+    mSt <- gets snd
+    let u' = M.findWithDefault (error "Shouldn't happen") (u, ty) mSt
+    pure $ Export ty abi (Name t u' l)
 renameDecl d@ExtFnDecl{}          = pure d
 
 -- | Call 'closedModule' and perform any necessary renamings
@@ -113,8 +117,9 @@ renameMonoM = traverse renameDecl
 --
 -- The 'Module' returned will have to be renamed.
 closedModule :: Module () (StackType ()) -> MonoM (Module () (StackType ()))
-closedModule m = traverse pickDecl roots
-    where key = mkModuleMap m
+closedModule m = traverse pickDecl roots <&> addExports
+    where addExports = (exportsOnly m ++)
+          key = mkModuleMap m
           roots = S.toList $ closure (m, key)
           pickDecl (Name _ (Unique i) _, ty) = -- TODO: findWithDefault?
             case IM.lookup i key of
@@ -169,6 +174,11 @@ namesInAtom (Case _ as)                = foldMap namesInAtom (foldMap snd as) --
 
 exports :: Module a b -> [(Name b, b)]
 exports = mapMaybe exportsDecl
+
+exportsOnly :: Module a b -> Module a b
+exportsOnly = mapMaybe getExport where
+    getExport d@Export{} = Just d
+    getExport _          = Nothing
 
 exportsDecl :: KempeDecl a b -> Maybe (Name b, b)
 exportsDecl (Export _ _ n@(Name _ _ l)) = Just (n, l)

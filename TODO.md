@@ -16,6 +16,7 @@
 - [ ] Do sets actually help?
 # Bugs
 - [x] The current setup ignores extern imports -> no it doesn't
+- [ ] Exported functions w/ C ABI should be there (so it can link)
 # Pipeline
 - [ ] FORTRAN backend? :p
 - [ ] Inliner (all non-recursive?)
