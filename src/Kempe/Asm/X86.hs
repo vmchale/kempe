@@ -1,5 +1,5 @@
 module Kempe.Asm.X86 ( X86 (..)
-                     , irEmit
+                     , irToX86
                      , AbsReg
                      ) where
 
@@ -28,6 +28,9 @@ expCostAnn :: Exp () -> Exp Int
 expCostAnn = cata a where -- TODO: bench overhead from recursion schemes?
     a StackPointerF{} = StackPointer 0
     a (MemF _ e)      = Mem (1 + expCost e) e
+
+irToX86 :: Stmt () -> [X86 AbsReg]
+irToX86 = irEmit . irCosts
 
 irCosts :: Stmt () -> Stmt Int
 irCosts (Eff _ e)  = let e' = expCostAnn e in Eff (expCost e') e'
