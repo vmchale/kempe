@@ -162,9 +162,9 @@ intOp cons = do
     t0 <- getTemp
     t1 <- getTemp
     pure
-        [ Pop () 4 t0
-        , Pop () 4 t1
-        , Push () 4 $ ExprIntBinOp () cons (Reg () 4 t0) (Reg () 4 t1) -- registers are 4 bytes for integers
+        [ Pop () 8 t0
+        , Pop () 8 t1
+        , Push () 8 $ ExprIntBinOp () cons (Reg () 4 t0) (Reg () 4 t1) -- registers are 4 bytes for integers
         ]
 
 intRel :: RelBinOp -> TempM [Stmt ()]
@@ -172,14 +172,14 @@ intRel cons = do
     t0 <- getTemp
     t1 <- getTemp
     pure
-        [ Pop () 4 t0 -- TODO: maybe plain mov is better/nicer than pop
-        , Pop () 4 t1
+        [ Pop () 8 t0 -- TODO: maybe plain mov is better/nicer than pop
+        , Pop () 8 t1
         , Push () 1 $ ExprIntRel () cons (Reg () 4 t0) (Reg () 4 t1)
         ]
 
 -- | This throws exceptions on nonsensical input.
 writeAtom :: Atom MonoStackType -> TempM [Stmt ()]
-writeAtom (IntLit _ i)              = pure [Push () 4 (ConstInt () $ fromInteger i)]
+writeAtom (IntLit _ i)              = pure [Push () 8 (ConstInt () $ fromInteger i)]
 writeAtom (BoolLit _ b)             = pure [Push () 1 (ConstBool () $ toByte b)]
 writeAtom (AtName _ n)              = pure . KCall () <$> lookupName n -- TODO: when to do tco?
 writeAtom (AtBuiltin ([], _) Drop)  = error "Internal error: Ill-typed drop!"
