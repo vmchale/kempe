@@ -40,3 +40,5 @@ irCosts (Jump _ l) = Jump 1 l
 irEmit :: Stmt Int -> [X86 AbsReg]
 irEmit = undefined
 -- I wonder if I could use a hylo.?
+--
+-- do both with a zipper...? or both ways idk
