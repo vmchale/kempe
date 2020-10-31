@@ -29,6 +29,13 @@ odd : Int -- Bool
 randBool : -- Bool
          =: [ rand odd ]
 
+maybeEven : -- (Maybe Int)
+          =: [ rand dup odd
+                if( drop Nothing
+                  , Just
+                  )
+             ]
+
 push3 : -- OS OS OS
       =: [ Linux trip ]
 
@@ -36,3 +43,4 @@ doNothing : Int Int -- Int Int
           =: [ ]
 
 %foreign cabi randBool
+%foreign cabi maybeEven
