@@ -98,7 +98,7 @@ renameDecl :: KempeDecl () (StackType ()) -> MonoM (KempeDecl () (StackType ()))
 renameDecl (FunDecl l n is os as) = FunDecl l n is os <$> traverse renameAtom as
 renameDecl (Export ty abi (Name t u l)) = do
     mSt <- gets snd
-    let u' = M.findWithDefault (error "Shouldn't happen") (u, ty) mSt
+    let u' = M.findWithDefault (error "Shouldn't happen; might be user error or internal error") (u, ty) mSt
     pure $ Export ty abi (Name t u' l)
 renameDecl d@ExtFnDecl{}          = pure d
 
@@ -118,7 +118,7 @@ renameMonoM = traverse renameDecl
 -- The 'Module' returned will have to be renamed.
 closedModule :: Module () (StackType ()) -> MonoM (Module () (StackType ()))
 closedModule m = traverse pickDecl roots <&> addExports
-    where addExports = (exportsOnly m ++)
+    where addExports = (++ exportsOnly m)
           key = mkModuleMap m
           roots = S.toList $ closure (m, key)
           pickDecl (Name _ (Unique i) _, ty) = -- TODO: findWithDefault?

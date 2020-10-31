@@ -87,6 +87,7 @@ data Stmt a = Push { stmtCost :: a, stmtTy :: Int, stmtExp :: Exp a }
             | CJump { stmtCost :: a, stmtSwitch :: Exp a, stmtJmp0 :: Label, stmtJmp1 :: Label }
             | CCall { stmtCost :: a, stmtExtTy :: MonoStackType, stmtCCall :: BSL.ByteString } -- TODO: ShortByteString?
             | KCall { stmtCost :: a, stmtCall :: Label } -- KCall is a jump to a Kempe procedure (and jump back, later)
+            | WrapKCall { stmtCost :: a, stmtiFnTy :: MonoStackType, stmtCall :: Label }
             -- enough...)
             | MovTemp { stmtCost :: a, stmtTemp :: Temp, stmtExp :: Exp a }
             | MovMem { stmtCost :: a, stmtExp0 :: Exp a, stmtExp1 :: Exp a } -- store e2 at address given by e1
@@ -145,7 +146,7 @@ writeDecl (FunDecl _ (Name _ u _) _ _ as) = do
 writeDecl (ExtFnDecl ty (Name _ u _) _ _ cName) = do
     bl <- broadcastName u
     pure [Labeled () bl, CCall () ty cName]
--- FIXME: this names will be illegible/not match up
+writeDecl (Export sTy Cabi n) = pure . WrapKCall () sTy <$> lookupName n
 
 writeAtoms :: [Atom MonoStackType] -> TempM [Stmt ()]
 writeAtoms = foldMapA writeAtom
