@@ -3,9 +3,11 @@ loop : Int Int -- Int Int
           if(, dup dip(*) 1 - loop)
         ]
 
-fac_rec : Int -- Int
+; tail recursive factorial
+fac_tailrec : Int -- Int
         =: [ 1 loop dip(drop) ]
 
+; naïve factorial
 fac : Int -- Int
     =: [ dup 0 =
          if( drop 1
@@ -13,4 +15,4 @@ fac : Int -- Int
        ]
 
 %foreign cabi fac
-%foreign cabi fac_rec
+%foreign cabi fac_tailrec

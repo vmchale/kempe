@@ -25,6 +25,7 @@
   - [ ] https://www.cs.virginia.edu/~evans/cs216/guides/x86.html
 - [ ] http://hackage.haskell.org/package/x86-64bit-0.4.6.1/docs/CodeGen-X86.html
 # Features
+- [ ] `abstype` for pointer abstract types?
 - [ ] `rem` builtin or the like?
 - [ ] REPL for type inspection?
 - [ ] Pattern match exhaustiveness checker
