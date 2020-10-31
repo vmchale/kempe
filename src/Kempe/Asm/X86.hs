@@ -1,13 +1,22 @@
+-- | This module contains dynamic-programming optimum instruction selector.
+--
+-- It's kind of broken because
+--
+-- 1. I didn't actually look up the instruction costs in the Agner guides,
+-- I just guessed.
+--
+-- 2. There aren't many possible tilings included.
 module Kempe.Asm.X86 ( X86 (..)
                      , irToX86
-                     , AbsReg
+                     , AbsReg (..)
                      ) where
 
 import           Control.Recursion (cata)
 import           Data.Int          (Int64)
 import qualified Kempe.IR          as IR
 
-type AbsReg = Int
+data AbsReg = StackPointer
+            | AllocReg !Int
 
 -- parametric in @reg@ as we do register allocation in a separate phase
 data X86 reg = PushReg reg
@@ -27,8 +36,10 @@ data X86 reg = PushReg reg
 -- guides.
 expCostAnn :: IR.Exp () -> IR.Exp Int
 expCostAnn = cata a where
-    a IR.StackPointerF{} = IR.StackPointer 0
-    a (IR.MemF _ e)      = IR.Mem (1 + IR.expCost e) e
+    a IR.StackPointerF{}           = IR.StackPointer 0
+    a (IR.MemF _ e)                = IR.Mem (1 + IR.expCost e) e
+    a (IR.ExprIntBinOpF _ op e e') = IR.ExprIntBinOp (1 + IR.expCost e + IR.expCost e') op e e' -- FIXME: per-op
+    a (IR.ExprIntRelF _ op e e')   = IR.ExprIntRel (1 + IR.expCost e + IR.expCost e') op e e'
 
 irToX86 :: [IR.Stmt ()] -> [X86 AbsReg]
 irToX86 = concatMap (irEmit . irCosts)
