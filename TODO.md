@@ -32,6 +32,7 @@
 - [ ] Or-patterns?
 - [ ] Tail-call optimization (easier than I thought?)
   - [ ]  Mutually recursive function optimization
+- [ ] `x86-64bit` backend? might be useful for REPL :o
 # Test Cases
 - [ ] Unit tests for type merge?
 - [ ] Unit tests for catTypes?

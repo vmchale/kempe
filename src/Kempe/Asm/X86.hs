@@ -7,7 +7,7 @@ import           Control.Recursion (cata)
 import           Data.Int          (Int64)
 import           Kempe.IR
 
-data AbsReg
+type AbsReg = Int
 
 -- parametric in @reg@ so we can do register allocation later
 data X86 reg = PushReg reg
