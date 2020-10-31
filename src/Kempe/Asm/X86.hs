@@ -9,7 +9,7 @@ import qualified Kempe.IR          as IR
 
 type AbsReg = Int
 
--- parametric in @reg@ so we can do register allocation later
+-- parametric in @reg@ as we do register allocation in a separate phase
 data X86 reg = PushReg reg
              | PopReg reg
              | AddRR reg reg
@@ -18,8 +18,6 @@ data X86 reg = PushReg reg
              | Jump IR.Label
              | Call IR.Label
              | Ret
-
--- how to represent a 'tiling'?? a 'tile' is an 'X86 AbsReg'?
 
 -- first pass (bottom-up): annotate optimum tilings of subtrees w/ cost, use
 -- that to annotate node with cost
