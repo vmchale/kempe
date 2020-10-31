@@ -26,7 +26,6 @@
 - [ ] http://hackage.haskell.org/package/x86-64bit-0.4.6.1/docs/CodeGen-X86.html
 # Features
 - [ ] `abstype` for pointer abstract types?
-- [ ] `rem` builtin or the like?
 - [ ] REPL for type inspection?
 - [ ] Pattern match exhaustiveness checker
 - [ ] Tuples (?)
@@ -35,6 +34,9 @@
 - [ ] Tail-call optimization (easier than I thought?)
   - [ ]  Mutually recursive function optimization
 - [ ] `x86-64bit` backend? might be useful for REPL :o
+## Builtins
+- [ ] `rem` builtin or the like?
+- [ ] `popcnt` basically
 # Test Cases
 - [ ] Unit tests for type merge?
 - [ ] Unit tests for catTypes?
