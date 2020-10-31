@@ -6,6 +6,7 @@ import           Control.DeepSeq      (deepseq)
 import           Control.Exception    (Exception, throwIO)
 import qualified Data.ByteString.Lazy as BSL
 import           Kempe.AST
+import           Kempe.Asm.X86
 import           Kempe.File
 import           Kempe.Lexer
 import           Kempe.Monomorphize
@@ -47,8 +48,18 @@ main = defaultMain $
             , irNoYeet "test/data/export.kmp"
             , irNoYeet "examples/splitmix.kmp"
             , irNoYeet "examples/factorial.kmp"
+            , x86NoYeet "examples/factorial.kmp"
             ]
         ]
+
+x86NoYeet :: FilePath -> TestTree
+x86NoYeet fp = testCase ("Selects instructions for " ++ fp) $ do
+    contents <- BSL.readFile fp
+    (i, m) <- yeetIO $ parseWithMax contents
+    let ir = irGen i m
+        x86 = irToX86 ir
+    assertBool "Worked without exception" (last x86 `seq` True)
+
 
 irNoYeet :: FilePath -> TestTree
 irNoYeet fp = testCase ("Generates IR without throwing an exception (" ++ fp ++ ")") $ do

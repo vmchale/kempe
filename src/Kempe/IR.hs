@@ -106,7 +106,7 @@ data Exp a = ConstInt { expCost :: a, expI :: Int64 }
            | Mem { expCost :: a, expAddr :: Exp a } -- fetch from address
            | ExprIntBinOp { expCost :: a, expBinOp :: IntBinOp, exp0 :: Exp a, exp1 :: Exp a }
            | ExprIntRel { expCost :: a, expRelOp :: RelBinOp, exp0 :: Exp a, exp1 :: Exp a }
-           | StackPointer { expCost :: a }
+           | StackPointer { expCost :: a } -- FIXME: should this be frame pointer?
            deriving (Generic, NFData, Recursive)
 
 data ExpF a x = ConstIntF a Int64

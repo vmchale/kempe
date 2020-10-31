@@ -17,6 +17,7 @@ data X86 reg = PushReg reg
              | PushConst Int64
              | Jump IR.Label
              | Call IR.Label
+             | Ret
 
 -- how to represent a 'tiling'?? a 'tile' is an 'X86 AbsReg'?
 
@@ -31,8 +32,8 @@ expCostAnn = cata a where
     a IR.StackPointerF{} = IR.StackPointer 0
     a (IR.MemF _ e)      = IR.Mem (1 + IR.expCost e) e
 
-irToX86 :: IR.Stmt () -> [X86 AbsReg]
-irToX86 = irEmit . irCosts
+irToX86 :: [IR.Stmt ()] -> [X86 AbsReg]
+irToX86 = concatMap (irEmit . irCosts)
 
 irCosts :: IR.Stmt () -> IR.Stmt Int
 irCosts (IR.Eff _ e)   = let e' = expCostAnn e in IR.Eff (IR.expCost e') e'
@@ -42,7 +43,7 @@ irCosts (IR.KCall _ l) = IR.KCall 2 l
 -- does this need a monad for labels/intermediaries?
 irEmit :: IR.Stmt Int -> [X86 AbsReg]
 irEmit (IR.Jump _ l)  = [Jump l]
-irEmit (IR.KCall _ l) = [Call l]
+
 -- I wonder if I could use a hylo.?
 --
 -- do both with a zipper...? or both ways idk
