@@ -5,7 +5,7 @@ module Kempe.Asm.X86 ( X86 (..)
 
 import           Control.Recursion (cata)
 import           Data.Int          (Int64)
-import           Kempe.IR
+import qualified Kempe.IR          as IR
 
 type AbsReg = Int
 
@@ -15,6 +15,8 @@ data X86 reg = PushReg reg
              | AddRR reg reg
              | SubRR reg reg
              | PushConst Int64
+             | Jump IR.Label
+             | Call IR.Label
 
 -- how to represent a 'tiling'?? a 'tile' is an 'X86 AbsReg'?
 
@@ -24,21 +26,23 @@ data X86 reg = PushReg reg
 
 -- I'm kind of making up these instruction costs, I should look at the Agner
 -- guides.
-expCostAnn :: Exp () -> Exp Int
-expCostAnn = cata a where -- TODO: bench overhead from recursion schemes?
-    a StackPointerF{} = StackPointer 0
-    a (MemF _ e)      = Mem (1 + expCost e) e
+expCostAnn :: IR.Exp () -> IR.Exp Int
+expCostAnn = cata a where
+    a IR.StackPointerF{} = IR.StackPointer 0
+    a (IR.MemF _ e)      = IR.Mem (1 + IR.expCost e) e
 
-irToX86 :: Stmt () -> [X86 AbsReg]
+irToX86 :: IR.Stmt () -> [X86 AbsReg]
 irToX86 = irEmit . irCosts
 
-irCosts :: Stmt () -> Stmt Int
-irCosts (Eff _ e)  = let e' = expCostAnn e in Eff (expCost e') e'
-irCosts (Jump _ l) = Jump 1 l
+irCosts :: IR.Stmt () -> IR.Stmt Int
+irCosts (IR.Eff _ e)   = let e' = expCostAnn e in IR.Eff (IR.expCost e') e'
+irCosts (IR.Jump _ l)  = IR.Jump 1 l
+irCosts (IR.KCall _ l) = IR.KCall 2 l
 
 -- does this need a monad for labels/intermediaries?
-irEmit :: Stmt Int -> [X86 AbsReg]
-irEmit = undefined
+irEmit :: IR.Stmt Int -> [X86 AbsReg]
+irEmit (IR.Jump _ l)  = [Jump l]
+irEmit (IR.KCall _ l) = [Call l]
 -- I wonder if I could use a hylo.?
 --
 -- do both with a zipper...? or both ways idk
