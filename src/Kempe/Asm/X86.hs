@@ -6,6 +6,8 @@
 -- I just guessed.
 --
 -- 2. There aren't many possible tilings included.
+--
+-- Nathelees, it should be possible to amend this to a correct implementation.
 module Kempe.Asm.X86 ( X86 (..)
                      , irToX86
                      , AbsReg (..)
