@@ -45,9 +45,11 @@ irToX86 :: [IR.Stmt ()] -> [X86 AbsReg]
 irToX86 = concatMap (irEmit . irCosts)
 
 irCosts :: IR.Stmt () -> IR.Stmt Int
-irCosts (IR.Eff _ e)   = let e' = expCostAnn e in IR.Eff (IR.expCost e') e'
-irCosts (IR.Jump _ l)  = IR.Jump 1 l
-irCosts (IR.KCall _ l) = IR.KCall 2 l
+irCosts (IR.Eff _ e)     = let e' = expCostAnn e in IR.Eff (IR.expCost e') e'
+irCosts (IR.Jump _ l)    = IR.Jump 1 l
+irCosts (IR.KCall _ l)   = IR.KCall 2 l
+irCosts (IR.Push _ 4 e)  = let e' = expCostAnn e in IR.Push (1 + IR.expCost e') 4 e'
+irCosts (IR.Labeled _ l) = IR.Labeled 0 l
 
 -- does this need a monad for labels/intermediaries?
 irEmit :: IR.Stmt Int -> [X86 AbsReg]
