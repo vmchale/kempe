@@ -274,7 +274,7 @@ assignTyLeaf n vars (tn@(Name _ (Unique i) _), ins) | S.null vars =
     modifying constructorTypesLens (IM.insert i ty) $> (tn $> ty, fmap void ins)
 
 app :: KempeTy a -> [Name a] -> KempeTy a
-app = foldl' (\ty n -> TyApp undefined ty (TyNamed undefined n))
+app = foldl' (\ty n -> TyApp undefined ty (TyVar undefined n))
 
 assignDecl :: KempeDecl a b -> TypeM () (KempeDecl () (StackType ()))
 assignDecl (TyDecl _ tn ns ls) = TyDecl () (void tn) (void <$> ns) <$> traverse (assignTyLeaf tn (S.fromList ns)) ls
