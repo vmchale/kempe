@@ -18,7 +18,7 @@ import           Data.Int          (Int64)
 import qualified Kempe.IR          as IR
 
 data AbsReg = StackPointer
-            | AllocReg !Int
+            | AllocReg !Int -- TODO: register by size
 
 -- parametric in @reg@ as we do register allocation in a separate phase
 data X86 reg = PushReg reg
