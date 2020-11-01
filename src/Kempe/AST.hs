@@ -34,7 +34,7 @@ import qualified Data.Set                as S
 import           Data.Text.Lazy.Encoding (decodeUtf8)
 import           GHC.Generics            (Generic)
 import           Kempe.Name
-import           Prettyprinter           (Doc, Pretty (pretty), align, brackets, dquotes, fillSep, parens, sep, tupled, (<+>))
+import           Prettyprinter           (Doc, Pretty (pretty), align, braces, brackets, concatWith, fillSep, hsep, parens, pipe, sep, tupled, (<+>))
 
 data BuiltinTy = TyPtr
                | TyInt
@@ -168,9 +168,13 @@ instance Pretty ABI where
     pretty Cabi = "cabi"
 
 prettyKempeDecl :: (Atom b -> Doc ann) -> KempeDecl a b -> Doc ann
-prettyKempeDecl atomizer (FunDecl _ n is os as) = pretty n <+> ":" <+> sep (fmap pretty is) <+> "--" <+> sep (fmap pretty os) <+> " =:" <+> brackets (align (fillSep (atomizer <$> as)))
+prettyKempeDecl atomizer (FunDecl _ n is os as) = pretty n <+> ":" <+> sep (fmap pretty is) <+> "--" <+> sep (fmap pretty os) <+> "=:" <+> brackets (align (fillSep (atomizer <$> as)))
 prettyKempeDecl _ (Export _ abi n)              = "%foreign" <+> pretty abi <+> pretty n
-prettyKempeDecl _ (ExtFnDecl _ n is os b)       = pretty n <+> ":" <+> sep (fmap pretty is) <+> "--" <+> sep (fmap pretty os) <+> " =:" <+> "$cfun" <> dquotes (pretty $ decodeUtf8 b)
+prettyKempeDecl _ (ExtFnDecl _ n is os b)       = pretty n <+> ":" <+> sep (fmap pretty is) <+> "--" <+> sep (fmap pretty os) <+> "=:" <+> "$cfun" <> pretty (decodeUtf8 b)
+prettyKempeDecl _ (TyDecl _ tn ns ls)           = "type" <+> pretty tn <+> hsep (fmap pretty ns) <+> braces (concatWith (\x y -> x <+> pipe <+> y) $ fmap (uncurry prettyTyLeaf) ls)
+
+prettyTyLeaf :: TyName a -> [KempeTy b] -> Doc ann
+prettyTyLeaf cn vars = pretty cn <+> hsep (fmap pretty vars)
 
 data KempeDecl a b = TyDecl a (TyName a) [Name a] [(TyName b, [KempeTy a])]
                    | FunDecl b (Name b) [KempeTy a] [KempeTy a] [Atom b]
