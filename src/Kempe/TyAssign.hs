@@ -285,6 +285,8 @@ assignDecl (FunDecl _ n ins os a) = do
     -- assign comes after tyInsert
     pure $ FunDecl reconcile (n $> reconcile) (void <$> ins) (void <$> os) as
 assignDecl (ExtFnDecl _ n ins os cn) = do
+    unless (length os <= 1) $
+        throwError $ InvalidCImport () (void n)
     let sig = voidStackType $ StackType S.empty ins os
     -- assign always comes after tyInsert
     pure $ ExtFnDecl sig (n $> sig) (void <$> ins) (void <$> os) cn
@@ -303,9 +305,11 @@ tyHeader Export{} = pure ()
 tyHeader (FunDecl _ (Name _ (Unique i) _) ins out _) = do
     let sig = voidStackType $ StackType (freeVars (ins ++ out)) ins out
     modifying tyEnvLens (IM.insert i sig)
-tyHeader (ExtFnDecl _ (Name _ (Unique i) _) ins os _) = do
+tyHeader (ExtFnDecl _ n@(Name _ (Unique i) _) ins os _) = do
+    unless (length os <= 1) $
+        throwError $ InvalidCImport () (void n)
     unless (null $ freeVars (ins ++ os)) $
-        throwError $ TyVarExt ()
+        throwError $ TyVarExt () (void n)
     let sig = voidStackType $ StackType S.empty ins os -- no free variables allowed in c functions
     modifying tyEnvLens (IM.insert i sig)
 tyHeader TyDecl{} = pure ()
