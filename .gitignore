@@ -24,3 +24,4 @@ cabal.sandbox.config
 .HTF/
 .ghc.environment.*
 .hspec-failures
+*_stubs.h
