@@ -289,7 +289,9 @@ assignDecl (ExtFnDecl _ n ins os cn) = do
     -- assign always comes after tyInsert
     pure $ ExtFnDecl sig (n $> sig) (void <$> ins) (void <$> os) cn
 assignDecl (Export _ abi n) = do
-    ty <- tyLookup (void n)
+    ty@(StackType _ _ os) <- tyLookup (void n)
+    unless (length os <= 1) $
+        throwError $ InvalidCExport () (void n)
     Export ty abi <$> assignName n
 
 -- don't need to rename cuz it's only for exports (in theory)

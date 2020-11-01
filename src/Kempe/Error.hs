@@ -21,6 +21,7 @@ data Error a = PoorScope a (Name a)
              | TyVarExt a
              | MonoFailed a
              | LessGeneral a (StackType a) (StackType a)
+             | InvalidCExport a (Name a)
              deriving (Generic, NFData)
 
 instance (Pretty a) => Show (Error a) where
@@ -33,5 +34,6 @@ instance Pretty (Error a) where
     pretty (TyVarExt _)                  = "Type variables may not occur in external or exported functions."
     pretty (MonoFailed _)                = "Monomorphization step failed"
     pretty (LessGeneral _ sty sty')      = "Type" <+> pretty sty' <+> "is not as general as type" <+> pretty sty
+    pretty (InvalidCExport _ n)          = "C export" <+> pretty n <+> "has more than one return value"
 
 instance (Pretty a, Typeable a) => Exception (Error a)
