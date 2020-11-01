@@ -14,4 +14,4 @@ monomorphize ctx m = do
     (flat, j) <- runMonoM i (flattenModule mTy)
     -- assign types again
     (flatTy, _) <- runTypeM j (assignModule flat)
-    traverse (traverse tryMono) flatTy
+    traverse (traverse tryMono) flatTy -- FIXME: overzealous in that it squashes type decls

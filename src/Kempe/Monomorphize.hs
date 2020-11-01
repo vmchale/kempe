@@ -100,7 +100,7 @@ renameDecl (Export ty abi (Name t u l)) = do
     mSt <- gets snd
     let u' = M.findWithDefault (error "Shouldn't happen; might be user error or internal error") (u, ty) mSt
     pure $ Export ty abi (Name t u' l)
-renameDecl d@ExtFnDecl{}          = pure d
+renameDecl d@ExtFnDecl{} = pure d
 
 -- | Call 'closedModule' and perform any necessary renamings
 flattenModule :: Module () (StackType ()) -> MonoM (Module () (StackType ()))
