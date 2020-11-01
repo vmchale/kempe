@@ -38,8 +38,6 @@ data X86 reg = PushReg reg
 -- that to annotate node with cost
 -- second pass: write code
 
--- I'm kind of making up these instruction costs, I should look at the Agner
--- guides.
 expCostAnn :: IR.Exp () -> IR.Exp Int
 expCostAnn = cata a where
     a IR.StackPointerF{}           = IR.StackPointer 0
