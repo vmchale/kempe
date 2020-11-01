@@ -20,19 +20,21 @@ module Kempe.AST ( BuiltinTy (..)
                  , prettyMonoStackType
                  , prettyTyped
                  , prettyTypedModule
+                 , prettyModule
                  -- * I resent this...
                  , voidStackType
                  ) where
 
-import           Control.DeepSeq      (NFData)
-import qualified Data.ByteString.Lazy as BSL
-import           Data.Functor         (void)
-import           Data.List.NonEmpty   (NonEmpty)
+import           Control.DeepSeq         (NFData)
+import qualified Data.ByteString.Lazy    as BSL
+import           Data.Functor            (void)
+import           Data.List.NonEmpty      (NonEmpty)
 import           Data.Semigroup
-import qualified Data.Set             as S
-import           GHC.Generics         (Generic)
+import qualified Data.Set                as S
+import           Data.Text.Lazy.Encoding (decodeUtf8)
+import           GHC.Generics            (Generic)
 import           Kempe.Name
-import           Prettyprinter        (Doc, Pretty (pretty), align, brackets, fillSep, parens, sep, tupled, (<+>))
+import           Prettyprinter           (Doc, Pretty (pretty), align, brackets, dquotes, fillSep, parens, sep, tupled, (<+>))
 
 data BuiltinTy = TyPtr
                | TyInt
@@ -102,6 +104,15 @@ instance Pretty (Pattern a) where
     pretty PatternWildcard{}  = "_"
     pretty (PatternCons _ tn) = pretty tn
 
+instance Pretty (Atom a) where
+    pretty (AtName _ n)    = pretty n
+    pretty (Dip _ as)      = "dip(" <> fillSep (fmap pretty as) <> ")"
+    pretty (AtBuiltin _ b) = pretty b
+    pretty (AtCons _ tn)   = pretty tn
+    pretty (If _ as as')   = "if(" <> align (fillSep (fmap pretty as)) <> ", " <> align (fillSep (fmap pretty as')) <> ")"
+    pretty (IntLit _ i)    = pretty i
+    pretty (BoolLit _ b)   = pretty b
+
 prettyTyped :: Atom (StackType ()) -> Doc ann
 prettyTyped (AtName ty n)    = parens (pretty n <+> ":" <+> pretty ty)
 prettyTyped (Dip _ as)       = "dip(" <> fillSep (prettyTyped <$> as) <> ")"
@@ -159,6 +170,7 @@ instance Pretty ABI where
 prettyKempeDecl :: (Atom b -> Doc ann) -> KempeDecl a b -> Doc ann
 prettyKempeDecl atomizer (FunDecl _ n is os as) = pretty n <+> ":" <+> sep (fmap pretty is) <+> "--" <+> sep (fmap pretty os) <+> " =:" <+> brackets (align (fillSep (atomizer <$> as)))
 prettyKempeDecl _ (Export _ abi n)              = "%foreign" <+> pretty abi <+> pretty n
+prettyKempeDecl _ (ExtFnDecl _ n is os b)       = pretty n <+> ":" <+> sep (fmap pretty is) <+> "--" <+> sep (fmap pretty os) <+> " =:" <+> "$cfun" <> dquotes (pretty $ decodeUtf8 b)
 
 data KempeDecl a b = TyDecl a (TyName a) [Name a] [(TyName b, [KempeTy a])]
                    | FunDecl b (Name b) [KempeTy a] [KempeTy a] [Atom b]
@@ -166,11 +178,14 @@ data KempeDecl a b = TyDecl a (TyName a) [Name a] [(TyName b, [KempeTy a])]
                    | Export b ABI (Name b)
                    deriving (Generic, NFData, Functor, Foldable, Traversable)
 
-prettyModule :: (Atom b -> Doc ann) -> Module a b -> Doc ann
-prettyModule atomizer = sep . fmap (prettyKempeDecl atomizer)
+prettyModuleGeneral :: (Atom b -> Doc ann) -> Module a b -> Doc ann
+prettyModuleGeneral atomizer = sep . fmap (prettyKempeDecl atomizer)
 
 prettyTypedModule :: Module () (StackType ()) -> Doc ann
-prettyTypedModule = prettyModule prettyTyped
+prettyTypedModule = prettyModuleGeneral prettyTyped
+
+prettyModule :: Module a b -> Doc ann
+prettyModule = prettyModuleGeneral pretty
 
 type Module a b = [KempeDecl a b]
 
