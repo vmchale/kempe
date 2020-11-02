@@ -162,7 +162,7 @@ instance Pretty BuiltinFn where
     pretty IntXor    = "xori"
 
 data ABI = Cabi
-         deriving (Generic, NFData)
+         deriving (Eq, Generic, NFData)
 
 instance Pretty ABI where
     pretty Cabi = "cabi"
