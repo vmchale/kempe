@@ -12,4 +12,5 @@ bench 'gcc -fsyntax-only benchmarks/splitmix64.c' \
     'ghc -O0 benchmarks/Splitmix.hs' \
     'rustc --crate-type=lib --emit=dep-info,metadata benchmarks/splitmix.rs' \
     'rustc --crate-type=lib benchmarks/splitmix.rs' \
-    'rustc --crate-type=cdylib benchmarks/splitmix.rs'
+    'rustc --crate-type=cdylib benchmarks/splitmix.rs' \
+    'idris2 --check Splitmix.idr'
