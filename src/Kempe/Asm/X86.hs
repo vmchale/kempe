@@ -64,6 +64,7 @@ irCosts (IR.Jump _ l)       = IR.Jump 1 l
 irCosts (IR.KCall _ l)      = IR.KCall 2 l
 irCosts (IR.Labeled _ l)    = IR.Labeled 0 l
 irCosts (IR.CJump _ t l l') = IR.CJump 3 t l l'
+irCosts (IR.MovTemp _ t e)  = let e' = expCostAnn e in IR.MovTemp (1 + IR.expCost e') t e'
 
 -- does this need a monad for labels/intermediaries?
 irEmit :: IR.Stmt Int -> [X86 AbsReg]
