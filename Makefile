@@ -1,5 +1,8 @@
 .PHONY: install clean
 
+rts.o: rts.S
+	nasm $^ -f elf64 -o $@
+
 install:
 	cabal install exe:kc --overwrite-policy=always
 

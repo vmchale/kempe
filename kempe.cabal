@@ -1,19 +1,20 @@
-cabal-version:      1.18
-name:               kempe
-version:            0.1.0.0
-license:            BSD3
-license-file:       LICENSE
-copyright:          Copyright: (c) 2020 Vanessa McHale
-maintainer:         vamchale@gmail.com
-author:             Vanessa McHale
-synopsis:           Kempe compiler
-description:        Kempe is a stack-based language
-category:           Language, Compilers
-build-type:         Simple
-extra-source-files:
+cabal-version:   1.18
+name:            kempe
+version:         0.1.0.0
+license:         BSD3
+license-file:    LICENSE
+copyright:       Copyright: (c) 2020 Vanessa McHale
+maintainer:      vamchale@gmail.com
+author:          Vanessa McHale
+synopsis:        Kempe compiler
+description:     Kempe is a stack-based language
+category:        Language, Compilers
+build-type:      Simple
+data-files:
     test/data/*.kmp
     prelude/*.kmp
     lib/*.kmp
+    rts.S
 
 extra-doc-files:
     README.md
