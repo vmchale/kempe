@@ -57,7 +57,7 @@ irCosts (IR.Labeled _ l) = IR.Labeled 0 l
 
 -- does this need a monad for labels/intermediaries?
 irEmit :: IR.Stmt Int -> [X86 AbsReg]
-irEmit (IR.Jump _ l)  = [Jump l]
+irEmit (IR.Jump _ l) = [Jump l]
 
 -- I wonder if I could use a hylo.?
 --
