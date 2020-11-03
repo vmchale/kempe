@@ -18,7 +18,9 @@ import           Data.Int          (Int64)
 import qualified Kempe.IR          as IR
 
 data AbsReg = DataPointer
-            | AllocReg !Int -- TODO: register by size
+            | AllocReg64 !Int -- TODO: register by size
+            | AllocReg8 !Int
+            | CRet -- x0 on aarch64
 
 -- parametric in @reg@ as we do register allocation in a separate phase
 data X86 reg = PushReg reg

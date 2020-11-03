@@ -39,7 +39,7 @@ type Label = Word
 
 data Temp = Temp64 !Int
           | Temp8 !Int
-          | DataPointer
+          | DataPointer -- RBP on x86 and x19 on aarch64?
           deriving (Generic, NFData)
 
 data TempSt = TempSt { labels     :: [Label]
