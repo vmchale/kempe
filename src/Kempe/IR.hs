@@ -173,7 +173,7 @@ intOp cons = do
 
 -- | Push bytes onto the Kempe data pointer
 push :: Int64 -> Exp () -> Stmt ()
-push off = MovMem () (ExprIntBinOp () IntPlusIR (Reg () DataPointer ) (ConstInt () off)) -- increment instead of decrement b/c malloc
+push off = MovMem () (ExprIntBinOp () IntPlusIR (Reg () DataPointer) (ConstInt () off)) -- increment instead of decrement b/c malloc
 
 intRel :: RelBinOp -> TempM [Stmt ()]
 intRel cons = do
