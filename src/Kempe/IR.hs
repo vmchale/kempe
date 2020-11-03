@@ -39,6 +39,7 @@ type Label = Word
 
 data Temp = Temp64 !Int
           | Temp8 !Int
+          | DataPointer
           deriving (Generic, NFData)
 
 data TempSt = TempSt { labels     :: [Label]
@@ -106,11 +107,10 @@ data Exp a = ConstInt { expCost :: a, expI :: Int64 }
            | ConstPtr { expCost :: a, expP :: Int64 }
            | ConstBool { expCost :: a, expB :: Word8 }
            | Named { expCost :: a, expLabel :: Label }
-           | Reg { expCost :: a, regSize :: Int, expReg :: Temp } -- TODO: size?
+           | Reg { expCost :: a, expReg :: Temp } -- TODO: size?
            | Mem { expCost :: a, expAddr :: Exp a } -- fetch from address
            | ExprIntBinOp { expCost :: a, expBinOp :: IntBinOp, exp0 :: Exp a, exp1 :: Exp a }
            | ExprIntRel { expCost :: a, expRelOp :: RelBinOp, exp0 :: Exp a, exp1 :: Exp a }
-           | DataPointer { expCost :: a } -- FIXME: should this be frame pointer?
            -- TODO: one for data, one for C ABI
            -- -- ret?
            deriving (Generic, NFData, Recursive)
@@ -119,11 +119,10 @@ data ExpF a x = ConstIntF a Int64
               | ConstPtrF a Int64
               | ConstBoolF a Word8
               | NamedF a Label
-              | RegF a Int Temp
+              | RegF a Temp
               | MemF a x
               | ExprIntBinOpF a IntBinOp x x
               | ExprIntRelF a RelBinOp x x
-              | DataPointerF a
               deriving (Functor, Generic)
 
 type instance Base (Exp a) = ExpF a
@@ -169,12 +168,12 @@ intOp cons = do
     pure
         [ Pop () 8 t0
         , Pop () 8 t1
-        , push 8 $ ExprIntBinOp () cons (Reg () 4 t0) (Reg () 4 t1) -- registers are 4 bytes for integers
+        , push 8 $ ExprIntBinOp () cons (Reg () t0) (Reg () t1) -- registers are 4 bytes for integers
         ]
 
 -- | Push bytes onto the Kempe data pointer
 push :: Int64 -> Exp () -> Stmt ()
-push off = MovMem () (ExprIntBinOp () IntPlusIR (DataPointer ()) (ConstInt () off)) -- increment instead of decrement b/c malloc
+push off = MovMem () (ExprIntBinOp () IntPlusIR (Reg () DataPointer ) (ConstInt () off)) -- increment instead of decrement b/c malloc
 
 intRel :: RelBinOp -> TempM [Stmt ()]
 intRel cons = do
@@ -183,7 +182,7 @@ intRel cons = do
     pure
         [ Pop () 8 t0 -- TODO: maybe plain mov is better/nicer than pop
         , Pop () 8 t1
-        , push 1 $ ExprIntRel () cons (Reg () 4 t0) (Reg () 4 t1)
+        , push 1 $ ExprIntRel () cons (Reg () t0) (Reg () t1)
         ]
 
 -- | This throws exceptions on nonsensical input.
@@ -207,10 +206,10 @@ writeAtom (AtBuiltin _ IntShiftL)   = intOp IntShiftLIR
 writeAtom (AtBuiltin _ IntEq)       = intRel IntEqIR
 writeAtom (AtBuiltin (is, _) Drop)  =
     let sz = size (last is) in
-        pure [Eff () (ExprIntBinOp () IntPlusIR (DataPointer ()) (ExprIntBinOp () IntPlusIR (DataPointer ()) (ConstInt () sz)))]
+        pure [Eff () (ExprIntBinOp () IntPlusIR (Reg () DataPointer) (ExprIntBinOp () IntPlusIR (Reg () DataPointer) (ConstInt () sz)))]
 writeAtom (AtBuiltin (is, _) Dup)   =
     let sz = size (last is) in
-        pure ( Eff () (ExprIntBinOp () IntPlusIR (DataPointer ()) (ExprIntBinOp () IntMinusIR (DataPointer ()) (ConstInt () sz))) -- allocate sz bytes on the stack
+        pure ( Eff () (ExprIntBinOp () IntPlusIR (Reg () DataPointer) (ExprIntBinOp () IntMinusIR (Reg () DataPointer) (ConstInt () sz))) -- allocate sz bytes on the stack
              : [ MovMem () (dataPointerOffset (i - sz)) (Mem () $ dataPointerOffset i) | i <- [1..sz] ]
              )
 writeAtom (If _ as as') = do
@@ -225,8 +224,8 @@ writeAtom (Dip (is, _) as) =
     let sz = size (last is)
         -- TODO: is there a guarantee the "discarded" parts of the stack won't
         -- be written over?
-        shiftNext = Eff () (ExprIntBinOp () IntPlusIR (DataPointer ()) (dataPointerOffset $ negate sz))
-        shiftBack = Eff () (ExprIntBinOp () IntPlusIR (DataPointer ()) (dataPointerOffset sz))
+        shiftNext = Eff () (ExprIntBinOp () IntPlusIR (Reg () DataPointer) (dataPointerOffset $ negate sz))
+        shiftBack = Eff () (ExprIntBinOp () IntPlusIR (Reg () DataPointer) (dataPointerOffset sz))
     in
         do
             aStmt <- writeAtoms as
@@ -235,7 +234,7 @@ writeAtom (Dip (is, _) as) =
             -- grab Stmts and shift them over to use sz bytes over or whatever?
 
 dataPointerOffset :: Int64 -> Exp ()
-dataPointerOffset off = ExprIntBinOp () IntPlusIR (DataPointer ()) (ConstInt () off)
+dataPointerOffset off = ExprIntBinOp () IntPlusIR (Reg () DataPointer) (ConstInt () off)
 
 toByte :: Bool -> Word8
 toByte True  = 1
