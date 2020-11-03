@@ -16,7 +16,6 @@ import           Data.Bifunctor             (second)
 import           Data.Foldable              (traverse_)
 import           Data.Functor               (void, ($>))
 import qualified Data.IntMap                as IM
-import           Data.List                  (foldl')
 import           Data.List.NonEmpty         (NonEmpty (..))
 import           Data.Semigroup             ((<>))
 import qualified Data.Set                   as S
@@ -274,7 +273,7 @@ assignTyLeaf n vars (tn@(Name _ (Unique i) _), ins) | S.null vars =
     modifying constructorTypesLens (IM.insert i ty) $> (tn $> ty, fmap void ins)
 
 app :: KempeTy a -> [Name a] -> KempeTy a
-app = foldl' (\ty n -> TyApp undefined ty (TyVar undefined n))
+app = foldr (\n ty -> TyApp undefined ty (TyVar undefined n))
 
 assignDecl :: KempeDecl a b -> TypeM () (KempeDecl () (StackType ()))
 assignDecl (TyDecl _ tn ns ls) = TyDecl () (void tn) (void <$> ns) <$> traverse (assignTyLeaf tn (S.fromList ns)) ls

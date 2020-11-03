@@ -34,6 +34,7 @@
 - [ ] Tail-call optimization (easier than I thought?)
   - [ ]  Mutually recursive function optimization
 - [ ] `x86-64bit` backend? might be useful for REPL :o
+- [ ] tail recursion modulo cons ?
 ## Builtins
 - [ ] `rem` builtin or the like?
 - [ ] `popcnt` basically
