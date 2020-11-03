@@ -40,7 +40,7 @@ data X86 reg = PushReg reg
 
 expCostAnn :: IR.Exp () -> IR.Exp Int
 expCostAnn = cata a where
-    a IR.StackPointerF{}           = IR.StackPointer 0
+    a IR.DataPointerF{}           = IR.DataPointer 0
     a (IR.MemF _ e)                = IR.Mem (1 + IR.expCost e) e
     a (IR.ExprIntBinOpF _ op e e') = IR.ExprIntBinOp (1 + IR.expCost e + IR.expCost e') op e e' -- FIXME: per-op
     a (IR.ExprIntRelF _ op e e')   = IR.ExprIntRel (1 + IR.expCost e + IR.expCost e') op e e'

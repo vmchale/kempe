@@ -1,3 +1,3 @@
 # x86
 
-  * `ebp` has Kempe data pointer.
+  * `rbp` has Kempe data pointer.

@@ -80,7 +80,7 @@ foldStmt :: NonEmpty (Stmt ()) -> Stmt ()
 foldStmt (s :| ss) = foldr (Seq ()) s ss
 
 -- | Type parameter @a@ so we can annotate with 'Int's later.
-data Stmt a = Push { stmtCost :: a, stmtTy :: Int, stmtExp :: Exp a }
+data Stmt a = Push { stmtCost :: a, stmtTy :: Int, stmtExp :: Exp a } -- FIXME: remove this and make a function (use mov)
             | Pop { stmtCost :: a, stmtTySz :: Int, stmtTemp :: Temp }
             | Labeled { stmtCost :: a, stmtLabel :: Label }
             -- -- | BsLabel { stmtCost :: a, stmtLabelBS :: BS.ByteString }
@@ -106,7 +106,7 @@ data Exp a = ConstInt { expCost :: a, expI :: Int64 }
            | Mem { expCost :: a, expAddr :: Exp a } -- fetch from address
            | ExprIntBinOp { expCost :: a, expBinOp :: IntBinOp, exp0 :: Exp a, exp1 :: Exp a }
            | ExprIntRel { expCost :: a, expRelOp :: RelBinOp, exp0 :: Exp a, exp1 :: Exp a }
-           | StackPointer { expCost :: a } -- FIXME: should this be frame pointer?
+           | DataPointer { expCost :: a } -- FIXME: should this be frame pointer?
            -- TODO: one for data, one for C ABI
            -- -- ret?
            deriving (Generic, NFData, Recursive)
@@ -119,7 +119,7 @@ data ExpF a x = ConstIntF a Int64
               | MemF a x
               | ExprIntBinOpF a IntBinOp x x
               | ExprIntRelF a RelBinOp x x
-              | StackPointerF a
+              | DataPointerF a
               deriving (Functor, Generic)
 
 type instance Base (Exp a) = ExpF a
@@ -199,16 +199,16 @@ writeAtom (AtBuiltin _ IntShiftL)   = intOp IntShiftLIR
 writeAtom (AtBuiltin _ IntEq)       = intRel IntEqIR
 writeAtom (AtBuiltin (is, _) Drop)  =
     let sz = size (last is) in
-        pure [Eff () (ExprIntBinOp () IntPlusIR (StackPointer ()) (ExprIntBinOp () IntPlusIR (StackPointer ()) (ConstInt () sz)))]
+        pure [Eff () (ExprIntBinOp () IntPlusIR (DataPointer ()) (ExprIntBinOp () IntPlusIR (DataPointer ()) (ConstInt () sz)))]
 writeAtom (AtBuiltin (is, _) Dup)   =
     let sz = size (last is) in
-        pure ( Eff () (ExprIntBinOp () IntPlusIR (StackPointer ()) (ExprIntBinOp () IntMinusIR (StackPointer ()) (ConstInt () sz))) -- allocate sz bytes on the stack
-             : [ MovMem () (stackPointerOffset (i - sz)) (Mem () $ stackPointerOffset i) | i <- [1..sz] ]
+        pure ( Eff () (ExprIntBinOp () IntPlusIR (DataPointer ()) (ExprIntBinOp () IntMinusIR (DataPointer ()) (ConstInt () sz))) -- allocate sz bytes on the stack
+             : [ MovMem () (dataPointerOffset (i - sz)) (Mem () $ dataPointerOffset i) | i <- [1..sz] ]
              )
 writeAtom (If _ as as') = do
     l0 <- newLabel
     l1 <- newLabel
-    let reg = stackPointerOffset (-1) -- one byte for bool
+    let reg = dataPointerOffset (-1) -- one byte for bool
         ifIR = CJump () reg l0 l1
     asIR <- writeAtoms as
     asIR' <- writeAtoms as'
@@ -217,8 +217,8 @@ writeAtom (Dip (is, _) as) =
     let sz = size (last is)
         -- TODO: is there a guarantee the "discarded" parts of the stack won't
         -- be written over?
-        shiftNext = Eff () (ExprIntBinOp () IntPlusIR (StackPointer ()) (stackPointerOffset $ negate sz))
-        shiftBack = Eff () (ExprIntBinOp () IntPlusIR (StackPointer ()) (stackPointerOffset sz))
+        shiftNext = Eff () (ExprIntBinOp () IntPlusIR (DataPointer ()) (dataPointerOffset $ negate sz))
+        shiftBack = Eff () (ExprIntBinOp () IntPlusIR (DataPointer ()) (dataPointerOffset sz))
     in
         do
             aStmt <- writeAtoms as
@@ -226,8 +226,8 @@ writeAtom (Dip (is, _) as) =
             -- TODO: possible optimization: don't shift stack pointer but rather
             -- grab Stmts and shift them over to use sz bytes over or whatever?
 
-stackPointerOffset :: Int64 -> Exp ()
-stackPointerOffset off = ExprIntBinOp () IntPlusIR (StackPointer ()) (ConstInt () off)
+dataPointerOffset :: Int64 -> Exp ()
+dataPointerOffset off = ExprIntBinOp () IntPlusIR (DataPointer ()) (ConstInt () off)
 
 toByte :: Bool -> Word8
 toByte True  = 1
