@@ -37,10 +37,12 @@ import           Lens.Micro.Mtl             (modifying)
 
 type Label = Word
 
-type Temp = Int
+data Temp = Temp64 !Int
+          | Temp8 !Int
+          deriving (Generic, NFData)
 
 data TempSt = TempSt { labels     :: [Label]
-                     , tempSupply :: [Temp]
+                     , tempSupply :: [Int]
                      , atLabels   :: IM.IntMap Label
                      -- TODO: type sizes in state
                      }
@@ -59,8 +61,11 @@ nextTemps (TempSt ls ts ats) = TempSt ls (tail ts) ats
 
 type TempM = State TempSt
 
-getTemp :: TempM Temp
+getTemp :: TempM Int
 getTemp = gets (head . tempSupply) <* modify nextTemps
+
+getTemp64 :: TempM Temp
+getTemp64 = Temp64 <$> getTemp
 
 newLabel :: TempM Label
 newLabel = gets (head . labels) <* modify nextLabels
@@ -80,8 +85,7 @@ foldStmt :: NonEmpty (Stmt ()) -> Stmt ()
 foldStmt (s :| ss) = foldr (Seq ()) s ss
 
 -- | Type parameter @a@ so we can annotate with 'Int's later.
-data Stmt a = Push { stmtCost :: a, stmtTy :: Int, stmtExp :: Exp a } -- FIXME: remove this and make a function (use mov)
-            | Pop { stmtCost :: a, stmtTySz :: Int, stmtTemp :: Temp }
+data Stmt a = Pop { stmtCost :: a, stmtTySz :: Int, stmtTemp :: Temp }
             | Labeled { stmtCost :: a, stmtLabel :: Label }
             -- -- | BsLabel { stmtCost :: a, stmtLabelBS :: BS.ByteString }
             | Jump { stmtCost :: a, stmtJmp :: Label }
@@ -160,28 +164,32 @@ foldMapA = (fmap fold .) . traverse
 
 intOp :: IntBinOp -> TempM [Stmt ()]
 intOp cons = do
-    t0 <- getTemp
-    t1 <- getTemp
+    t0 <- getTemp64
+    t1 <- getTemp64
     pure
         [ Pop () 8 t0
         , Pop () 8 t1
-        , Push () 8 $ ExprIntBinOp () cons (Reg () 4 t0) (Reg () 4 t1) -- registers are 4 bytes for integers
+        , push 8 $ ExprIntBinOp () cons (Reg () 4 t0) (Reg () 4 t1) -- registers are 4 bytes for integers
         ]
+
+-- | Push bytes onto the Kempe data pointer
+push :: Int64 -> Exp () -> Stmt ()
+push off = MovMem () (ExprIntBinOp () IntPlusIR (DataPointer ()) (ConstInt () off)) -- increment instead of decrement b/c malloc
 
 intRel :: RelBinOp -> TempM [Stmt ()]
 intRel cons = do
-    t0 <- getTemp
-    t1 <- getTemp
+    t0 <- getTemp64
+    t1 <- getTemp64
     pure
         [ Pop () 8 t0 -- TODO: maybe plain mov is better/nicer than pop
         , Pop () 8 t1
-        , Push () 1 $ ExprIntRel () cons (Reg () 4 t0) (Reg () 4 t1)
+        , push 1 $ ExprIntRel () cons (Reg () 4 t0) (Reg () 4 t1)
         ]
 
 -- | This throws exceptions on nonsensical input.
 writeAtom :: Atom MonoStackType -> TempM [Stmt ()]
-writeAtom (IntLit _ i)              = pure [Push () 8 (ConstInt () $ fromInteger i)]
-writeAtom (BoolLit _ b)             = pure [Push () 1 (ConstBool () $ toByte b)]
+writeAtom (IntLit _ i)              = pure [push 8 (ConstInt () $ fromInteger i)]
+writeAtom (BoolLit _ b)             = pure [push 1 (ConstBool () $ toByte b)]
 writeAtom (AtName _ n)              = pure . KCall () <$> lookupName n -- TODO: when to do tco?
 writeAtom (AtBuiltin ([], _) Drop)  = error "Internal error: Ill-typed drop!"
 writeAtom (AtBuiltin ([], _) Swap)  = error "Internal error: Ill-typed swap!"
