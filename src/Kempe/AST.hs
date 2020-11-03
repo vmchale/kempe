@@ -162,10 +162,12 @@ instance Pretty BuiltinFn where
     pretty IntXor    = "xori"
 
 data ABI = Cabi
+         | Kabi
          deriving (Eq, Generic, NFData)
 
 instance Pretty ABI where
     pretty Cabi = "cabi"
+    pretty Kabi = "kabi"
 
 prettyKempeDecl :: (Atom b -> Doc ann) -> KempeDecl a b -> Doc ann
 prettyKempeDecl atomizer (FunDecl _ n is os as) = pretty n <+> ":" <+> sep (fmap pretty is) <+> "--" <+> sep (fmap pretty os) <+> "=:" <+> brackets (align (fillSep (atomizer <$> as)))

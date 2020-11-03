@@ -292,7 +292,7 @@ assignDecl (ExtFnDecl _ n ins os cn) = do
     pure $ ExtFnDecl sig (n $> sig) (void <$> ins) (void <$> os) cn
 assignDecl (Export _ abi n) = do
     ty@(StackType _ _ os) <- tyLookup (void n)
-    unless (length os <= 1) $
+    unless (abi == Kabi || length os <= 1) $
         throwError $ InvalidCExport () (void n)
     Export ty abi <$> assignName n
 

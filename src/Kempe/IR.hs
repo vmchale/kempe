@@ -89,7 +89,7 @@ data Stmt a = Push { stmtCost :: a, stmtTy :: Int, stmtExp :: Exp a }
             | CJump { stmtCost :: a, stmtSwitch :: Exp a, stmtJmp0 :: Label, stmtJmp1 :: Label }
             | CCall { stmtCost :: a, stmtExtTy :: MonoStackType, stmtCCall :: BSL.ByteString } -- TODO: ShortByteString?
             | KCall { stmtCost :: a, stmtCall :: Label } -- KCall is a jump to a Kempe procedure (and jump back, later)
-            | WrapKCall { stmtCost :: a, stmtiFnTy :: MonoStackType, stmtABI :: BS.ByteString, stmtCall :: Label }
+            | WrapKCall { stmtCost :: a, wrapAbi :: ABI, stmtiFnTy :: MonoStackType, stmtABI :: BS.ByteString, stmtCall :: Label }
             -- enough...)
             | MovTemp { stmtCost :: a, stmtTemp :: Temp, stmtExp :: Exp a }
             | MovMem { stmtCost :: a, stmtExp0 :: Exp a, stmtExp1 :: Exp a } -- store e2 at address given by e1
@@ -145,11 +145,11 @@ writeModule = foldMapA writeDecl
 writeDecl :: KempeDecl () MonoStackType -> TempM [Stmt ()]
 writeDecl (FunDecl _ (Name _ u _) _ _ as) = do
     bl <- broadcastName u
-    (Labeled () bl:) <$> writeAtoms as
+    (Labeled () bl:) <$> writeAtoms as -- FIXME: Need RET or something
 writeDecl (ExtFnDecl ty (Name _ u _) _ _ cName) = do
     bl <- broadcastName u
     pure [Labeled () bl, CCall () ty cName]
-writeDecl (Export sTy Cabi n) = pure . WrapKCall () sTy (encodeUtf8 $ name n) <$> lookupName n
+writeDecl (Export sTy abi n) = pure . WrapKCall () abi sTy (encodeUtf8 $ name n) <$> lookupName n
 
 writeAtoms :: [Atom MonoStackType] -> TempM [Stmt ()]
 writeAtoms = foldMapA writeAtom

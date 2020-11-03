@@ -70,6 +70,7 @@ import Prettyprinter (Pretty (pretty), (<+>))
     if { TokKeyword $$ KwIf }
     foreign { TokKeyword $$ KwForeign }
     cabi { TokKeyword $$ KwCabi }
+    kabi { TokKeyword $$ KwKabi }
 
     dip { TokBuiltin $$ BuiltinDip }
     boolLit { $$@(TokBuiltin _ (BuiltinBoolLit _)) }
@@ -108,6 +109,7 @@ Module :: { Module AlexPosn AlexPosn }
 
 ABI :: { ABI }
     : cabi { Cabi }
+    | kabi { Kabi }
 
 Decl :: { KempeDecl AlexPosn AlexPosn }
      : TyDecl { $1 }

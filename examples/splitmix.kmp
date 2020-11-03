@@ -8,4 +8,4 @@ next : Int -- Int Int
           dup 32 >> xori
         ]
 
-%foreign cabi next
+%foreign kabi next
