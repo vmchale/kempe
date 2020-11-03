@@ -17,7 +17,7 @@ import           Control.Recursion (cata)
 import           Data.Int          (Int64)
 import qualified Kempe.IR          as IR
 
-data AbsReg = StackPointer
+data AbsReg = DataPointer
             | AllocReg !Int -- TODO: register by size
 
 -- parametric in @reg@ as we do register allocation in a separate phase
