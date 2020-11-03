@@ -15,7 +15,13 @@ module Kempe.Asm.X86 ( X86 (..)
 
 import           Control.Recursion (cata)
 import           Data.Int          (Int64)
+import           Data.Word         (Word8)
 import qualified Kempe.IR          as IR
+
+toAbsReg :: IR.Temp -> AbsReg
+toAbsReg (IR.Temp8 i)   = AllocReg8 i
+toAbsReg (IR.Temp64 i)  = AllocReg64 i
+toAbsReg IR.DataPointer = DataPointer
 
 data AbsReg = DataPointer
             | AllocReg64 !Int -- TODO: register by size
@@ -35,6 +41,9 @@ data X86 reg = PushReg reg
              | MovRC reg Int64 -- or Word64 ig
              | AddRC reg Int64
              | SubRC reg Int64
+             | Label IR.Label
+             | Je IR.Label
+             | CmpRegConstU8 reg Word8
 
 -- first pass (bottom-up): annotate optimum tilings of subtrees w/ cost, use
 -- that to annotate node with cost
@@ -50,14 +59,17 @@ irToX86 :: [IR.Stmt ()] -> [X86 AbsReg]
 irToX86 = concatMap (irEmit . irCosts)
 
 irCosts :: IR.Stmt () -> IR.Stmt Int
-irCosts (IR.Eff _ e)     = let e' = expCostAnn e in IR.Eff (IR.expCost e') e'
-irCosts (IR.Jump _ l)    = IR.Jump 1 l
-irCosts (IR.KCall _ l)   = IR.KCall 2 l
-irCosts (IR.Labeled _ l) = IR.Labeled 0 l
+irCosts (IR.Eff _ e)        = let e' = expCostAnn e in IR.Eff (IR.expCost e') e'
+irCosts (IR.Jump _ l)       = IR.Jump 1 l
+irCosts (IR.KCall _ l)      = IR.KCall 2 l
+irCosts (IR.Labeled _ l)    = IR.Labeled 0 l
+irCosts (IR.CJump _ t l l') = IR.CJump 3 t l l'
 
 -- does this need a monad for labels/intermediaries?
 irEmit :: IR.Stmt Int -> [X86 AbsReg]
-irEmit (IR.Jump _ l) = [Jump l]
+irEmit (IR.Jump _ l)       = [Jump l]
+irEmit (IR.Labeled _ l)    = [Label l]
+irEmit (IR.CJump _ t l l') = [CmpRegConstU8 (toAbsReg t) 0, Je l', Je l]
 
 -- I wonder if I could use a hylo.?
 --

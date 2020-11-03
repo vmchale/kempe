@@ -11,6 +11,7 @@ module Kempe.IR ( writeModule
                 , RelBinOp (..)
                 , IntBinOp (..)
                 , Label
+                , Temp (..)
                 , runTempM
                 , TempM
                 , foldStmt
@@ -68,6 +69,9 @@ getTemp = gets (head . tempSupply) <* modify nextTemps
 getTemp64 :: TempM Temp
 getTemp64 = Temp64 <$> getTemp
 
+getTemp8 :: TempM Temp
+getTemp8 = Temp8 <$> getTemp
+
 newLabel :: TempM Label
 newLabel = gets (head . labels) <* modify nextLabels
 
@@ -91,7 +95,7 @@ data Stmt a = Pop { stmtCost :: a, stmtTySz :: Int, stmtTemp :: Temp }
             -- -- | BsLabel { stmtCost :: a, stmtLabelBS :: BS.ByteString }
             | Jump { stmtCost :: a, stmtJmp :: Label }
             -- conditional jump for ifs
-            | CJump { stmtCost :: a, stmtSwitch :: Exp a, stmtJmp0 :: Label, stmtJmp1 :: Label }
+            | CJump { stmtCost :: a, stmtSwitch :: Temp, stmtJmp0 :: Label, stmtJmp1 :: Label }
             | CCall { stmtCost :: a, stmtExtTy :: MonoStackType, stmtCCall :: BSL.ByteString } -- TODO: ShortByteString?
             | KCall { stmtCost :: a, stmtCall :: Label } -- KCall is a jump to a Kempe procedure (and jump back, later)
             | WrapKCall { stmtCost :: a, wrapAbi :: ABI, stmtiFnTy :: MonoStackType, stmtABI :: BS.ByteString, stmtCall :: Label }
@@ -100,8 +104,9 @@ data Stmt a = Pop { stmtCost :: a, stmtTySz :: Int, stmtTemp :: Temp }
             | MovMem { stmtCost :: a, stmtExp0 :: Exp a, stmtExp1 :: Exp a } -- store e2 at address given by e1
             | Eff { stmtCost :: a, stmtExp :: Exp a } -- evaluate an expression for its effects
             | Seq { stmtCost :: a, stmt0 :: Stmt a, stmt1 :: Stmt a }
+            | Ret { stmtCost :: a }
             -- -- | MJump { stmtCost :: a, stmtM :: Exp a, stmtLabel :: Label } -- for optimizations/fallthrough?
-            deriving (Generic, NFData)
+            deriving (Generic, NFData, Functor)
 
 data Exp a = ConstInt { expCost :: a, expI :: Int64 }
            | ConstPtr { expCost :: a, expP :: Int64 }
@@ -113,7 +118,7 @@ data Exp a = ConstInt { expCost :: a, expI :: Int64 }
            | ExprIntRel { expCost :: a, expRelOp :: RelBinOp, exp0 :: Exp a, exp1 :: Exp a }
            -- TODO: one for data, one for C ABI
            -- -- ret?
-           deriving (Generic, NFData, Recursive)
+           deriving (Generic, NFData, Recursive, Functor)
 
 data ExpF a x = ConstIntF a Int64
               | ConstPtrF a Int64
@@ -149,10 +154,10 @@ writeModule = foldMapA writeDecl
 writeDecl :: KempeDecl () MonoStackType -> TempM [Stmt ()]
 writeDecl (FunDecl _ (Name _ u _) _ _ as) = do
     bl <- broadcastName u
-    (Labeled () bl:) <$> writeAtoms as -- FIXME: Need RET or something
+    (++ [Ret ()]) . (Labeled () bl:) <$> writeAtoms as -- FIXME: Need RET or something
 writeDecl (ExtFnDecl ty (Name _ u _) _ _ cName) = do
     bl <- broadcastName u
-    pure [Labeled () bl, CCall () ty cName]
+    pure [Labeled () bl, CCall () ty cName, Ret ()]
 writeDecl (Export sTy abi n) = pure . WrapKCall () abi sTy (encodeUtf8 $ name n) <$> lookupName n
 
 writeAtoms :: [Atom MonoStackType] -> TempM [Stmt ()]
@@ -215,11 +220,13 @@ writeAtom (AtBuiltin (is, _) Dup)   =
 writeAtom (If _ as as') = do
     l0 <- newLabel
     l1 <- newLabel
+    r <- getTemp8
     let reg = dataPointerOffset (-1) -- one byte for bool
-        ifIR = CJump () reg l0 l1
+        loadReg = MovTemp () r reg
+        ifIR = CJump () r l0 l1
     asIR <- writeAtoms as
     asIR' <- writeAtoms as'
-    pure $ ifIR : (Labeled () l0 : asIR) ++ (Labeled () l1 : asIR')
+    pure $ loadReg : ifIR : (Labeled () l0 : asIR) ++ (Labeled () l1 : asIR')
 writeAtom (Dip (is, _) as) =
     let sz = size (last is)
         -- TODO: is there a guarantee the "discarded" parts of the stack won't
