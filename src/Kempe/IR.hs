@@ -211,7 +211,7 @@ writeAtom (AtBuiltin _ IntShiftL)   = intOp IntShiftLIR
 writeAtom (AtBuiltin _ IntEq)       = intRel IntEqIR
 writeAtom (AtBuiltin (is, _) Drop)  =
     let sz = size (last is) in
-        pure [Eff () (ExprIntBinOp () IntPlusIR (Reg () DataPointer) (ExprIntBinOp () IntPlusIR (Reg () DataPointer) (ConstInt () sz)))]
+        pure [Eff () (ExprIntBinOp () IntMinusIR (Reg () DataPointer) (ConstInt () sz))]
 writeAtom (AtBuiltin (is, _) Dup)   =
     let sz = size (last is) in
         pure ( Eff () (ExprIntBinOp () IntPlusIR (Reg () DataPointer) (ExprIntBinOp () IntMinusIR (Reg () DataPointer) (ConstInt () sz))) -- allocate sz bytes on the stack
