@@ -178,7 +178,7 @@ intOp cons = do
 
 -- | Push bytes onto the Kempe data pointer
 push :: Int64 -> Exp () -> Stmt ()
-push off = MovMem () (ExprIntBinOp () IntPlusIR (Reg () DataPointer) (ConstInt () off)) -- increment instead of decrement b/c malloc
+push off = MovMem () (ExprIntBinOp () IntPlusIR (Reg () DataPointer) (ConstInt () off)) -- increment instead of decrement b/c this is the Kempe ABI
 
 intRel :: RelBinOp -> TempM [Stmt ()]
 intRel cons = do
@@ -215,7 +215,7 @@ writeAtom (AtBuiltin (is, _) Drop)  =
 writeAtom (AtBuiltin (is, _) Dup)   =
     let sz = size (last is) in
         pure ( Eff () (ExprIntBinOp () IntPlusIR (Reg () DataPointer) (ExprIntBinOp () IntMinusIR (Reg () DataPointer) (ConstInt () sz))) -- allocate sz bytes on the stack
-             : [ MovMem () (dataPointerOffset (i - sz)) (Mem () $ dataPointerOffset i) | i <- [1..sz] ]
+             : [ MovMem () (dataPointerOffset (i - sz)) (Mem () $ dataPointerOffset i) | i <- [1..sz] ] -- FIXME: this clobbers DataPointer?
              )
 writeAtom (If _ as as') = do
     l0 <- newLabel
