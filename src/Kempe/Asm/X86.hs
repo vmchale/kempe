@@ -9,6 +9,7 @@
 --
 -- Nathelees, it should be possible to amend this to a correct implementation.
 module Kempe.Asm.X86 ( X86 (..)
+                     , Addr (..)
                      , irToX86
                      , AbsReg (..)
                      , runWriteM
@@ -47,6 +48,12 @@ allocReg64 = AllocReg64 <$> getInt
 runWriteM :: Int -> WriteM a -> a
 runWriteM u = flip evalState (WriteSt [u..])
 
+data Addr reg = Reg reg
+              | AddrRRPlus reg reg
+              | AddrRRMinus reg reg
+              | AddrRC reg Int64
+              | AddrRRScale reg reg Int64
+
 -- parametric in @reg@ as we do register allocation in a separate phase
 data X86 reg = PushReg reg
              | PopReg reg
@@ -56,8 +63,8 @@ data X86 reg = PushReg reg
              | Jump IR.Label
              | Call IR.Label
              | Ret
-             | MovRR reg reg
-             | MovRC reg Int64 -- or Word64 ig
+             | MovRA reg (Addr reg)
+             | MovAR (Addr reg) reg
              | AddRC reg Int64
              | SubRC reg Int64
              | Label IR.Label
