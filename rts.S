@@ -2,11 +2,8 @@
 
 extern malloc, free
 
-kempe_init:
-    push QWORD 0x800000
-    CALL malloc
-    mov rbx, rdx
+section .data
+    kempe_data times 0x800000 db 0
 
-kempe_cleanup:
-    push rbx
-    CALL free
+kempe_init:
+    mov rbx, kempe_data
