@@ -89,6 +89,8 @@ lookupName (Name _ (Unique i) _) =
 foldStmt :: NonEmpty (Stmt ()) -> Stmt ()
 foldStmt (s :| ss) = foldr (Seq ()) s ss
 
+-- TODO: pretty-printer?
+
 -- | Type parameter @a@ so we can annotate with 'Int's later.
 data Stmt a = Labeled { stmtCost :: a, stmtLabel :: Label }
             -- -- | BsLabel { stmtCost :: a, stmtLabelBS :: BS.ByteString }
@@ -153,7 +155,7 @@ writeModule = foldMapA writeDecl
 writeDecl :: KempeDecl () MonoStackType -> TempM [Stmt ()]
 writeDecl (FunDecl _ (Name _ u _) _ _ as) = do
     bl <- broadcastName u
-    (++ [Ret ()]) . (Labeled () bl:) <$> writeAtoms as -- FIXME: Need RET or something
+    (++ [Ret ()]) . (Labeled () bl:) <$> writeAtoms as
 writeDecl (ExtFnDecl ty (Name _ u _) _ _ cName) = do
     bl <- broadcastName u
     pure [Labeled () bl, CCall () ty cName, Ret ()]
@@ -175,6 +177,7 @@ intOp cons = do
 -- | Push bytes onto the Kempe data pointer
 push :: Int64 -> Exp () -> Stmt ()
 push off = MovMem () (ExprIntBinOp () IntPlusIR (Reg () DataPointer) (ConstInt () off)) -- increment instead of decrement b/c this is the Kempe ABI
+-- FIXME: in the IR, this is defined to have side effects on DataPointer? yes ig
 
 pop :: Int64 -> Temp -> [Stmt ()]
 pop sz t =
@@ -220,7 +223,7 @@ writeAtom (If _ as as') = do
     l0 <- newLabel
     l1 <- newLabel
     r <- getTemp8
-    let reg = dataPointerOffset (-1) -- one byte for bool
+    let reg = dataPointerOffset 1 -- one byte for bool
         loadReg = MovTemp () r reg
         ifIR = CJump () r l0 l1
     asIR <- writeAtoms as

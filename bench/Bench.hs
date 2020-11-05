@@ -31,7 +31,7 @@ main =
                       ]
                   , env irEnv $ \ ~(s, f) ->
                       bgroup "IR"
-                        [ bench "IR pipeline (examples/splitmix.kmp)" $ nf runIR s
+                        [ bench "IR pipeline (examples/splitmix.kmp)" $ nf runIR s -- IR benchmarks are a bit silly; I will use them to decide if I should use difference lists
                         , bench "IR pipeline (examples/factorial.kmp)" $ nf runIR f
                         ]
                 ]
