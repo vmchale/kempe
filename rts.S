@@ -2,8 +2,8 @@
 
 extern malloc, free
 
-section .data
-    kempe_data times 0x800000 db 0
+section .bss
+    kempe_data: resb 0x800000
 
 kempe_init:
     mov rbx, kempe_data
