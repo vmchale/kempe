@@ -50,8 +50,8 @@ runWriteM u = flip evalState (WriteSt [u..])
 
 data Addr reg = Reg reg
               | AddrRRPlus reg reg
-              | AddrRRMinus reg reg
-              | AddrRC reg Int64
+              | AddrRCPlus reg Int64
+              | AddrRCMinus reg Int64
               | AddrRRScale reg reg Int64
 
 -- parametric in @reg@ as we do register allocation in a separate phase
