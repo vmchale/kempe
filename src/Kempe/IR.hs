@@ -90,8 +90,7 @@ foldStmt :: NonEmpty (Stmt ()) -> Stmt ()
 foldStmt (s :| ss) = foldr (Seq ()) s ss
 
 -- | Type parameter @a@ so we can annotate with 'Int's later.
-data Stmt a = Pop { stmtCost :: a, stmtTySz :: Int, stmtTemp :: Temp }
-            | Labeled { stmtCost :: a, stmtLabel :: Label }
+data Stmt a = Labeled { stmtCost :: a, stmtLabel :: Label }
             -- -- | BsLabel { stmtCost :: a, stmtLabelBS :: BS.ByteString }
             | Jump { stmtCost :: a, stmtJmp :: Label }
             -- conditional jump for ifs
@@ -170,25 +169,25 @@ intOp :: IntBinOp -> TempM [Stmt ()]
 intOp cons = do
     t0 <- getTemp64 -- registers are 64 bits for integers
     t1 <- getTemp64
-    pure
-        [ Pop () 8 t0
-        , Pop () 8 t1
-        , push 8 $ ExprIntBinOp () cons (Reg () t0) (Reg () t1)
-        ]
+    pure $
+        pop 8 t0 ++ pop 8 t1 ++ [ push 8 $ ExprIntBinOp () cons (Reg () t0) (Reg () t1) ]
 
 -- | Push bytes onto the Kempe data pointer
 push :: Int64 -> Exp () -> Stmt ()
 push off = MovMem () (ExprIntBinOp () IntPlusIR (Reg () DataPointer) (ConstInt () off)) -- increment instead of decrement b/c this is the Kempe ABI
 
+pop :: Int64 -> Temp -> [Stmt ()]
+pop sz t =
+    [ MovTemp () t (Mem () (Reg () DataPointer))
+    , Eff () (ExprIntBinOp () IntMinusIR (Reg () DataPointer) (ConstInt () sz))
+    ]
+
 intRel :: RelBinOp -> TempM [Stmt ()]
 intRel cons = do
     t0 <- getTemp64
     t1 <- getTemp64
-    pure
-        [ Pop () 8 t0 -- TODO: maybe plain mov is better/nicer than pop
-        , Pop () 8 t1
-        , push 1 $ ExprIntRel () cons (Reg () t0) (Reg () t1)
-        ]
+    pure $
+        pop 8 t0 ++ pop 8 t1 ++ [ push 1 $ ExprIntRel () cons (Reg () t0) (Reg () t1) ]
 
 -- | This throws exceptions on nonsensical input.
 writeAtom :: Atom MonoStackType -> TempM [Stmt ()]
