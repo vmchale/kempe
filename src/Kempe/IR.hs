@@ -168,12 +168,12 @@ foldMapA = (fmap fold .) . traverse
 
 intOp :: IntBinOp -> TempM [Stmt ()]
 intOp cons = do
-    t0 <- getTemp64
+    t0 <- getTemp64 -- registers are 64 bits for integers
     t1 <- getTemp64
     pure
         [ Pop () 8 t0
         , Pop () 8 t1
-        , push 8 $ ExprIntBinOp () cons (Reg () t0) (Reg () t1) -- registers are 4 bytes for integers
+        , push 8 $ ExprIntBinOp () cons (Reg () t0) (Reg () t1)
         ]
 
 -- | Push bytes onto the Kempe data pointer
