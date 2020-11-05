@@ -219,9 +219,9 @@ writeAtom (AtBuiltin (is, _) Drop)  =
         pure [MovTemp () DataPointer (ExprIntBinOp () IntMinusIR (Reg () DataPointer) (ConstInt () sz))] -- subtract sz from data pointer (Kempe data pointer grows up)
 writeAtom (AtBuiltin (is, _) Dup)   =
     let sz = size (last is) in
-        pure ( MovTemp () DataPointer (ExprIntBinOp () IntPlusIR (Reg () DataPointer) (ExprIntBinOp () IntMinusIR (Reg () DataPointer) (ConstInt () sz))) -- allocate sz bytes on the stack
-             : [ MovMem () (dataPointerOffset (i - sz)) (Mem () $ dataPointerOffset i) | i <- [1..sz] ] -- FIXME: this clobbers DataPointer?
-             )
+        pure $
+             [ MovMem () (dataPointerOffset (i + sz)) (Mem () $ dataPointerOffset i) | i <- [1..sz] ] -- FIXME: this clobbers DataPointer?
+                ++ [ MovTemp () DataPointer (ExprIntBinOp () IntPlusIR (Reg () DataPointer) (ExprIntBinOp () IntMinusIR (Reg () DataPointer) (ConstInt () sz))) ] -- move data pointer over sz bytes
 writeAtom (If _ as as') = do
     l0 <- newLabel
     l1 <- newLabel
