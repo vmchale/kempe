@@ -115,7 +115,7 @@ data Exp a = ConstInt { expCost :: a, expI :: Int64 }
            | Named { expCost :: a, expLabel :: Label }
            | Reg { expCost :: a, expReg :: Temp } -- TODO: size?
            | Mem { expCost :: a, expAddr :: Exp a } -- fetch from address
-           | ExprIntBinOp { expCost :: a, expBinOp :: IntBinOp, exp0 :: Exp a, exp1 :: Exp a }
+           | ExprIntBinOp { expCost :: a, expBinOp :: IntBinOp, exp0 :: Exp a, exp1 :: Exp a } -- SEMANTICS: this is not side-effecting unless in an Eff
            | ExprIntRel { expCost :: a, expRelOp :: RelBinOp, exp0 :: Exp a, exp1 :: Exp a }
            -- TODO: one for data, one for C ABI
            -- -- ret?
@@ -172,12 +172,14 @@ intOp cons = do
     t0 <- getTemp64 -- registers are 64 bits for integers
     t1 <- getTemp64
     pure $
-        pop 8 t0 ++ pop 8 t1 ++ [ push 8 $ ExprIntBinOp () cons (Reg () t0) (Reg () t1) ]
+        pop 8 t0 ++ pop 8 t1 ++ push 8 (ExprIntBinOp () cons (Reg () t0) (Reg () t1))
 
 -- | Push bytes onto the Kempe data pointer
-push :: Int64 -> Exp () -> Stmt ()
-push off = MovMem () (ExprIntBinOp () IntPlusIR (Reg () DataPointer) (ConstInt () off)) -- increment instead of decrement b/c this is the Kempe ABI
--- FIXME: in the IR, this is defined to have side effects on DataPointer? yes ig
+push :: Int64 -> Exp () -> [Stmt ()]
+push off e =
+    [ Eff () (ExprIntBinOp () IntPlusIR (Reg () DataPointer) (ConstInt () off)) -- increment instead of decrement b/c this is the Kempe ABI
+    , MovMem () (Reg () DataPointer) e
+    ]
 
 pop :: Int64 -> Temp -> [Stmt ()]
 pop sz t =
@@ -190,12 +192,12 @@ intRel cons = do
     t0 <- getTemp64
     t1 <- getTemp64
     pure $
-        pop 8 t0 ++ pop 8 t1 ++ [ push 1 $ ExprIntRel () cons (Reg () t0) (Reg () t1) ]
+        pop 8 t0 ++ pop 8 t1 ++ push 1 (ExprIntRel () cons (Reg () t0) (Reg () t1))
 
 -- | This throws exceptions on nonsensical input.
 writeAtom :: Atom MonoStackType -> TempM [Stmt ()]
-writeAtom (IntLit _ i)              = pure [push 8 (ConstInt () $ fromInteger i)]
-writeAtom (BoolLit _ b)             = pure [push 1 (ConstBool () $ toByte b)]
+writeAtom (IntLit _ i)              = pure $ push 8 (ConstInt () $ fromInteger i)
+writeAtom (BoolLit _ b)             = pure $ push 1 (ConstBool () $ toByte b)
 writeAtom (AtName _ n)              = pure . KCall () <$> lookupName n -- TODO: when to do tco?
 writeAtom (AtBuiltin ([], _) Drop)  = error "Internal error: Ill-typed drop!"
 writeAtom (AtBuiltin ([], _) Swap)  = error "Internal error: Ill-typed swap!"
