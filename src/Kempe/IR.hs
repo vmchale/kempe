@@ -226,11 +226,11 @@ writeAtom (If _ as as') = do
     l1 <- newLabel
     r <- getTemp8
     let reg = dataPointerOffset 1 -- one byte for bool
-        loadReg = MovTemp () r reg
+        loadReg = MovTemp () r (Reg () DataPointer)
         ifIR = CJump () r l0 l1
     asIR <- writeAtoms as
     asIR' <- writeAtoms as'
-    pure $ loadReg : ifIR : (Labeled () l0 : asIR) ++ (Labeled () l1 : asIR')
+    pure $ Eff () reg : loadReg : ifIR : (Labeled () l0 : asIR) ++ (Labeled () l1 : asIR')
 writeAtom (Dip (is, _) as) =
     let sz = size (last is)
         shiftNext = Eff () (ExprIntBinOp () IntMinusIR (Reg () DataPointer) (ConstInt () sz))
