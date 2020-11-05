@@ -103,7 +103,6 @@ data Stmt a = Labeled { stmtCost :: a, stmtLabel :: Label }
             -- enough...)
             | MovTemp { stmtCost :: a, stmtTemp :: Temp, stmtExp :: Exp a }
             | MovMem { stmtCost :: a, stmtExp0 :: Exp a, stmtExp1 :: Exp a } -- store e2 at address given by e1
-            | Eff { stmtCost :: a, stmtExp :: Exp a } -- evaluate an expression for its effects
             | Seq { stmtCost :: a, stmt0 :: Stmt a, stmt1 :: Stmt a }
             | Ret { stmtCost :: a }
             -- -- | MJump { stmtCost :: a, stmtM :: Exp a, stmtLabel :: Label } -- for optimizations/fallthrough?
@@ -115,7 +114,7 @@ data Exp a = ConstInt { expCost :: a, expI :: Int64 }
            | Named { expCost :: a, expLabel :: Label }
            | Reg { expCost :: a, expReg :: Temp } -- TODO: size?
            | Mem { expCost :: a, expAddr :: Exp a } -- fetch from address
-           | ExprIntBinOp { expCost :: a, expBinOp :: IntBinOp, exp0 :: Exp a, exp1 :: Exp a } -- SEMANTICS: this is not side-effecting unless in an Eff
+           | ExprIntBinOp { expCost :: a, expBinOp :: IntBinOp, exp0 :: Exp a, exp1 :: Exp a } -- SEMANTICS: this is not side-effecting
            | ExprIntRel { expCost :: a, expRelOp :: RelBinOp, exp0 :: Exp a, exp1 :: Exp a }
            -- TODO: one for data, one for C ABI
            -- -- ret?
@@ -177,14 +176,14 @@ intOp cons = do
 -- | Push bytes onto the Kempe data pointer
 push :: Int64 -> Exp () -> [Stmt ()]
 push off e =
-    [ Eff () (ExprIntBinOp () IntPlusIR (Reg () DataPointer) (ConstInt () off)) -- increment instead of decrement b/c this is the Kempe ABI
+    [ MovTemp () DataPointer (ExprIntBinOp () IntPlusIR (Reg () DataPointer) (ConstInt () off)) -- increment instead of decrement b/c this is the Kempe ABI
     , MovMem () (Reg () DataPointer) e
     ]
 
 pop :: Int64 -> Temp -> [Stmt ()]
 pop sz t =
     [ MovTemp () t (Mem () (Reg () DataPointer))
-    , Eff () (ExprIntBinOp () IntMinusIR (Reg () DataPointer) (ConstInt () sz))
+    , MovTemp () DataPointer (ExprIntBinOp () IntMinusIR (Reg () DataPointer) (ConstInt () sz))
     ]
 
 intRel :: RelBinOp -> TempM [Stmt ()]
@@ -215,10 +214,10 @@ writeAtom (AtBuiltin _ IntShiftL)   = intOp IntShiftLIR
 writeAtom (AtBuiltin _ IntEq)       = intRel IntEqIR
 writeAtom (AtBuiltin (is, _) Drop)  =
     let sz = size (last is) in
-        pure [Eff () (ExprIntBinOp () IntMinusIR (Reg () DataPointer) (ConstInt () sz))] -- subtract sz from data pointer (Kempe data pointer grows up)
+        pure [MovTemp () DataPointer (ExprIntBinOp () IntMinusIR (Reg () DataPointer) (ConstInt () sz))] -- subtract sz from data pointer (Kempe data pointer grows up)
 writeAtom (AtBuiltin (is, _) Dup)   =
     let sz = size (last is) in
-        pure ( Eff () (ExprIntBinOp () IntPlusIR (Reg () DataPointer) (ExprIntBinOp () IntMinusIR (Reg () DataPointer) (ConstInt () sz))) -- allocate sz bytes on the stack
+        pure ( MovTemp () DataPointer (ExprIntBinOp () IntPlusIR (Reg () DataPointer) (ExprIntBinOp () IntMinusIR (Reg () DataPointer) (ConstInt () sz))) -- allocate sz bytes on the stack
              : [ MovMem () (dataPointerOffset (i - sz)) (Mem () $ dataPointerOffset i) | i <- [1..sz] ] -- FIXME: this clobbers DataPointer?
              )
 writeAtom (If _ as as') = do
@@ -230,11 +229,11 @@ writeAtom (If _ as as') = do
         ifIR = CJump () r l0 l1
     asIR <- writeAtoms as
     asIR' <- writeAtoms as'
-    pure $ Eff () reg : loadReg : ifIR : (Labeled () l0 : asIR) ++ (Labeled () l1 : asIR')
+    pure $ MovTemp () DataPointer reg : loadReg : ifIR : (Labeled () l0 : asIR) ++ (Labeled () l1 : asIR')
 writeAtom (Dip (is, _) as) =
     let sz = size (last is)
-        shiftNext = Eff () (ExprIntBinOp () IntMinusIR (Reg () DataPointer) (ConstInt () sz))
-        shiftBack = Eff () (ExprIntBinOp () IntPlusIR (Reg () DataPointer) (ConstInt () sz))
+        shiftNext = MovTemp () DataPointer (ExprIntBinOp () IntMinusIR (Reg () DataPointer) (ConstInt () sz))
+        shiftBack = MovTemp () DataPointer (ExprIntBinOp () IntPlusIR (Reg () DataPointer) (ConstInt () sz))
     in
         do
             aStmt <- writeAtoms as
