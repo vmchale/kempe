@@ -11,12 +11,15 @@
 module Kempe.Asm.X86 ( X86 (..)
                      , irToX86
                      , AbsReg (..)
+                     , runWriteM
+                     , WriteM
                      ) where
 
-import           Control.Recursion (cata)
-import           Data.Int          (Int64)
-import           Data.Word         (Word8)
-import qualified Kempe.IR          as IR
+import           Control.Monad.State (State, evalState, gets, modify)
+import           Control.Recursion   (cata)
+import           Data.Int            (Int64)
+import           Data.Word           (Word8)
+import qualified Kempe.IR            as IR
 
 toAbsReg :: IR.Temp -> AbsReg
 toAbsReg (IR.Temp8 i)   = AllocReg8 i
@@ -27,6 +30,22 @@ data AbsReg = DataPointer
             | AllocReg64 !Int -- TODO: register by size
             | AllocReg8 !Int
             | CRet -- x0 on aarch64
+
+newtype WriteSt = WriteSt { temps :: [Int] }
+
+type WriteM = State WriteSt
+
+nextInt :: WriteSt -> WriteSt
+nextInt (WriteSt is) = WriteSt (tail is)
+
+getInt :: WriteM Int
+getInt = gets (head . temps) <* modify nextInt
+
+allocReg64 :: WriteM AbsReg
+allocReg64 = AllocReg64 <$> getInt
+
+runWriteM :: Int -> WriteM a -> a
+runWriteM u = flip evalState (WriteSt [u..])
 
 -- parametric in @reg@ as we do register allocation in a separate phase
 data X86 reg = PushReg reg

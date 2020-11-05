@@ -19,8 +19,9 @@ module Kempe.IR ( writeModule
 
 import           Control.DeepSeq            (NFData)
 -- strict b/c it's faster according to benchmarks
-import           Control.Monad.State.Strict (State, evalState, gets, modify)
+import           Control.Monad.State.Strict (State, gets, modify, runState)
 import           Control.Recursion          (Base, Recursive)
+import           Data.Bifunctor             (second)
 import qualified Data.ByteString            as BS
 import qualified Data.ByteString.Lazy       as BSL
 import           Data.Foldable              (fold)
@@ -49,8 +50,9 @@ data TempSt = TempSt { labels     :: [Label]
                      -- TODO: type sizes in state
                      }
 
-runTempM :: TempM a -> a
-runTempM = flip evalState (TempSt [1..] [1..] mempty)
+-- TODO: return temp supply?
+runTempM :: TempM a -> (a, Int)
+runTempM = second (head . tempSupply) . flip runState (TempSt [1..] [1..] mempty)
 
 atLabelsLens :: Lens' TempSt (IM.IntMap Label)
 atLabelsLens f s = fmap (\x -> s { atLabels = x }) (f (atLabels s))
