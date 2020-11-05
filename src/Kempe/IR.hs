@@ -211,7 +211,7 @@ writeAtom (AtBuiltin _ IntShiftL)   = intOp IntShiftLIR
 writeAtom (AtBuiltin _ IntEq)       = intRel IntEqIR
 writeAtom (AtBuiltin (is, _) Drop)  =
     let sz = size (last is) in
-        pure [Eff () (ExprIntBinOp () IntMinusIR (Reg () DataPointer) (ConstInt () sz))]
+        pure [Eff () (ExprIntBinOp () IntMinusIR (Reg () DataPointer) (ConstInt () sz))] -- subtract sz from data pointer (Kempe data pointer grows up)
 writeAtom (AtBuiltin (is, _) Dup)   =
     let sz = size (last is) in
         pure ( Eff () (ExprIntBinOp () IntPlusIR (Reg () DataPointer) (ExprIntBinOp () IntMinusIR (Reg () DataPointer) (ConstInt () sz))) -- allocate sz bytes on the stack
@@ -229,10 +229,8 @@ writeAtom (If _ as as') = do
     pure $ loadReg : ifIR : (Labeled () l0 : asIR) ++ (Labeled () l1 : asIR')
 writeAtom (Dip (is, _) as) =
     let sz = size (last is)
-        -- TODO: is there a guarantee the "discarded" parts of the stack won't
-        -- be written over?
-        shiftNext = Eff () (ExprIntBinOp () IntPlusIR (Reg () DataPointer) (dataPointerOffset $ negate sz))
-        shiftBack = Eff () (ExprIntBinOp () IntPlusIR (Reg () DataPointer) (dataPointerOffset sz))
+        shiftNext = Eff () (ExprIntBinOp () IntMinusIR (Reg () DataPointer) (ConstInt () sz))
+        shiftBack = Eff () (ExprIntBinOp () IntPlusIR (Reg () DataPointer) (ConstInt () sz))
     in
         do
             aStmt <- writeAtoms as
