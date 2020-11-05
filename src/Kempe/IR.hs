@@ -98,7 +98,7 @@ data Stmt a = Labeled { stmtCost :: a, stmtLabel :: Label }
             -- -- | BsLabel { stmtCost :: a, stmtLabelBS :: BS.ByteString }
             | Jump { stmtCost :: a, stmtJmp :: Label }
             -- conditional jump for ifs
-            | CJump { stmtCost :: a, stmtSwitch :: Temp, stmtJmp0 :: Label, stmtJmp1 :: Label }
+            | CJump { stmtCost :: a, stmtSwitch :: Exp a, stmtJmp0 :: Label, stmtJmp1 :: Label }
             | CCall { stmtCost :: a, stmtExtTy :: MonoStackType, stmtCCall :: BSL.ByteString } -- TODO: ShortByteString?
             | KCall { stmtCost :: a, stmtCall :: Label } -- KCall is a jump to a Kempe procedure (and jump back, later)
             | WrapKCall { stmtCost :: a, wrapAbi :: ABI, stmtiFnTy :: MonoStackType, stmtABI :: BS.ByteString, stmtCall :: Label }
@@ -225,13 +225,10 @@ writeAtom (AtBuiltin (is, _) Dup)   =
 writeAtom (If _ as as') = do
     l0 <- newLabel
     l1 <- newLabel
-    r <- getTemp8
-    let reg = dataPointerOffset 1 -- one byte for bool
-        loadReg = MovTemp () r (Reg () DataPointer)
-        ifIR = CJump () r l0 l1
+    let ifIR = CJump () (Mem () $ dataPointerOffset 1) l0 l1
     asIR <- writeAtoms as
     asIR' <- writeAtoms as'
-    pure $ MovTemp () DataPointer reg : loadReg : ifIR : (Labeled () l0 : asIR) ++ (Labeled () l1 : asIR')
+    pure $ ifIR : (Labeled () l0 : asIR) ++ (Labeled () l1 : asIR')
 writeAtom (Dip (is, _) as) =
     let sz = size (last is)
         shiftNext = MovTemp () DataPointer (ExprIntBinOp () IntMinusIR (Reg () DataPointer) (ConstInt () sz))

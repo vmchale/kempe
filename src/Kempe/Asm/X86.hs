@@ -85,17 +85,17 @@ irToX86 :: [IR.Stmt ()] -> [X86 AbsReg]
 irToX86 = concatMap (irEmit . irCosts)
 
 irCosts :: IR.Stmt () -> IR.Stmt Int
-irCosts (IR.Jump _ l)       = IR.Jump 1 l
-irCosts (IR.KCall _ l)      = IR.KCall 2 l
-irCosts (IR.Labeled _ l)    = IR.Labeled 0 l
-irCosts (IR.CJump _ t l l') = IR.CJump 3 t l l'
-irCosts (IR.MovTemp _ t e)  = let e' = expCostAnn e in IR.MovTemp (1 + IR.expCost e') t e'
+irCosts (IR.Jump _ l)                  = IR.Jump 1 l
+irCosts (IR.KCall _ l)                 = IR.KCall 2 l
+irCosts (IR.Labeled _ l)               = IR.Labeled 0 l
+irCosts (IR.CJump _ (IR.Reg _ t) l l') = IR.CJump 3 (IR.Reg 0 t) l l'
+irCosts (IR.MovTemp _ t e)             = let e' = expCostAnn e in IR.MovTemp (1 + IR.expCost e') t e'
 
 -- does this need a monad for labels/intermediaries?
 irEmit :: IR.Stmt Int -> [X86 AbsReg]
-irEmit (IR.Jump _ l)       = [Jump l]
-irEmit (IR.Labeled _ l)    = [Label l]
-irEmit (IR.CJump _ t l l') = [CmpRegConstU8 (toAbsReg t) 0, Je l', Je l]
+irEmit (IR.Jump _ l)                  = [Jump l]
+irEmit (IR.Labeled _ l)               = [Label l]
+irEmit (IR.CJump _ (IR.Reg _ t) l l') = [CmpRegConstU8 (toAbsReg t) 0, Je l', Je l]
 
 -- I wonder if I could use a hylo.?
 --
