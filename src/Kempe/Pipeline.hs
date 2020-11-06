@@ -7,6 +7,6 @@ import           Kempe.IR
 import           Kempe.Shuttle
 
 irGen :: Int -- ^ Thread uniques through
-      -> Module a b -> [Stmt ()]
-irGen i m = fst $ runTempM (writeModule tAnnMod)
+      -> Module a b -> ([Stmt ()], Int)
+irGen i m = runTempM (writeModule tAnnMod)
     where tAnnMod = either throw id $ monomorphize i m

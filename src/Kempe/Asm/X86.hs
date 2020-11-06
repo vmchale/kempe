@@ -17,7 +17,7 @@ module Kempe.Asm.X86 ( X86 (..)
                      ) where
 
 import           Control.Monad.State (State, evalState, gets, modify)
-import           Control.Recursion   (cata)
+import           Data.Foldable.Ext
 import           Data.Int            (Int64)
 import           Data.Word           (Word8)
 import qualified Kempe.IR            as IR
@@ -45,6 +45,9 @@ getInt = gets (head . temps) <* modify nextInt
 allocReg64 :: WriteM AbsReg
 allocReg64 = AllocReg64 <$> getInt
 
+allocReg8 :: WriteM AbsReg
+allocReg8 = AllocReg8 <$> getInt
+
 runWriteM :: Int -> WriteM a -> a
 runWriteM u = flip evalState (WriteSt [u..])
 
@@ -65,37 +68,39 @@ data X86 reg = PushReg reg
              | Ret
              | MovRA reg (Addr reg)
              | MovAR (Addr reg) reg
+             | MovRCBool reg Word8
              | AddRC reg Int64
              | SubRC reg Int64
              | Label IR.Label
              | Je IR.Label
-             | CmpRegConstU8 reg Word8
+             | CmpAddrReg (Addr reg) reg
 
 -- first pass (bottom-up): annotate optimum tilings of subtrees w/ cost, use
 -- that to annotate node with cost
 -- second pass: write code
 
-expCostAnn :: IR.Exp () -> IR.Exp Int
-expCostAnn = cata a where
-    a (IR.MemF _ e)                = IR.Mem (1 + IR.expCost e) e
-    a (IR.ExprIntBinOpF _ op e e') = IR.ExprIntBinOp (1 + IR.expCost e + IR.expCost e') op e e' -- FIXME: per-op
-    a (IR.ExprIntRelF _ op e e')   = IR.ExprIntRel (1 + IR.expCost e + IR.expCost e') op e e'
+irToX86 :: Int -> [IR.Stmt ()] -> [X86 AbsReg]
+irToX86 u = runWriteM u . foldMapA (irEmit . irCosts)
 
-irToX86 :: [IR.Stmt ()] -> [X86 AbsReg]
-irToX86 = concatMap (irEmit . irCosts)
-
+-- TODO: match seq?
 irCosts :: IR.Stmt () -> IR.Stmt Int
-irCosts (IR.Jump _ l)                  = IR.Jump 1 l
-irCosts (IR.KCall _ l)                 = IR.KCall 2 l
-irCosts (IR.Labeled _ l)               = IR.Labeled 0 l
-irCosts (IR.CJump _ (IR.Reg _ t) l l') = IR.CJump 3 (IR.Reg 0 t) l l'
-irCosts (IR.MovTemp _ t e)             = let e' = expCostAnn e in IR.MovTemp (1 + IR.expCost e') t e'
+irCosts (IR.Jump _ l)                                                                      = IR.Jump 1 l
+irCosts (IR.KCall _ l)                                                                     = IR.KCall 2 l
+irCosts IR.Ret{}                                                                           = IR.Ret 1
+irCosts (IR.Labeled _ l)                                                                   = IR.Labeled 0 l
+irCosts (IR.CJump _ e@(IR.Mem (IR.ExprIntBinOp IR.IntPlusIR IR.Reg{} IR.ConstInt{})) l l') = IR.CJump 3 e l l'
+irCosts (IR.MovTemp _ r m@(IR.Mem IR.Reg{}))                                               = IR.MovTemp 1 r m
 
 -- does this need a monad for labels/intermediaries?
-irEmit :: IR.Stmt Int -> [X86 AbsReg]
-irEmit (IR.Jump _ l)                  = [Jump l]
-irEmit (IR.Labeled _ l)               = [Label l]
-irEmit (IR.CJump _ (IR.Reg _ t) l l') = [CmpRegConstU8 (toAbsReg t) 0, Je l', Je l]
+irEmit :: IR.Stmt Int -> WriteM [X86 AbsReg]
+irEmit (IR.Jump _ l) = pure [Jump l]
+irEmit (IR.Labeled _ l) = pure [Label l]
+irEmit (IR.KCall _ l) = pure [Call l]
+irEmit IR.Ret{} = pure [Ret]
+irEmit (IR.CJump _ (IR.Mem (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg IR.DataPointer) (IR.ConstInt i))) l l') = do
+    { r <- allocReg8
+    ; pure [MovRCBool r 0, CmpAddrReg (AddrRCPlus DataPointer i) r, Je l, Jump l' ]
+    }
 
 -- I wonder if I could use a hylo.?
 --
