@@ -93,7 +93,7 @@ irCosts (IR.CJump _ e@(IR.Mem (IR.ExprIntBinOp IR.IntPlusIR IR.Reg{} IR.ConstInt
 irCosts (IR.MovTemp _ r m@(IR.Mem IR.Reg{}))                                               = IR.MovTemp 1 r m
 irCosts (IR.MovTemp _ r e@(IR.ExprIntBinOp IR.IntMinusIR IR.Reg{} IR.ConstInt{}))          = IR.MovTemp 1 r e
 irCosts (IR.MovTemp _ r e@(IR.ExprIntBinOp IR.IntPlusIR IR.Reg{} IR.ConstInt{}))           = IR.MovTemp 1 r e
-irCosts (IR.MovMem _ r e@(IR.ExprIntBinOp{}))                                              = undefined
+irCosts (IR.MovMem _ r e@(IR.ExprIntBinOp IR.IntMinusIR IR.Reg{} IR.Reg{}))                = IR.MovMem 2 r e
 
 -- does this need a monad for labels/intermediaries?
 irEmit :: IR.Stmt Int -> WriteM [X86 AbsReg]
@@ -108,6 +108,10 @@ irEmit (IR.CJump _ (IR.Mem (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg IR.DataPointer)
 irEmit (IR.MovTemp _ r (IR.Mem (IR.Reg r1))) = pure [MovRR (toAbsReg r) (toAbsReg r1)] -- TODO: use the same reg i?
 irEmit (IR.MovTemp _ r (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r1) (IR.ConstInt i))) = pure [MovRA (toAbsReg r) (AddrRCMinus (toAbsReg r1) i)]
 irEmit (IR.MovTemp _ r (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r1) (IR.ConstInt i))) = pure [MovRA (toAbsReg r) (AddrRCPlus (toAbsReg r1) i)]
+irEmit (IR.MovMem _ r e@(IR.ExprIntBinOp IR.IntMinusIR IR.Reg{} IR.Reg{})) = do -- this is a pain in the ass, maybe there is a better way to do this? -> pattern match on two sequenced instructions
+    { r <- allocReg64
+    ; pure undefined
+    }
 
 -- I wonder if I could use a hylo.?
 --

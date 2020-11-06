@@ -171,6 +171,7 @@ pop sz t =
     , MovTemp () DataPointer (ExprIntBinOp IntMinusIR (Reg DataPointer) (ConstInt sz))
     ]
 
+-- TODO: is this most efficient?
 intRel :: RelBinOp -> TempM [Stmt ()]
 intRel cons = do
     t0 <- getTemp64
@@ -199,7 +200,7 @@ writeAtom (AtBuiltin _ IntShiftL)   = intOp IntShiftLIR
 writeAtom (AtBuiltin _ IntEq)       = intRel IntEqIR
 writeAtom (AtBuiltin (is, _) Drop)  =
     let sz = size (last is) in
-        pure [MovTemp () DataPointer (ExprIntBinOp IntMinusIR (Reg DataPointer) (ConstInt sz))] -- subtract sz from data pointer (Kempe data pointer grows up)
+        pure [ MovTemp () DataPointer (ExprIntBinOp IntMinusIR (Reg DataPointer) (ConstInt sz)) ] -- subtract sz from data pointer (Kempe data pointer grows up)
 writeAtom (AtBuiltin (is, _) Dup)   =
     let sz = size (last is) in
         pure $
