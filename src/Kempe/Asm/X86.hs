@@ -106,10 +106,11 @@ irCosts (IR.CJump _ e@(IR.Mem (IR.ExprIntBinOp IR.IntPlusIR IR.Reg{} IR.ConstInt
 irCosts (IR.MovTemp _ r m@(IR.Mem IR.Reg{}))                                                                                          = IR.MovTemp 1 r m
 irCosts (IR.MovTemp _ r e@(IR.ExprIntBinOp IR.IntMinusIR IR.Reg{} IR.ConstInt{}))                                                     = IR.MovTemp 1 r e
 irCosts (IR.MovTemp _ r e@(IR.ExprIntBinOp IR.IntPlusIR IR.Reg{} IR.ConstInt{}))                                                      = IR.MovTemp 1 r e
-irCosts (IR.MovMem _ r e@(IR.ExprIntBinOp IR.IntMinusIR IR.Reg{} IR.Reg{}))                                                           = IR.MovMem 2 r e
-irCosts (IR.MovMem _ r e@IR.ConstInt{})                                                                                               = IR.MovMem 1 r e
-irCosts (IR.MovMem _ r e@(IR.ExprIntBinOp IR.IntTimesIR _ _))                                                                         = IR.MovMem 3 r e
+irCosts (IR.MovMem _ r@IR.Reg{} e@(IR.ExprIntBinOp IR.IntMinusIR IR.Reg{} IR.Reg{}))                                                  = IR.MovMem 2 r e
+irCosts (IR.MovMem _ r@IR.Reg{} e@IR.ConstInt{})                                                                                      = IR.MovMem 1 r e
+irCosts (IR.MovMem _ r@IR.Reg{} e@(IR.ExprIntBinOp IR.IntTimesIR _ _))                                                                = IR.MovMem 3 r e
 irCosts (IR.MovMem _ e1@(IR.ExprIntBinOp _ IR.Reg{} IR.ConstInt{}) e2@(IR.Mem (IR.ExprIntBinOp IR.IntPlusIR IR.Reg{} IR.ConstInt{}))) = IR.MovMem 2 e1 e2
+irCosts (IR.MovMem _ r@IR.Reg{} e@(IR.ExprIntRel _ IR.Reg{} IR.Reg{}))                                                                = IR.MovMem 2 r e
 
 -- does this need a monad for labels/intermediaries?
 irEmit :: IR.Stmt Int -> WriteM [X86 AbsReg]
@@ -137,6 +138,7 @@ irEmit (IR.MovMem _ (IR.ExprIntBinOp _ (IR.Reg r0) (IR.ConstInt i)) (IR.Mem (IR.
     { r' <- allocReg64
     ; pure [ MovRA r' (AddrRCPlus (toAbsReg r1) j), MovAR (AddrRCPlus (toAbsReg r0) i) r' ]
     }
+irEmit (IR.MovMem _ r@IR.Reg{} e@(IR.ExprIntRel _ (IR.Reg r1) (IR.Reg r2))) = undefined -- idk how to convert 4 bytes to one lmao
 
 -- I wonder if I could use a hylo.?
 --

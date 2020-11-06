@@ -171,7 +171,7 @@ pop sz t =
     , MovTemp () DataPointer (ExprIntBinOp IntMinusIR (Reg DataPointer) (ConstInt sz))
     ]
 
--- TODO: is this most efficient?
+-- FIXME: just use expressions from memory accesses
 intRel :: RelBinOp -> TempM [Stmt ()]
 intRel cons = do
     t0 <- getTemp64
