@@ -109,14 +109,14 @@ data Stmt a = Labeled { stmtCost :: a, stmtLabel :: Label }
             -- -- | MJump { stmtCost :: a, stmtM :: Exp a, stmtLabel :: Label } -- for optimizations/fallthrough?
 
 data Exp = ConstInt Int64
-           | ConstPtr Int64
-           | ConstBool Word8
-           | Named Label
-           | Reg Temp  -- TODO: size?
-           | Mem Exp -- fetch from address
-           | ExprIntBinOp IntBinOp Exp Exp -- SEMANTICS: this is not side-effecting
-           | ExprIntRel RelBinOp Exp Exp
-           deriving (Generic, NFData)
+         | ConstPtr Int64
+         | ConstBool Word8
+         | Named Label
+         | Reg Temp  -- TODO: size?
+         | Mem Exp -- fetch from address
+         | ExprIntBinOp IntBinOp Exp Exp -- SEMANTICS: this is not side-effecting
+         | ExprIntRel RelBinOp Exp Exp
+         deriving (Generic, NFData)
            -- TODO: one for data, one for C ABI
            -- -- ret?
 
