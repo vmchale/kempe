@@ -23,6 +23,7 @@ import           Control.DeepSeq     (NFData)
 import           Control.Monad.State (State, evalState, gets, modify)
 import           Data.Foldable.Ext
 import           Data.Int            (Int64)
+import           Data.Monoid         (Sum (..))
 import           Data.Word           (Word8)
 import           GHC.Generics        (Generic)
 import           Kempe.AST
@@ -74,6 +75,7 @@ data Addr reg = Reg reg
 -- parametric in @reg@ as we do register allocation in a separate phase
 data X86 reg = PushReg reg
              | PopReg reg
+             | PushMem (Addr reg)
              | PushConst Int64
              | Jump IR.Label
              | Call IR.Label
@@ -104,7 +106,7 @@ irToX86 :: IR.WriteSt -> [IR.Stmt ()] -> [X86 AbsReg]
 irToX86 w = runWriteM w . foldMapA (irEmit . irCosts)
 
 -- TODO: match seq?
-irCosts :: IR.Stmt () -> IR.Stmt Int
+irCosts :: IR.Stmt () -> IR.Stmt Int64
 irCosts (IR.Jump _ l)                                                                                                                 = IR.Jump 1 l
 irCosts (IR.KCall _ l)                                                                                                                = IR.KCall 2 l
 irCosts IR.Ret{}                                                                                                                      = IR.Ret 1
@@ -118,10 +120,10 @@ irCosts (IR.MovMem _ r@IR.Reg{} e@IR.ConstInt{})                                
 irCosts (IR.MovMem _ r@IR.Reg{} e@(IR.ExprIntBinOp IR.IntTimesIR _ _))                                                                = IR.MovMem 3 r e
 irCosts (IR.MovMem _ e1@(IR.ExprIntBinOp _ IR.Reg{} IR.ConstInt{}) e2@(IR.Mem (IR.ExprIntBinOp IR.IntPlusIR IR.Reg{} IR.ConstInt{}))) = IR.MovMem 2 e1 e2
 irCosts (IR.MovMem _ r@IR.Reg{} e@(IR.ExprIntRel _ IR.Reg{} IR.Reg{}))                                                                = IR.MovMem 2 r e
-irCosts (IR.WrapKCall _ Cabi _ _ _)                                                                                                   = undefined
+irCosts (IR.WrapKCall _ Cabi (is, o) n l) | sizeStack is `rem` 4 == 0 = IR.WrapKCall (3 + sizeStack is `quot` 4) Cabi (is, o) n l
 
 -- does this need a monad for labels/intermediaries?
-irEmit :: IR.Stmt Int -> WriteM [X86 AbsReg]
+irEmit :: IR.Stmt Int64 -> WriteM [X86 AbsReg]
 irEmit (IR.Jump _ l) = pure [Jump l]
 irEmit (IR.Labeled _ l) = pure [Label l]
 irEmit (IR.KCall _ l) = pure [Call l]
@@ -151,6 +153,10 @@ irEmit (IR.MovMem _ (IR.Reg r) (IR.ExprIntRel IR.IntEqIR (IR.Reg r1) (IR.Reg r2)
     ; l1 <- getLabel
     ; pure [ CmpRegReg (toAbsReg r1) (toAbsReg r2), Je l0, Jump l1, Label l0, MovRCBool (toAbsReg r) 1, Label 1, MovRCBool (toAbsReg r) 0 ]
     }
+irEmit (IR.WrapKCall _ Cabi (is, o) n l) | sizeStack is `rem` 4 == 0 = undefined
+
+sizeStack :: [KempeTy a] -> Int64
+sizeStack = getSum . foldMap (Sum . IR.size)
 
 -- I wonder if I could use a hylo.?
 --

@@ -15,6 +15,7 @@ module Kempe.IR ( writeModule
                 , TempM
                 , foldStmt
                 , WriteSt (..)
+                , size
                 ) where
 
 import           Control.DeepSeq            (NFData)

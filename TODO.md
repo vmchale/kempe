@@ -17,6 +17,7 @@
 # Bugs
 - [x] The current setup ignores extern imports -> no it doesn't
 - [ ] Exported functions w/ C ABI should be there (so it can link)
+- [ ] Throw error when return value in C ABI is too big
 # Pipeline
 - [ ] FORTRAN backend? :p
 - [ ] Inliner (all non-recursive?)
