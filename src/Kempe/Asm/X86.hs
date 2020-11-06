@@ -1,3 +1,6 @@
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric  #-}
+
 -- | This module contains dynamic-programming optimum instruction selector.
 --
 -- It's kind of broken because
@@ -16,10 +19,12 @@ module Kempe.Asm.X86 ( X86 (..)
                      , WriteM
                      ) where
 
+import           Control.DeepSeq     (NFData)
 import           Control.Monad.State (State, evalState, gets, modify)
 import           Data.Foldable.Ext
 import           Data.Int            (Int64)
 import           Data.Word           (Word8)
+import           GHC.Generics        (Generic)
 import qualified Kempe.IR            as IR
 
 toAbsReg :: IR.Temp -> AbsReg
@@ -31,6 +36,7 @@ data AbsReg = DataPointer
             | AllocReg64 !Int -- TODO: register by size
             | AllocReg8 !Int
             | CRet -- x0 on aarch64
+            deriving (Generic, NFData)
 
 newtype WriteSt = WriteSt { temps :: [Int] }
 
@@ -56,25 +62,32 @@ data Addr reg = Reg reg
               | AddrRCPlus reg Int64
               | AddrRCMinus reg Int64
               | AddrRRScale reg reg Int64
+              deriving (Generic, NFData)
+
+-- TODO: sanity-check pass to make sure no Reg8's are in e.g. MovRCBool
 
 -- parametric in @reg@ as we do register allocation in a separate phase
 data X86 reg = PushReg reg
              | PopReg reg
-             | AddRR reg reg
-             | SubRR reg reg
              | PushConst Int64
              | Jump IR.Label
              | Call IR.Label
              | Ret
+             -- intel-ish syntax; destination first
              | MovRA reg (Addr reg)
              | MovAR (Addr reg) reg
              | MovRR reg reg -- for convencience
+             | MovRC reg Int64
              | MovRCBool reg Word8
+             | AddRR reg reg
+             | SubRR reg reg
+             | MulRR reg reg
              | AddRC reg Int64
              | SubRC reg Int64
              | Label IR.Label
              | Je IR.Label
              | CmpAddrReg (Addr reg) reg
+             deriving (Generic, NFData)
 
 -- first pass (bottom-up): annotate optimum tilings of subtrees w/ cost, use
 -- that to annotate node with cost
@@ -94,6 +107,9 @@ irCosts (IR.MovTemp _ r m@(IR.Mem IR.Reg{}))                                    
 irCosts (IR.MovTemp _ r e@(IR.ExprIntBinOp IR.IntMinusIR IR.Reg{} IR.ConstInt{}))          = IR.MovTemp 1 r e
 irCosts (IR.MovTemp _ r e@(IR.ExprIntBinOp IR.IntPlusIR IR.Reg{} IR.ConstInt{}))           = IR.MovTemp 1 r e
 irCosts (IR.MovMem _ r e@(IR.ExprIntBinOp IR.IntMinusIR IR.Reg{} IR.Reg{}))                = IR.MovMem 2 r e
+irCosts (IR.MovMem _ r e@IR.ConstInt{})                                                    = IR.MovMem 1 r e
+irCosts (IR.MovMem _ r e@(IR.ExprIntBinOp IR.IntTimesIR _ _))                              = IR.MovMem 1 r e
+irCosts (IR.MovMem _ r e@(IR.Mem IR.ExprIntBinOp{}))                                       = undefined
 
 -- does this need a monad for labels/intermediaries?
 irEmit :: IR.Stmt Int -> WriteM [X86 AbsReg]
@@ -108,9 +124,14 @@ irEmit (IR.CJump _ (IR.Mem (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg IR.DataPointer)
 irEmit (IR.MovTemp _ r (IR.Mem (IR.Reg r1))) = pure [MovRR (toAbsReg r) (toAbsReg r1)] -- TODO: use the same reg i?
 irEmit (IR.MovTemp _ r (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r1) (IR.ConstInt i))) = pure [MovRA (toAbsReg r) (AddrRCMinus (toAbsReg r1) i)]
 irEmit (IR.MovTemp _ r (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r1) (IR.ConstInt i))) = pure [MovRA (toAbsReg r) (AddrRCPlus (toAbsReg r1) i)]
-irEmit (IR.MovMem _ r e@(IR.ExprIntBinOp IR.IntMinusIR IR.Reg{} IR.Reg{})) = do -- this is a pain in the ass, maybe there is a better way to do this? -> pattern match on two sequenced instructions
-    { r <- allocReg64
-    ; pure undefined
+irEmit (IR.MovMem _ (IR.Reg r) (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r1) (IR.Reg r2))) = do -- this is a pain in the ass, maybe there is a better way to do this? -> pattern match on two sequenced instructions
+    { r' <- allocReg64
+    ; pure [ MovRR r' (toAbsReg r1), SubRR r' (toAbsReg r2), MovRR (toAbsReg r) r' ]
+    }
+irEmit (IR.MovMem _ (IR.Reg r) (IR.ConstInt i)) = pure [ MovRC (toAbsReg r) i ]
+irEmit (IR.MovMem _ (IR.Reg r) (IR.ExprIntBinOp IR.IntTimesIR (IR.Reg r1) (IR.Reg r2))) = do
+    { r' <- allocReg64
+    ; pure [ MovRR r' (toAbsReg r1), MulRR r' (toAbsReg r2), MovRR (toAbsReg r) r' ]
     }
 
 -- I wonder if I could use a hylo.?

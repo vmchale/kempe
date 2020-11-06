@@ -58,7 +58,7 @@ x86NoYeet fp = testCase ("Selects instructions for " ++ fp) $ do
     (i, m) <- yeetIO $ parseWithMax contents
     let (ir, u) = irGen i m
         x86 = irToX86 u ir
-    assertBool "Worked without exception" (last x86 `seq` True)
+    assertBool "Worked without exception" (x86 `deepseq` True)
 
 
 irNoYeet :: FilePath -> TestTree
