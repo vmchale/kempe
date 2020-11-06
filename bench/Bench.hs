@@ -4,6 +4,7 @@ import           Control.Exception    (throw, throwIO)
 import           Criterion.Main
 import qualified Data.ByteString.Lazy as BSL
 import           Data.Functor         (void)
+import           Kempe.Asm.X86
 import           Kempe.IR
 import           Kempe.Lexer
 import           Kempe.Monomorphize
@@ -34,6 +35,10 @@ main =
                         [ bench "IR pipeline (examples/splitmix.kmp)" $ nf (fst . runIR) s -- IR benchmarks are a bit silly; I will use them to decide if I should use difference lists
                         , bench "IR pipeline (examples/factorial.kmp)" $ nf (fst . runIR) f
                         ]
+                  , env facMono $ \f ->
+                      bgroup "Instruction selection"
+                        [ bench "X86 (examples/factorial.kmp)" $ nf genX86 f
+                        ]
                 ]
     where parsedM = yeetIO . parseWithMax =<< BSL.readFile "test/data/ty.kmp"
           splitmix = yeetIO . parseWithMax =<< BSL.readFile "examples/splitmix.kmp"
@@ -48,3 +53,5 @@ main =
           facMono = either throw id . uncurry monomorphize <$> fac
           irEnv = (,) <$> splitmixMono <*> facMono
           runIR = runTempM . writeModule
+          genX86 m = let (ir, u) = runIR m in irToX86 u ir
+          -- facIR = runIR <$> facMono

@@ -21,6 +21,7 @@ module Kempe.Asm.X86 ( X86 (..)
 
 import           Control.DeepSeq     (NFData)
 import           Control.Monad.State (State, evalState, gets, modify)
+import qualified Data.ByteString     as BS
 import           Data.Foldable.Ext
 import           Data.Int            (Int64)
 import           Data.Monoid         (Sum (..))
@@ -93,6 +94,7 @@ data X86 reg = PushReg reg
              | AddRC reg Int64
              | SubRC reg Int64
              | Label IR.Label
+             | BSLabel BS.ByteString
              | Je IR.Label
              | CmpAddrReg (Addr reg) reg
              | CmpRegReg reg reg -- for simplicity
@@ -120,7 +122,7 @@ irCosts (IR.MovMem _ r@IR.Reg{} e@IR.ConstInt{})                                
 irCosts (IR.MovMem _ r@IR.Reg{} e@(IR.ExprIntBinOp IR.IntTimesIR _ _))                                                                = IR.MovMem 3 r e
 irCosts (IR.MovMem _ e1@(IR.ExprIntBinOp _ IR.Reg{} IR.ConstInt{}) e2@(IR.Mem (IR.ExprIntBinOp IR.IntPlusIR IR.Reg{} IR.ConstInt{}))) = IR.MovMem 2 e1 e2
 irCosts (IR.MovMem _ r@IR.Reg{} e@(IR.ExprIntRel _ IR.Reg{} IR.Reg{}))                                                                = IR.MovMem 2 r e
-irCosts (IR.WrapKCall _ Cabi (is, o) n l) | sizeStack is `rem` 4 == 0 = IR.WrapKCall (3 + sizeStack is `quot` 4) Cabi (is, o) n l
+irCosts (IR.WrapKCall _ Cabi (is, o) n l) | all (\i -> IR.size i `rem` 4 == 0) is = IR.WrapKCall (3 + sizeStack is `quot` 4) Cabi (is, o) n l
 
 -- does this need a monad for labels/intermediaries?
 irEmit :: IR.Stmt Int64 -> WriteM [X86 AbsReg]
@@ -153,7 +155,12 @@ irEmit (IR.MovMem _ (IR.Reg r) (IR.ExprIntRel IR.IntEqIR (IR.Reg r1) (IR.Reg r2)
     ; l1 <- getLabel
     ; pure [ CmpRegReg (toAbsReg r1) (toAbsReg r2), Je l0, Jump l1, Label l0, MovRCBool (toAbsReg r) 1, Label 1, MovRCBool (toAbsReg r) 0 ]
     }
-irEmit (IR.WrapKCall _ Cabi (is, o) n l) | sizeStack is `rem` 4 == 0 = undefined
+irEmit (IR.WrapKCall _ Cabi (is, o) n l) | all (\i -> IR.size i `rem` 4 == 0) is =
+    pure $ [ BSLabel n ]
+        ++ []
+        ++ [ Call l
+           , Ret
+           ]
 
 sizeStack :: [KempeTy a] -> Int64
 sizeStack = getSum . foldMap (Sum . IR.size)
