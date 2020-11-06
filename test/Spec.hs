@@ -65,7 +65,7 @@ irNoYeet :: FilePath -> TestTree
 irNoYeet fp = testCase ("Generates IR without throwing an exception (" ++ fp ++ ")") $ do
     contents <- BSL.readFile fp
     (i, m) <- yeetIO $ parseWithMax contents
-    let res = irGen i m
+    let res = fst $ irGen i m
     assertBool "Worked without failure" (res `deepseq` True)
 
 lexNoError :: FilePath -> TestTree

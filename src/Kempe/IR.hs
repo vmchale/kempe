@@ -14,6 +14,7 @@ module Kempe.IR ( writeModule
                 , runTempM
                 , TempM
                 , foldStmt
+                , WriteSt (..)
                 ) where
 
 import           Control.DeepSeq            (NFData)
@@ -42,15 +43,23 @@ data Temp = Temp64 !Int
           | DataPointer -- RBP on x86 and x19 on aarch64?
           deriving (Generic, NFData)
 
+data WriteSt = WriteSt { wlabels :: [Label]
+                       , temps   :: [Int]
+                       }
+
 data TempSt = TempSt { labels     :: [Label]
                      , tempSupply :: [Int]
                      , atLabels   :: IM.IntMap Label
                      -- TODO: type sizes in state
                      }
 
+asWriteSt :: TempSt -> WriteSt
+asWriteSt (TempSt ls ts _) = WriteSt ls ts
+
 -- TODO: return temp supply?
-runTempM :: TempM a -> (a, Int)
-runTempM = second (head . tempSupply) . flip runState (TempSt [1..] [1..] mempty)
+-- also label supply ig
+runTempM :: TempM a -> (a, WriteSt)
+runTempM = second asWriteSt . flip runState (TempSt [1..] [1..] mempty)
 
 atLabelsLens :: Lens' TempSt (IM.IntMap Label)
 atLabelsLens f s = fmap (\x -> s { atLabels = x }) (f (atLabels s))

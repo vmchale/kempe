@@ -25,6 +25,7 @@ import           Data.Foldable.Ext
 import           Data.Int            (Int64)
 import           Data.Word           (Word8)
 import           GHC.Generics        (Generic)
+import           Kempe.AST
 import qualified Kempe.IR            as IR
 
 toAbsReg :: IR.Temp -> AbsReg
@@ -38,15 +39,19 @@ data AbsReg = DataPointer
             | CRet -- x0 on aarch64
             deriving (Generic, NFData)
 
-newtype WriteSt = WriteSt { temps :: [Int] }
+type WriteM = State IR.WriteSt
 
-type WriteM = State WriteSt
+nextLabels :: IR.WriteSt -> IR.WriteSt
+nextLabels (IR.WriteSt ls ts) = IR.WriteSt (tail ls) ts
 
-nextInt :: WriteSt -> WriteSt
-nextInt (WriteSt is) = WriteSt (tail is)
+nextInt :: IR.WriteSt -> IR.WriteSt
+nextInt (IR.WriteSt ls ts) = IR.WriteSt ls (tail ts)
 
 getInt :: WriteM Int
-getInt = gets (head . temps) <* modify nextInt
+getInt = gets (head . IR.temps) <* modify nextInt
+
+getLabel :: WriteM IR.Label
+getLabel = gets (head . IR.wlabels) <* modify nextLabels
 
 allocReg64 :: WriteM AbsReg
 allocReg64 = AllocReg64 <$> getInt
@@ -54,8 +59,8 @@ allocReg64 = AllocReg64 <$> getInt
 allocReg8 :: WriteM AbsReg
 allocReg8 = AllocReg8 <$> getInt
 
-runWriteM :: Int -> WriteM a -> a
-runWriteM u = flip evalState (WriteSt [u..])
+runWriteM :: IR.WriteSt -> WriteM a -> a
+runWriteM = flip evalState
 
 data Addr reg = Reg reg
               | AddrRRPlus reg reg
@@ -76,7 +81,8 @@ data X86 reg = PushReg reg
              -- intel-ish syntax; destination first
              | MovRA reg (Addr reg)
              | MovAR (Addr reg) reg
-             | MovRR reg reg -- for convencience
+             | MovABool (Addr reg) Word8
+             | MovRR reg reg -- for convenience
              | MovRC reg Int64
              | MovRCBool reg Word8
              | AddRR reg reg
@@ -87,14 +93,15 @@ data X86 reg = PushReg reg
              | Label IR.Label
              | Je IR.Label
              | CmpAddrReg (Addr reg) reg
+             | CmpRegReg reg reg -- for simplicity
              deriving (Generic, NFData)
 
 -- first pass (bottom-up): annotate optimum tilings of subtrees w/ cost, use
 -- that to annotate node with cost
 -- second pass: write code
 
-irToX86 :: Int -> [IR.Stmt ()] -> [X86 AbsReg]
-irToX86 u = runWriteM u . foldMapA (irEmit . irCosts)
+irToX86 :: IR.WriteSt -> [IR.Stmt ()] -> [X86 AbsReg]
+irToX86 w = runWriteM w . foldMapA (irEmit . irCosts)
 
 -- TODO: match seq?
 irCosts :: IR.Stmt () -> IR.Stmt Int
@@ -111,6 +118,7 @@ irCosts (IR.MovMem _ r@IR.Reg{} e@IR.ConstInt{})                                
 irCosts (IR.MovMem _ r@IR.Reg{} e@(IR.ExprIntBinOp IR.IntTimesIR _ _))                                                                = IR.MovMem 3 r e
 irCosts (IR.MovMem _ e1@(IR.ExprIntBinOp _ IR.Reg{} IR.ConstInt{}) e2@(IR.Mem (IR.ExprIntBinOp IR.IntPlusIR IR.Reg{} IR.ConstInt{}))) = IR.MovMem 2 e1 e2
 irCosts (IR.MovMem _ r@IR.Reg{} e@(IR.ExprIntRel _ IR.Reg{} IR.Reg{}))                                                                = IR.MovMem 2 r e
+irCosts (IR.WrapKCall _ Cabi _ _ _)                                                                                                   = undefined
 
 -- does this need a monad for labels/intermediaries?
 irEmit :: IR.Stmt Int -> WriteM [X86 AbsReg]
@@ -138,7 +146,11 @@ irEmit (IR.MovMem _ (IR.ExprIntBinOp _ (IR.Reg r0) (IR.ConstInt i)) (IR.Mem (IR.
     { r' <- allocReg64
     ; pure [ MovRA r' (AddrRCPlus (toAbsReg r1) j), MovAR (AddrRCPlus (toAbsReg r0) i) r' ]
     }
-irEmit (IR.MovMem _ r@IR.Reg{} e@(IR.ExprIntRel _ (IR.Reg r1) (IR.Reg r2))) = undefined -- idk how to convert 4 bytes to one lmao
+irEmit (IR.MovMem _ (IR.Reg r) (IR.ExprIntRel IR.IntEqIR (IR.Reg r1) (IR.Reg r2))) = do -- idk how to convert 4 bytes to one lmao -> need cmp instruction
+    { l0 <- getLabel
+    ; l1 <- getLabel
+    ; pure [ CmpRegReg (toAbsReg r1) (toAbsReg r2), Je l0, Jump l1, Label l0, MovRCBool (toAbsReg r) 1, Label 1, MovRCBool (toAbsReg r) 0 ]
+    }
 
 -- I wonder if I could use a hylo.?
 --
