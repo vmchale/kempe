@@ -101,7 +101,7 @@ data Stmt a = Labeled { stmtCost :: a, stmtLabel :: Label }
             | KCall { stmtCost :: a, stmtCall :: Label } -- KCall is a jump to a Kempe procedure (and jump back, later)
             | WrapKCall { stmtCost :: a, wrapAbi :: ABI, stmtiFnTy :: MonoStackType, stmtABI :: BS.ByteString, stmtCall :: Label }
             -- enough...)
-            | MovTemp { stmtCost :: a, stmtTemp :: Temp, stmtExp :: Exp }
+            | MovTemp { stmtCost :: a, stmtTemp :: Temp, stmtExp :: Exp } -- put e in temp?
             | MovMem { stmtCost :: a, stmtExp0 :: Exp, stmtExp1 :: Exp } -- store e2 at address given by e1
             | Seq { stmtCost :: a, stmt0 :: Stmt a, stmt1 :: Stmt a }
             | Ret { stmtCost :: a }

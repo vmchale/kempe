@@ -68,6 +68,7 @@ data X86 reg = PushReg reg
              | Ret
              | MovRA reg (Addr reg)
              | MovAR (Addr reg) reg
+             | MovRR reg reg -- for convencience
              | MovRCBool reg Word8
              | AddRC reg Int64
              | SubRC reg Int64
@@ -90,6 +91,7 @@ irCosts IR.Ret{}                                                                
 irCosts (IR.Labeled _ l)                                                                   = IR.Labeled 0 l
 irCosts (IR.CJump _ e@(IR.Mem (IR.ExprIntBinOp IR.IntPlusIR IR.Reg{} IR.ConstInt{})) l l') = IR.CJump 3 e l l'
 irCosts (IR.MovTemp _ r m@(IR.Mem IR.Reg{}))                                               = IR.MovTemp 1 r m
+irCosts (IR.MovTemp _ r e@(IR.ExprIntBinOp IR.IntMinusIR IR.Reg{} IR.ConstInt{}))          = IR.MovTemp 1 r e
 
 -- does this need a monad for labels/intermediaries?
 irEmit :: IR.Stmt Int -> WriteM [X86 AbsReg]
@@ -99,8 +101,10 @@ irEmit (IR.KCall _ l) = pure [Call l]
 irEmit IR.Ret{} = pure [Ret]
 irEmit (IR.CJump _ (IR.Mem (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg IR.DataPointer) (IR.ConstInt i))) l l') = do
     { r <- allocReg8
-    ; pure [MovRCBool r 0, CmpAddrReg (AddrRCPlus DataPointer i) r, Je l, Jump l' ]
+    ; pure [MovRCBool r 0, CmpAddrReg (AddrRCPlus DataPointer i) r, Je l, Jump l']
     }
+irEmit (IR.MovTemp _ r (IR.Mem (IR.Reg r1))) = pure [MovRR (toAbsReg r) (toAbsReg r1)] -- TODO: use the same reg i?
+irEmit (IR.MovTemp _ r (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r1) (IR.ConstInt i))) = pure [MovRA (toAbsReg r) (AddrRCMinus (toAbsReg r1) i)]
 
 -- I wonder if I could use a hylo.?
 --
