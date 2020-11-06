@@ -98,18 +98,19 @@ irToX86 u = runWriteM u . foldMapA (irEmit . irCosts)
 
 -- TODO: match seq?
 irCosts :: IR.Stmt () -> IR.Stmt Int
-irCosts (IR.Jump _ l)                                                                      = IR.Jump 1 l
-irCosts (IR.KCall _ l)                                                                     = IR.KCall 2 l
-irCosts IR.Ret{}                                                                           = IR.Ret 1
-irCosts (IR.Labeled _ l)                                                                   = IR.Labeled 0 l
-irCosts (IR.CJump _ e@(IR.Mem (IR.ExprIntBinOp IR.IntPlusIR IR.Reg{} IR.ConstInt{})) l l') = IR.CJump 3 e l l'
-irCosts (IR.MovTemp _ r m@(IR.Mem IR.Reg{}))                                               = IR.MovTemp 1 r m
-irCosts (IR.MovTemp _ r e@(IR.ExprIntBinOp IR.IntMinusIR IR.Reg{} IR.ConstInt{}))          = IR.MovTemp 1 r e
-irCosts (IR.MovTemp _ r e@(IR.ExprIntBinOp IR.IntPlusIR IR.Reg{} IR.ConstInt{}))           = IR.MovTemp 1 r e
-irCosts (IR.MovMem _ r e@(IR.ExprIntBinOp IR.IntMinusIR IR.Reg{} IR.Reg{}))                = IR.MovMem 2 r e
-irCosts (IR.MovMem _ r e@IR.ConstInt{})                                                    = IR.MovMem 1 r e
-irCosts (IR.MovMem _ r e@(IR.ExprIntBinOp IR.IntTimesIR _ _))                              = IR.MovMem 1 r e
-irCosts (IR.MovMem _ r e@(IR.Mem IR.ExprIntBinOp{}))                                       = undefined
+irCosts (IR.Jump _ l)                                                                                                                 = IR.Jump 1 l
+irCosts (IR.KCall _ l)                                                                                                                = IR.KCall 2 l
+irCosts IR.Ret{}                                                                                                                      = IR.Ret 1
+irCosts (IR.Labeled _ l)                                                                                                              = IR.Labeled 0 l
+irCosts (IR.CJump _ e@(IR.Mem (IR.ExprIntBinOp IR.IntPlusIR IR.Reg{} IR.ConstInt{})) l l')                                            = IR.CJump 3 e l l'
+irCosts (IR.MovTemp _ r m@(IR.Mem IR.Reg{}))                                                                                          = IR.MovTemp 1 r m
+irCosts (IR.MovTemp _ r e@(IR.ExprIntBinOp IR.IntMinusIR IR.Reg{} IR.ConstInt{}))                                                     = IR.MovTemp 1 r e
+irCosts (IR.MovTemp _ r e@(IR.ExprIntBinOp IR.IntPlusIR IR.Reg{} IR.ConstInt{}))                                                      = IR.MovTemp 1 r e
+irCosts (IR.MovMem _ r e@(IR.ExprIntBinOp IR.IntMinusIR IR.Reg{} IR.Reg{}))                                                           = IR.MovMem 2 r e
+irCosts (IR.MovMem _ r e@IR.ConstInt{})                                                                                               = IR.MovMem 1 r e
+irCosts (IR.MovMem _ r e@(IR.ExprIntBinOp IR.IntTimesIR _ _))                                                                         = IR.MovMem 1 r e
+irCosts (IR.MovMem _ e1@(IR.ExprIntBinOp _ IR.Reg{} IR.ConstInt{}) e2@(IR.Mem (IR.ExprIntBinOp IR.IntPlusIR IR.Reg{} IR.ConstInt{}))) = IR.MovMem 1 e1 e2
+irCosts (IR.MovTemp _ r e@(IR.ExprIntBinOp _ IR.Reg{} (IR.ExprIntBinOp IR.IntMinusIR IR.Reg{} IR.ConstInt{})))                        = undefined
 
 -- does this need a monad for labels/intermediaries?
 irEmit :: IR.Stmt Int -> WriteM [X86 AbsReg]
@@ -132,6 +133,10 @@ irEmit (IR.MovMem _ (IR.Reg r) (IR.ConstInt i)) = pure [ MovRC (toAbsReg r) i ]
 irEmit (IR.MovMem _ (IR.Reg r) (IR.ExprIntBinOp IR.IntTimesIR (IR.Reg r1) (IR.Reg r2))) = do
     { r' <- allocReg64
     ; pure [ MovRR r' (toAbsReg r1), MulRR r' (toAbsReg r2), MovRR (toAbsReg r) r' ]
+    }
+irEmit (IR.MovMem _ (IR.ExprIntBinOp _ (IR.Reg r0) (IR.ConstInt i)) (IR.Mem (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r1) (IR.ConstInt j)))) = do
+    { r' <- allocReg64
+    ; pure [ MovRA r' (AddrRCPlus (toAbsReg r1) j), MovAR (AddrRCPlus (toAbsReg r0) i) r' ]
     }
 
 -- I wonder if I could use a hylo.?
