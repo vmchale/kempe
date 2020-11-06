@@ -108,9 +108,8 @@ irCosts (IR.MovTemp _ r e@(IR.ExprIntBinOp IR.IntMinusIR IR.Reg{} IR.ConstInt{})
 irCosts (IR.MovTemp _ r e@(IR.ExprIntBinOp IR.IntPlusIR IR.Reg{} IR.ConstInt{}))                                                      = IR.MovTemp 1 r e
 irCosts (IR.MovMem _ r e@(IR.ExprIntBinOp IR.IntMinusIR IR.Reg{} IR.Reg{}))                                                           = IR.MovMem 2 r e
 irCosts (IR.MovMem _ r e@IR.ConstInt{})                                                                                               = IR.MovMem 1 r e
-irCosts (IR.MovMem _ r e@(IR.ExprIntBinOp IR.IntTimesIR _ _))                                                                         = IR.MovMem 1 r e
-irCosts (IR.MovMem _ e1@(IR.ExprIntBinOp _ IR.Reg{} IR.ConstInt{}) e2@(IR.Mem (IR.ExprIntBinOp IR.IntPlusIR IR.Reg{} IR.ConstInt{}))) = IR.MovMem 1 e1 e2
-irCosts (IR.MovTemp _ r e@(IR.ExprIntBinOp _ IR.Reg{} (IR.ExprIntBinOp IR.IntMinusIR IR.Reg{} IR.ConstInt{})))                        = undefined
+irCosts (IR.MovMem _ r e@(IR.ExprIntBinOp IR.IntTimesIR _ _))                                                                         = IR.MovMem 3 r e
+irCosts (IR.MovMem _ e1@(IR.ExprIntBinOp _ IR.Reg{} IR.ConstInt{}) e2@(IR.Mem (IR.ExprIntBinOp IR.IntPlusIR IR.Reg{} IR.ConstInt{}))) = IR.MovMem 2 e1 e2
 
 -- does this need a monad for labels/intermediaries?
 irEmit :: IR.Stmt Int -> WriteM [X86 AbsReg]
@@ -118,9 +117,9 @@ irEmit (IR.Jump _ l) = pure [Jump l]
 irEmit (IR.Labeled _ l) = pure [Label l]
 irEmit (IR.KCall _ l) = pure [Call l]
 irEmit IR.Ret{} = pure [Ret]
-irEmit (IR.CJump _ (IR.Mem (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg IR.DataPointer) (IR.ConstInt i))) l l') = do
-    { r <- allocReg8
-    ; pure [MovRCBool r 0, CmpAddrReg (AddrRCPlus DataPointer i) r, Je l, Jump l']
+irEmit (IR.CJump _ (IR.Mem (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r) (IR.ConstInt i))) l l') = do
+    { r' <- allocReg8
+    ; pure [MovRCBool r' 0, CmpAddrReg (AddrRCPlus (toAbsReg r) i) r', Je l, Jump l']
     }
 irEmit (IR.MovTemp _ r (IR.Mem (IR.Reg r1))) = pure [MovRR (toAbsReg r) (toAbsReg r1)] -- TODO: use the same reg i?
 irEmit (IR.MovTemp _ r (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r1) (IR.ConstInt i))) = pure [MovRA (toAbsReg r) (AddrRCMinus (toAbsReg r1) i)]
