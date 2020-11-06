@@ -77,6 +77,7 @@ data Addr reg = Reg reg
 data X86 reg = PushReg reg
              | PopReg reg
              | PushMem (Addr reg)
+             | PopMem (Addr reg)
              | PushConst Int64
              | Jump IR.Label
              | Call IR.Label
@@ -122,7 +123,7 @@ irCosts (IR.MovMem _ r@IR.Reg{} e@IR.ConstInt{})                                
 irCosts (IR.MovMem _ r@IR.Reg{} e@(IR.ExprIntBinOp IR.IntTimesIR _ _))                                                                = IR.MovMem 3 r e
 irCosts (IR.MovMem _ e1@(IR.ExprIntBinOp _ IR.Reg{} IR.ConstInt{}) e2@(IR.Mem (IR.ExprIntBinOp IR.IntPlusIR IR.Reg{} IR.ConstInt{}))) = IR.MovMem 2 e1 e2
 irCosts (IR.MovMem _ r@IR.Reg{} e@(IR.ExprIntRel _ IR.Reg{} IR.Reg{}))                                                                = IR.MovMem 2 r e
-irCosts (IR.WrapKCall _ Cabi (is, o) n l) | all (\i -> IR.size i `rem` 4 == 0) is = IR.WrapKCall (3 + sizeStack is `quot` 4) Cabi (is, o) n l
+irCosts (IR.WrapKCall _ Cabi (is, o) n l) | all (\i -> IR.size i `rem` 4 == 0) is = IR.WrapKCall (3 + sizeStack is `quot` 8) Cabi (is, o) n l
 
 -- does this need a monad for labels/intermediaries?
 irEmit :: IR.Stmt Int64 -> WriteM [X86 AbsReg]
@@ -150,17 +151,18 @@ irEmit (IR.MovMem _ (IR.ExprIntBinOp _ (IR.Reg r0) (IR.ConstInt i)) (IR.Mem (IR.
     { r' <- allocReg64
     ; pure [ MovRA r' (AddrRCPlus (toAbsReg r1) j), MovAR (AddrRCPlus (toAbsReg r0) i) r' ]
     }
-irEmit (IR.MovMem _ (IR.Reg r) (IR.ExprIntRel IR.IntEqIR (IR.Reg r1) (IR.Reg r2))) = do -- idk how to convert 4 bytes to one lmao -> need cmp instruction
+irEmit (IR.MovMem _ (IR.Reg r) (IR.ExprIntRel IR.IntEqIR (IR.Reg r1) (IR.Reg r2))) = do -- idk how to convert 8 bytes to one lmao -> need cmp instruction
     { l0 <- getLabel
     ; l1 <- getLabel
     ; pure [ CmpRegReg (toAbsReg r1) (toAbsReg r2), Je l0, Jump l1, Label l0, MovRCBool (toAbsReg r) 1, Label 1, MovRCBool (toAbsReg r) 0 ]
     }
-irEmit (IR.WrapKCall _ Cabi (is, o) n l) | all (\i -> IR.size i `rem` 4 == 0) is =
-    pure $ [ BSLabel n ]
-        ++ []
-        ++ [ Call l
-           , Ret
-           ]
+irEmit (IR.WrapKCall _ Cabi (is, [o]) n l) | all (\i -> IR.size i `rem` 8 == 0) is && IR.size o == 8 = do
+    { rC <- allocReg64 -- reg for offset counter
+    ; let offs = zipWith const [1..] is
+    ; let totalSize = sizeStack is + 8 -- for the output
+    ; pure $ [BSLabel n, MovRC rC 0] ++ foldMap (\i -> [PopMem (AddrRCPlus DataPointer (i * 8))]) offs ++ [AddRC DataPointer totalSize, Call l, MovAR (AddrRCMinus DataPointer 8) CRet, Ret] -- TODO: are the parameters backwards?
+    -- copy last n bytes onto the
+    }
 
 sizeStack :: [KempeTy a] -> Int64
 sizeStack = getSum . foldMap (Sum . IR.size)
