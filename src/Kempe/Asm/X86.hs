@@ -108,7 +108,9 @@ data X86 reg = PushReg reg
 irToX86 :: IR.WriteSt -> [IR.Stmt ()] -> [X86 AbsReg]
 irToX86 w = runWriteM w . foldMapA (irEmit . irCosts)
 
--- TODO: match seq?
+-- TODO: match multiple statements
+-- this isn't even recursive lmao
+-- TODO: something to eval general expressions
 irCosts :: IR.Stmt () -> IR.Stmt Int64
 irCosts (IR.Jump _ l)                                                                                                                 = IR.Jump 1 l
 irCosts (IR.KCall _ l)                                                                                                                = IR.KCall 2 l
@@ -161,7 +163,7 @@ irEmit (IR.WrapKCall _ Cabi (is, [o]) n l) | all (\i -> IR.size i `rem` 8 == 0) 
     ; let offs = zipWith const [1..] is
     ; let totalSize = sizeStack is + 8 -- for the output
     ; pure $ [BSLabel n, MovRC rC 0] ++ foldMap (\i -> [PopMem (AddrRCPlus DataPointer (i * 8))]) offs ++ [AddRC DataPointer totalSize, Call l, MovAR (AddrRCMinus DataPointer 8) CRet, Ret] -- TODO: are the parameters backwards?
-    -- copy last n bytes onto the
+    -- copy last n bytes onto the system stack
     }
 
 sizeStack :: [KempeTy a] -> Int64
