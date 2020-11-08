@@ -19,8 +19,8 @@ getFresh = gets fst <* modify (first (+1))
 broadcast :: Int -> Label -> FreshM ()
 broadcast i l = modify (second (M.insert l i))
 
--- TODO: backwards so cataM?
-
+-- | Annotate instructions with a unique node name and a map to all possible
+-- destinations
 mkControlFlow :: [X86 () reg] -> FreshM [X86 ControlAnn reg]
 mkControlFlow ((Label _ l):asms) = do
     { i <- getFresh
