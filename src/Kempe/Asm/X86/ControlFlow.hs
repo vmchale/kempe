@@ -19,14 +19,30 @@ getFresh = gets fst <* modify (first (+1))
 broadcast :: Int -> Label -> FreshM ()
 broadcast i l = modify (second (M.insert l i))
 
+next :: [X86 () reg] -> FreshM ([Int] -> [Int], [X86 ControlAnn reg])
+next asms = do
+    nextAsms <- mkControlFlow asms
+    case nextAsms of
+        []            -> pure (id, [])
+        asms'@(asm:_) -> pure ((node (ann asm) :), asms')
+
 -- | Annotate instructions with a unique node name and a map to all possible
 -- destinations
 mkControlFlow :: [X86 () reg] -> FreshM [X86 ControlAnn reg]
+mkControlFlow [] = pure []
 mkControlFlow ((Label _ l):asms) = do
     { i <- getFresh
     ; broadcast i l
-    ; asmsAnn <- mkControlFlow asms
-    ; case asmsAnn of
-        []            -> pure [Label (ControlAnn i []) l]
-        asms'@(asm:_) -> pure $ Label (ControlAnn i [node $ ann asm]) l : asms'
+    ; (f, asms') <- next asms
+    ; pure (Label (ControlAnn i (f [])) l : asms')
+    }
+mkControlFlow ((Ret _):asms) = do
+    { i <- getFresh
+    ; (f, asms') <- next asms
+    ; pure (Ret (ControlAnn i (f [])) : asms')
+    }
+mkControlFlow ((PushReg _ r):asms) = do
+    { i <- getFresh
+    ; (f, asms') <- next asms
+    ; pure (PushReg (ControlAnn i (f [])) r : asms')
     }
