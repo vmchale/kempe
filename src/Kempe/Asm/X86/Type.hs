@@ -8,10 +8,10 @@ module Kempe.Asm.X86.Type ( X86 (..)
 import           Control.DeepSeq (NFData)
 import qualified Data.ByteString as BS
 import           Data.Int        (Int64)
-import           Data.Word       (Word64, Word8)
+import           Data.Word       (Word8)
 import           GHC.Generics    (Generic)
 
-type Label = Word64
+type Label = Word
 
 data Addr reg = Reg reg
               | AddrRRPlus reg reg
