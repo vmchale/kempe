@@ -28,6 +28,9 @@ next asms = do
 
 -- | Annotate instructions with a unique node name and a map to all possible
 -- destinations
+--
+-- FIXME: two-pass, one to map labels
+-- lol tardis
 mkControlFlow :: [X86 () reg] -> FreshM [X86 ControlAnn reg]
 mkControlFlow [] = pure []
 mkControlFlow ((Label _ l):asms) = do
