@@ -10,6 +10,8 @@
 - [x] splitmix random number generator? (or rather any pseudorandom number
   generator...)
   - [ ] http://prng.di.unimi.it/xoroshiro128plus.c
+# Backends
+- [ ] x86 simple?
 # Performance
 ## Data Structures
 - [ ] Difference lists when laying down atoms/IR
