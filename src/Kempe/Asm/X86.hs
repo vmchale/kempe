@@ -153,7 +153,7 @@ irEmit (IR.MovMem _ (IR.ExprIntBinOp _ (IR.Reg r0) (IR.ConstInt i)) (IR.Mem (IR.
     { r' <- allocReg64
     ; pure [ MovRA r' (AddrRCPlus (toAbsReg r1) j), MovAR (AddrRCPlus (toAbsReg r0) i) r' ]
     }
-irEmit (IR.MovMem _ (IR.Reg r) (IR.ExprIntRel IR.IntEqIR (IR.Reg r1) (IR.Reg r2))) = do -- idk how to convert 8 bytes to one lmao -> need cmp instruction
+irEmit (IR.MovMem _ (IR.Reg r) (IR.ExprIntRel IR.IntEqIR (IR.Reg r1) (IR.Reg r2))) = do
     { l0 <- getLabel
     ; l1 <- getLabel
     ; pure [ CmpRegReg (toAbsReg r1) (toAbsReg r2), Je l0, Jump l1, Label l0, MovRCBool (toAbsReg r) 1, Label 1, MovRCBool (toAbsReg r) 0 ]
