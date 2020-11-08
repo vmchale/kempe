@@ -47,6 +47,8 @@ library
         Kempe.Unique
         Kempe.Name
         Kempe.Error
+        Kempe.Asm.X86.ControlFlow
+        Kempe.Asm.X86.Type
         Prettyprinter.Ext
         Data.Foldable.Ext
 
