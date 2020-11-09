@@ -1,10 +1,11 @@
 module Main (main) where
 
-import           Control.Exception    (throw, throwIO)
+import           Control.Exception         (throw, throwIO)
 import           Criterion.Main
-import qualified Data.ByteString.Lazy as BSL
-import           Data.Functor         (void)
+import qualified Data.ByteString.Lazy      as BSL
+import           Data.Functor              (void)
 import           Kempe.Asm.X86
+import           Kempe.Asm.X86.ControlFlow
 import           Kempe.IR
 import           Kempe.Lexer
 import           Kempe.Monomorphize
@@ -39,6 +40,11 @@ main =
                       bgroup "Instruction selection"
                         [ bench "X86 (examples/factorial.kmp)" $ nf genX86 f
                         ]
+                  , env facX86 $ \f ->
+                      bgroup "Control flow graph"
+                        [ bench "X86 (examples/factorial.kmp)" $ nf mkControlFlow f
+                        ]
+
                 ]
     where parsedM = yeetIO . parseWithMax =<< BSL.readFile "test/data/ty.kmp"
           splitmix = yeetIO . parseWithMax =<< BSL.readFile "examples/splitmix.kmp"
@@ -54,4 +60,5 @@ main =
           irEnv = (,) <$> splitmixMono <*> facMono
           runIR = runTempM . writeModule
           genX86 m = let (ir, u) = runIR m in irToX86 u ir
+          facX86 = genX86 <$> facMono
           -- facIR = runIR <$> facMono

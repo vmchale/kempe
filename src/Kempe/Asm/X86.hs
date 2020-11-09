@@ -118,7 +118,7 @@ irEmit (IR.MovMem _ (IR.ExprIntBinOp _ (IR.Reg r0) (IR.ConstInt i)) (IR.Mem (IR.
 irEmit (IR.MovMem _ (IR.Reg r) (IR.ExprIntRel IR.IntEqIR (IR.Reg r1) (IR.Reg r2))) = do
     { l0 <- getLabel
     ; l1 <- getLabel
-    ; pure [ CmpRegReg () (toAbsReg r1) (toAbsReg r2), Je () l0, Jump () l1, Label () l0, MovRCBool () (toAbsReg r) 1, Label () 1, MovRCBool () (toAbsReg r) 0 ]
+    ; pure [ CmpRegReg () (toAbsReg r1) (toAbsReg r2), Je () l0, Jump () l1, Label () l0, MovRCBool () (toAbsReg r) 1, Label () l1, MovRCBool () (toAbsReg r) 0 ]
     }
 irEmit (IR.WrapKCall _ Cabi (is, [o]) n l) | all (\i -> IR.size i `rem` 8 == 0) is && IR.size o == 8 = do
     { rC <- allocReg64 -- reg for offset counter

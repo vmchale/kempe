@@ -41,13 +41,13 @@ library
         Kempe.Shuttle
         Kempe.IR
         Kempe.Asm.X86
+        Kempe.Asm.X86.ControlFlow
 
     hs-source-dirs:   src
     other-modules:
         Kempe.Unique
         Kempe.Name
         Kempe.Error
-        Kempe.Asm.X86.ControlFlow
         Kempe.Asm.X86.Type
         Prettyprinter.Ext
         Data.Foldable.Ext

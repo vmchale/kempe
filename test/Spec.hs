@@ -2,11 +2,12 @@
 
 module Main (main) where
 
-import           Control.DeepSeq      (deepseq)
-import           Control.Exception    (Exception, throwIO)
-import qualified Data.ByteString.Lazy as BSL
+import           Control.DeepSeq           (deepseq)
+import           Control.Exception         (Exception, throwIO)
+import qualified Data.ByteString.Lazy      as BSL
 import           Kempe.AST
 import           Kempe.Asm.X86
+import           Kempe.Asm.X86.ControlFlow
 import           Kempe.File
 import           Kempe.Lexer
 import           Kempe.Monomorphize
@@ -14,7 +15,7 @@ import           Kempe.Parser
 import           Kempe.Pipeline
 import           Kempe.Shuttle
 import           Kempe.TyAssign
-import           Prettyprinter        (pretty)
+import           Prettyprinter             (pretty)
 import           Test.Tasty
 import           Test.Tasty.HUnit
 
@@ -49,8 +50,17 @@ main = defaultMain $
             , irNoYeet "examples/splitmix.kmp"
             , irNoYeet "examples/factorial.kmp"
             , x86NoYeet "examples/factorial.kmp"
+            , controlFlowGraph "examples/factorial.kmp"
             ]
         ]
+
+controlFlowGraph :: FilePath -> TestTree
+controlFlowGraph fp = testCase ("Doesn't crash while creating control flow graph for " ++ fp) $ do
+    contents <- BSL.readFile fp
+    (i, m) <- yeetIO $ parseWithMax contents
+    let (ir, u) = irGen i m
+        x86 = irToX86 u ir
+    assertBool "Worked without exception" (mkControlFlow x86 `deepseq` True)
 
 x86NoYeet :: FilePath -> TestTree
 x86NoYeet fp = testCase ("Selects instructions for " ++ fp) $ do
@@ -59,7 +69,6 @@ x86NoYeet fp = testCase ("Selects instructions for " ++ fp) $ do
     let (ir, u) = irGen i m
         x86 = irToX86 u ir
     assertBool "Worked without exception" (x86 `deepseq` True)
-
 
 irNoYeet :: FilePath -> TestTree
 irNoYeet fp = testCase ("Generates IR without throwing an exception (" ++ fp ++ ")") $ do

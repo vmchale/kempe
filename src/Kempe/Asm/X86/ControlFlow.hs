@@ -1,11 +1,16 @@
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric  #-}
+
 module Kempe.Asm.X86.ControlFlow ( mkControlFlow
                                  , ControlAnn (..)
                                  ) where
 
+import           Control.DeepSeq     (NFData)
 import           Control.Monad.State (State, evalState, gets, modify)
 import           Data.Bifunctor      (first, second)
 import           Data.Functor        (($>))
 import qualified Data.Map            as M
+import           GHC.Generics        (Generic)
 import           Kempe.Asm.X86.Type
 
 -- map of labels by node (maybe backwards?)
@@ -16,7 +21,7 @@ runFreshM = flip evalState (0, mempty)
 
 data ControlAnn = ControlAnn { node :: !Int
                              , conn :: [Int]
-                             }
+                             } deriving (Generic, NFData)
 
 mkControlFlow :: [X86 reg ()] -> [X86 reg ControlAnn]
 mkControlFlow instrs = runFreshM (broadcasts instrs *> addControlFlow instrs)
