@@ -35,8 +35,8 @@ lookupLabel l = gets (M.findWithDefault (error "Internal error in control-flow g
 broadcast :: Int -> Label -> FreshM ()
 broadcast i l = modify (second (M.insert l i))
 
--- | Annotate instructions with a unique node name and a map to all possible
--- destinations
+-- | Annotate instructions with a unique node name and a list of all possible
+-- destinations.
 addControlFlow :: [X86 reg ()] -> FreshM [X86 reg ControlAnn]
 addControlFlow [] = pure []
 addControlFlow ((Label _ l):asms) = do
@@ -72,8 +72,8 @@ next :: [X86 reg ()] -> FreshM ([Int] -> [Int], [X86 reg ControlAnn])
 next asms = do
     nextAsms <- addControlFlow asms
     case nextAsms of
-        []            -> pure (id, [])
-        asms'@(asm:_) -> pure ((node (ann asm) :), asms')
+        []      -> pure (id, [])
+        (asm:_) -> pure ((node (ann asm) :), nextAsms)
 
 -- | Construct map assigning labels to their node name.
 broadcasts :: [X86 reg ()] -> FreshM [X86 reg ()]
