@@ -32,9 +32,6 @@ broadcast i l = modify (second (M.insert l i))
 
 -- | Annotate instructions with a unique node name and a map to all possible
 -- destinations
---
--- FIXME: two-pass, one to map labels
--- lol tardis
 addControlFlow :: [X86 reg ()] -> FreshM [X86 reg ControlAnn]
 addControlFlow [] = pure []
 addControlFlow ((Label _ l):asms) = do
