@@ -67,7 +67,7 @@ runWriteM = flip evalState
 -- that to annotate node with cost
 -- second pass: write code
 
-irToX86 :: IR.WriteSt -> [IR.Stmt ()] -> [X86 () AbsReg]
+irToX86 :: IR.WriteSt -> [IR.Stmt ()] -> [X86 AbsReg ()]
 irToX86 w = runWriteM w . foldMapA (irEmit . irCosts)
 
 -- TODO: match multiple statements
@@ -90,7 +90,7 @@ irCosts (IR.MovMem _ r@IR.Reg{} e@(IR.ExprIntRel _ IR.Reg{} IR.Reg{}))          
 irCosts (IR.WrapKCall _ Cabi (is, o) n l) | all (\i -> IR.size i `rem` 4 == 0) is = IR.WrapKCall (3 + sizeStack is `quot` 8) Cabi (is, o) n l
 
 -- does this need a monad for labels/intermediaries?
-irEmit :: IR.Stmt Int64 -> WriteM [X86 () AbsReg]
+irEmit :: IR.Stmt Int64 -> WriteM [X86 AbsReg ()]
 irEmit (IR.Jump _ l) = pure [Jump () l]
 irEmit (IR.Labeled _ l) = pure [Label () l]
 irEmit (IR.KCall _ l) = pure [Call () l]

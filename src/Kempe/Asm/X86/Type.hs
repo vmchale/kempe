@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveFunctor  #-}
 {-# LANGUAGE DeriveGeneric  #-}
 
 module Kempe.Asm.X86.Type ( X86 (..)
@@ -24,7 +25,7 @@ data Addr reg = Reg reg
 -- TODO: sanity-check pass to make sure no Reg8's are in e.g. MovRCBool
 
 -- parametric in @reg@; we do register allocation second
-data X86 a reg = PushReg { ann :: a, rSrc :: reg }
+data X86 reg a = PushReg { ann :: a, rSrc :: reg }
                | PopReg { ann :: a, rSrc :: reg }
                | PushMem { ann :: a, addr :: Addr reg }
                | PopMem { ann :: a, addr :: Addr reg }
@@ -49,5 +50,5 @@ data X86 a reg = PushReg { ann :: a, rSrc :: reg }
                | Je { ann :: a, jLabel :: Label }
                | CmpAddrReg { ann :: a, addrCmp :: Addr reg, rCmp :: reg }
                | CmpRegReg { ann :: a, rCmp :: reg, rCmp' :: reg } -- for simplicity
-               deriving (Generic, NFData)
+               deriving (Generic, NFData, Functor)
 
