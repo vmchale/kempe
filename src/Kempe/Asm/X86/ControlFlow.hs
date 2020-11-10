@@ -2,18 +2,16 @@ module Kempe.Asm.X86.ControlFlow ( mkControlFlow
                                  , ControlAnn (..)
                                  ) where
 
-import           Control.DeepSeq     (NFData)
 import           Control.Monad.State (State, evalState, gets, modify)
 import           Data.Bifunctor      (first, second)
 import           Data.Functor        (($>))
 import qualified Data.Map            as M
 import           Data.Semigroup      ((<>))
 import qualified Data.Set            as S
-import           GHC.Generics        (Generic)
 import           Kempe.Asm.X86.Type
 
 -- map of labels by node (maybe backwards?)
-type FreshM = State (Int, M.Map Label Int)
+type FreshM = State (Int, M.Map Label Int) -- TODO: map int to asm
 
 runFreshM :: FreshM a -> a
 runFreshM = flip evalState (0, mempty)

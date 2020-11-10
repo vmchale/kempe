@@ -8,5 +8,7 @@ import           Kempe.Asm.X86.Type
 
 type Liveness = S.Set AbsReg
 
+-- need: succ for a node
+
 initLiveness :: [X86 AbsReg a] -> [X86 AbsReg Liveness]
 initLiveness = fmap ($> S.empty)
