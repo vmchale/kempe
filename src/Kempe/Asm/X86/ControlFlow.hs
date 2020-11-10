@@ -2,12 +2,13 @@ module Kempe.Asm.X86.ControlFlow ( mkControlFlow
                                  , ControlAnn (..)
                                  ) where
 
-import           Control.Monad.State (State, evalState, gets, modify)
-import           Data.Bifunctor      (first, second)
-import           Data.Functor        (($>))
-import qualified Data.Map            as M
-import           Data.Semigroup      ((<>))
-import qualified Data.Set            as S
+-- seems to pretty clearly be faster
+import           Control.Monad.State.Strict (State, evalState, gets, modify)
+import           Data.Bifunctor             (first, second)
+import           Data.Functor               (($>))
+import qualified Data.Map                   as M
+import           Data.Semigroup             ((<>))
+import qualified Data.Set                   as S
 import           Kempe.Asm.X86.Type
 
 -- map of labels by node (maybe backwards?)
