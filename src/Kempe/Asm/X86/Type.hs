@@ -20,7 +20,7 @@ data AbsReg = DataPointer
             | AllocReg64 !Int -- TODO: register by size
             | AllocReg8 !Int
             | CRet -- x0 on aarch64
-            deriving (Generic, NFData)
+            deriving (Eq, Ord, Generic, NFData)
 
 data Addr reg = Reg reg
               | AddrRRPlus reg reg
