@@ -6,6 +6,7 @@ import qualified Data.ByteString.Lazy      as BSL
 import           Data.Functor              (void)
 import           Kempe.Asm.X86
 import           Kempe.Asm.X86.ControlFlow
+import           Kempe.Asm.X86.Liveness
 import           Kempe.IR
 import           Kempe.Lexer
 import           Kempe.Monomorphize
@@ -44,7 +45,10 @@ main =
                       bgroup "Control flow graph"
                         [ bench "X86 (examples/factorial.kmp)" $ nf mkControlFlow f
                         ]
-
+                  , env facX86Cf $ \f ->
+                      bgroup "Liveness analysis"
+                        [ bench "X86 (examples/factorial.kmp)" $ nf mkLiveness f
+                        ]
                 ]
     where parsedM = yeetIO . parseWithMax =<< BSL.readFile "test/data/ty.kmp"
           splitmix = yeetIO . parseWithMax =<< BSL.readFile "examples/splitmix.kmp"
@@ -61,4 +65,5 @@ main =
           runIR = runTempM . writeModule
           genX86 m = let (ir, u) = runIR m in irToX86 u ir
           facX86 = genX86 <$> facMono
+          facX86Cf = mkControlFlow <$> facX86
           -- facIR = runIR <$> facMono
