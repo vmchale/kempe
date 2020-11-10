@@ -50,7 +50,7 @@ done n0 n1 = {-# SCC "done" #-} and $ IM.map (uncurry (==) . (snd *** snd)) $ IM
 
 -- order in which to inspect nodes during liveness analysis
 inspectOrder :: [X86 reg ControlAnn] -> [Int]
-inspectOrder = reverse . fmap (node . ann)
+inspectOrder = fmap (node . ann) -- don't reverse because thread goes in opposite order
 
 mkLiveness :: [X86 reg ControlAnn] -> LivenessMap
 mkLiveness asms = liveness is (initLiveness asms)
