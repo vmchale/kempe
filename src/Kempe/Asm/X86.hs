@@ -34,12 +34,6 @@ toAbsReg (IR.Temp8 i)   = AllocReg8 i
 toAbsReg (IR.Temp64 i)  = AllocReg64 i
 toAbsReg IR.DataPointer = DataPointer
 
-data AbsReg = DataPointer
-            | AllocReg64 !Int -- TODO: register by size
-            | AllocReg8 !Int
-            | CRet -- x0 on aarch64
-            deriving (Generic, NFData)
-
 type WriteM = State IR.WriteSt
 
 nextLabels :: IR.WriteSt -> IR.WriteSt

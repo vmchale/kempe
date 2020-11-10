@@ -21,6 +21,7 @@ runFreshM = flip evalState (0, mempty)
 
 data ControlAnn = ControlAnn { node :: !Int
                              , conn :: [Int]
+                             -- todo: use/defs
                              } deriving (Generic, NFData)
 
 mkControlFlow :: [X86 reg ()] -> [X86 reg ControlAnn]

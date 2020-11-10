@@ -4,6 +4,7 @@
 
 module Kempe.Asm.X86.Type ( X86 (..)
                           , Addr (..)
+                          , AbsReg (..)
                           , Label
                           ) where
 
@@ -14,6 +15,12 @@ import           Data.Word       (Word8)
 import           GHC.Generics    (Generic)
 
 type Label = Word
+
+data AbsReg = DataPointer
+            | AllocReg64 !Int -- TODO: register by size
+            | AllocReg8 !Int
+            | CRet -- x0 on aarch64
+            deriving (Generic, NFData)
 
 data Addr reg = Reg reg
               | AddrRRPlus reg reg
