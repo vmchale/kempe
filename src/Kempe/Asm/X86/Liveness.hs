@@ -1,6 +1,9 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric  #-}
 
+-- FIXME: this module is slow
+
+-- | Based on the Appel book.
 module Kempe.Asm.X86.Liveness ( mkLiveness
                               , Liveness
                               , LivenessMap
@@ -9,7 +12,8 @@ module Kempe.Asm.X86.Liveness ( mkLiveness
 import           Control.Arrow       ((***))
 import           Control.Composition (thread)
 import           Control.DeepSeq     (NFData)
-import qualified Data.IntMap         as IM
+-- this seems to be faster
+import qualified Data.IntMap.Strict  as IM
 import qualified Data.Set            as S
 import           GHC.Generics        (Generic)
 import           Kempe.Asm.X86.Type
@@ -42,7 +46,7 @@ lookupNode :: Int -> LivenessMap -> (ControlAnn, Liveness)
 lookupNode = IM.findWithDefault (error "Internal error: failed to look up instruction")
 
 done :: LivenessMap -> LivenessMap -> Bool
-done n0 n1 = and $ IM.map (uncurry (==) . (snd *** snd)) $ IM.intersectionWith (,) n0 n1
+done n0 n1 = {-# SCC "done" #-} and $ IM.map (uncurry (==) . (snd *** snd)) $ IM.intersectionWith (,) n0 n1
 
 -- order in which to inspect nodes during liveness analysis
 inspectOrder :: [X86 reg ControlAnn] -> [Int]
@@ -63,7 +67,7 @@ iterNodes :: [Int] -> LivenessMap -> LivenessMap
 iterNodes is = thread (fmap stepNode is)
 
 stepNode :: Int -> LivenessMap -> LivenessMap
-stepNode n ns = IM.insert n (c, Liveness ins' out') ns
+stepNode n ns = {-# SCC "stepNode" #-} IM.insert n (c, Liveness ins' out') ns
     where (c, l) = lookupNode n ns
           ins' = usesNode c <> (out l S.\\ defsNode c)
           out' = S.unions (fmap ins (succNode c ns))
