@@ -20,8 +20,8 @@ type FreshM = State (Int, M.Map Label Int)
 runFreshM :: FreshM a -> a
 runFreshM = flip evalState (0, mempty)
 
-data ControlAnn = ControlAnn { node :: !Int
-                             , conn :: [Int]
+data ControlAnn = ControlAnn { node     :: !Int
+                             , conn     :: [Int]
                              , usesNode :: S.Set AbsReg
                              , defsNode :: S.Set AbsReg
                              } deriving (Generic, NFData)
