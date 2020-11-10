@@ -10,6 +10,7 @@ import           Control.Monad.State (State, evalState, gets, modify)
 import           Data.Bifunctor      (first, second)
 import           Data.Functor        (($>))
 import qualified Data.Map            as M
+import           Data.Semigroup      ((<>))
 import qualified Data.Set            as S
 import           GHC.Generics        (Generic)
 import           Kempe.Asm.X86.Type
