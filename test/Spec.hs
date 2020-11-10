@@ -6,8 +6,8 @@ import           Control.DeepSeq           (deepseq)
 import           Control.Exception         (Exception, throwIO)
 import qualified Data.ByteString.Lazy      as BSL
 import           Kempe.AST
-import           Kempe.Asm.X86
 import           Kempe.Asm.X86.ControlFlow
+import           Kempe.Asm.X86.Liveness
 import           Kempe.File
 import           Kempe.Lexer
 import           Kempe.Monomorphize
@@ -51,23 +51,30 @@ main = defaultMain $
             , irNoYeet "examples/factorial.kmp"
             , x86NoYeet "examples/factorial.kmp"
             , controlFlowGraph "examples/factorial.kmp"
+            , liveness "examples/factorial.kmp"
             ]
         ]
+
+liveness :: FilePath -> TestTree
+liveness fp = testCase ("Liveness analysis terminates (" ++ fp ++ ")") $ do
+    contents <- BSL.readFile fp
+    parsed <- yeetIO $ parseWithMax contents
+    let x86 = uncurry x86Parsed parsed
+        cf = mkControlFlow x86
+    assertBool "Doesn't bottom" (mkLiveness cf `deepseq` True)
 
 controlFlowGraph :: FilePath -> TestTree
 controlFlowGraph fp = testCase ("Doesn't crash while creating control flow graph for " ++ fp) $ do
     contents <- BSL.readFile fp
-    (i, m) <- yeetIO $ parseWithMax contents
-    let (ir, u) = irGen i m
-        x86 = irToX86 u ir
+    parsed <- yeetIO $ parseWithMax contents
+    let x86 = uncurry x86Parsed parsed
     assertBool "Worked without exception" (mkControlFlow x86 `deepseq` True)
 
 x86NoYeet :: FilePath -> TestTree
 x86NoYeet fp = testCase ("Selects instructions for " ++ fp) $ do
     contents <- BSL.readFile fp
-    (i, m) <- yeetIO $ parseWithMax contents
-    let (ir, u) = irGen i m
-        x86 = irToX86 u ir
+    parsed <- yeetIO $ parseWithMax contents
+    let x86 = uncurry x86Parsed parsed
     assertBool "Worked without exception" (x86 `deepseq` True)
 
 irNoYeet :: FilePath -> TestTree
