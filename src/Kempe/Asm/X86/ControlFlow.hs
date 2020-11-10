@@ -1,6 +1,3 @@
-{-# LANGUAGE DeriveAnyClass #-}
-{-# LANGUAGE DeriveGeneric  #-}
-
 module Kempe.Asm.X86.ControlFlow ( mkControlFlow
                                  , ControlAnn (..)
                                  ) where
@@ -20,12 +17,6 @@ type FreshM = State (Int, M.Map Label Int)
 
 runFreshM :: FreshM a -> a
 runFreshM = flip evalState (0, mempty)
-
-data ControlAnn = ControlAnn { node     :: !Int
-                             , conn     :: [Int]
-                             , usesNode :: S.Set AbsReg
-                             , defsNode :: S.Set AbsReg
-                             } deriving (Generic, NFData)
 
 mkControlFlow :: [X86 AbsReg ()] -> [X86 AbsReg ControlAnn]
 mkControlFlow instrs = runFreshM (broadcasts instrs *> addControlFlow instrs)

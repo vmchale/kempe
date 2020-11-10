@@ -5,16 +5,24 @@
 module Kempe.Asm.X86.Type ( X86 (..)
                           , Addr (..)
                           , AbsReg (..)
+                          , ControlAnn (..)
                           , Label
                           ) where
 
 import           Control.DeepSeq (NFData)
 import qualified Data.ByteString as BS
 import           Data.Int        (Int64)
+import qualified Data.Set        as S
 import           Data.Word       (Word8)
 import           GHC.Generics    (Generic)
 
 type Label = Word
+
+data ControlAnn = ControlAnn { node     :: !Int
+                             , conn     :: [Int]
+                             , usesNode :: S.Set AbsReg
+                             , defsNode :: S.Set AbsReg
+                             } deriving (Generic, NFData)
 
 data AbsReg = DataPointer
             | AllocReg64 !Int -- TODO: register by size
