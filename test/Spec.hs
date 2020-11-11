@@ -61,7 +61,7 @@ liveness fp = testCase ("Liveness analysis terminates (" ++ fp ++ ")") $ do
     parsed <- yeetIO $ parseWithMax contents
     let x86 = uncurry x86Parsed parsed
         cf = mkControlFlow x86
-    assertBool "Doesn't bottom" (mkLiveness cf `deepseq` True)
+    assertBool "Doesn't bottom" (reconstruct cf `deepseq` True)
 
 controlFlowGraph :: FilePath -> TestTree
 controlFlowGraph fp = testCase ("Doesn't crash while creating control flow graph for " ++ fp) $ do

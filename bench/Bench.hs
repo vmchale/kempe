@@ -47,7 +47,7 @@ main =
                         ]
                   , env facX86Cf $ \f ->
                       bgroup "Liveness analysis"
-                        [ bench "X86 (examples/factorial.kmp)" $ nf mkLiveness f
+                        [ bench "X86 (examples/factorial.kmp)" $ nf reconstruct f
                         ]
                 ]
     where parsedM = yeetIO . parseWithMax =<< BSL.readFile "test/data/ty.kmp"

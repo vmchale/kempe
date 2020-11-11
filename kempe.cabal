@@ -50,6 +50,7 @@ library
         Kempe.Name
         Kempe.Error
         Kempe.Asm.X86.Type
+        Kempe.Asm.X86.Linear
         Prettyprinter.Ext
         Data.Foldable.Ext
 

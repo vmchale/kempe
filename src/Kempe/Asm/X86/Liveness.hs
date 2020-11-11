@@ -4,9 +4,8 @@
 -- FIXME: this module is slow
 
 -- | Based on the Appel book.
-module Kempe.Asm.X86.Liveness ( mkLiveness
-                              , Liveness
-                              , LivenessMap
+module Kempe.Asm.X86.Liveness ( Liveness
+                              , reconstruct
                               ) where
 
 import           Control.Composition (thread)
@@ -47,6 +46,11 @@ done n0 n1 = {-# SCC "done" #-} and $ zipWith (\(_, l) (_, l') -> l == l') (IM.e
 -- order in which to inspect nodes during liveness analysis
 inspectOrder :: [X86 reg ControlAnn] -> [Int]
 inspectOrder = fmap (node . ann) -- don't need to reverse because thread goes in opposite order
+
+reconstruct :: [X86 reg ControlAnn] -> [X86 reg Liveness]
+reconstruct asms = {-# SCC "reconstruct" #-} fmap (fmap lookupL) asms
+    where l = mkLiveness asms
+          lookupL x = snd $ lookupNode (node x) l
 
 mkLiveness :: [X86 reg ControlAnn] -> LivenessMap
 mkLiveness asms = liveness is (initLiveness asms)
