@@ -6,6 +6,7 @@ module Kempe.Asm.X86.Type ( X86 (..)
                           , Addr (..)
                           , AbsReg (..)
                           , ControlAnn (..)
+                          , Liveness (..)
                           , Label
                           ) where
 
@@ -17,6 +18,9 @@ import           Data.Word       (Word8)
 import           GHC.Generics    (Generic)
 
 type Label = Word
+
+data Liveness = Liveness { ins :: S.Set AbsReg, out :: S.Set AbsReg }
+    deriving (Eq, Generic, NFData)
 
 data ControlAnn = ControlAnn { node     :: !Int
                              , conn     :: [Int]

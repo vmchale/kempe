@@ -16,9 +16,6 @@ import qualified Data.Set            as S
 import           GHC.Generics        (Generic)
 import           Kempe.Asm.X86.Type
 
-data Liveness = Liveness { ins :: S.Set AbsReg, out :: S.Set AbsReg }
-    deriving (Eq, Generic, NFData)
-
 emptyLiveness :: Liveness
 emptyLiveness = Liveness S.empty S.empty
 
