@@ -1,6 +1,3 @@
-{-# LANGUAGE DeriveAnyClass #-}
-{-# LANGUAGE DeriveGeneric  #-}
-
 -- | This module contains dynamic-programming optimum instruction selector.
 --
 -- It's kind of broken because
@@ -19,12 +16,10 @@ module Kempe.Asm.X86 ( X86 (..)
                      , WriteM
                      ) where
 
-import           Control.DeepSeq     (NFData)
 import           Control.Monad.State (State, evalState, gets, modify)
 import           Data.Foldable.Ext
 import           Data.Int            (Int64)
 import           Data.Monoid         (Sum (..))
-import           GHC.Generics        (Generic)
 import           Kempe.AST
 import           Kempe.Asm.X86.Type
 import qualified Kempe.IR            as IR

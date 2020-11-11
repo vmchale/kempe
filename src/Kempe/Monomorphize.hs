@@ -21,7 +21,6 @@ import           Data.Functor               ((<&>))
 import qualified Data.IntMap                as IM
 import qualified Data.Map                   as M
 import           Data.Maybe                 (mapMaybe)
-import           Data.Semigroup             ((<>))
 import qualified Data.Set                   as S
 import qualified Data.Text                  as T
 import           Kempe.AST

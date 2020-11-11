@@ -1,7 +1,6 @@
 module Main (main) where
 
 import           Control.Exception   (throwIO)
-import           Data.Semigroup      ((<>))
 import qualified Data.Version        as V
 import           Kempe.File
 import           Options.Applicative
