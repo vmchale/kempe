@@ -28,7 +28,7 @@ data X86Reg = Rax
             deriving (Eq, Ord, Enum, Bounded)
 
 -- set of free registers we iterate over
-data AllocSt = AllocSt { allocs :: M.Map AbsReg X86Reg
+data AllocSt = AllocSt { allocs :: M.Map AbsReg X86Reg -- ^ Already allocated registers
                        , free64 :: S.Set X86Reg
                        , free8  :: S.Set X86Reg
                        }
@@ -37,18 +37,25 @@ data AllocSt = AllocSt { allocs :: M.Map AbsReg X86Reg
 allFree :: AllocSt
 allFree = AllocSt mempty (S.fromList [Rax .. Rdx]) (S.fromList [AH .. DL])
 
-type FreeM = State AllocSt
+type AllocM = State AllocSt
 
-runFreeM :: FreeM a -> a
-runFreeM = flip evalState allFree
+runAllocM :: AllocM a -> a
+runAllocM = flip evalState allFree
 
 -- deleteAssoc ::
 
 allocRegs :: [X86 AbsReg Liveness] -> [X86 X86Reg ()]
-allocRegs = runFreeM . traverse allocReg
+allocRegs = runAllocM . traverse allocReg
+
+new :: Liveness -> S.Set AbsReg
+new (Liveness i o) = o S.\\ i
+
+done :: Liveness -> S.Set AbsReg
+done (Liveness i o) = i S.\\ o
 
 -- FIXME: generate spill code
-allocReg :: X86 AbsReg Liveness -> FreeM (X86 X86Reg ())
+allocReg :: X86 AbsReg Liveness -> AllocM (X86 X86Reg ())
+allocReg (PushReg l r)   = undefined
 allocReg Ret{}           = pure $ Ret ()
 allocReg (Call _ l)      = pure $ Call () l
 allocReg (PushConst _ i) = pure $ PushConst () i
