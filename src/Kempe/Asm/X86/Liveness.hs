@@ -48,8 +48,8 @@ inspectOrder :: [X86 reg ControlAnn] -> [Int]
 inspectOrder = fmap (node . ann) -- don't need to reverse because thread goes in opposite order
 
 reconstruct :: [X86 reg ControlAnn] -> [X86 reg Liveness]
-reconstruct asms = {-# SCC "reconstruct" #-} fmap (fmap lookupL) asms
-    where l = mkLiveness asms
+reconstruct asms = {-# SCC "reconstructL" #-} fmap (fmap lookupL) asms
+    where l = {-# SCC "mkLiveness" #-} mkLiveness asms
           lookupL x = snd $ lookupNode (node x) l
 
 mkLiveness :: [X86 reg ControlAnn] -> LivenessMap
