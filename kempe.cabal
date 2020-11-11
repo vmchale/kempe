@@ -59,7 +59,7 @@ library
         FlexibleContexts GeneralizedNewtypeDeriving OverloadedStrings
         StandaloneDeriving TupleSections
 
-    ghc-options:      -Wall -O2
+    ghc-options:      -Wall -O2 -fregs-iterative
     build-depends:
         base >=4.8 && <5,
         array -any,
