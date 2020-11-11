@@ -11,7 +11,9 @@
   generator...)
   - [ ] http://prng.di.unimi.it/xoroshiro128plus.c
 # Backends
-- [ ] x86 simple?
+- [ ] Linear scan register allocator
+  - [ ] "needed" for REPL
+- [ ] Graph (?) register allocator
 # Performance
 ## Data Structures
 - [ ] Difference lists when laying down atoms/IR
