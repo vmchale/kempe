@@ -15,6 +15,8 @@ import           Data.Maybe          (fromMaybe)
 import qualified Data.Set            as S
 import           GHC.Generics        (Generic)
 import           Kempe.Asm.X86.Type
+import Lens.Micro (Lens')
+import Lens.Micro.Mtl (modifying, (.=))
 
 -- currently just has 64-bit and 8-bit registers
 data X86Reg = Rax
@@ -35,9 +37,18 @@ data X86Reg = Rax
 
 -- set of free registers we iterate over
 data AllocSt = AllocSt { allocs :: M.Map AbsReg X86Reg -- ^ Already allocated registers
-                       , free64 :: S.Set X86Reg
+                       , free64 :: S.Set X86Reg -- TODO: IntSet here?
                        , free8  :: S.Set X86Reg
                        }
+
+allocsLens :: Lens' AllocSt (M.Map AbsReg X86Reg)
+allocsLens f s = fmap (\x -> s { allocs = x }) (f (allocs s))
+
+free64Lens :: Lens' AllocSt (S.Set X86Reg)
+free64Lens f s = fmap (\x -> s { free64 = x }) (f (free64 s))
+
+free8Lens :: Lens' AllocSt (S.Set X86Reg)
+free8Lens f s = fmap (\x -> s { free8 = x }) (f (free8 s))
 
 -- | Mark all registers as free (at the beginning).
 allFree :: AllocSt
@@ -69,22 +80,35 @@ done (Liveness i o) = i S.\\ o
 freeDone :: Liveness -> AllocM ()
 freeDone l = undefined
 
+assignReg64 :: Int -> X86Reg -> AllocM ()
+assignReg64 i xr =
+    modifying allocsLens (M.insert (AllocReg64 i) xr)
+
 newReg64 :: AllocM X86Reg
 newReg64 = do
     r64St <- gets free64
-    pure $ fromMaybe err $ S.lookupMin r64St
+    let (res, newSt) = fromMaybe err $ S.minView r64St --
+        assocRes = assoc res
+    -- register is no longer free
+    free64Lens .= newSt
+    modifying free8Lens (S.\\ assocRes)
+    pure res
 
     where err = error "(internal error) No register available."
 
-useReg :: Liveness -> AbsReg -> AllocM X86Reg
-useReg l absR =
+unfoundReg :: a
+unfoundReg = error "Internal error in register allocator: unfound register"
+
+useReg64 :: Liveness -> Int -> AllocM X86Reg
+useReg64 l i =
     if absR `S.member` new l
-        then newReg64
-        else do { aSt <- gets allocs ; pure $ M.findWithDefault (error "Internal error in register allocator: unfound register") absR aSt }
+        then do { res <- newReg64 ; assignReg64 i res ; pure res }
+        else do { aSt <- gets allocs ; pure $ M.findWithDefault unfoundReg absR aSt }
+    where absR = AllocReg64 i
 
 -- FIXME: generate spill code
 allocReg :: X86 AbsReg Liveness -> AllocM (X86 X86Reg ())
-allocReg (PushReg l r)   = PushReg () <$> useReg l r <* freeDone l
+allocReg (PushReg l (AllocReg64 i))   = PushReg () <$> useReg64 l i <* freeDone l
 allocReg Ret{}           = pure $ Ret ()
 allocReg (Call _ l)      = pure $ Call () l
 allocReg (PushConst _ i) = pure $ PushConst () i
