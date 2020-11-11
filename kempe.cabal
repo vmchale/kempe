@@ -43,6 +43,7 @@ library
         Kempe.Asm.X86
         Kempe.Asm.X86.ControlFlow
         Kempe.Asm.X86.Liveness
+        Kempe.Asm.X86.Linear
 
     hs-source-dirs:   src
     other-modules:
@@ -50,7 +51,6 @@ library
         Kempe.Name
         Kempe.Error
         Kempe.Asm.X86.Type
-        Kempe.Asm.X86.Linear
         Prettyprinter.Ext
         Data.Foldable.Ext
 

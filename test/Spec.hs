@@ -7,6 +7,7 @@ import           Control.Exception         (Exception, throwIO)
 import qualified Data.ByteString.Lazy      as BSL
 import           Kempe.AST
 import           Kempe.Asm.X86.ControlFlow
+import           Kempe.Asm.X86.Linear
 import           Kempe.Asm.X86.Liveness
 import           Kempe.File
 import           Kempe.Lexer
@@ -52,8 +53,16 @@ main = defaultMain $
             , x86NoYeet "examples/factorial.kmp"
             , controlFlowGraph "examples/factorial.kmp"
             , liveness "examples/factorial.kmp"
+            , codegen "examples/factorial.kmp"
             ]
         ]
+
+codegen :: FilePath -> TestTree
+codegen fp = testCase ("Generates code without throwing an exception (" ++ fp ++ ")") $ do
+    contents <- BSL.readFile fp
+    parsed <- yeetIO $ parseWithMax contents
+    let liveX86 = reconstruct $ mkControlFlow $ uncurry x86Parsed parsed
+    assertBool "Doesn't fail" (allocRegs liveX86 `deepseq` True)
 
 liveness :: FilePath -> TestTree
 liveness fp = testCase ("Liveness analysis terminates (" ++ fp ++ ")") $ do
