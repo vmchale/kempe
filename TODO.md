@@ -14,6 +14,7 @@
 - [ ] Linear scan register allocator
   - [ ] "needed" for REPL
 - [ ] Graph (?) register allocator
+- [ ] qbe https://c9x.me/compile/
 # Performance
 ## Data Structures
 - [ ] Difference lists when laying down atoms/IR
