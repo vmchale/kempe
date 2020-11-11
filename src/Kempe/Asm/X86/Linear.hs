@@ -21,5 +21,6 @@ data X86Reg = Rax
             | DH
             | DL
 
+-- TODO: generate spill code
 allocReg :: [X86 AbsReg Liveness] -> [X86 X86Reg ()]
 allocReg = undefined

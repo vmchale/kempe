@@ -1,6 +1,3 @@
-{-# LANGUAGE DeriveAnyClass #-}
-{-# LANGUAGE DeriveGeneric  #-}
-
 -- FIXME: this module is slow
 
 -- | Based on the Appel book.
@@ -9,11 +6,9 @@ module Kempe.Asm.X86.Liveness ( Liveness
                               ) where
 
 import           Control.Composition (thread)
-import           Control.DeepSeq     (NFData)
 -- this seems to be faster
 import qualified Data.IntMap.Lazy    as IM
 import qualified Data.Set            as S
-import           GHC.Generics        (Generic)
 import           Kempe.Asm.X86.Type
 
 emptyLiveness :: Liveness
@@ -58,7 +53,7 @@ liveness is nSt =
     if done nSt nSt'
         then nSt
         else liveness is nSt'
-    where nSt' = iterNodes is nSt
+    where nSt' = {-# SCC "iterNodes" #-} iterNodes is nSt
 
 iterNodes :: [Int] -> LivenessMap -> LivenessMap
 iterNodes is = thread (fmap stepNode is)
