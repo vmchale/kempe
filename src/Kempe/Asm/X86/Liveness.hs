@@ -13,7 +13,6 @@ import           Control.Composition (thread)
 import           Control.DeepSeq     (NFData)
 -- this seems to be faster
 import qualified Data.IntMap.Lazy    as IM
-import           Data.Semigroup      ((<>))
 import qualified Data.Set            as S
 import           GHC.Generics        (Generic)
 import           Kempe.Asm.X86.Type

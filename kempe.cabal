@@ -77,9 +77,6 @@ library
     if !flag(cross)
         build-tool-depends: alex:alex -any, happy:happy -any
 
-    if !impl(ghc >=8.0)
-        build-depends: semigroups -any
-
     if impl(ghc >=8.0)
         ghc-options:
             -Wincomplete-uni-patterns -Wincomplete-record-updates
@@ -105,9 +102,6 @@ executable kc
         base -any,
         optparse-applicative -any,
         kempe -any
-
-    if !impl(ghc >=8.0)
-        build-depends: semigroups -any
 
     if impl(ghc >=8.0)
         ghc-options:
