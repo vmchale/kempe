@@ -13,11 +13,11 @@ module Kempe.Monomorphize ( closedModule
                           , mkModuleMap
                           ) where
 
-import           Control.Composition        ((<&>))
 import           Control.Monad              ((<=<))
 import           Control.Monad.Except       (MonadError, throwError)
 import           Control.Monad.State.Strict (StateT, gets, runStateT)
 import           Data.Bifunctor             (second)
+import           Data.Functor               ((<&>))
 import qualified Data.IntMap                as IM
 import qualified Data.Map                   as M
 import           Data.Maybe                 (mapMaybe)
