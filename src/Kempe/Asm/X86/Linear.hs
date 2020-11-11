@@ -18,6 +18,7 @@ import           GHC.Generics        (Generic)
 import           Kempe.Asm.X86.Type
 import           Lens.Micro          (Lens')
 import           Lens.Micro.Mtl      (modifying, (.=))
+import           Prettyprinter       (pretty)
 
 -- currently just has 64-bit and 8-bit registers
 data X86Reg = Rax
@@ -113,14 +114,30 @@ assignReg64 :: Int -> X86Reg -> AllocM ()
 assignReg64 i xr =
     modifying allocsLens (M.insert (AllocReg64 i) xr)
 
+assignReg8 :: Int -> X86Reg -> AllocM ()
+assignReg8 i xr =
+    modifying allocsLens (M.insert (AllocReg8 i) xr)
+
 newReg64 :: AllocM X86Reg
 newReg64 = do
     r64St <- gets free64
-    let (res, newSt) = fromMaybe err $ S.minView r64St --
+    let (res, newSt) = fromMaybe err $ S.minView r64St
         assocRes = assoc res
     -- register is no longer free
     free64Lens .= newSt
     modifying free8Lens (S.\\ assocRes)
+    pure res
+
+    where err = error "(internal error) No register available."
+
+newReg8 :: AllocM X86Reg
+newReg8 = do
+    r8St <- gets free8
+    let (res, newSt) = fromMaybe err $ S.minView r8St
+        assocRes = assoc res
+    -- register is no longer free
+    free8Lens .= newSt
+    modifying free64Lens (S.\\ assocRes)
     pure res
 
     where err = error "(internal error) No register available."
@@ -136,11 +153,21 @@ useReg64 l i =
         else findReg absR
     where absR = AllocReg64 i
 
+useReg8 :: Liveness -> Int -> AllocM X86Reg
+useReg8 l i =
+    if absR `S.member` new l
+        then do { res <- newReg8 ; assignReg8 i res ; pure res }
+        else findReg absR
+    where absR = AllocReg8 i
+
 -- FIXME: generate spill code
 allocReg :: X86 AbsReg Liveness -> AllocM (X86 X86Reg ())
-allocReg (PushReg l (AllocReg64 i)) = PushReg () <$> useReg64 l i <* freeDone l
-allocReg Ret{}                      = pure $ Ret ()
-allocReg (Call _ l)                 = pure $ Call () l
-allocReg (PushConst _ i)            = pure $ PushConst () i
-allocReg (Je _ l)                   = pure $ Je () l
-allocReg (Jump _ l)                 = pure $ Jump () l
+allocReg (PushReg l (AllocReg64 i))    = PushReg () <$> useReg64 l i <* freeDone l
+allocReg Ret{}                         = pure $ Ret ()
+allocReg (Call _ l)                    = pure $ Call () l
+allocReg (PushConst _ i)               = pure $ PushConst () i
+allocReg (Je _ l)                      = pure $ Je () l
+allocReg (Jump _ l)                    = pure $ Jump () l
+allocReg (Label _ l)                   = pure $ Label () l
+allocReg (MovRCBool l (AllocReg8 i) b) = MovRCBool () <$> useReg8 l i <*> pure b <* freeDone l
+allocReg a                             = error (show $ pretty a)
