@@ -29,6 +29,7 @@ data X86Reg = Rax
 -- set of free registers we iterate over
 type FreeSt = (S.Set X86Reg, S.Set X86Reg)
 
+-- | Mark all registers as free (at the beginning).
 allFree :: FreeSt
 allFree = (S.fromList [Rax .. Rdx], S.fromList [AH .. DL])
 
