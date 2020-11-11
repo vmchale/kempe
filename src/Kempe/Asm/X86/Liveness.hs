@@ -9,11 +9,10 @@ module Kempe.Asm.X86.Liveness ( mkLiveness
                               , LivenessMap
                               ) where
 
-import           Control.Arrow       ((***))
 import           Control.Composition (thread)
 import           Control.DeepSeq     (NFData)
 -- this seems to be faster
-import qualified Data.IntMap.Lazy    as IM
+import qualified Data.IntMap.Strict    as IM
 import           Data.Semigroup      ((<>))
 import qualified Data.Set            as S
 import           GHC.Generics        (Generic)
@@ -32,9 +31,6 @@ initLiveness = IM.fromList . fmap (\asm -> let x = ann asm in (node x, (x, empty
 
 type LivenessMap = IM.IntMap (ControlAnn, Liveness)
 
--- i :: X86 AbsReg (ControlAnn, Liveness) -> Int
--- i = node . fst . ann
-
 -- | All program points accessible from some node.
 succNode :: ControlAnn -- ^ 'ControlAnn' associated w/ node @n@
          -> LivenessMap
@@ -47,7 +43,7 @@ lookupNode :: Int -> LivenessMap -> (ControlAnn, Liveness)
 lookupNode = IM.findWithDefault (error "Internal error: failed to look up instruction")
 
 done :: LivenessMap -> LivenessMap -> Bool
-done n0 n1 = {-# SCC "done" #-} and $ IM.map (uncurry (==) . (snd *** snd)) $ IM.intersectionWith (,) n0 n1
+done n0 n1 = {-# SCC "done" #-} and $ zipWith (\(_, l) (_, l') -> l == l') (IM.elems n0) (IM.elems n1) -- should be safe b/c n0, n1 must have same length
 
 -- order in which to inspect nodes during liveness analysis
 inspectOrder :: [X86 reg ControlAnn] -> [Int]
