@@ -45,7 +45,6 @@ data Addr reg = Reg reg
 
 -- parametric in @reg@; we do register allocation second
 data X86 reg a = PushReg { ann :: a, rSrc :: reg }
-               | PopReg { ann :: a, rSrc :: reg }
                | PushMem { ann :: a, addr :: Addr reg }
                | PopMem { ann :: a, addr :: Addr reg }
                | PushConst { ann :: a, iSrc :: Int64 }

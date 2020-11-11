@@ -85,7 +85,6 @@ uses (CmpRegReg _ r r') = S.fromList [r, r']
 uses _                  = S.empty
 
 defs :: X86 reg ann -> S.Set reg
-defs (PopReg _ r)      = S.singleton r
 defs (MovRA _ r _)     = S.singleton r
 defs (MovRR _ r _)     = S.singleton r
 defs (MovRC _ r _)     = S.singleton r
