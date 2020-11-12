@@ -14,17 +14,22 @@ module Kempe.Asm.X86.Type ( X86 (..)
 
 import           Control.DeepSeq    (NFData)
 import qualified Data.ByteString    as BS
+import           Data.Foldable      (toList)
 import           Data.Int           (Int64)
 import qualified Data.Set           as S
 import           Data.Text.Encoding (decodeUtf8)
 import           Data.Word          (Word8)
 import           GHC.Generics       (Generic)
-import           Prettyprinter      (Doc, Pretty (pretty), brackets, colon, concatWith, hardline, indent, (<+>))
+import           Prettyprinter      (Doc, Pretty (pretty), braces, brackets, colon, concatWith, hardline, indent, punctuate, (<+>))
 
 type Label = Word
 
 data Liveness = Liveness { ins :: S.Set AbsReg, out :: S.Set AbsReg }
     deriving (Eq, Generic, NFData)
+
+instance Pretty Liveness where
+    pretty (Liveness is os) = braces (pp is <+> ";" <+> pp os)
+        where pp = mconcat . punctuate "," . fmap pretty . toList
 
 data ControlAnn = ControlAnn { node     :: !Int
                              , conn     :: [Int]
