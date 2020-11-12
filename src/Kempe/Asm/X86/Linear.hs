@@ -178,6 +178,7 @@ useReg :: Liveness -> AbsReg -> AllocM X86Reg
 useReg l (AllocReg64 i) = useReg64 l i
 useReg l (AllocReg8 i)  = useReg8 l i
 useReg _ DataPointer    = pure Rbx
+useReg _ CRet           = pure Rax -- shouldn't clobber anything because this is used at end of function calls/wrappers anyway
 
 -- FIXME: generate spill code
 allocReg :: X86 AbsReg Liveness -> AllocM (X86 X86Reg ())
@@ -203,7 +204,9 @@ allocReg (MovRA l r (AddrRCPlus DataPointer c))      = (MovRA () <$> useReg l r 
 allocReg (MovAR l (AddrRCPlus DataPointer c) r)      = (MovAR () (AddrRCPlus Rbx c) <$> useReg l r) <* freeDone l
 allocReg (CmpRegReg l r0 r1)                         = (CmpRegReg () <$> useReg l r0 <*> useReg l r1) <* freeDone l
 allocReg (MovABool _ (Reg DataPointer) b)            = pure $ MovABool () (Reg Rbx) b
-allocReg (Label _ l)                                 = pure $ Label () l
 allocReg (BSLabel _ b)                               = pure $ BSLabel () b
 allocReg (MovRC l r c)                               = (MovRC () <$> useReg l r <*> pure c) <* freeDone l
+allocReg (PopMem _ (AddrRCPlus DataPointer c))       = pure $ PopMem () (AddrRCPlus Rbx c)
+allocReg (AddAC _ (Reg DataPointer) c) = pure $ AddAC () (Reg Rbx) c
+allocReg (MovAR l (AddrRCMinus DataPointer c) r) = (MovAR () (AddrRCMinus Rbx c) <$> useReg l r) <* freeDone l
 allocReg a                                           = error (show $ pretty a)
