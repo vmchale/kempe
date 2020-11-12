@@ -179,6 +179,7 @@ useReg l (AllocReg64 i) = useReg64 l i
 useReg l (AllocReg8 i)  = useReg8 l i
 useReg _ DataPointer    = pure Rbx
 useReg _ CRet           = pure Rax -- shouldn't clobber anything because this is used at end of function calls/wrappers anyway
+-- TODO: ig we should have a sanity check here?
 
 -- FIXME: generate spill code
 allocReg :: X86 AbsReg Liveness -> AllocM (X86 X86Reg ())
