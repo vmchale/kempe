@@ -170,4 +170,5 @@ allocReg (Jump _ l)                                              = pure $ Jump (
 allocReg (Label _ l)                                             = pure $ Label () l
 allocReg (MovRCBool l (AllocReg8 i) b)                           = MovRCBool () <$> useReg8 l i <*> pure b <* freeDone l
 allocReg (CmpAddrReg l (AddrRCPlus DataPointer c) (AllocReg8 i)) = CmpAddrReg () (AddrRCPlus Rbx c) <$> useReg8 l i <* freeDone l
+allocReg (MovRA l (AllocReg64 i) (Reg DataPointer))              = MovRA () <$> useReg64 l i <*> pure (Reg Rbx) <* freeDone l
 allocReg a                                                       = error (show $ pretty a)

@@ -71,6 +71,7 @@ data X86 reg a = PushReg { ann :: a, rSrc :: reg }
                | AddRR { ann :: a, rAdd1 :: reg, rAdd2 :: reg }
                | SubRR { ann :: a, rSub1 :: reg, rSub2 :: reg }
                | MulRR { ann :: a, rMul1 :: reg, rMul2 :: reg }
+               | AddAC { ann :: a, addrAdd1 :: Addr reg, iAdd2 :: Int64 }
                | AddRC { ann :: a, rAdd1 :: reg, iAdd2 :: Int64 }
                | SubRC { ann :: a, rSub1 :: reg, iSub2 :: Int64 }
                | Label { ann :: a, label :: Label }

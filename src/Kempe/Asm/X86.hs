@@ -88,17 +88,17 @@ irEmit (IR.CJump _ (IR.Mem (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r) (IR.ConstInt
     { r' <- allocReg8
     ; pure [MovRCBool () r' 0, CmpAddrReg () (AddrRCPlus (toAbsReg r) i) r', Je () l, Jump () l']
     }
-irEmit (IR.MovTemp _ r (IR.Mem (IR.Reg r1))) = pure [MovRR () (toAbsReg r) (toAbsReg r1)] -- TODO: use the same reg i?
+irEmit (IR.MovTemp _ r (IR.Mem (IR.Reg r1))) = pure [MovRA () (toAbsReg r) (Reg $ toAbsReg r1)] -- TODO: use the same reg i?
 irEmit (IR.MovTemp _ r (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r1) (IR.ConstInt i))) = pure [MovRA () (toAbsReg r) (AddrRCMinus (toAbsReg r1) i)]
 irEmit (IR.MovTemp _ r (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r1) (IR.ConstInt i))) = pure [MovRA () (toAbsReg r) (AddrRCPlus (toAbsReg r1) i)]
 irEmit (IR.MovMem _ (IR.Reg r) (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r1) (IR.Reg r2))) = do -- this is a pain in the ass, maybe there is a better way to do this? -> pattern match on two sequenced instructions
     { r' <- allocReg64
-    ; pure [ MovRR () r' (toAbsReg r1), SubRR () r' (toAbsReg r2), MovRR () (toAbsReg r) r' ]
+    ; pure [ MovRA () r' (Reg $ toAbsReg r1), SubRR () r' (toAbsReg r2), MovAR () (Reg $ toAbsReg r) r' ]
     }
 irEmit (IR.MovMem _ (IR.Reg r) (IR.ConstInt i)) = pure [ MovRC () (toAbsReg r) i ]
 irEmit (IR.MovMem _ (IR.Reg r) (IR.ExprIntBinOp IR.IntTimesIR (IR.Reg r1) (IR.Reg r2))) = do
     { r' <- allocReg64
-    ; pure [ MovRR () r' (toAbsReg r1), MulRR () r' (toAbsReg r2), MovRR () (toAbsReg r) r' ]
+    ; pure [ MovRR () r' (toAbsReg r1), MulRR () r' (toAbsReg r2), MovAR () (Reg $ toAbsReg r) r' ]
     }
 irEmit (IR.MovMem _ (IR.ExprIntBinOp _ (IR.Reg r0) (IR.ConstInt i)) (IR.Mem (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r1) (IR.ConstInt j)))) = do
     { r' <- allocReg64
@@ -107,13 +107,13 @@ irEmit (IR.MovMem _ (IR.ExprIntBinOp _ (IR.Reg r0) (IR.ConstInt i)) (IR.Mem (IR.
 irEmit (IR.MovMem _ (IR.Reg r) (IR.ExprIntRel IR.IntEqIR (IR.Reg r1) (IR.Reg r2))) = do
     { l0 <- getLabel
     ; l1 <- getLabel
-    ; pure [ CmpRegReg () (toAbsReg r1) (toAbsReg r2), Je () l0, Jump () l1, Label () l0, MovRCBool () (toAbsReg r) 1, Label () l1, MovRCBool () (toAbsReg r) 0 ]
+    ; pure [ CmpRegReg () (toAbsReg r1) (toAbsReg r2), Je () l0, Jump () l1, Label () l0, MovABool () (Reg $ toAbsReg r) 1, Label () l1, MovABool () (Reg $ toAbsReg r) 0 ]
     }
 irEmit (IR.WrapKCall _ Cabi (is, [o]) n l) | all (\i -> IR.size i `rem` 8 == 0) is && IR.size o == 8 = do
     { rC <- allocReg64 -- reg for offset counter
     ; let offs = zipWith const [1..] is
     ; let totalSize = sizeStack is + 8 -- for the output
-    ; pure $ [BSLabel () n, MovRC () rC 0] ++ foldMap (\i -> [PopMem () (AddrRCPlus DataPointer (i * 8))]) offs ++ [AddRC () DataPointer totalSize, Call () l, MovAR () (AddrRCMinus DataPointer 8) CRet, Ret ()] -- TODO: are the parameters backwards?
+    ; pure $ [BSLabel () n, MovRC () rC 0] ++ foldMap (\i -> [PopMem () (AddrRCPlus DataPointer (i * 8))]) offs ++ [AddAC () (Reg DataPointer) totalSize, Call () l, MovAR () (AddrRCMinus DataPointer 8) CRet, Ret ()] -- TODO: are the parameters backwards?
     -- copy last n bytes onto the system stack
     }
 
