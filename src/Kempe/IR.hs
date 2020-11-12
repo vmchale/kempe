@@ -155,7 +155,7 @@ data Exp = ConstInt Int64
          | ConstBool Bool
          | Named Label
          | Reg Temp  -- TODO: size?
-         | Mem Exp -- fetch from address
+         | Mem Exp -- fetch from address FIXME: how many bytes?
          | ExprIntBinOp IntBinOp Exp Exp -- SEMANTICS: this is not side-effecting
          | ExprIntRel RelBinOp Exp Exp
          deriving (Generic, NFData)
