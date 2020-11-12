@@ -114,10 +114,9 @@ irEmit (IR.MovMem _ (IR.Reg r) (IR.ExprIntRel IR.IntEqIR (IR.Reg r1) (IR.Reg r2)
     ; pure [ CmpRegReg () (toAbsReg r1) (toAbsReg r2), Je () l0, Jump () l1, Label () l0, MovABool () (Reg $ toAbsReg r) 1, Label () l1, MovABool () (Reg $ toAbsReg r) 0 ]
     }
 irEmit (IR.WrapKCall _ Cabi (is, [o]) n l) | all (\i -> IR.size i `rem` 8 == 0) is && IR.size o == 8 = do
-    { rC <- allocReg64 -- reg for offset counter
-    ; let offs = zipWith const [1..] is
+    { let offs = zipWith const [1..] is
     ; let totalSize = sizeStack is + 8 -- for the output
-    ; pure $ [BSLabel () n, MovRC () rC 0] ++ foldMap (\i -> [PopMem () (AddrRCPlus DataPointer (i * 8))]) offs ++ [AddAC () (Reg DataPointer) totalSize, Call () l, MovAR () (AddrRCMinus DataPointer 8) CRet, Ret ()] -- TODO: are the parameters backwards?
+    ; pure $ [BSLabel () n] ++ foldMap (\i -> [PopMem () (AddrRCPlus DataPointer (i * 8))]) offs ++ [AddAC () (Reg DataPointer) totalSize, Call () l, MovAR () (AddrRCMinus DataPointer 8) CRet, Ret ()] -- TODO: are the parameters backwards?
     -- copy last n bytes onto the system stack
     }
 
