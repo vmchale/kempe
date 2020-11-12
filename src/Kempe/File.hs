@@ -36,10 +36,10 @@ irFile :: FilePath -> IO ()
 irFile fp = do
     contents <- BSL.readFile fp
     res <- yeetIO $ parseWithMax contents
-    putDoc $ hardline <> uncurry dumpIR res
+    putDoc $ uncurry dumpIR res <> hardline
 
 absFile :: FilePath -> IO ()
 absFile fp = do
     contents <- BSL.readFile fp
     res <- yeetIO $ parseWithMax contents
-    putDoc $ hardline <> uncurry dumpAbs res
+    putDoc $ uncurry dumpAbs res <> hardline
