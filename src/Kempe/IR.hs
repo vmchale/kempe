@@ -129,7 +129,7 @@ instance Pretty Exp where
     pretty (ConstBool True)       = parens "bool true"
     pretty (Named l)              = parens (prettyLabel l)
     pretty (Reg t)                = parens ("reg" <+> pretty t)
-    pretty (Mem e)                = parens ("mem" <+> pretty e)
+    pretty (Mem _ e)              = parens ("mem" <+> pretty e)
     pretty (ExprIntBinOp op e e') = parens (pretty op <+> pretty e <+> pretty e')
     pretty (ExprIntRel op e e')   = parens (pretty op <+> pretty e <+> pretty e')
 
@@ -155,7 +155,7 @@ data Exp = ConstInt Int64
          | ConstBool Bool
          | Named Label
          | Reg Temp  -- TODO: size?
-         | Mem Exp -- fetch from address FIXME: how many bytes?
+         | Mem Int64 Exp -- fetch from address FIXME: how many bytes?
          | ExprIntBinOp IntBinOp Exp Exp -- SEMANTICS: this is not side-effecting
          | ExprIntRel RelBinOp Exp Exp
          deriving (Generic, NFData)
@@ -225,7 +225,7 @@ push off e =
 
 pop :: Int64 -> Temp -> [Stmt ()]
 pop sz t =
-    [ MovTemp () t (Mem (Reg DataPointer))
+    [ MovTemp () t (Mem sz (Reg DataPointer))
     , MovTemp () DataPointer (ExprIntBinOp IntMinusIR (Reg DataPointer) (ConstInt sz))
     ]
 
@@ -262,12 +262,12 @@ writeAtom (AtBuiltin (is, _) Drop)  =
 writeAtom (AtBuiltin (is, _) Dup)   =
     let sz = size (last is) in
         pure $
-             [ MovMem () (dataPointerOffset (i + sz)) (Mem $ dataPointerOffset i) | i <- [1..sz] ] -- FIXME: this should be a one-byte fetch each time
+             [ MovMem () (dataPointerOffset (i + sz)) (Mem 1 $ dataPointerOffset i) | i <- [1..sz] ] -- FIXME: this should be a one-byte fetch each time
                 ++ [ MovTemp () DataPointer (ExprIntBinOp IntPlusIR (Reg DataPointer) (ConstInt sz)) ] -- move data pointer over sz bytes
 writeAtom (If _ as as') = do
     l0 <- newLabel
     l1 <- newLabel
-    let ifIR = CJump () (Mem $ dataPointerOffset 1) l0 l1
+    let ifIR = CJump () (Mem 1 $ dataPointerOffset 1) l0 l1
     asIR <- writeAtoms as
     asIR' <- writeAtoms as'
     l2 <- newLabel
