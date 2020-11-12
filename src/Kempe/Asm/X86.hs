@@ -95,7 +95,7 @@ irEmit (IR.MovMem _ (IR.Reg r) (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r1) (IR.Re
     { r' <- allocReg64
     ; pure [ MovRA () r' (Reg $ toAbsReg r1), SubRR () r' (toAbsReg r2), MovAR () (Reg $ toAbsReg r) r' ]
     }
-irEmit (IR.MovMem _ (IR.Reg r) (IR.ConstInt i)) = pure [ MovRC () (toAbsReg r) i ]
+irEmit (IR.MovMem _ (IR.Reg r) (IR.ConstInt i)) = pure [ MovAC () (Reg $ toAbsReg r) i ]
 irEmit (IR.MovMem _ (IR.Reg r) (IR.ExprIntBinOp IR.IntTimesIR (IR.Reg r1) (IR.Reg r2))) = do
     { r' <- allocReg64
     ; pure [ MovRR () r' (toAbsReg r1), MulRR () r' (toAbsReg r2), MovAR () (Reg $ toAbsReg r) r' ]

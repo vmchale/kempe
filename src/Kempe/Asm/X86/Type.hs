@@ -9,6 +9,7 @@ module Kempe.Asm.X86.Type ( X86 (..)
                           , ControlAnn (..)
                           , Liveness (..)
                           , Label
+                          , prettyAsm
                           ) where
 
 import           Control.DeepSeq    (NFData)
@@ -18,7 +19,7 @@ import qualified Data.Set           as S
 import           Data.Text.Encoding (decodeUtf8)
 import           Data.Word          (Word8)
 import           GHC.Generics       (Generic)
-import           Prettyprinter      (Doc, Pretty (pretty), brackets, colon, indent, (<+>))
+import           Prettyprinter      (Doc, Pretty (pretty), brackets, colon, concatWith, hardline, indent, (<+>))
 
 type Label = Word
 
@@ -67,6 +68,7 @@ data X86 reg a = PushReg { ann :: a, rSrc :: reg }
                | MovABool { ann :: a, addrDest :: Addr reg, boolSrc :: Word8 }
                | MovRR { ann :: a, rDest :: reg, rSrc :: reg } -- for convenience
                | MovRC { ann :: a, rDest :: reg, iSrc :: Int64 }
+               | MovAC { ann :: a, addrDest :: Addr reg, iSrc :: Int64 }
                | MovRCBool { ann :: a, rDest :: reg, boolSrc :: Word8 }
                | AddRR { ann :: a, rAdd1 :: reg, rAdd2 :: reg }
                | SubRR { ann :: a, rSub1 :: reg, rSub2 :: reg }
@@ -108,8 +110,10 @@ instance Pretty reg => Pretty (X86 reg a) where
     pretty (MovABool _ a b)    = i4 ("mov byte ptr" <+> pretty a <> "," <+> pretty b) -- TODO: indicate it's one byte?
     pretty (MovRR _ r0 r1)     = i4 ("mov" <+> pretty r0 <> "," <+> pretty r1)
     pretty (MovRC _ r i)       = i4 ("mov" <+> pretty r <> "," <+> pretty i)
+    pretty (MovAC _ a i)       = i4 ("mov" <+> pretty a <> "," <+> pretty i)
     pretty (MovRCBool _ r b)   = i4 ("mov" <+> pretty r <> "," <+> pretty b)
     pretty (AddRR _ r0 r1)     = i4 ("add" <+> pretty r0 <> "," <> pretty r1)
+    pretty (AddAC _ a c)       = i4 ("add" <+> pretty a <> "," <+> pretty c)
     pretty (SubRR _ r0 r1)     = i4 ("sub" <+> pretty r0 <> "," <> pretty r1)
     pretty (MulRR _ r0 r1)     = i4 ("imul" <+> pretty r0 <> "," <+> pretty r1)
     pretty (AddRC _ r0 c)      = i4 ("add" <+> pretty r0 <> "," <+> pretty c)
@@ -119,3 +123,6 @@ instance Pretty reg => Pretty (X86 reg a) where
     pretty (Je _ l)            = i4 ("je" <+> prettyLabel l)
     pretty (CmpAddrReg _ a r)  = i4 ("cmp" <+> pretty a <> "," <+> pretty r)
     pretty (CmpRegReg _ r0 r1) = i4 ("cmp" <+> pretty r0 <> "," <+> pretty r1)
+
+prettyAsm :: Pretty reg => [X86 reg a] -> Doc ann
+prettyAsm = concatWith (\x y -> x <> hardline <> y) . fmap pretty
