@@ -7,7 +7,6 @@ import           Control.Exception         (Exception, throwIO)
 import qualified Data.ByteString.Lazy      as BSL
 import           Kempe.AST
 import           Kempe.Asm.X86.ControlFlow
-import           Kempe.Asm.X86.Linear
 import           Kempe.Asm.X86.Liveness
 import           Kempe.File
 import           Kempe.Lexer
