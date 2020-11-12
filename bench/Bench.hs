@@ -7,6 +7,7 @@ import           Data.Functor              (void)
 import           Kempe.Asm.X86
 import           Kempe.Asm.X86.ControlFlow
 import           Kempe.Asm.X86.Liveness
+import           Kempe.Asm.X86.Linear
 import           Kempe.IR
 import           Kempe.Lexer
 import           Kempe.Monomorphize
@@ -49,6 +50,10 @@ main =
                       bgroup "Liveness analysis"
                         [ bench "X86 (examples/factorial.kmp)" $ nf reconstruct f
                         ]
+                  , env absX86 $ \f ->
+                      bgroup "Register allocation"
+                        [ bench "X86/linear (examples/factorial.kmp)" $ nf allocRegs f
+                        ]
                 ]
     where parsedM = yeetIO . parseWithMax =<< BSL.readFile "test/data/ty.kmp"
           splitmix = yeetIO . parseWithMax =<< BSL.readFile "examples/splitmix.kmp"
@@ -66,4 +71,5 @@ main =
           genX86 m = let (ir, u) = runIR m in irToX86 u ir
           facX86 = genX86 <$> facMono
           facX86Cf = mkControlFlow <$> facX86
+          absX86 = reconstruct <$> facX86Cf
           -- facIR = runIR <$> facMono
