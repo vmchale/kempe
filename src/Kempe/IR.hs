@@ -270,7 +270,8 @@ writeAtom (If _ as as') = do
     let ifIR = CJump () (Mem $ dataPointerOffset 1) l0 l1
     asIR <- writeAtoms as
     asIR' <- writeAtoms as'
-    pure $ ifIR : (Labeled () l0 : asIR) ++ (Labeled () l1 : asIR')
+    l2 <- newLabel
+    pure $ ifIR : (Labeled () l0 : asIR ++ [Jump () l2]) ++ (Labeled () l1 : asIR' ++ [Jump () l2]) ++ [Labeled () l2]
 writeAtom (Dip (is, _) as) =
     let sz = size (last is)
         shiftNext = MovTemp () DataPointer (ExprIntBinOp IntMinusIR (Reg DataPointer) (ConstInt sz))
