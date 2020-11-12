@@ -22,19 +22,19 @@ import           Prettyprinter       (pretty)
 
 -- currently just has 64-bit and 8-bit registers
 data X86Reg = Rax
-            | Rbx
             | Rcx
             | Rdx
             | Rsp
             | Rbp
             | AH
             | AL
-            | BH
-            | BL
+            -- -- | BH
+            -- -- | BL
             | CH
             | CL
             | DH
             | DL
+            | Rbx
             deriving (Eq, Ord, Enum, Bounded, Generic, NFData)
 
 -- set of free registers we iterate over
@@ -69,7 +69,6 @@ runAllocM = flip evalState allFree
 -- that point.
 assoc :: X86Reg -> S.Set X86Reg
 assoc Rax = S.fromList [AH, AL]
-assoc Rbx = S.fromList [BH, BL]
 assoc Rcx = S.fromList [CH, CL]
 assoc Rdx = S.fromList [DH, DL]
 assoc AH  = S.singleton Rax
@@ -162,12 +161,13 @@ useReg8 l i =
 
 -- FIXME: generate spill code
 allocReg :: X86 AbsReg Liveness -> AllocM (X86 X86Reg ())
-allocReg (PushReg l (AllocReg64 i))    = PushReg () <$> useReg64 l i <* freeDone l
-allocReg Ret{}                         = pure $ Ret ()
-allocReg (Call _ l)                    = pure $ Call () l
-allocReg (PushConst _ i)               = pure $ PushConst () i
-allocReg (Je _ l)                      = pure $ Je () l
-allocReg (Jump _ l)                    = pure $ Jump () l
-allocReg (Label _ l)                   = pure $ Label () l
-allocReg (MovRCBool l (AllocReg8 i) b) = MovRCBool () <$> useReg8 l i <*> pure b <* freeDone l
-allocReg a                             = error (show $ pretty a)
+allocReg (PushReg l (AllocReg64 i))                              = PushReg () <$> useReg64 l i <* freeDone l
+allocReg Ret{}                                                   = pure $ Ret ()
+allocReg (Call _ l)                                              = pure $ Call () l
+allocReg (PushConst _ i)                                         = pure $ PushConst () i
+allocReg (Je _ l)                                                = pure $ Je () l
+allocReg (Jump _ l)                                              = pure $ Jump () l
+allocReg (Label _ l)                                             = pure $ Label () l
+allocReg (MovRCBool l (AllocReg8 i) b)                           = MovRCBool () <$> useReg8 l i <*> pure b <* freeDone l
+allocReg (CmpAddrReg l (AddrRCPlus DataPointer c) (AllocReg8 i)) = CmpAddrReg () (AddrRCPlus Rbx c) <$> useReg8 l i <* freeDone l
+allocReg a                                                       = error (show $ pretty a)
