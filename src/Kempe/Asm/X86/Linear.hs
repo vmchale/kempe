@@ -1,5 +1,6 @@
-{-# LANGUAGE DeriveAnyClass #-}
-{-# LANGUAGE DeriveGeneric  #-}
+{-# LANGUAGE DeriveAnyClass    #-}
+{-# LANGUAGE DeriveGeneric     #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 -- | Linear scan register allocator
 --
@@ -18,7 +19,7 @@ import           GHC.Generics        (Generic)
 import           Kempe.Asm.X86.Type
 import           Lens.Micro          (Lens')
 import           Lens.Micro.Mtl      (modifying, (.=))
-import           Prettyprinter       (pretty)
+import           Prettyprinter       (Pretty (pretty))
 
 -- currently just has 64-bit and 8-bit registers
 data X86Reg = Rax
@@ -36,6 +37,20 @@ data X86Reg = Rax
             | DL
             | Rbx
             deriving (Eq, Ord, Enum, Bounded, Generic, NFData)
+
+instance Pretty X86Reg where
+    pretty Rax = "rax"
+    pretty Rcx = "rcx"
+    pretty Rdx = "rdx"
+    pretty Rsp = "rsp"
+    pretty Rbp = "rbp"
+    pretty AH  = "ah"
+    pretty AL  = "al"
+    pretty CH  = "ch"
+    pretty CL  = "cl"
+    pretty DH  = "dh"
+    pretty DL  = "dl"
+    pretty Rbx = "rbx"
 
 -- set of free registers we iterate over
 data AllocSt = AllocSt { allocs :: M.Map AbsReg X86Reg -- ^ Already allocated registers

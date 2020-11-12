@@ -1,10 +1,15 @@
 module Kempe.Pipeline ( irGen
                       , x86Parsed
+                      , x86Alloc
                       ) where
 
-import           Control.Exception (throw)
+import           Control.Composition       ((.*))
+import           Control.Exception         (throw)
 import           Kempe.AST
 import           Kempe.Asm.X86
+import           Kempe.Asm.X86.ControlFlow
+import           Kempe.Asm.X86.Linear
+import           Kempe.Asm.X86.Liveness
 import           Kempe.IR
 import           Kempe.Shuttle
 
@@ -15,3 +20,6 @@ irGen i m = runTempM (writeModule tAnnMod)
 
 x86Parsed :: Int -> Module a b -> [X86 AbsReg ()]
 x86Parsed i m = let (ir, u) = irGen i m in irToX86 u ir
+
+x86Alloc :: Int -> Module a b -> [X86 X86Reg ()]
+x86Alloc = allocRegs . reconstruct . mkControlFlow .* x86Parsed

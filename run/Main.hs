@@ -7,12 +7,13 @@ import           Options.Applicative
 import qualified Paths_kempe         as P
 
 data Command = TypeCheck !FilePath
-             | Compile !FilePath !FilePath !Bool -- TODO: take arch on cli
+             | Compile !FilePath !FilePath !Bool !Bool -- TODO: take arch on cli
 
 run :: Command -> IO ()
-run (TypeCheck fp)      = either throwIO pure =<< tcFile fp
-run (Compile _ _ False) = putStrLn "Compiler currently does nothing; try 'typecheck'"
-run (Compile fp _ True) = irFile fp
+run (TypeCheck fp)            = either throwIO pure =<< tcFile fp
+run (Compile _ _ False False) = putStrLn "Compiler currently does nothing; try 'typecheck'"
+run (Compile fp _ True False) = irFile fp
+run (Compile fp _ False True) = x86File fp
 
 kmpFile :: Parser FilePath
 kmpFile = argument str
@@ -24,6 +25,11 @@ irSwitch :: Parser Bool
 irSwitch = switch
     (long "dump-ir"
     <> help "Write intermediate representation to stdout")
+
+asmSwitch :: Parser Bool
+asmSwitch = switch
+    (long "dump-asm"
+    <> help "Write assembly (intel syntax) to stdout")
 
 exeFile :: Parser FilePath
 exeFile = argument str
@@ -39,7 +45,7 @@ commandP = hsubparser
     <|> compileP
     where
         tcP = TypeCheck <$> kmpFile
-        compileP = Compile <$> kmpFile <*> exeFile <*> irSwitch
+        compileP = Compile <$> kmpFile <*> exeFile <*> irSwitch <*> asmSwitch
 
 wrapper :: ParserInfo Command
 wrapper = info (helper <*> versionMod <*> commandP)

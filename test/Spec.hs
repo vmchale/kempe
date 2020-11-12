@@ -61,8 +61,8 @@ codegen :: FilePath -> TestTree
 codegen fp = testCase ("Generates code without throwing an exception (" ++ fp ++ ")") $ do
     contents <- BSL.readFile fp
     parsed <- yeetIO $ parseWithMax contents
-    let liveX86 = reconstruct $ mkControlFlow $ uncurry x86Parsed parsed
-    assertBool "Doesn't fail" (allocRegs liveX86 `deepseq` True)
+    let code = uncurry x86Alloc parsed
+    assertBool "Doesn't fail" (code `deepseq` True)
 
 liveness :: FilePath -> TestTree
 liveness fp = testCase ("Liveness analysis terminates (" ++ fp ++ ")") $ do
