@@ -1,5 +1,6 @@
 module Kempe.File ( tcFile
                   , absFile
+                  , irFile
                   ) where
 
 -- common b/w test suite and exec, repl utils
@@ -9,6 +10,7 @@ import qualified Data.ByteString.Lazy      as BSL
 import           Kempe.AST
 import           Kempe.Asm.X86.Type
 import           Kempe.Error
+import           Kempe.IR
 import           Kempe.Parser
 import           Kempe.Pipeline
 import           Kempe.TyAssign
@@ -24,8 +26,17 @@ tcFile fp = do
 yeetIO :: Exception e => Either e a -> IO a
 yeetIO = either throwIO pure
 
+dumpIR :: Int -> Module a b -> Doc ann
+dumpIR = prettyIR . fst .* irGen
+
 dumpAbs :: Int -> Module a b -> Doc ann
 dumpAbs = prettyAsm .* x86Parsed
+
+irFile :: FilePath -> IO ()
+irFile fp = do
+    contents <- BSL.readFile fp
+    res <- yeetIO $ parseWithMax contents
+    putDoc $ uncurry dumpIR res
 
 absFile :: FilePath -> IO ()
 absFile fp = do

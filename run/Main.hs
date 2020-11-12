@@ -7,17 +7,23 @@ import           Options.Applicative
 import qualified Paths_kempe         as P
 
 data Command = TypeCheck !FilePath
-             | Compile !FilePath !FilePath -- TODO: take arch on cli
+             | Compile !FilePath !FilePath !Bool -- TODO: take arch on cli
 
 run :: Command -> IO ()
-run (TypeCheck fp) = either throwIO pure =<< tcFile fp
-run (Compile _ _)  = putStrLn "Compiler currently does nothing; try 'typecheck'"
+run (TypeCheck fp)      = either throwIO pure =<< tcFile fp
+run (Compile _ _ False) = putStrLn "Compiler currently does nothing; try 'typecheck'"
+run (Compile fp _ True) = irFile fp
 
 kmpFile :: Parser FilePath
 kmpFile = argument str
     (metavar "FILE"
     <> help "Source file"
     <> kmpCompletions)
+
+irSwitch :: Parser Bool
+irSwitch = switch
+    (long "dump-ir"
+    <> help "Write intermediate representation to stdout")
 
 exeFile :: Parser FilePath
 exeFile = argument str
@@ -33,7 +39,7 @@ commandP = hsubparser
     <|> compileP
     where
         tcP = TypeCheck <$> kmpFile
-        compileP = Compile <$> kmpFile <*> exeFile
+        compileP = Compile <$> kmpFile <*> exeFile <*> irSwitch
 
 wrapper :: ParserInfo Command
 wrapper = info (helper <*> versionMod <*> commandP)

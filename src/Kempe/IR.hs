@@ -1,7 +1,7 @@
-{-# LANGUAGE DeriveAnyClass #-}
-{-# LANGUAGE DeriveFunctor  #-}
-{-# LANGUAGE DeriveGeneric  #-}
-{-# LANGUAGE TypeFamilies   #-}
+{-# LANGUAGE DeriveAnyClass    #-}
+{-# LANGUAGE DeriveFunctor     #-}
+{-# LANGUAGE DeriveGeneric     #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 -- | IR loosely based on Appel book.
 module Kempe.IR ( writeModule
@@ -13,7 +13,8 @@ module Kempe.IR ( writeModule
                 , Temp (..)
                 , runTempM
                 , TempM
-                , foldStmt
+                , prettyIR
+                -- , foldStmt
                 , WriteSt (..)
                 , size
                 ) where
@@ -28,14 +29,14 @@ import           Data.Foldable.Ext
 import           Data.Int                   (Int64)
 import qualified Data.IntMap                as IM
 import           Data.List.NonEmpty         (NonEmpty (..))
-import           Data.Text.Encoding         (encodeUtf8)
-import           Data.Word                  (Word8)
+import           Data.Text.Encoding         (decodeUtf8, encodeUtf8)
 import           GHC.Generics               (Generic)
 import           Kempe.AST
 import           Kempe.Name
 import           Kempe.Unique
 import           Lens.Micro                 (Lens')
 import           Lens.Micro.Mtl             (modifying)
+import           Prettyprinter              (Doc, Pretty (pretty), braces, colon, concatWith, hardline, parens, (<+>))
 
 type Label = Word
 
@@ -43,6 +44,11 @@ data Temp = Temp64 !Int
           | Temp8 !Int
           | DataPointer -- RBP on x86 and x19 on aarch64?
           deriving (Generic, NFData)
+
+instance Pretty Temp where
+    pretty (Temp64 i)  = "t_" <> pretty i
+    pretty (Temp8 i)   = "t8_" <> pretty i
+    pretty DataPointer = "datapointer"
 
 data WriteSt = WriteSt { wlabels :: [Label]
                        , temps   :: [Int]
@@ -96,10 +102,37 @@ lookupName (Name _ (Unique i) _) =
     gets
         (IM.findWithDefault (error "Internal error in IR phase: could not look find label for name") i . atLabels)
 
-foldStmt :: NonEmpty (Stmt ()) -> Stmt ()
-foldStmt (s :| ss) = foldr (Seq ()) s ss
+-- foldStmt :: NonEmpty (Stmt ()) -> Stmt ()
+-- foldStmt (s :| ss) = foldr (Seq ()) s ss
 
 -- TODO: pretty-printer?
+
+prettyIR :: [Stmt a] -> Doc ann
+prettyIR = concatWith (\x y -> x <> hardline <> y) . fmap pretty
+
+prettyLabel :: Label -> Doc ann
+prettyLabel l = "kmp" <> pretty l
+
+instance Pretty (Stmt a) where
+    pretty (Labeled _ l)           = hardline <> prettyLabel l <> colon
+    pretty (Jump _ l)              = parens ("j" <+> prettyLabel l)
+    pretty (CCall _ ty bs)         = parens ("C" <+> pretty (decodeUtf8 (BSL.toStrict bs)) <+> braces (pretty ty))
+    pretty (KCall _ l)             = parens ("call" <+> prettyLabel l)
+    pretty Ret{}                   = parens "ret"
+    pretty (MovTemp _ t e)         = parens ("movtemp" <+> pretty t <+> pretty e)
+    pretty (MovMem _ e e')         = parens ("movmem" <+> pretty e <+> pretty e')
+    pretty (CJump _ e l l')        = parens ("cjump" <+> pretty e <+> prettyLabel l <+> prettyLabel l')
+    pretty (WrapKCall _ _ ty fn l) = hardline <> "export" <+> pretty (decodeUtf8 fn) <+> braces (pretty ty) <+> prettyLabel l
+
+instance Pretty Exp where
+    pretty (ConstInt i)           = parens ("int" <+> pretty i)
+    pretty (ConstBool False)      = parens "bool false"
+    pretty (ConstBool True)       = parens "bool true"
+    pretty (Named l)              = parens (prettyLabel l)
+    pretty (Reg t)                = parens ("reg" <+> pretty t)
+    pretty (Mem e)                = parens ("mem" <+> pretty e)
+    pretty (ExprIntBinOp op e e') = parens (pretty op <+> pretty e <+> pretty e')
+    pretty (ExprIntRel op e e')   = parens (pretty op <+> pretty e <+> pretty e')
 
 -- | Type parameter @a@ so we can annotate with 'Int's later.
 data Stmt a = Labeled { stmtCost :: a, stmtLabel :: Label }
@@ -113,14 +146,14 @@ data Stmt a = Labeled { stmtCost :: a, stmtLabel :: Label }
             -- enough...)
             | MovTemp { stmtCost :: a, stmtTemp :: Temp, stmtExp :: Exp } -- put e in temp?
             | MovMem { stmtCost :: a, stmtExp0 :: Exp, stmtExp1 :: Exp } -- store e2 at address given by e1
-            | Seq { stmtCost :: a, stmt0 :: Stmt a, stmt1 :: Stmt a }
+            -- -- | Seq { stmtCost :: a, stmt0 :: Stmt a, stmt1 :: Stmt a }
             | Ret { stmtCost :: a }
            deriving (Generic, NFData, Functor)
             -- -- | MJump { stmtCost :: a, stmtM :: Exp a, stmtLabel :: Label } -- for optimizations/fallthrough?
 
 data Exp = ConstInt Int64
          | ConstPtr Int64
-         | ConstBool Word8
+         | ConstBool Bool
          | Named Label
          | Reg Temp  -- TODO: size?
          | Mem Exp -- fetch from address
@@ -136,6 +169,12 @@ data RelBinOp = IntEqIR
               | IntGtIR
               deriving (Generic, NFData)
 
+instance Pretty RelBinOp where
+    pretty IntEqIR  = "="
+    pretty IntNeqIR = "!="
+    pretty IntLtIR  = "<"
+    pretty IntGtIR  = ">"
+
 data IntBinOp = IntPlusIR
               | IntTimesIR
               | IntDivIR
@@ -145,6 +184,16 @@ data IntBinOp = IntPlusIR
               | IntShiftRIR
               | IntShiftLIR
               deriving (Generic, NFData)
+
+instance Pretty IntBinOp where
+    pretty IntPlusIR   = "+"
+    pretty IntTimesIR  = "*"
+    pretty IntDivIR    = "/"
+    pretty IntMinusIR  = "-"
+    pretty IntModIR    = "%"
+    pretty IntXorIR    = "xor"
+    pretty IntShiftRIR = ">>"
+    pretty IntShiftLIR = "<<"
 
 writeModule :: Module () MonoStackType -> TempM [Stmt ()]
 writeModule = foldMapA writeDecl
@@ -192,7 +241,7 @@ intRel cons = do
 -- | This throws exceptions on nonsensical input.
 writeAtom :: Atom MonoStackType -> TempM [Stmt ()]
 writeAtom (IntLit _ i)              = pure $ push 8 (ConstInt $ fromInteger i)
-writeAtom (BoolLit _ b)             = pure $ push 1 (ConstBool $ toByte b)
+writeAtom (BoolLit _ b)             = pure $ push 1 (ConstBool b)
 writeAtom (AtName _ n)              = pure . KCall () <$> lookupName n -- TODO: when to do tco?
 writeAtom (AtBuiltin ([], _) Drop)  = error "Internal error: Ill-typed drop!"
 writeAtom (AtBuiltin ([], _) Swap)  = error "Internal error: Ill-typed swap!"
@@ -236,10 +285,6 @@ writeAtom (Dip (is, _) as) =
 
 dataPointerOffset :: Int64 -> Exp
 dataPointerOffset off = ExprIntBinOp IntPlusIR (Reg DataPointer) (ConstInt off)
-
-toByte :: Bool -> Word8
-toByte True  = 1
-toByte False = 0
 
 -- need env with size for constructors
 size :: KempeTy a -> Int64
