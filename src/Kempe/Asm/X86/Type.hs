@@ -6,6 +6,7 @@
 module Kempe.Asm.X86.Type ( X86 (..)
                           , Addr (..)
                           , AbsReg (..)
+                          , X86Reg (..)
                           , ControlAnn (..)
                           , Liveness (..)
                           , Label
@@ -36,6 +37,38 @@ data ControlAnn = ControlAnn { node     :: !Int
                              , usesNode :: S.Set AbsReg
                              , defsNode :: S.Set AbsReg
                              } deriving (Generic, NFData)
+
+-- currently just has 64-bit and 8-bit registers
+data X86Reg = Rax
+            | Rcx
+            | Rdx
+            | Rsp
+            | Rbp
+            | AH
+            | AL
+            -- -- | BH
+            -- -- | BL
+            | CH
+            | CL
+            | DH
+            | DL
+            | Rbx
+            -- TODO: 64-bit registers r8-r15
+            deriving (Eq, Ord, Enum, Bounded, Generic, NFData)
+
+instance Pretty X86Reg where
+    pretty Rax = "rax"
+    pretty Rcx = "rcx"
+    pretty Rdx = "rdx"
+    pretty Rsp = "rsp"
+    pretty Rbp = "rbp"
+    pretty AH  = "ah"
+    pretty AL  = "al"
+    pretty CH  = "ch"
+    pretty CL  = "cl"
+    pretty DH  = "dh"
+    pretty DL  = "dl"
+    pretty Rbx = "rbx"
 
 data AbsReg = DataPointer
             | AllocReg64 !Int -- TODO: register by size

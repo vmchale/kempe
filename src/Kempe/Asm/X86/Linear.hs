@@ -1,5 +1,3 @@
-{-# LANGUAGE DeriveAnyClass    #-}
-{-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 -- | Linear scan register allocator
@@ -9,48 +7,15 @@ module Kempe.Asm.X86.Linear ( X86Reg (..)
                             , allocRegs
                             ) where
 
-import           Control.DeepSeq     (NFData)
 import           Control.Monad.State (State, evalState, gets)
 import           Data.Foldable       (traverse_)
 import qualified Data.Map            as M
 import           Data.Maybe          (fromMaybe)
 import qualified Data.Set            as S
-import           GHC.Generics        (Generic)
 import           Kempe.Asm.X86.Type
 import           Lens.Micro          (Lens')
 import           Lens.Micro.Mtl      (modifying, (.=))
 import           Prettyprinter       (Pretty (pretty))
-
--- currently just has 64-bit and 8-bit registers
-data X86Reg = Rax
-            | Rcx
-            | Rdx
-            | Rsp
-            | Rbp
-            | AH
-            | AL
-            -- -- | BH
-            -- -- | BL
-            | CH
-            | CL
-            | DH
-            | DL
-            | Rbx
-            deriving (Eq, Ord, Enum, Bounded, Generic, NFData)
-
-instance Pretty X86Reg where
-    pretty Rax = "rax"
-    pretty Rcx = "rcx"
-    pretty Rdx = "rdx"
-    pretty Rsp = "rsp"
-    pretty Rbp = "rbp"
-    pretty AH  = "ah"
-    pretty AL  = "al"
-    pretty CH  = "ch"
-    pretty CL  = "cl"
-    pretty DH  = "dh"
-    pretty DL  = "dl"
-    pretty Rbx = "rbx"
 
 -- set of free registers we iterate over
 data AllocSt = AllocSt { allocs :: M.Map AbsReg X86Reg -- ^ Already allocated registers

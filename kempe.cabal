@@ -44,6 +44,7 @@ library
         Kempe.Asm.X86.ControlFlow
         Kempe.Asm.X86.Liveness
         Kempe.Asm.X86.Linear
+        Kempe.Asm.X86.Dyn
 
     hs-source-dirs:   src
     other-modules:
