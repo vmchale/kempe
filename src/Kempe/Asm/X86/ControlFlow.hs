@@ -86,6 +86,7 @@ uses (SubRR _ r r')     = S.fromList [r, r']
 uses (MulRR _ r r')     = S.fromList [r, r']
 uses (AddRC _ r _)      = S.singleton r
 uses (SubRC _ r _)      = S.singleton r
+uses (AddAC _ a _)      = addrRegs a
 uses (CmpAddrReg _ a r) = S.singleton r <> addrRegs a
 uses (CmpRegReg _ r r') = S.fromList [r, r']
 uses _                  = S.empty
