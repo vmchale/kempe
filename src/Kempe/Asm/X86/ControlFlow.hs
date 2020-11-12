@@ -16,6 +16,7 @@ type FreshM = State (Int, M.Map Label Int) -- TODO: map int to asm
 runFreshM :: FreshM a -> a
 runFreshM = flip evalState (0, mempty)
 
+-- FIXME: split on RET before?
 mkControlFlow :: [X86 AbsReg ()] -> [X86 AbsReg ControlAnn]
 mkControlFlow instrs = runFreshM (broadcasts instrs *> addControlFlow instrs)
 

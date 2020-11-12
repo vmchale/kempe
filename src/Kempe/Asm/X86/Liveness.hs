@@ -39,6 +39,7 @@ done n0 n1 = {-# SCC "done" #-} and $ zipWith (\(_, l) (_, l') -> l == l') (IM.e
 inspectOrder :: [X86 reg ControlAnn] -> [Int]
 inspectOrder = fmap (node . ann) -- don't need to reverse because thread goes in opposite order
 
+-- FIXME: split on RET
 reconstruct :: [X86 reg ControlAnn] -> [X86 reg Liveness]
 reconstruct asms = {-# SCC "reconstructL" #-} fmap (fmap lookupL) asms
     where l = {-# SCC "mkLiveness" #-} mkLiveness asms
