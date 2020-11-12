@@ -28,7 +28,6 @@ import qualified Data.ByteString.Lazy       as BSL
 import           Data.Foldable.Ext
 import           Data.Int                   (Int64)
 import qualified Data.IntMap                as IM
-import           Data.List.NonEmpty         (NonEmpty (..))
 import           Data.Text.Encoding         (decodeUtf8, encodeUtf8)
 import           GHC.Generics               (Generic)
 import           Kempe.AST
@@ -116,13 +115,13 @@ prettyLabel l = "kmp" <> pretty l
 instance Pretty (Stmt a) where
     pretty (Labeled _ l)           = hardline <> prettyLabel l <> colon
     pretty (Jump _ l)              = parens ("j" <+> prettyLabel l)
-    pretty (CCall _ ty bs)         = parens ("C" <+> pretty (decodeUtf8 (BSL.toStrict bs)) <+> braces (pretty ty))
+    pretty (CCall _ ty bs)         = parens ("C" <+> pretty (decodeUtf8 (BSL.toStrict bs)) <+> braces (prettyMonoStackType  ty))
     pretty (KCall _ l)             = parens ("call" <+> prettyLabel l)
     pretty Ret{}                   = parens "ret"
     pretty (MovTemp _ t e)         = parens ("movtemp" <+> pretty t <+> pretty e)
     pretty (MovMem _ e e')         = parens ("movmem" <+> pretty e <+> pretty e')
     pretty (CJump _ e l l')        = parens ("cjump" <+> pretty e <+> prettyLabel l <+> prettyLabel l')
-    pretty (WrapKCall _ _ ty fn l) = hardline <> "export" <+> pretty (decodeUtf8 fn) <+> braces (pretty ty) <+> prettyLabel l
+    pretty (WrapKCall _ _ ty fn l) = hardline <> "export" <+> pretty (decodeUtf8 fn) <+> braces (prettyMonoStackType ty) <+> prettyLabel l
 
 instance Pretty Exp where
     pretty (ConstInt i)           = parens ("int" <+> pretty i)

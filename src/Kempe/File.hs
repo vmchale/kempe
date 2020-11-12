@@ -14,7 +14,7 @@ import           Kempe.IR
 import           Kempe.Parser
 import           Kempe.Pipeline
 import           Kempe.TyAssign
-import           Prettyprinter             (Doc)
+import           Prettyprinter             (Doc, hardline)
 import           Prettyprinter.Render.Text (putDoc)
 
 tcFile :: FilePath -> IO (Either (Error ()) ())
@@ -36,10 +36,10 @@ irFile :: FilePath -> IO ()
 irFile fp = do
     contents <- BSL.readFile fp
     res <- yeetIO $ parseWithMax contents
-    putDoc $ uncurry dumpIR res
+    putDoc $ hardline <> uncurry dumpIR res
 
 absFile :: FilePath -> IO ()
 absFile fp = do
     contents <- BSL.readFile fp
     res <- yeetIO $ parseWithMax contents
-    putDoc $ uncurry dumpAbs res
+    putDoc $ hardline <> uncurry dumpAbs res
