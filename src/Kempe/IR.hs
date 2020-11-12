@@ -42,7 +42,7 @@ type Label = Word
 data Temp = Temp64 !Int
           | Temp8 !Int
           | DataPointer -- RBP on x86 and x19 on aarch64?
-          deriving (Generic, NFData)
+          deriving (Eq, Generic, NFData)
 
 instance Pretty Temp where
     pretty (Temp64 i)  = "t_" <> pretty i

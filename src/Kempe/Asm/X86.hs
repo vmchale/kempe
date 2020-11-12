@@ -89,8 +89,8 @@ irEmit (IR.CJump _ (IR.Mem 1 (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r) (IR.ConstI
     ; pure [MovRCBool () r' 0, CmpAddrReg () (AddrRCPlus (toAbsReg r) i) r', Je () l, Jump () l']
     }
 irEmit (IR.MovTemp _ r (IR.Mem _ (IR.Reg r1))) = pure [MovRA () (toAbsReg r) (Reg $ toAbsReg r1)] -- TODO: use the same reg i? TODO: sanity check reg/mem access size?
-irEmit (IR.MovTemp _ r (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r1) (IR.ConstInt i))) = pure [MovRA () (toAbsReg r) (AddrRCMinus (toAbsReg r1) i)]
-irEmit (IR.MovTemp _ r (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r1) (IR.ConstInt i))) = pure [MovRA () (toAbsReg r) (AddrRCPlus (toAbsReg r1) i)]
+irEmit (IR.MovTemp _ r (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r1) (IR.ConstInt i))) | r == r1 = pure [AddRC () (toAbsReg r) i]
+irEmit (IR.MovTemp _ r (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r1) (IR.ConstInt i))) | r == r1 = pure [SubRC () (toAbsReg r) i]
 irEmit (IR.MovMem _ (IR.Reg r) (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r1) (IR.Reg r2))) = do -- this is a pain in the ass, maybe there is a better way to do this? -> pattern match on two sequenced instructions
     { r' <- allocReg64
     ; pure [ MovRA () r' (Reg $ toAbsReg r1), SubRR () r' (toAbsReg r2), MovAR () (Reg $ toAbsReg r) r' ]

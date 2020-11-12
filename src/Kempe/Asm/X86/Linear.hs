@@ -174,16 +174,36 @@ useReg8 l i =
         else findReg absR
     where absR = AllocReg8 i
 
+useReg :: Liveness -> AbsReg -> AllocM X86Reg
+useReg l (AllocReg64 i) = useReg64 l i
+useReg l (AllocReg8 i)  = useReg8 l i
+useReg _ DataPointer    = pure Rbx
+
 -- FIXME: generate spill code
 allocReg :: X86 AbsReg Liveness -> AllocM (X86 X86Reg ())
-allocReg (PushReg l (AllocReg64 i))                              = PushReg () <$> useReg64 l i <* freeDone l
-allocReg Ret{}                                                   = pure $ Ret ()
-allocReg (Call _ l)                                              = pure $ Call () l
-allocReg (PushConst _ i)                                         = pure $ PushConst () i
-allocReg (Je _ l)                                                = pure $ Je () l
-allocReg (Jump _ l)                                              = pure $ Jump () l
-allocReg (Label _ l)                                             = pure $ Label () l
-allocReg (MovRCBool l (AllocReg8 i) b)                           = MovRCBool () <$> useReg8 l i <*> pure b <* freeDone l
-allocReg (CmpAddrReg l (AddrRCPlus DataPointer c) (AllocReg8 i)) = CmpAddrReg () (AddrRCPlus Rbx c) <$> useReg8 l i <* freeDone l
-allocReg (MovRA l (AllocReg64 i) (Reg DataPointer))              = MovRA () <$> useReg64 l i <*> pure (Reg Rbx) <* freeDone l
-allocReg a                                                       = error (show $ pretty a)
+allocReg (PushReg l (AllocReg64 i))                  = PushReg () <$> useReg64 l i <* freeDone l
+allocReg Ret{}                                       = pure $ Ret ()
+allocReg (Call _ l)                                  = pure $ Call () l
+allocReg (PushConst _ i)                             = pure $ PushConst () i
+allocReg (Je _ l)                                    = pure $ Je () l
+allocReg (Jump _ l)                                  = pure $ Jump () l
+allocReg (Label _ l)                                 = pure $ Label () l
+allocReg (MovRCBool l (AllocReg8 i) b)               = (MovRCBool () <$> useReg8 l i <*> pure b) <* freeDone l
+allocReg (CmpAddrReg l (AddrRCPlus DataPointer c) r) = CmpAddrReg () (AddrRCPlus Rbx c) <$> useReg l r <* freeDone l
+allocReg (MovRA l r (Reg DataPointer))               = (MovRA () <$> useReg l r <*> pure (Reg Rbx)) <* freeDone l
+allocReg (AddRC _ DataPointer c)                     = pure $ AddRC () Rbx c
+allocReg (SubRC _ DataPointer c)                     = pure $ SubRC () Rbx c
+allocReg (MovRA l r0 (Reg r1))                       = (MovRA () <$> useReg l r0 <*> fmap Reg (useReg l r1)) <* freeDone l
+allocReg (SubRR l r0 r1)                             = (SubRR () <$> useReg l r0 <*> useReg l r1) <* freeDone l
+allocReg (MovAR l (Reg DataPointer) r)               = (MovAR () (Reg Rbx) <$> useReg l r) <* freeDone l
+allocReg (MovAC _ (Reg DataPointer) i)               = pure $ MovAC () (Reg Rbx) i
+allocReg (MovRR l r0 r1)                             = (MovRR () <$> useReg l r0 <*> useReg l r1) <* freeDone l
+allocReg (MulRR l r0 r1)                             = (MovRR () <$> useReg l r0 <*> useReg l r1) <* freeDone l
+allocReg (MovRA l r (AddrRCPlus DataPointer c))      = (MovRA () <$> useReg l r <*> pure (AddrRCPlus Rbx c)) <* freeDone l
+allocReg (MovAR l (AddrRCPlus DataPointer c) r)      = (MovAR () (AddrRCPlus Rbx c) <$> useReg l r) <* freeDone l
+allocReg (CmpRegReg l r0 r1)                         = (CmpRegReg () <$> useReg l r0 <*> useReg l r1) <* freeDone l
+allocReg (MovABool _ (Reg DataPointer) b)            = pure $ MovABool () (Reg Rbx) b
+allocReg (Label _ l)                                 = pure $ Label () l
+allocReg (BSLabel _ b)                               = pure $ BSLabel () b
+allocReg (MovRC l r c)                               = (MovRC () <$> useReg l r <*> pure c) <* freeDone l
+allocReg a                                           = error (show $ pretty a)
