@@ -74,6 +74,9 @@ constructorTypesLens f s = fmap (\x -> s { constructorTypes = x }) (f (construct
 tyEnvLens :: Lens' (TyState a) (TyEnv a)
 tyEnvLens f s = fmap (\x -> s { tyEnv = x }) (f (tyEnv s))
 
+kindEnvLens :: Lens' (TyState a) (IM.IntMap Kind)
+kindEnvLens f s = fmap (\x -> s { kindEnv = x }) (f (kindEnv s))
+
 renamesLens :: Lens' (TyState a) (IM.IntMap Int)
 renamesLens f s = fmap (\x -> s { renames = x }) (f (renames s))
 
@@ -257,23 +260,34 @@ tyAtoms = foldM
     (\seed a -> do { tys' <- tyAtom a ; catTypes tys' seed })
     emptyStackType
 
+-- from size,
+mkHKT :: Int -> Kind
+mkHKT 0 = Star
+mkHKT i = TyCons (mkHKT i) Star
+
 tyInsertLeaf :: Name b -- ^ type being declared
              -> S.Set (Name b) -> (TyName a, [KempeTy b]) -> TypeM () ()
-tyInsertLeaf n vars (Name _ (Unique i) _, ins) | S.null vars =
-    modifying constructorTypesLens (IM.insert i (voidStackType $ StackType vars ins [TyNamed undefined n]))
+tyInsertLeaf n@(Name _ (Unique k) _) vars (Name _ (Unique i) _, ins) | S.null vars =
+    modifying constructorTypesLens (IM.insert i (voidStackType $ StackType vars ins [TyNamed undefined n])) *>
+    modifying kindEnvLens (IM.insert k Star)
                                                | otherwise =
-    modifying constructorTypesLens (IM.insert i (voidStackType $ StackType vars ins [app (TyNamed undefined n) (S.toList vars)]))
+    modifying constructorTypesLens (IM.insert i (voidStackType $ StackType vars ins [app (TyNamed undefined n) (S.toList vars)])) *>
+    modifying kindEnvLens (IM.insert k (mkHKT $ S.size vars))
 
 assignTyLeaf :: Name b
              -> S.Set (Name b)
              -> (TyName a, [KempeTy b])
              -> TypeM () (TyName (StackType ()), [KempeTy ()])
-assignTyLeaf n vars (tn@(Name _ (Unique i) _), ins) | S.null vars =
+assignTyLeaf n@(Name _ (Unique k) _) vars (tn@(Name _ (Unique i) _), ins) | S.null vars =
     let ty = voidStackType $ StackType vars ins [TyNamed undefined n] in
-    modifying constructorTypesLens (IM.insert i ty) $> (tn $> ty, fmap void ins)
+    modifying constructorTypesLens (IM.insert i ty) *>
+    modifying kindEnvLens (IM.insert k Star) $>
+    (tn $> ty, fmap void ins)
                                                | otherwise =
     let ty = voidStackType $ StackType vars ins [app (TyNamed undefined n) (S.toList vars)] in
-    modifying constructorTypesLens (IM.insert i ty) $> (tn $> ty, fmap void ins)
+    modifying constructorTypesLens (IM.insert i ty) *>
+    modifying kindEnvLens (IM.insert k (mkHKT $ S.size vars)) $>
+    (tn $> ty, fmap void ins)
 
 app :: KempeTy a -> [Name a] -> KempeTy a
 app = foldr (\n ty -> TyApp undefined ty (TyVar undefined n))
