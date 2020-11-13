@@ -52,6 +52,7 @@ library
         Kempe.Name
         Kempe.Error
         Kempe.Asm.X86.Type
+        Kempe.Proc.Nasm
         Prettyprinter.Ext
         Data.Foldable.Ext
 
@@ -75,7 +76,9 @@ library
         prettyprinter >=1.7.0,
         composition-prelude >=1.1.0.1,
         microlens-mtl -any,
-        x86-64bit
+        x86-64bit,
+        process >=1.2.3.0,
+        temporary
 
     if !flag(cross)
         build-tool-depends: alex:alex -any, happy:happy -any

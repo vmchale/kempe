@@ -1,6 +1,7 @@
 module Kempe.File ( tcFile
                   , irFile
                   , x86File
+                  , compile
                   ) where
 
 -- common b/w test suite and exec, repl utils
@@ -13,6 +14,7 @@ import           Kempe.Error
 import           Kempe.IR
 import           Kempe.Parser
 import           Kempe.Pipeline
+import           Kempe.Proc.Nasm
 import           Kempe.TyAssign
 import           Prettyprinter             (Doc, hardline)
 import           Prettyprinter.Render.Text (putDoc)
@@ -43,3 +45,9 @@ x86File fp = do
     contents <- BSL.readFile fp
     res <- yeetIO $ parseWithMax contents
     putDoc $ uncurry dumpX86 res <> hardline
+
+compile :: FilePath -> FilePath -> IO ()
+compile fp o = do
+    contents <- BSL.readFile fp
+    res <- yeetIO $ parseWithMax contents
+    writeO (uncurry dumpX86 res) o
