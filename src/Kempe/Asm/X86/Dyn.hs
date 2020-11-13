@@ -3,9 +3,9 @@
 module Kempe.Asm.X86.Dyn ( assemble
                          ) where
 
-import Kempe.Asm.X86.Type
-import CodeGen.X86
-import Data.Foldable (traverse_)
+import           CodeGen.X86
+import           Data.Foldable      (traverse_)
+import           Kempe.Asm.X86.Type
 
 assemble :: [X86 X86Reg ()] -> Code
 assemble = traverse_ asmInstruction
@@ -17,8 +17,8 @@ asReg64 Rcx = rcx
 asReg64 Rdx = rdx
 asReg64 Rsp = rsp
 asReg64 Rbp = rbp
-asReg64 _ = error "Internal error: not a 64-bit register!"
+asReg64 _   = error "Internal error: not a 64-bit register!"
 
 asmInstruction :: X86 X86Reg () -> Code
-asmInstruction Ret{} = ret
+asmInstruction Ret{}         = ret
 asmInstruction (PushReg _ r) = push (asReg64 r)
