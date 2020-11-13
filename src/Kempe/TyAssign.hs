@@ -32,7 +32,7 @@ type TyEnv a = IM.IntMap (StackType a)
 
 data TyState a = TyState { maxU             :: Int -- ^ For renamer
                          , tyEnv            :: TyEnv a
-                         , kindEnv :: IM.IntMap Kind
+                         , kindEnv          :: IM.IntMap Kind
                          , renames          :: IM.IntMap Int
                          , constructorTypes :: IM.IntMap (StackType a)
                          , constraints      :: S.Set (KempeTy a, KempeTy a) -- Just need equality between simple types? (do have tyapp but yeah)
