@@ -44,7 +44,6 @@ library
         Kempe.Asm.X86.ControlFlow
         Kempe.Asm.X86.Liveness
         Kempe.Asm.X86.Linear
-        Kempe.Asm.X86.Dyn
 
     hs-source-dirs:   src
     other-modules:
@@ -77,7 +76,6 @@ library
         prettyprinter >=1.7.0,
         composition-prelude >=1.1.0.1,
         microlens-mtl -any,
-        x86-64bit -any,
         process >=1.2.3.0,
         temporary -any
 
