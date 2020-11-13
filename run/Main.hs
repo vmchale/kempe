@@ -11,7 +11,7 @@ data Command = TypeCheck !FilePath
 
 run :: Command -> IO ()
 run (TypeCheck fp)                  = either throwIO pure =<< tcFile fp
-run (Compile _ _ False False)       = putStrLn "Compiler currently does nothing; try 'typecheck'"
+run (Compile _ _ False False)       = putStrLn "Compiler currently does nothing"
 run (Compile fp Nothing True False) = irFile fp
 run (Compile fp Nothing False True) = x86File fp
 
