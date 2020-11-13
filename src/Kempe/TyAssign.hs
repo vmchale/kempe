@@ -32,6 +32,7 @@ type TyEnv a = IM.IntMap (StackType a)
 
 data TyState a = TyState { maxU             :: Int -- ^ For renamer
                          , tyEnv            :: TyEnv a
+                         , kindEnv :: IM.IntMap Kind
                          , renames          :: IM.IntMap Int
                          , constructorTypes :: IM.IntMap (StackType a)
                          , constraints      :: S.Set (KempeTy a, KempeTy a) -- Just need equality between simple types? (do have tyapp but yeah)
@@ -41,7 +42,7 @@ data TyState a = TyState { maxU             :: Int -- ^ For renamer
 (<#*>) x y = x <> hardline <> indent 2 y
 
 instance Pretty (TyState a) where
-    pretty (TyState _ te r _ cs) =
+    pretty (TyState _ te _ r _ cs) =
         "type environment:" <#> vsep (prettyBound <$> IM.toList te)
             <#> "renames:" <#*> prettyDumpBinds r
             <#> "constraints:" <#> prettyConstraints cs
@@ -84,6 +85,9 @@ dummyName n = do
     pSt <- gets maxU
     Name n (Unique $ pSt + 1) ()
         <$ modifying maxULens (+1)
+
+data Kind = Star
+          | TyCons Kind Kind
 
 type TypeM a = StateT (TyState a) (Either (Error a))
 
@@ -139,7 +143,7 @@ unifyM s =
 runTypeM :: Int -- ^ For renamer
          -> TypeM a x -> Either (Error a) (x, Int)
 runTypeM maxInt = fmap (second maxU) .
-    flip runStateT (TyState maxInt mempty mempty mempty S.empty)
+    flip runStateT (TyState maxInt mempty mempty mempty mempty S.empty)
 
 typeOfBuiltin :: BuiltinFn -> TypeM () (StackType ())
 typeOfBuiltin Drop = do
