@@ -9,12 +9,6 @@ HS_SRC := $(shell find src -type f) kempe.cabal
 moddeps.svg: $(HS_SRC)
 	graphmod src | dot -Tsvg -o$@
 
-factorial.S: examples/factorial.kmp
-	kc $^ --dump-asm > $@
-
-factorial.o: factorial.S
-	nasm $^ -f elf64 -o $@
-
 rts.o: rts.S
 	nasm $^ -f elf64 -o $@
 
