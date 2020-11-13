@@ -8,8 +8,10 @@ bench 'gcc -fsyntax-only benchmarks/splitmix64.c' \
     'gcc -O0 -c benchmarks/splitmix64.c' \
     'clang -O0 -c benchmarks/splitmix64.c' \
     'icc -O0 -c benchmarks/splitmix64.c' \
-    'pgcc -O0 -c benchmarks/splitmix64.c' \
     'ghc -O0 benchmarks/Splitmix.hs' \
     'rustc --crate-type=lib --emit=dep-info,metadata benchmarks/splitmix.rs' \
     'rustc --crate-type=lib benchmarks/splitmix.rs' \
-    'rustc --crate-type=cdylib benchmarks/splitmix.rs'
+    'rustc --crate-type=cdylib benchmarks/splitmix.rs' \
+    'kc examples/factorial.kmp --dump-asm > factorial.S && nasm factorial.S -f elf64'
+
+#     'pgcc -O0 -c benchmarks/splitmix64.c -Mnollvm' \
