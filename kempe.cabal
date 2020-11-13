@@ -73,12 +73,13 @@ library
         mtl -any,
         microlens -any,
         transformers -any,
+        extra -any,
         prettyprinter >=1.7.0,
         composition-prelude >=1.1.0.1,
         microlens-mtl -any,
-        x86-64bit,
+        x86-64bit -any,
         process >=1.2.3.0,
-        temporary
+        temporary -any
 
     if !flag(cross)
         build-tool-depends: alex:alex -any, happy:happy -any

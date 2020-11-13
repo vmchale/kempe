@@ -14,6 +14,7 @@ import           Control.Monad.Except       (throwError)
 import           Control.Monad.State.Strict (StateT, get, gets, modify, put, runStateT)
 import           Data.Bifunctor             (second)
 import           Data.Foldable              (traverse_)
+import           Data.Foldable.Extra        (allM)
 import           Data.Functor               (void, ($>))
 import qualified Data.IntMap                as IM
 import           Data.List.NonEmpty         (NonEmpty (..))
@@ -91,6 +92,7 @@ dummyName n = do
 
 data Kind = Star
           | TyCons Kind Kind
+          deriving (Eq)
 
 type TypeM a = StateT (TyState a) (Either (Error a))
 
@@ -292,15 +294,43 @@ assignTyLeaf n@(Name _ (Unique k) _) vars (tn@(Name _ (Unique i) _), ins) | S.nu
 app :: KempeTy a -> [Name a] -> KempeTy a
 app = foldr (\n ty -> TyApp undefined ty (TyVar undefined n))
 
+kindLookup :: TyName a -> TypeM a Kind
+kindLookup n@(Name _ (Unique i) l) = do
+    st <- gets kindEnv
+    case IM.lookup i st of
+        Just k  -> pure k
+        Nothing -> throwError $ PoorScope l n
+
+isStar :: Kind -> Bool
+isStar Star = True
+isStar _    = False
+
+allStar :: (Foldable f) => f (KempeTy a) -> TypeM a Bool
+allStar = allM (fmap isStar . kindOf)
+
+kindOf :: KempeTy a -> TypeM a Kind
+kindOf TyBuiltin{}        = pure Star
+kindOf (TyNamed _ tn)     = kindLookup tn
+kindOf TyVar{}            = pure Star
+kindOf ty@(TyTuple l tys) = do { good <- allStar tys ; unless good (throwError (IllKinded l ty)) $> Star }
+kindOf tyErr@(TyApp l ty ty') = do
+    k <- kindOf ty
+    k' <- kindOf ty'
+    case k of
+        TyCons k'' k''' -> unless (k' == k''') (throwError (IllKinded l tyErr)) $> k''
+        _               -> throwError (IllKinded l tyErr)
+
 assignDecl :: KempeDecl a b -> TypeM () (KempeDecl () (StackType ()))
 assignDecl (TyDecl _ tn ns ls) = TyDecl () (void tn) (void <$> ns) <$> traverse (assignTyLeaf tn (S.fromList ns)) ls
 assignDecl (FunDecl _ n ins os a) = do
+    traverse_ kindOf (void <$> ins ++ os)
     sig <- renameStack $ voidStackType $ StackType (freeVars (ins ++ os)) ins os
     (as, inferred) <- assignAtoms a
     reconcile <- mergeStackTypes sig inferred
     -- assign comes after tyInsert
     pure $ FunDecl reconcile (n $> reconcile) (void <$> ins) (void <$> os) as
 assignDecl (ExtFnDecl _ n ins os cn) = do
+    traverse_ kindOf (void <$> ins ++ os)
     unless (length os <= 1) $
         throwError $ InvalidCImport () (void n)
     let sig = voidStackType $ StackType S.empty ins os
@@ -348,12 +378,13 @@ lessGeneral (StackType _ is os) (StackType _ is' os') = lessGenerals (is ++ os) 
 tyInsert :: KempeDecl a b -> TypeM () ()
 tyInsert (TyDecl _ tn ns ls) = traverse_ (tyInsertLeaf tn (S.fromList ns)) ls
 tyInsert (FunDecl _ _ ins out as) = do
+    traverse_ kindOf (void <$> ins ++ out) -- FIXME: this gives sketchy results?
     sig <- renameStack $ voidStackType $ StackType (freeVars (ins ++ out)) ins out
     inferred <- tyAtoms as
     _ <- mergeStackTypes sig inferred -- FIXME: need to verify the merged type is as general as the signature?
     when (inferred `lessGeneral` sig) $
         throwError $ LessGeneral () sig inferred
-tyInsert ExtFnDecl{} = pure ()
+tyInsert ExtFnDecl{} = pure () -- TODO: kind-check
 tyInsert Export{} = pure ()
 
 tyModule :: Module a b -> TypeM () ()
