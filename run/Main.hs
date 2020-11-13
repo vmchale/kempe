@@ -11,6 +11,7 @@ data Command = TypeCheck !FilePath
 
 run :: Command -> IO ()
 run (TypeCheck fp)                    = either throwIO pure =<< tcFile fp
+run (Compile fp Nothing False False)  = putStrLn "No output file specified!"
 run (Compile fp (Just o) False False) = compile fp o
 run (Compile fp Nothing True False)   = irFile fp
 run (Compile fp Nothing False True)   = x86File fp
