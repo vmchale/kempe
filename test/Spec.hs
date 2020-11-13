@@ -36,7 +36,7 @@ main = defaultMain $
             , tyInfer "test/data/mutual.kmp"
             , tyInfer "examples/factorial.kmp"
             , badType "test/err/merge.kmp" "Type a_4 -- a_4 Int is not as general as type a_3 -- a_3 a_3"
-            , badType "test/err/kind.kmp" "Ill-kinded type: '(Maybe_1 Maybe_1)' . Note that type variables are assumed to have kind \11089."
+            , badType "test/err/kind.kmp" "Ill-kinded type: '(Maybe_1 Maybe_1)'. Note that type variables have kind \11089 in Kempe."
             , testAssignment "test/data/ty.kmp"
             , testAssignment "lib/either.kmp"
             , testAssignment "prelude/fn.kmp"

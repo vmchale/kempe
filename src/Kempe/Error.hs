@@ -38,7 +38,7 @@ instance Pretty (Error a) where
     pretty (LessGeneral _ sty sty')      = "Type" <+> pretty sty' <+> "is not as general as type" <+> pretty sty
     pretty (InvalidCExport _ n)          = "C export" <+> pretty n <+> "has more than one return value"
     pretty (InvalidCImport _ n)          = pretty n <+> "imported functions can have at most one return value"
-    pretty (IllKinded _ ty)              = "Ill-kinded type:" <+> squotes (pretty ty) <+> ". Note that type variables have kind ⭑ in Kempe."
+    pretty (IllKinded _ ty)              = "Ill-kinded type:" <+> squotes (pretty ty) <> ". Note that type variables have kind ⭑ in Kempe."
     pretty (BadType _)                   = "All types appearing in a signature must have kind ⭑"
 
 instance (Pretty a, Typeable a) => Exception (Error a)
