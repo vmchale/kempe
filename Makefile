@@ -6,6 +6,12 @@ MAKEFLAGS += --warn-undefined-variables --no-builtin-rules
 
 HS_SRC := $(shell find src -type f) kempe.cabal
 
+factorial.S: examples/factorial.kmp
+	kc $^ --dump-asm > $@
+
+factorial.o: factorial.S
+	nasm $^ -f elf64 -o $@
+
 rts.o: rts.S
 	nasm $^ -f elf64 -o $@
 
@@ -16,4 +22,4 @@ moddeps.svg: $(HS_SRC)
 	graphmod src | dot -Tsvg -o$@
 
 clean:
-	rm -rf dist-newstyle *.rlib *.d *.rmeta *.o stack.yaml.lock moddeps.svg
+	rm -rf dist-newstyle *.rlib *.d *.rmeta *.o stack.yaml.lock moddeps.svg factorial.S
