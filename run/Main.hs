@@ -10,10 +10,10 @@ data Command = TypeCheck !FilePath
              | Compile !FilePath !(Maybe FilePath) !Bool !Bool -- TODO: take arch on cli
 
 run :: Command -> IO ()
-run (TypeCheck fp)                  = either throwIO pure =<< tcFile fp
-run (Compile fp o False False)      = compile fp o
-run (Compile fp Nothing True False) = irFile fp
-run (Compile fp Nothing False True) = x86File fp
+run (TypeCheck fp)                    = either throwIO pure =<< tcFile fp
+run (Compile fp (Just o) False False) = compile fp o
+run (Compile fp Nothing True False)   = irFile fp
+run (Compile fp Nothing False True)   = x86File fp
 
 kmpFile :: Parser FilePath
 kmpFile = argument str
