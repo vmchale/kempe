@@ -15,7 +15,6 @@ import qualified Data.Set            as S
 import           Kempe.Asm.X86.Type
 import           Lens.Micro          (Lens')
 import           Lens.Micro.Mtl      (modifying, (.=))
-import           Prettyprinter       (Pretty (pretty))
 
 -- set of free registers we iterate over
 data AllocSt = AllocSt { allocs :: M.Map AbsReg X86Reg -- ^ Already allocated registers
@@ -53,6 +52,10 @@ assoc Rcx = S.fromList [CH, CL]
 assoc Rdx = S.fromList [DH, DL]
 assoc AH  = S.singleton Rax
 assoc AL  = S.singleton Rax
+assoc CH  = S.singleton Rcx
+assoc CL  = S.singleton Rcx
+assoc DH  = S.singleton Rdx
+assoc DL  = S.singleton Rdx
 
 allocRegs :: [X86 AbsReg Liveness] -> [X86 X86Reg ()]
 allocRegs = runAllocM . traverse allocReg
@@ -139,6 +142,13 @@ useReg8 l i =
         else findReg absR
     where absR = AllocReg8 i
 
+useAddr :: Liveness -> Addr AbsReg -> AllocM (Addr X86Reg)
+useAddr l (Reg r)               = Reg <$> useReg l r
+useAddr l (AddrRCPlus r c)      = AddrRCPlus <$> useReg l r <*> pure c
+useAddr l (AddrRCMinus r c)     = AddrRCMinus <$> useReg l r <*> pure c
+useAddr l (AddrRRPlus r0 r1)    = AddrRRPlus <$> useReg l r0 <*> useReg l r1
+useAddr l (AddrRRScale r0 r1 c) = AddrRRScale <$> useReg l r0 <*> useReg l r1 <*> pure c
+
 useReg :: Liveness -> AbsReg -> AllocM X86Reg
 useReg l (AllocReg64 i) = useReg64 l i
 useReg l (AllocReg8 i)  = useReg8 l i
@@ -146,33 +156,50 @@ useReg _ DataPointer    = pure Rbx
 useReg _ CRet           = pure Rax -- shouldn't clobber anything because this is used at end of function calls/wrappers anyway
 -- TODO: ig we should have a sanity check here?
 
+illTyped :: a
+illTyped = error "Internal error: ill-typed assembly!"
+
+questionable :: a
+questionable = error "Internal error in register allocator: questionable instruction."
+
 -- FIXME: generate spill code
 allocReg :: X86 AbsReg Liveness -> AllocM (X86 X86Reg ())
-allocReg (PushReg l (AllocReg64 i))                  = PushReg () <$> useReg64 l i <* freeDone l
-allocReg Ret{}                                       = pure $ Ret ()
-allocReg (Call _ l)                                  = pure $ Call () l
-allocReg (PushConst _ i)                             = pure $ PushConst () i
-allocReg (Je _ l)                                    = pure $ Je () l
-allocReg (Jump _ l)                                  = pure $ Jump () l
-allocReg (Label _ l)                                 = pure $ Label () l
-allocReg (MovRCBool l (AllocReg8 i) b)               = (MovRCBool () <$> useReg8 l i <*> pure b) <* freeDone l
-allocReg (CmpAddrReg l (AddrRCPlus DataPointer c) r) = CmpAddrReg () (AddrRCPlus Rbx c) <$> useReg l r <* freeDone l
-allocReg (MovRA l r (Reg DataPointer))               = (MovRA () <$> useReg l r <*> pure (Reg Rbx)) <* freeDone l
-allocReg (AddRC _ DataPointer c)                     = pure $ AddRC () Rbx c
-allocReg (SubRC _ DataPointer c)                     = pure $ SubRC () Rbx c
-allocReg (MovRA l r0 (Reg r1))                       = (MovRA () <$> useReg l r0 <*> fmap Reg (useReg l r1)) <* freeDone l
-allocReg (SubRR l r0 r1)                             = (SubRR () <$> useReg l r0 <*> useReg l r1) <* freeDone l
-allocReg (MovAR l (Reg DataPointer) r)               = (MovAR () (Reg Rbx) <$> useReg l r) <* freeDone l
-allocReg (MovAC _ (Reg DataPointer) i)               = pure $ MovAC () (Reg Rbx) i
-allocReg (MovRR l r0 r1)                             = (MovRR () <$> useReg l r0 <*> useReg l r1) <* freeDone l
-allocReg (MulRR l r0 r1)                             = (MovRR () <$> useReg l r0 <*> useReg l r1) <* freeDone l
-allocReg (MovRA l r (AddrRCPlus DataPointer c))      = (MovRA () <$> useReg l r <*> pure (AddrRCPlus Rbx c)) <* freeDone l
-allocReg (MovAR l (AddrRCPlus DataPointer c) r)      = (MovAR () (AddrRCPlus Rbx c) <$> useReg l r) <* freeDone l
-allocReg (CmpRegReg l r0 r1)                         = (CmpRegReg () <$> useReg l r0 <*> useReg l r1) <* freeDone l
-allocReg (MovABool _ (Reg DataPointer) b)            = pure $ MovABool () (Reg Rbx) b
-allocReg (BSLabel _ b)                               = pure $ BSLabel () b
-allocReg (MovRC l r c)                               = (MovRC () <$> useReg l r <*> pure c) <* freeDone l
-allocReg (PopMem _ (AddrRCPlus DataPointer c))       = pure $ PopMem () (AddrRCPlus Rbx c)
-allocReg (AddAC _ (Reg DataPointer) c)               = pure $ AddAC () (Reg Rbx) c
-allocReg (MovAR l (AddrRCMinus DataPointer c) r)     = (MovAR () (AddrRCMinus Rbx c) <$> useReg l r) <* freeDone l
-allocReg a                                           = error (show $ pretty a)
+allocReg (PushReg l r)                         = PushReg () <$> useReg l r <* freeDone l
+allocReg Ret{}                                 = pure $ Ret ()
+allocReg (Call _ l)                            = pure $ Call () l
+allocReg (PushConst _ i)                       = pure $ PushConst () i
+allocReg (Je _ l)                              = pure $ Je () l
+allocReg (Jump _ l)                            = pure $ Jump () l
+allocReg (Label _ l)                           = pure $ Label () l
+allocReg (MovRCBool l (AllocReg8 i) b)         = (MovRCBool () <$> useReg8 l i <*> pure b) <* freeDone l
+allocReg (CmpAddrReg l a r)                    = (CmpAddrReg () <$> useAddr l a <*> useReg l r) <* freeDone l
+allocReg (AddRC _ DataPointer c)               = pure $ AddRC () Rbx c
+allocReg (SubRC _ DataPointer c)               = pure $ SubRC () Rbx c
+allocReg (MovRA l r0 (Reg r1))                 = (MovRA () <$> useReg l r0 <*> fmap Reg (useReg l r1)) <* freeDone l
+allocReg (SubRR l r0 r1)                       = (SubRR () <$> useReg l r0 <*> useReg l r1) <* freeDone l
+allocReg (MovAR l a r)                         = (MovAR () <$> useAddr l a <*> useReg l r) <* freeDone l
+allocReg (MovAC _ (Reg DataPointer) i)         = pure $ MovAC () (Reg Rbx) i
+allocReg (MovRR l r0 r1)                       = (MovRR () <$> useReg l r0 <*> useReg l r1) <* freeDone l
+allocReg (MulRR l r0 r1)                       = (MovRR () <$> useReg l r0 <*> useReg l r1) <* freeDone l
+allocReg (MovRA l r a)                         = (MovRA () <$> useReg l r <*> useAddr l a) <* freeDone l
+allocReg (CmpRegReg l r0 r1)                   = (CmpRegReg () <$> useReg l r0 <*> useReg l r1) <* freeDone l
+allocReg (MovABool _ (Reg DataPointer) b)      = pure $ MovABool () (Reg Rbx) b
+allocReg (BSLabel _ b)                         = pure $ BSLabel () b
+allocReg (MovRC l r c)                         = (MovRC () <$> useReg l r <*> pure c) <* freeDone l
+allocReg (PopMem _ (AddrRCPlus DataPointer c)) = pure $ PopMem () (AddrRCPlus Rbx c)
+allocReg (AddAC _ (Reg DataPointer) c)         = pure $ AddAC () (Reg Rbx) c
+allocReg (MovRCBool _ DataPointer _)           = illTyped
+allocReg (MovRCBool _ AllocReg64{} _)          = illTyped
+allocReg (MovRCBool _ CRet _)                  = illTyped
+allocReg (AddRC l (AllocReg64 i) c)            = (AddRC () <$> useReg64 l i <*> pure c) <* freeDone l
+allocReg (SubRC l (AllocReg64 i) c)            = (SubRC () <$> useReg64 l i <*> pure c) <* freeDone l
+allocReg (AddRC _ AllocReg8{} _)               = illTyped
+allocReg (AddRC _ CRet _)                      = questionable
+allocReg (SubRC _ AllocReg8{} _)               = illTyped
+allocReg (SubRC _ CRet _)                      = questionable
+allocReg (MovAC l a c)                         = (MovAC () <$> useAddr l a <*> pure c) <* freeDone l
+allocReg (MovABool l a b)                      = (MovABool () <$> useAddr l a <*> pure b) <* freeDone l
+allocReg (PopMem l a)                          = PopMem () <$> useAddr l a <* freeDone l
+allocReg (AddAC l a c)                         = (AddAC () <$> useAddr l a <*> pure c) <* freeDone l
+allocReg (PushMem l a)                         = PushMem () <$> useAddr l a <* freeDone l
+allocReg (AddRR l r0 r1)                       = (AddRR () <$> useReg l r0 <*> useReg l r1) <* freeDone l
