@@ -1,5 +1,4 @@
 module Kempe.File ( tcFile
-                  , absFile
                   , irFile
                   , x86File
                   ) where
@@ -33,20 +32,11 @@ dumpIR = prettyIR . fst .* irGen
 dumpX86 :: Int -> Module a b -> Doc ann
 dumpX86 = prettyAsm .* x86Alloc
 
-dumpAbs :: Int -> Module a b -> Doc ann
-dumpAbs = prettyAsm .* x86Parsed
-
 irFile :: FilePath -> IO ()
 irFile fp = do
     contents <- BSL.readFile fp
     res <- yeetIO $ parseWithMax contents
     putDoc $ uncurry dumpIR res <> hardline
-
-absFile :: FilePath -> IO ()
-absFile fp = do
-    contents <- BSL.readFile fp
-    res <- yeetIO $ parseWithMax contents
-    putDoc $ uncurry dumpAbs res <> hardline
 
 x86File :: FilePath -> IO ()
 x86File fp = do
