@@ -21,10 +21,10 @@
 - [ ] Do sets actually help?
 # Bugs
 - [x] The current setup ignores extern imports -> no it doesn't
-- [ ] Exported functions w/ C ABI should be there (so it can link)
+- [x] Exported functions w/ C ABI should be there (so it can link)
 - [ ] Throw error when return value in C ABI is too big
+- [ ] Constructors aren't monomorphized
 # Pipeline
-- [ ] FORTRAN backend? :p
 - [ ] Inliner (all non-recursive?)
 - [ ] https://www.cs.princeton.edu/courses/archive/spr19/cos217/lectures/13_Assembly1.pdf (von neumann -> c where int ptrs, ATS & such are useful...)
 - [ ] http://hackage.haskell.org/package/x86-64bit-0.4.6.1/docs/CodeGen-X86.html
@@ -37,7 +37,6 @@
 - [ ] Or-patterns?
 - [ ] Tail-call optimization (easier than I thought?)
   - [ ]  Mutually recursive function optimization
-- [ ] `x86-64bit` backend? might be useful for REPL :o
 - [ ] tail recursion modulo cons ?
 ## Builtins
 - [ ] `rem` builtin or the like?
