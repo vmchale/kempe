@@ -17,7 +17,9 @@ module Kempe.Asm.X86 ( X86 (..)
                      ) where
 
 import           Control.Monad.State (State, evalState, gets, modify)
+import           Control.Recursion   (cata)
 import           Data.Foldable.Ext
+import           Data.Functor        (($>))
 import           Data.Int            (Int64)
 import           Data.Monoid         (Sum (..))
 import           Kempe.AST
@@ -59,6 +61,11 @@ runWriteM = flip evalState
 irToX86 :: IR.WriteSt -> [IR.Stmt ()] -> [X86 AbsReg ()]
 irToX86 w = runWriteM w . foldMapA (irEmit . irCosts)
 
+expCost :: IR.Exp a -> IR.Exp Int64
+expCost = cata a where
+    a (IR.ConstIntF _ i)  = IR.ConstInt 0 i
+    a (IR.ConstBoolF _ b) = IR.ConstBool 0 b
+
 -- TODO: match multiple statements
 -- this isn't even recursive lmao
 -- TODO: something to eval general expressions
@@ -67,15 +74,15 @@ irCosts (IR.Jump _ l)                                                           
 irCosts (IR.KCall _ l)                                                                                                                = IR.KCall 2 l
 irCosts IR.Ret{}                                                                                                                      = IR.Ret 1
 irCosts (IR.Labeled _ l)                                                                                                              = IR.Labeled 0 l
-irCosts (IR.CJump _ e@(IR.Mem _ (IR.ExprIntBinOp IR.IntPlusIR IR.Reg{} IR.ConstInt{})) l l')                                            = IR.CJump 3 e l l'
-irCosts (IR.MovTemp _ r m@(IR.Mem _ IR.Reg{}))                                                                                          = IR.MovTemp 1 r m
-irCosts (IR.MovTemp _ r e@(IR.ExprIntBinOp IR.IntMinusIR IR.Reg{} IR.ConstInt{}))                                                     = IR.MovTemp 1 r e
-irCosts (IR.MovTemp _ r e@(IR.ExprIntBinOp IR.IntPlusIR IR.Reg{} IR.ConstInt{}))                                                      = IR.MovTemp 1 r e
-irCosts (IR.MovMem _ r@IR.Reg{} e@(IR.ExprIntBinOp IR.IntMinusIR IR.Reg{} IR.Reg{}))                                                  = IR.MovMem 2 r e
-irCosts (IR.MovMem _ r@IR.Reg{} e@IR.ConstInt{})                                                                                      = IR.MovMem 1 r e
-irCosts (IR.MovMem _ r@IR.Reg{} e@(IR.ExprIntBinOp IR.IntTimesIR _ _))                                                                = IR.MovMem 3 r e
-irCosts (IR.MovMem _ e1@(IR.ExprIntBinOp _ IR.Reg{} IR.ConstInt{}) e2@(IR.Mem _ (IR.ExprIntBinOp IR.IntPlusIR IR.Reg{} IR.ConstInt{}))) = IR.MovMem 2 e1 e2
-irCosts (IR.MovMem _ r@IR.Reg{} e@(IR.ExprIntRel _ IR.Reg{} IR.Reg{}))                                                                = IR.MovMem 2 r e
+irCosts (IR.CJump _ e@(IR.Mem _ _ (IR.ExprIntBinOp _ IR.IntPlusIR IR.Reg{} IR.ConstInt{})) l l')                                      = IR.CJump 3 (e $> undefined) l l'
+irCosts (IR.MovTemp _ r m@(IR.Mem _ _ IR.Reg{}))                                                                                      = IR.MovTemp 1 r (m $> undefined)
+irCosts (IR.MovTemp _ r e@(IR.ExprIntBinOp _ IR.IntMinusIR IR.Reg{} IR.ConstInt{}))                                                     = IR.MovTemp 1 r (e $> undefined)
+irCosts (IR.MovTemp _ r e@(IR.ExprIntBinOp _ IR.IntPlusIR IR.Reg{} IR.ConstInt{}))                                                      = IR.MovTemp 1 r (e $> undefined)
+irCosts (IR.MovMem _ r@IR.Reg{} e@(IR.ExprIntBinOp _ IR.IntMinusIR IR.Reg{} IR.Reg{}))                                                  = IR.MovMem 2 (r $> undefined) (e $> undefined)
+irCosts (IR.MovMem _ r@IR.Reg{} e@IR.ConstInt{})                                                                                      = IR.MovMem 1 (r $> undefined) (e $> undefined)
+irCosts (IR.MovMem _ r@IR.Reg{} e@(IR.ExprIntBinOp _ IR.IntTimesIR _ _))                                                                = IR.MovMem 3 (r $> undefined) (e $> undefined)
+irCosts (IR.MovMem _ e1@(IR.ExprIntBinOp _ _ IR.Reg{} IR.ConstInt{}) e2@(IR.Mem _ _ (IR.ExprIntBinOp _ IR.IntPlusIR IR.Reg{} IR.ConstInt{}))) = IR.MovMem 2 (e1 $> undefined) (e2 $> undefined)
+irCosts (IR.MovMem _ r@IR.Reg{} e@(IR.ExprIntRel _ _ IR.Reg{} IR.Reg{}))                                                                = IR.MovMem 2 (r $> undefined) (e $> undefined)
 irCosts (IR.WrapKCall _ Cabi (is, o) n l) | all (\i -> IR.size i `rem` 4 == 0) is = IR.WrapKCall (3 + sizeStack is `quot` 8) Cabi (is, o) n l
 
 -- does this need a monad for labels/intermediaries?
@@ -84,31 +91,31 @@ irEmit (IR.Jump _ l) = pure [Jump () l]
 irEmit (IR.Labeled _ l) = pure [Label () l]
 irEmit (IR.KCall _ l) = pure [Call () l]
 irEmit IR.Ret{} = pure [Ret ()]
-irEmit (IR.CJump _ (IR.Mem 1 (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r) (IR.ConstInt i))) l l') = do
+irEmit (IR.CJump _ (IR.Mem _ 1 (IR.ExprIntBinOp _ IR.IntPlusIR (IR.Reg _ r) (IR.ConstInt _ i))) l l') = do
     { r' <- allocReg8
     ; pure [MovRCBool () r' 0, CmpAddrReg () (AddrRCPlus (toAbsReg r) i) r', Je () l, Jump () l']
     }
-irEmit (IR.MovTemp _ r (IR.Mem _ (IR.Reg r1))) = pure [MovRA () (toAbsReg r) (Reg $ toAbsReg r1)] -- TODO: use the same reg i? TODO: sanity check reg/mem access size?
-irEmit (IR.MovTemp _ r (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r1) (IR.ConstInt i))) | r == r1 = pure [AddRC () (toAbsReg r) i]
-irEmit (IR.MovTemp _ r (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r1) (IR.ConstInt i))) | r == r1 = pure [SubRC () (toAbsReg r) i]
-irEmit (IR.MovMem _ (IR.Reg r) (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r1) (IR.Reg r2))) = do -- this is a pain in the ass, maybe there is a better way to do this? -> pattern match on two sequenced instructions
+irEmit (IR.MovTemp _ r (IR.Mem _ _ (IR.Reg _ r1))) = pure [MovRA () (toAbsReg r) (Reg $ toAbsReg r1)] -- TODO: sanity check reg/mem access size?
+irEmit (IR.MovTemp _ r (IR.ExprIntBinOp _ IR.IntMinusIR (IR.Reg _ r1) (IR.ConstInt _ i))) | r == r1 = pure [AddRC () (toAbsReg r) i]
+irEmit (IR.MovTemp _ r (IR.ExprIntBinOp _ IR.IntPlusIR (IR.Reg _ r1) (IR.ConstInt _ i))) | r == r1 = pure [SubRC () (toAbsReg r) i]
+irEmit (IR.MovMem _ (IR.Reg _ r) (IR.ExprIntBinOp _ IR.IntMinusIR (IR.Reg _ r1) (IR.Reg _ r2))) = do -- this is a pain in the ass, maybe there is a better way to do this? -> pattern match on two sequenced instructions
     { r' <- allocReg64
     ; pure [ MovRA () r' (Reg $ toAbsReg r1), SubRR () r' (toAbsReg r2), MovAR () (Reg $ toAbsReg r) r' ]
     }
-irEmit (IR.MovMem _ (IR.Reg r) (IR.ConstInt i)) = pure [ MovAC () (Reg $ toAbsReg r) i ]
-irEmit (IR.MovMem _ (IR.Reg r) (IR.ExprIntBinOp IR.IntTimesIR (IR.Reg r1) (IR.Reg r2))) = do
+irEmit (IR.MovMem _ (IR.Reg _ r) (IR.ConstInt _ i)) = pure [ MovAC () (Reg $ toAbsReg r) i ]
+irEmit (IR.MovMem _ (IR.Reg _ r) (IR.ExprIntBinOp _ IR.IntTimesIR (IR.Reg _ r1) (IR.Reg _ r2))) = do
     { r' <- allocReg64
     ; pure [ MovRR () r' (toAbsReg r1), MulRR () r' (toAbsReg r2), MovAR () (Reg $ toAbsReg r) r' ]
     }
-irEmit (IR.MovMem _ (IR.ExprIntBinOp _ (IR.Reg r0) (IR.ConstInt i)) (IR.Mem 1 (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r1) (IR.ConstInt j)))) = do
+irEmit (IR.MovMem _ (IR.ExprIntBinOp _ _ (IR.Reg _ r0) (IR.ConstInt _ i)) (IR.Mem _ 1 (IR.ExprIntBinOp _ IR.IntPlusIR (IR.Reg _ r1) (IR.ConstInt _ j)))) = do
     { r' <- allocReg8
     ; pure [ MovRA () r' (AddrRCPlus (toAbsReg r1) j), MovAR () (AddrRCPlus (toAbsReg r0) i) r' ]
     }
-irEmit (IR.MovMem _ (IR.ExprIntBinOp _ (IR.Reg r0) (IR.ConstInt i)) (IR.Mem 8 (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r1) (IR.ConstInt j)))) = do
+irEmit (IR.MovMem _ (IR.ExprIntBinOp _ _ (IR.Reg _ r0) (IR.ConstInt _ i)) (IR.Mem _ 8 (IR.ExprIntBinOp _ IR.IntPlusIR (IR.Reg _ r1) (IR.ConstInt _ j)))) = do
     { r' <- allocReg64
     ; pure [ MovRA () r' (AddrRCPlus (toAbsReg r1) j), MovAR () (AddrRCPlus (toAbsReg r0) i) r' ]
     }
-irEmit (IR.MovMem _ (IR.Reg r) (IR.ExprIntRel IR.IntEqIR (IR.Reg r1) (IR.Reg r2))) = do
+irEmit (IR.MovMem _ (IR.Reg _ r) (IR.ExprIntRel _ IR.IntEqIR (IR.Reg _ r1) (IR.Reg _ r2))) = do
     { l0 <- getLabel
     ; l1 <- getLabel
     ; pure [ CmpRegReg () (toAbsReg r1) (toAbsReg r2), Je () l0, Jump () l1, Label () l0, MovABool () (Reg $ toAbsReg r) 1, Label () l1, MovABool () (Reg $ toAbsReg r) 0 ]

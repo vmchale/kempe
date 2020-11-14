@@ -77,7 +77,8 @@ library
         composition-prelude >=1.1.0.1,
         microlens-mtl -any,
         process >=1.2.3.0,
-        temporary -any
+        temporary -any,
+        recursion -any
 
     if !flag(cross)
         build-tool-depends: alex:alex -any, happy:happy -any

@@ -2,11 +2,13 @@
 {-# LANGUAGE DeriveFunctor     #-}
 {-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeFamilies      #-}
 
 -- | IR loosely based on Appel book.
 module Kempe.IR ( writeModule
                 , Stmt (..)
                 , Exp (..)
+                , ExpF (..)
                 , RelBinOp (..)
                 , IntBinOp (..)
                 , Label
@@ -22,6 +24,7 @@ module Kempe.IR ( writeModule
 import           Control.DeepSeq            (NFData)
 -- strict b/c it's faster according to benchmarks
 import           Control.Monad.State.Strict (State, gets, modify, runState)
+import           Control.Recursion          (Base, Recursive)
 import           Data.Bifunctor             (second)
 import qualified Data.ByteString            as BS
 import qualified Data.ByteString.Lazy       as BSL
@@ -123,44 +126,51 @@ instance Pretty (Stmt a) where
     pretty (CJump _ e l l')        = parens ("cjump" <+> pretty e <+> prettyLabel l <+> prettyLabel l')
     pretty (WrapKCall _ _ ty fn l) = hardline <> "export" <+> pretty (decodeUtf8 fn) <+> braces (prettyMonoStackType ty) <+> prettyLabel l
 
-instance Pretty Exp where
-    pretty (ConstInt i)           = parens ("int" <+> pretty i)
-    pretty (ConstBool False)      = parens "bool false"
-    pretty (ConstBool True)       = parens "bool true"
-    pretty (Named l)              = parens (prettyLabel l)
-    pretty (Reg t)                = parens ("reg" <+> pretty t)
-    pretty (Mem _ e)              = parens ("mem" <+> pretty e)
-    pretty (ExprIntBinOp op e e') = parens (pretty op <+> pretty e <+> pretty e')
-    pretty (ExprIntRel op e e')   = parens (pretty op <+> pretty e <+> pretty e')
+instance Pretty (Exp a) where
+    pretty (ConstInt _ i)           = parens ("int" <+> pretty i)
+    pretty (ConstBool _ False)      = parens "bool false"
+    pretty (ConstBool _ True)       = parens "bool true"
+    pretty (Reg _ t)                = parens ("reg" <+> pretty t)
+    pretty (Mem _ _ e)              = parens ("mem" <+> pretty e)
+    pretty (ExprIntBinOp _ op e e') = parens (pretty op <+> pretty e <+> pretty e')
+    pretty (ExprIntRel _ op e e')   = parens (pretty op <+> pretty e <+> pretty e')
 
 -- | Type parameter @a@ so we can annotate with 'Int's later.
 data Stmt a = Labeled { stmtCost :: a, stmtLabel :: Label }
             -- -- | BsLabel { stmtCost :: a, stmtLabelBS :: BS.ByteString }
             | Jump { stmtCost :: a, stmtJmp :: Label }
             -- conditional jump for ifs
-            | CJump { stmtCost :: a, stmtSwitch :: Exp, stmtJmp0 :: Label, stmtJmp1 :: Label }
+            | CJump { stmtCost :: a, stmtSwitch :: Exp a, stmtJmp0 :: Label, stmtJmp1 :: Label }
             | CCall { stmtCost :: a, stmtExtTy :: MonoStackType, stmtCCall :: BSL.ByteString } -- TODO: ShortByteString?
             | KCall { stmtCost :: a, stmtCall :: Label } -- KCall is a jump to a Kempe procedure (and jump back, later)
             | WrapKCall { stmtCost :: a, wrapAbi :: ABI, stmtiFnTy :: MonoStackType, stmtABI :: BS.ByteString, stmtCall :: Label }
             -- enough...)
-            | MovTemp { stmtCost :: a, stmtTemp :: Temp, stmtExp :: Exp } -- put e in temp?
-            | MovMem { stmtCost :: a, stmtExp0 :: Exp, stmtExp1 :: Exp } -- store e2 at address given by e1
+            | MovTemp { stmtCost :: a, stmtTemp :: Temp, stmtExp :: Exp a } -- put e in temp?
+            | MovMem { stmtCost :: a, stmtExp0 :: Exp a, stmtExp1 :: Exp a } -- store e2 at address given by e1
             -- -- | Seq { stmtCost :: a, stmt0 :: Stmt a, stmt1 :: Stmt a }
             | Ret { stmtCost :: a }
            deriving (Generic, NFData, Functor)
             -- -- | MJump { stmtCost :: a, stmtM :: Exp a, stmtLabel :: Label } -- for optimizations/fallthrough?
 
-data Exp = ConstInt Int64
-         | ConstPtr Int64
-         | ConstBool Bool
-         | Named Label
-         | Reg Temp  -- TODO: size?
-         | Mem Int64 Exp -- fetch from address FIXME: how many bytes?
-         | ExprIntBinOp IntBinOp Exp Exp -- SEMANTICS: this is not side-effecting
-         | ExprIntRel RelBinOp Exp Exp
-         deriving (Generic, NFData)
+data Exp a = ConstInt { expCost :: a, expI :: Int64 }
+           | ConstBool { expCost :: a, expB :: Bool }
+           | Reg { expCost :: a, expReg :: Temp }  -- TODO: size?
+           | Mem { expCost :: a, memSize :: Int64, memGet :: Exp a } -- fetch from address FIXME: how many bytes?
+           | ExprIntBinOp { expCost :: a, expOp :: IntBinOp, exp0 :: Exp a, exp1 :: Exp a } -- SEMANTICS: this is not side-effecting
+           | ExprIntRel { expCost :: a, expRel :: RelBinOp, exp0 :: Exp a, exp1 :: Exp a }
+           deriving (Generic, NFData, Functor, Recursive)
            -- TODO: one for data, one for C ABI
            -- -- ret?
+
+data ExpF a x = ConstIntF a Int64
+              | ConstBoolF a Bool
+              | RegF a Temp
+              | MemF a Int64 x
+              | ExprIntBinOpF a IntBinOp x x
+              | ExprIntRelF a RelBinOp x x
+              deriving (Generic, Functor)
+
+type instance Base (Exp a) = ExpF a
 
 data RelBinOp = IntEqIR
               | IntNeqIR
@@ -214,19 +224,19 @@ intOp cons = do
     t0 <- getTemp64 -- registers are 64 bits for integers
     t1 <- getTemp64
     pure $
-        pop 8 t0 ++ pop 8 t1 ++ push 8 (ExprIntBinOp cons (Reg t0) (Reg t1))
+        pop 8 t0 ++ pop 8 t1 ++ push 8 (ExprIntBinOp () cons (Reg () t0) (Reg () t1))
 
 -- | Push bytes onto the Kempe data pointer
-push :: Int64 -> Exp -> [Stmt ()]
+push :: Int64 -> Exp () -> [Stmt ()]
 push off e =
-    [ MovTemp () DataPointer (ExprIntBinOp IntPlusIR (Reg DataPointer) (ConstInt off)) -- increment instead of decrement b/c this is the Kempe ABI
-    , MovMem () (Reg DataPointer) e
+    [ MovTemp () DataPointer (ExprIntBinOp () IntPlusIR (Reg () DataPointer) (ConstInt () off)) -- increment instead of decrement b/c this is the Kempe ABI
+    , MovMem () (Reg () DataPointer) e
     ]
 
 pop :: Int64 -> Temp -> [Stmt ()]
 pop sz t =
-    [ MovTemp () t (Mem sz (Reg DataPointer))
-    , MovTemp () DataPointer (ExprIntBinOp IntMinusIR (Reg DataPointer) (ConstInt sz))
+    [ MovTemp () t (Mem () sz (Reg () DataPointer))
+    , MovTemp () DataPointer (ExprIntBinOp () IntMinusIR (Reg () DataPointer) (ConstInt () sz))
     ]
 
 -- FIXME: just use expressions from memory accesses
@@ -235,12 +245,12 @@ intRel cons = do
     t0 <- getTemp64
     t1 <- getTemp64
     pure $
-        pop 8 t0 ++ pop 8 t1 ++ push 1 (ExprIntRel cons (Reg t0) (Reg t1))
+        pop 8 t0 ++ pop 8 t1 ++ push 1 (ExprIntRel () cons (Reg () t0) (Reg () t1))
 
 -- | This throws exceptions on nonsensical input.
 writeAtom :: Atom MonoStackType -> TempM [Stmt ()]
-writeAtom (IntLit _ i)              = pure $ push 8 (ConstInt $ fromInteger i)
-writeAtom (BoolLit _ b)             = pure $ push 1 (ConstBool b)
+writeAtom (IntLit _ i)              = pure $ push 8 (ConstInt () $ fromInteger i)
+writeAtom (BoolLit _ b)             = pure $ push 1 (ConstBool () b)
 writeAtom (AtName _ n)              = pure . KCall () <$> lookupName n -- TODO: when to do tco?
 writeAtom (AtBuiltin ([], _) Drop)  = error "Internal error: Ill-typed drop!"
 writeAtom (AtBuiltin ([], _) Swap)  = error "Internal error: Ill-typed swap!"
@@ -258,24 +268,24 @@ writeAtom (AtBuiltin _ IntShiftL)   = intOp IntShiftLIR
 writeAtom (AtBuiltin _ IntEq)       = intRel IntEqIR
 writeAtom (AtBuiltin (is, _) Drop)  =
     let sz = size (last is) in
-        pure [ MovTemp () DataPointer (ExprIntBinOp IntMinusIR (Reg DataPointer) (ConstInt sz)) ] -- subtract sz from data pointer (Kempe data pointer grows up)
+        pure [ MovTemp () DataPointer (ExprIntBinOp () IntMinusIR (Reg () DataPointer) (ConstInt () sz)) ] -- subtract sz from data pointer (Kempe data pointer grows up)
 writeAtom (AtBuiltin (is, _) Dup)   =
     let sz = size (last is) in
         pure $
-             [ MovMem () (dataPointerOffset (i + sz)) (Mem 1 $ dataPointerOffset i) | i <- [1..sz] ] -- FIXME: this should be a one-byte fetch each time
-                ++ [ MovTemp () DataPointer (ExprIntBinOp IntPlusIR (Reg DataPointer) (ConstInt sz)) ] -- move data pointer over sz bytes
+             [ MovMem () (dataPointerOffset (i + sz)) (Mem () 1 $ dataPointerOffset i) | i <- [1..sz] ] -- FIXME: this should be a one-byte fetch each time
+                ++ [ MovTemp () DataPointer (ExprIntBinOp () IntPlusIR (Reg () DataPointer) (ConstInt () sz)) ] -- move data pointer over sz bytes
 writeAtom (If _ as as') = do
     l0 <- newLabel
     l1 <- newLabel
-    let ifIR = CJump () (Mem 1 $ dataPointerOffset 1) l0 l1
+    let ifIR = CJump () (Mem () 1 $ dataPointerOffset 1) l0 l1
     asIR <- writeAtoms as
     asIR' <- writeAtoms as'
     l2 <- newLabel
     pure $ ifIR : (Labeled () l0 : asIR ++ [Jump () l2]) ++ (Labeled () l1 : asIR' ++ [Jump () l2]) ++ [Labeled () l2]
 writeAtom (Dip (is, _) as) =
     let sz = size (last is)
-        shiftNext = MovTemp () DataPointer (ExprIntBinOp IntMinusIR (Reg DataPointer) (ConstInt sz))
-        shiftBack = MovTemp () DataPointer (ExprIntBinOp IntPlusIR (Reg DataPointer) (ConstInt sz))
+        shiftNext = MovTemp () DataPointer (ExprIntBinOp () IntMinusIR (Reg () DataPointer) (ConstInt () sz))
+        shiftBack = MovTemp () DataPointer (ExprIntBinOp () IntPlusIR (Reg () DataPointer) (ConstInt () sz))
     in
         do
             aStmt <- writeAtoms as
@@ -283,8 +293,8 @@ writeAtom (Dip (is, _) as) =
             -- TODO: possible optimization: don't shift stack pointer but rather
             -- grab Stmts and shift them over to use sz bytes over or whatever?
 
-dataPointerOffset :: Int64 -> Exp
-dataPointerOffset off = ExprIntBinOp IntPlusIR (Reg DataPointer) (ConstInt off)
+dataPointerOffset :: Int64 -> Exp ()
+dataPointerOffset off = ExprIntBinOp () IntPlusIR (Reg () DataPointer) (ConstInt () off)
 
 -- need env with size for constructors
 size :: KempeTy a -> Int64
