@@ -137,15 +137,16 @@ closedModule m = addExports <$> do
           isTyDecl _        = False
 
 -- group specializations by type name?
-specializeTyDecls :: [(Name (StackType ()), KempeDecl () (StackType ()), StackType ())] -> MonoM [KempeDecl () (StackType ())]
+specializeTyDecls :: [(TyName (StackType ()), KempeDecl () (StackType ()), StackType ())] -> MonoM [KempeDecl () (StackType ())]
 specializeTyDecls ds = traverse (uncurry mkTyDecl) processed
     where toMerge = groupBy ((==) `on` snd3) ds
           processed = fmap process toMerge
           process tyDs@((_, x, _):_) = (x, zip (fst3 <$> tyDs) (thd3 <$> tyDs))
           process []                 = error "Empty group!"
 
-mkTyDecl :: KempeDecl () (StackType ()) -> [(Name (StackType ()), StackType ())] -> MonoM (KempeDecl () (StackType ()))
-mkTyDecl = undefined
+mkTyDecl :: KempeDecl () (StackType ()) -> [(TyName (StackType ()), StackType ())] -> MonoM (KempeDecl () (StackType ()))
+mkTyDecl (TyDecl _ tn ns _) constrs =
+    undefined
 
 specializeDecl :: KempeDecl () (StackType ()) -> StackType () -> MonoM (KempeDecl () (StackType ()))
 specializeDecl (FunDecl _ n _ _ as) sty = do
