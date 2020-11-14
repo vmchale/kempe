@@ -1,6 +1,7 @@
 module Kempe.Shuttle ( monomorphize
                      ) where
 
+import           Data.List          (partition)
 import           Kempe.AST
 import           Kempe.Error
 import           Kempe.Monomorphize
@@ -12,6 +13,14 @@ monomorphize :: Int
 monomorphize ctx m = do
     (mTy, i) <- runTypeM ctx (assignModule m)
     (flat, j) <- runMonoM i (flattenModule mTy)
+    let (flatTy, _) = partition isTyDecl flat
     -- assign types again
-    (flatTy, _) <- runTypeM j (assignModule flat)
-    traverse (traverse tryMono) flatTy -- FIXME: overzealous in that it squashes type decls
+    (flat', _) <- runTypeM j (assignModule flat)
+    let (_, flatFn') = partition isTyDecl flat'
+    -- save tydecls from flatten round (since they're annotated with types there
+    -- already)
+    traverse (traverse tryMono) (flatTy ++ flatFn')
+
+isTyDecl :: KempeDecl a b -> Bool
+isTyDecl TyDecl{} = True
+isTyDecl _        = False

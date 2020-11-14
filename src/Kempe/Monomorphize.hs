@@ -152,7 +152,7 @@ specializeTyDecls ds = traverse (uncurry mkTyDecl) processed
 
 mkTyDecl :: KempeDecl () (StackType ()) -> [(TyName (StackType ()), StackType ())] -> MonoM (KempeDecl () (StackType ()))
 mkTyDecl (TyDecl _ tn ns _) constrs = do
-    renCons <- traverse (\(tn', ty) -> do { ty'@(is, _) <- tryMono ty ; (, is) <$> renamed tn' ty' }) constrs
+    renCons <- traverse (\(tn', ty) -> do { ty'@(is, _) <- tryMono ty ; (, is) <$> renamed (tn' $> ty') ty' }) constrs
     pure $ TyDecl () tn ns renCons
 mkTyDecl _ _ = error "Shouldn't happen."
 

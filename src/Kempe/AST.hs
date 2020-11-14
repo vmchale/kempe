@@ -174,6 +174,9 @@ prettyKempeDecl _ (Export _ abi n)              = "%foreign" <+> pretty abi <+> 
 prettyKempeDecl _ (ExtFnDecl _ n is os b)       = pretty n <+> ":" <+> sep (fmap pretty is) <+> "--" <+> sep (fmap pretty os) <+> "=:" <+> "$cfun" <> pretty (decodeUtf8 b)
 prettyKempeDecl _ (TyDecl _ tn ns ls)           = "type" <+> pretty tn <+> hsep (fmap pretty ns) <+> braces (concatWith (\x y -> x <+> pipe <+> y) $ fmap (uncurry prettyTyLeaf) ls)
 
+instance Pretty (KempeDecl a b) where
+    pretty = prettyKempeDecl pretty
+
 prettyTyLeaf :: TyName a -> [KempeTy b] -> Doc ann
 prettyTyLeaf cn vars = pretty cn <+> hsep (fmap pretty vars)
 
