@@ -17,8 +17,9 @@ import           Control.Monad              ((<=<))
 import           Control.Monad.Except       (MonadError, throwError)
 import           Control.Monad.State.Strict (StateT, gets, runStateT)
 import           Data.Bifunctor             (second)
-import           Data.Functor               ((<&>))
+import           Data.Function              (on)
 import qualified Data.IntMap                as IM
+import           Data.List                  (groupBy, partition)
 import qualified Data.Map                   as M
 import           Data.Maybe                 (mapMaybe)
 import qualified Data.Set                   as S
@@ -116,14 +117,33 @@ renameMonoM = traverse renameDecl
 --
 -- The 'Module' returned will have to be renamed.
 closedModule :: Module () (StackType ()) -> MonoM (Module () (StackType ()))
-closedModule m = traverse pickDecl roots <&> addExports
+closedModule m = addExports <$> do
+    { fn' <- traverse (uncurry specializeDecl) fnDecls
+    ; ty' <- specializeTyDecls tyDecls
+    ; pure (ty' ++ fn')
+    }
     where addExports = (++ exportsOnly m)
           key = mkModuleMap m
           roots = S.toList $ closure (m, key)
-          pickDecl (Name _ (Unique i) _, ty) = -- TODO: findWithDefault?
+          gatherDecl (Name _ (Unique i) _, ty) = -- TODO: findWithDefault?
             case IM.lookup i key of
-                Just decl -> specializeDecl decl ty
+                Just decl -> (decl, ty)
                 Nothing   -> error "Internal error! module map should contain all names."
+          rootDecl = gatherDecl <$> roots
+          pickedDecl = traverse (uncurry specializeDecl) rootDecl
+          (tyDecls, fnDecls) = partition (isTyDecl . fst) rootDecl
+          isTyDecl TyDecl{} = True
+          isTyDecl _        = False
+
+-- group specializations by type name?
+specializeTyDecls :: [(KempeDecl () (StackType ()), StackType ())] -> MonoM [KempeDecl () (StackType ())]
+specializeTyDecls ds = traverse (uncurry mkTyDecl) processed
+    where toMerge = groupBy ((==) `on` fst) ds
+          processed = fmap process toMerge
+          process tyDs@((x, _):_) = (x, snd <$> tyDs)
+
+mkTyDecl :: KempeDecl () (StackType ()) -> [StackType ()] -> MonoM (KempeDecl () (StackType ()))
+mkTyDecl = undefined
 
 specializeDecl :: KempeDecl () (StackType ()) -> StackType () -> MonoM (KempeDecl () (StackType ()))
 specializeDecl (FunDecl _ n _ _ as) sty = do
@@ -131,6 +151,7 @@ specializeDecl (FunDecl _ n _ _ as) sty = do
     pure $ FunDecl newStackType (Name t u newStackType) is os as
 specializeDecl d@ExtFnDecl{} _ = pure d
 specializeDecl d@Export{} _    = pure d
+specializeDecl TyDecl{} _ = error "Shouldn't happen."
 -- leave exports and foreign imports alone (have to be monomorphic)
 
 -- | Insert a specialized rename.

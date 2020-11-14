@@ -95,7 +95,7 @@ data Pattern b = PatternInt b Integer
                | PatternWildcard b
                | PatternBool b Bool
                -- -- | PatternTuple
-               deriving (Generic, NFData, Functor, Foldable, Traversable)
+               deriving (Eq, Generic, NFData, Functor, Foldable, Traversable)
 
 instance Pretty (Pattern a) where
     pretty (PatternInt _ i)   = pretty i
@@ -129,7 +129,7 @@ data Atom b = AtName b (Name b)
             | BoolLit b Bool
             | AtBuiltin b BuiltinFn
             | AtCons b (TyName b)
-            deriving (Generic, NFData, Functor, Foldable, Traversable)
+            deriving (Eq, Generic, NFData, Functor, Foldable, Traversable)
 
 data BuiltinFn = Drop
                | Swap
@@ -144,7 +144,7 @@ data BuiltinFn = Drop
                | IntShiftL
                | IntXor
                -- TODO: IntLt and such
-               deriving (Generic, NFData)
+               deriving (Eq, Generic, NFData)
 
 instance Pretty BuiltinFn where
     pretty Drop      = "drop"
@@ -181,7 +181,7 @@ data KempeDecl a b = TyDecl a (TyName a) [Name a] [(TyName b, [KempeTy a])]
                    | FunDecl b (Name b) [KempeTy a] [KempeTy a] [Atom b]
                    | ExtFnDecl b (Name b) [KempeTy a] [KempeTy a] BSL.ByteString -- ShortByteString?
                    | Export b ABI (Name b)
-                   deriving (Generic, NFData, Functor, Foldable, Traversable)
+                   deriving (Eq, Generic, NFData, Functor, Foldable, Traversable)
 
 prettyModuleGeneral :: (Atom b -> Doc ann) -> Module a b -> Doc ann
 prettyModuleGeneral atomizer = sep . fmap (prettyKempeDecl atomizer)
