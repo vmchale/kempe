@@ -122,8 +122,8 @@ irEmit (IR.MovMem _ (IR.Reg _ r) (IR.ExprIntRel _ IR.IntEqIR (IR.Reg _ r1) (IR.R
     }
 irEmit (IR.WrapKCall _ Cabi (is, [o]) n l) | all (\i -> IR.size i `rem` 8 == 0) is && IR.size o == 8 = do
     { let offs = zipWith const [1..] is
-    ; let totalSize = sizeStack is + 8 -- for the output
-    ; pure $ [BSLabel () n] ++ foldMap (\i -> [PopMem () (AddrRCPlus DataPointer (i * 8))]) offs ++ [AddRC () DataPointer totalSize, Call () l, MovAR () (AddrRCMinus DataPointer 8) CRet, Ret ()] -- TODO: are the parameters backwards?
+    ; let totalSize = sizeStack is + IR.size o -- for the output
+    ; pure $ [BSLabel () n] ++ foldMap (\i -> [PopMem () (AddrRCPlus DataPointer (i * 8))]) offs ++ [AddRC () DataPointer totalSize, Call () l, MovAR () (AddrRCMinus DataPointer (IR.size o)) CRet, Ret ()] -- TODO: are the parameters backwards?
     -- copy last n bytes onto the system stack
     }
 
