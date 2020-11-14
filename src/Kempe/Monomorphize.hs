@@ -18,6 +18,7 @@ import           Control.Monad.Except       (MonadError, throwError)
 import           Control.Monad.State.Strict (StateT, gets, runStateT)
 import           Data.Bifunctor             (second)
 import           Data.Function              (on)
+import           Data.Functor               (($>))
 import qualified Data.IntMap                as IM
 import           Data.List                  (groupBy, partition)
 import qualified Data.Map                   as M
@@ -94,6 +95,10 @@ renameAtom (AtName ty (Name t u l)) = do
     let u' = M.findWithDefault u (u, ty) mSt
     pure $ AtName ty (Name t u' l)
 renameAtom (Case ty ls)             = Case ty <$> traverse renameCase ls
+renameAtom (AtCons ty (Name t u l)) = do
+    mSt <- gets snd
+    let u' = M.findWithDefault u (u, ty) mSt
+    pure $ AtCons ty (Name t u' l)
 
 renameDecl :: KempeDecl () (StackType ()) -> MonoM (KempeDecl () (StackType ()))
 renameDecl (FunDecl l n is os as) = FunDecl l n is os <$> traverse renameAtom as
@@ -102,6 +107,7 @@ renameDecl (Export ty abi (Name t u l)) = do
     let u' = M.findWithDefault (error "Shouldn't happen; might be user error or internal error") (u, ty) mSt
     pure $ Export ty abi (Name t u' l)
 renameDecl d@ExtFnDecl{} = pure d
+renameDecl d@TyDecl{}    = pure d -- don't need to
 
 -- | Call 'closedModule' and perform any necessary renamings
 flattenModule :: Module () (StackType ()) -> MonoM (Module () (StackType ()))
@@ -145,8 +151,10 @@ specializeTyDecls ds = traverse (uncurry mkTyDecl) processed
           process []                 = error "Empty group!"
 
 mkTyDecl :: KempeDecl () (StackType ()) -> [(TyName (StackType ()), StackType ())] -> MonoM (KempeDecl () (StackType ()))
-mkTyDecl (TyDecl _ tn ns _) constrs =
-    undefined
+mkTyDecl (TyDecl _ tn ns _) constrs = do
+    renCons <- traverse (\(tn', ty) -> do { ty'@(is, _) <- tryMono ty ; (, is) <$> renamed tn' ty' }) constrs
+    pure $ TyDecl () tn ns renCons
+mkTyDecl _ _ = error "Shouldn't happen."
 
 specializeDecl :: KempeDecl () (StackType ()) -> StackType () -> MonoM (KempeDecl () (StackType ()))
 specializeDecl (FunDecl _ n _ _ as) sty = do
