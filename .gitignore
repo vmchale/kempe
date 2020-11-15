@@ -26,3 +26,4 @@ cabal.sandbox.config
 .hspec-failures
 *_stubs.h
 factorial.S
+factorial
