@@ -150,6 +150,7 @@ specializeTyDecls ds = traverse (uncurry mkTyDecl) processed
           process tyDs@((_, x, _):_) = (x, zip (fst3 <$> tyDs) (thd3 <$> tyDs))
           process []                 = error "Empty group!"
 
+-- TODO: annotate with size (for IR) + tag number (for ABI)
 mkTyDecl :: KempeDecl () (StackType ()) -> [(TyName (StackType ()), StackType ())] -> MonoM (KempeDecl () (StackType ()))
 mkTyDecl (TyDecl _ tn ns _) constrs = do
     renCons <- traverse (\(tn', ty) -> do { ty'@(is, _) <- tryMono ty ; (, is) <$> renamed (tn' $> ty') ty' }) constrs
