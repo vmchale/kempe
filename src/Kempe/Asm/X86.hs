@@ -85,6 +85,7 @@ irCosts (IR.MovMem _ e1@(IR.ExprIntBinOp _ _ IR.Reg{} IR.ConstInt{}) e2@(IR.Mem 
 irCosts (IR.MovMem _ r@IR.Reg{} e@(IR.ExprIntRel _ _ IR.Reg{} IR.Reg{}))                                                                = IR.MovMem 2 (r $> undefined) (e $> undefined)
 irCosts (IR.WrapKCall _ Cabi (is, o) n l) | all (\i -> IR.size i `rem` 4 == 0) is = IR.WrapKCall (3 + sizeStack is `quot` 8) Cabi (is, o) n l
 irCosts (IR.WrapKCall _ Kabi (is, os) n l) = IR.WrapKCall 3 Kabi (is, os) n l
+irCosts (IR.MovTemp _ r e) = let e' = expCost e in IR.MovTemp (1 + IR.expCost e') r e'
 
 -- does this need a monad for labels/intermediaries?
 irEmit :: IR.Stmt Int64 -> WriteM [X86 AbsReg ()]
