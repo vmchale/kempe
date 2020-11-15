@@ -1,8 +1,9 @@
 #include <stdio.h>
 
 extern void kempe_init(void);
-extern int factorial(int);
+extern int fac(int);
 
 int main(int argc, char *argv[]) {
-    printf("%d", factorial(3));
+    kempe_init();
+    printf("%d", fac(3));
 }
