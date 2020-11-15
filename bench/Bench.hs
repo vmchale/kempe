@@ -6,8 +6,8 @@ import qualified Data.ByteString.Lazy      as BSL
 import           Data.Functor              (void)
 import           Kempe.Asm.X86
 import           Kempe.Asm.X86.ControlFlow
-import           Kempe.Asm.X86.Liveness
 import           Kempe.Asm.X86.Linear
+import           Kempe.Asm.X86.Liveness
 import           Kempe.IR
 import           Kempe.Lexer
 import           Kempe.Monomorphize
@@ -28,9 +28,9 @@ main =
                       , bench "check (prelude/fn.kmp)" $ nf runCheck prel
                       , bench "assign (test/data/ty.kmp)" $ nf runAssign p
                       , bench "assign (prelude/fn.kmp)" $ nf runAssign prel
-                      -- , bench "shuttle (test/data/ty.kmp)" $ nf (uncurry monomorphize) p
+                      , bench "shuttle (test/data/ty.kmp)" $ nf (uncurry monomorphize) p
                       , bench "shuttle (examples/splitmix.kmp)" $ nf (uncurry monomorphize) s
-                      -- , bench "closedModule" $ nf (runSpecialize =<<) (runAssign p)
+                      , bench "closedModule" $ nf (runSpecialize =<<) (runAssign p)
                       , bench "closure" $ nf (\m -> closure (m, mkModuleMap m)) (void <$> snd p)
                       ]
                   , env irEnv $ \ ~(s, f) ->
