@@ -11,7 +11,7 @@ data Command = TypeCheck !FilePath
 
 run :: Command -> IO ()
 run (TypeCheck fp)                    = either throwIO pure =<< tcFile fp
-run (Compile _ Nothing False False)  = putStrLn "No output file specified!"
+run (Compile _ Nothing False False)   = putStrLn "No output file specified!"
 run (Compile fp (Just o) False False) = compile fp o
 run (Compile fp Nothing True False)   = irFile fp
 run (Compile fp Nothing False True)   = x86File fp
@@ -51,7 +51,7 @@ commandP = hsubparser
 wrapper :: ParserInfo Command
 wrapper = info (helper <*> versionMod <*> commandP)
     (fullDesc
-    <> progDesc "Kempe language compiler, x86_64 and Aarch64 backend"
+    <> progDesc "Kempe language compiler, x86_64 backend"
     <> header "Kempe - a stack-based language")
 
 versionMod :: Parser (a -> a)
