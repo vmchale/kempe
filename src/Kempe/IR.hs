@@ -293,6 +293,8 @@ writeAtom (Dip (is, _) as) =
             -- TODO: possible optimization: don't shift stack pointer but rather
             -- grab Stmts and shift them over to use sz bytes over or whatever?
 
+-- TODO: need consistent ABI for constructors
+
 dataPointerOffset :: Int64 -> Exp ()
 dataPointerOffset off = ExprIntBinOp () IntPlusIR (Reg () DataPointer) (ConstInt () off)
 
