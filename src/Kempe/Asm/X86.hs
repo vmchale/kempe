@@ -126,6 +126,8 @@ irEmit (IR.WrapKCall _ Cabi (is, [o]) n l) | all (\i -> IR.size i `rem` 8 == 0) 
     ; pure $ [BSLabel () n] ++ foldMap (\i -> [PopMem () (AddrRCPlus DataPointer (i * 8))]) offs ++ [AddRC () DataPointer totalSize, Call () l, MovAR () (AddrRCMinus DataPointer (IR.size o)) CRet, Ret ()] -- TODO: are the parameters backwards?
     -- copy last n bytes onto the system stack
     }
+irEmit (IR.WrapKCall _ Kabi (_, _) n l) =
+    pure [BSLabel () n, Call () l, Ret ()]
 
 sizeStack :: [KempeTy a] -> Int64
 sizeStack = getSum . foldMap (Sum . IR.size)
