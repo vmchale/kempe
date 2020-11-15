@@ -3,5 +3,7 @@
 section .bss
     kempe_data: resb 0x800000
 
+section .text
+
 kempe_init:
     mov rbx, kempe_data
