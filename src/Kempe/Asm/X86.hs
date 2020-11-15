@@ -102,7 +102,7 @@ irCosts (IR.MovMem _ r@IR.Reg{} e@IR.ConstInt{})                                
 irCosts (IR.MovMem _ r@IR.Reg{} e@(IR.ExprIntBinOp _ IR.IntTimesIR _ _))                                                              = IR.MovMem 3 (r $> undefined) (e $> undefined)
 irCosts (IR.MovMem _ e1@(IR.ExprIntBinOp _ _ IR.Reg{} IR.ConstInt{}) e2@(IR.Mem _ _ (IR.ExprIntBinOp _ IR.IntPlusIR IR.Reg{} IR.ConstInt{}))) = IR.MovMem 2 (e1 $> undefined) (e2 $> undefined)
 irCosts (IR.MovMem _ r@IR.Reg{} e@(IR.ExprIntRel _ _ IR.Reg{} IR.Reg{}))                                                              = IR.MovMem 2 (r $> undefined) (e $> undefined)
-irCosts (IR.WrapKCall _ Cabi (is, o) n l) | all (\i -> IR.size i `rem` 4 == 0) is = IR.WrapKCall (3 + sizeStack is `quot` 8) Cabi (is, o) n l
+irCosts (IR.WrapKCall _ Cabi (is, o) n l) | all (\i -> IR.size i `rem` 8 == 0) is = IR.WrapKCall (3 + sizeStack is `quot` 8) Cabi (is, o) n l
 irCosts (IR.WrapKCall _ Kabi (is, os) n l) = IR.WrapKCall 3 Kabi (is, os) n l
 irCosts (IR.MovTemp _ r e) = let e' = expCost e in IR.MovTemp (1 + IR.expCost e') r e'
 irCosts (IR.MovMem _ e e') = let (e'', e''') = (expCost e, expCost e') in IR.MovMem (2 + IR.expCost e'' + IR.expCost e''') e'' e'''
