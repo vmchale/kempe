@@ -63,8 +63,27 @@ irToX86 w = runWriteM w . foldMapA (irEmit . irCosts)
 
 expCost :: IR.Exp a -> IR.Exp Int64
 expCost = cata a where
-    a (IR.ConstIntF _ i)  = IR.ConstInt 0 i
-    a (IR.ConstBoolF _ b) = IR.ConstBool 0 b
+    a (IR.ConstIntF _ i)           = IR.ConstInt 0 i
+    a (IR.ConstBoolF _ b)          = IR.ConstBool 0 b
+    a (IR.RegF _ r)                = IR.Reg cr r
+    a (IR.MemF _ sz m)             = IR.Mem (cm + IR.expCost m) sz m
+    a (IR.ExprIntBinOpF _ op e e') = IR.ExprIntBinOp (2 + IR.expCost e + IR.expCost e') op e e'
+    a (IR.ExprIntRelF _ op e e')   = IR.ExprIntRel (3 + IR.expCost e + IR.expCost e') op e e'
+
+-- | Cost of a memory fetch
+cm :: Int64
+cm = undefined
+
+-- | Cost of register read
+cr :: Int64
+cr = undefined
+
+costToPush :: [KempeTy a] -> Int64
+costToPush = undefined
+
+-- cost to save/restore registers for a C call.
+costSave :: Int64
+costSave = undefined
 
 -- TODO: match multiple statements
 -- this isn't even recursive lmao
@@ -76,16 +95,21 @@ irCosts IR.Ret{}                                                                
 irCosts (IR.Labeled _ l)                                                                                                              = IR.Labeled 0 l
 irCosts (IR.CJump _ e@(IR.Mem _ _ (IR.ExprIntBinOp _ IR.IntPlusIR IR.Reg{} IR.ConstInt{})) l l')                                      = IR.CJump 3 (e $> undefined) l l'
 irCosts (IR.MovTemp _ r m@(IR.Mem _ _ IR.Reg{}))                                                                                      = IR.MovTemp 1 r (m $> undefined)
-irCosts (IR.MovTemp _ r e@(IR.ExprIntBinOp _ IR.IntMinusIR IR.Reg{} IR.ConstInt{}))                                                     = IR.MovTemp 1 r (e $> undefined)
-irCosts (IR.MovTemp _ r e@(IR.ExprIntBinOp _ IR.IntPlusIR IR.Reg{} IR.ConstInt{}))                                                      = IR.MovTemp 1 r (e $> undefined)
-irCosts (IR.MovMem _ r@IR.Reg{} e@(IR.ExprIntBinOp _ IR.IntMinusIR IR.Reg{} IR.Reg{}))                                                  = IR.MovMem 2 (r $> undefined) (e $> undefined)
+irCosts (IR.MovTemp _ r e@(IR.ExprIntBinOp _ IR.IntMinusIR IR.Reg{} IR.ConstInt{}))                                                   = IR.MovTemp 1 r (e $> undefined)
+irCosts (IR.MovTemp _ r e@(IR.ExprIntBinOp _ IR.IntPlusIR IR.Reg{} IR.ConstInt{}))                                                    = IR.MovTemp 1 r (e $> undefined)
+irCosts (IR.MovMem _ r@IR.Reg{} e@(IR.ExprIntBinOp _ IR.IntMinusIR IR.Reg{} IR.Reg{}))                                                = IR.MovMem 2 (r $> undefined) (e $> undefined)
 irCosts (IR.MovMem _ r@IR.Reg{} e@IR.ConstInt{})                                                                                      = IR.MovMem 1 (r $> undefined) (e $> undefined)
-irCosts (IR.MovMem _ r@IR.Reg{} e@(IR.ExprIntBinOp _ IR.IntTimesIR _ _))                                                                = IR.MovMem 3 (r $> undefined) (e $> undefined)
+irCosts (IR.MovMem _ r@IR.Reg{} e@(IR.ExprIntBinOp _ IR.IntTimesIR _ _))                                                              = IR.MovMem 3 (r $> undefined) (e $> undefined)
 irCosts (IR.MovMem _ e1@(IR.ExprIntBinOp _ _ IR.Reg{} IR.ConstInt{}) e2@(IR.Mem _ _ (IR.ExprIntBinOp _ IR.IntPlusIR IR.Reg{} IR.ConstInt{}))) = IR.MovMem 2 (e1 $> undefined) (e2 $> undefined)
-irCosts (IR.MovMem _ r@IR.Reg{} e@(IR.ExprIntRel _ _ IR.Reg{} IR.Reg{}))                                                                = IR.MovMem 2 (r $> undefined) (e $> undefined)
+irCosts (IR.MovMem _ r@IR.Reg{} e@(IR.ExprIntRel _ _ IR.Reg{} IR.Reg{}))                                                              = IR.MovMem 2 (r $> undefined) (e $> undefined)
 irCosts (IR.WrapKCall _ Cabi (is, o) n l) | all (\i -> IR.size i `rem` 4 == 0) is = IR.WrapKCall (3 + sizeStack is `quot` 8) Cabi (is, o) n l
 irCosts (IR.WrapKCall _ Kabi (is, os) n l) = IR.WrapKCall 3 Kabi (is, os) n l
 irCosts (IR.MovTemp _ r e) = let e' = expCost e in IR.MovTemp (1 + IR.expCost e') r e'
+irCosts (IR.MovMem _ e e') = let (e'', e''') = (expCost e, expCost e') in IR.MovMem (2 + IR.expCost e'' + IR.expCost e''') e'' e'''
+irCosts (IR.CJump _ e l l') = let e' = expCost e in IR.CJump (2 + IR.expCost e') e' l l'
+irCosts (IR.CCall _ (is, []) b) = IR.CCall (2 + costSave + costToPush is) (is, []) b
+irCosts (IR.CCall _ (is, [o]) b) = IR.CCall (2 + costSave + costToPush is) (is, [o]) b
+irCosts IR.CCall{} = error "C functions can have at most one return value!"
 
 -- does this need a monad for labels/intermediaries?
 irEmit :: IR.Stmt Int64 -> WriteM [X86 AbsReg ()]

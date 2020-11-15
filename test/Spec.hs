@@ -50,6 +50,7 @@ main = defaultMain $
             , irNoYeet "examples/splitmix.kmp"
             , irNoYeet "examples/factorial.kmp"
             , x86NoYeet "examples/factorial.kmp"
+            , x86NoYeet "examples/splitmix.kmp"
             , controlFlowGraph "examples/factorial.kmp"
             , liveness "examples/factorial.kmp"
             , codegen "examples/factorial.kmp"
