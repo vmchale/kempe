@@ -157,7 +157,7 @@ instance Pretty reg => Pretty (X86 reg a) where
     pretty (AddRC _ r0 c)      = i4 ("add" <+> pretty r0 <> "," <+> pretty c)
     pretty (SubRC _ r0 c)      = i4 ("sub" <+> pretty r0 <> "," <+> pretty c)
     pretty (Label _ l)         = prettyLabel l <> colon
-    pretty (BSLabel _ b)       = pretty (decodeUtf8 b) <> colon
+    pretty (BSLabel _ b)       = let pl = pretty (decodeUtf8 b) in "global" <+> pl <> hardline <> pl <> colon
     pretty (Je _ l)            = i4 ("je" <+> prettyLabel l)
     pretty (CmpAddrReg _ a r)  = i4 ("cmp" <+> pretty a <> "," <+> pretty r)
     pretty (CmpRegReg _ r0 r1) = i4 ("cmp" <+> pretty r0 <> "," <+> pretty r1)
