@@ -163,4 +163,4 @@ instance Pretty reg => Pretty (X86 reg a) where
     pretty (CmpRegReg _ r0 r1) = i4 ("cmp" <+> pretty r0 <> "," <+> pretty r1)
 
 prettyAsm :: Pretty reg => [X86 reg a] -> Doc ann
-prettyAsm = concatWith (\x y -> x <> hardline <> y) . fmap pretty
+prettyAsm = (("section .text" <> hardline) <>) . concatWith (\x y -> x <> hardline <> y) . fmap pretty
