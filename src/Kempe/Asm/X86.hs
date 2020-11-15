@@ -89,12 +89,12 @@ costSave = undefined
 -- this isn't even recursive lmao
 -- TODO: something to eval general expressions
 irCosts :: IR.Stmt () -> IR.Stmt Int64
-irCosts (IR.Jump _ l)                                                                                                                 = IR.Jump 1 l
-irCosts (IR.KCall _ l)                                                                                                                = IR.KCall 2 l
-irCosts IR.Ret{}                                                                                                                      = IR.Ret 1
-irCosts (IR.Labeled _ l)                                                                                                              = IR.Labeled 0 l
-irCosts (IR.CJump _ e@(IR.Mem _ _ (IR.ExprIntBinOp _ IR.IntPlusIR IR.Reg{} IR.ConstInt{})) l l')                                      = IR.CJump 3 (e $> undefined) l l'
-irCosts (IR.MovTemp _ r m@(IR.Mem _ _ IR.Reg{}))                                                                                      = IR.MovTemp 1 r (m $> undefined)
+irCosts (IR.Jump _ l) = IR.Jump 1 l
+irCosts (IR.KCall _ l) = IR.KCall 2 l
+irCosts IR.Ret{} = IR.Ret 1
+irCosts (IR.Labeled _ l) = IR.Labeled 0 l
+irCosts (IR.CJump _ e@(IR.Mem _ _ (IR.ExprIntBinOp _ IR.IntPlusIR IR.Reg{} IR.ConstInt{})) l l') = IR.CJump 3 (e $> undefined) l l'
+irCosts (IR.MovTemp _ r m@(IR.Mem _ _ IR.Reg{})) = IR.MovTemp 1 r (m $> undefined)
 irCosts (IR.MovTemp _ r e@(IR.ExprIntBinOp _ IR.IntMinusIR IR.Reg{} IR.ConstInt{}))                                                   = IR.MovTemp 1 r (e $> undefined)
 irCosts (IR.MovTemp _ r e@(IR.ExprIntBinOp _ IR.IntPlusIR IR.Reg{} IR.ConstInt{}))                                                    = IR.MovTemp 1 r (e $> undefined)
 irCosts (IR.MovMem _ r@IR.Reg{} e@(IR.ExprIntBinOp _ IR.IntMinusIR IR.Reg{} IR.Reg{}))                                                = IR.MovMem 2 (r $> undefined) (e $> undefined)
