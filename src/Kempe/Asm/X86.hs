@@ -81,10 +81,6 @@ cr = undefined
 costToPush :: [KempeTy a] -> Int64
 costToPush = undefined
 
--- cost to save/restore registers for a C call.
-costSave :: Int64
-costSave = undefined
-
 -- TODO: match multiple statements
 -- this isn't even recursive lmao
 -- TODO: something to eval general expressions
@@ -107,8 +103,8 @@ irCosts (IR.WrapKCall _ Kabi (is, os) n l) = IR.WrapKCall 3 Kabi (is, os) n l
 irCosts (IR.MovTemp _ r e) = let e' = expCost e in IR.MovTemp (1 + IR.expCost e') r e'
 irCosts (IR.MovMem _ e e') = let (e'', e''') = (expCost e, expCost e') in IR.MovMem (2 + IR.expCost e'' + IR.expCost e''') e'' e'''
 irCosts (IR.CJump _ e l l') = let e' = expCost e in IR.CJump (2 + IR.expCost e') e' l l'
-irCosts (IR.CCall _ (is, []) b) = IR.CCall (2 + costSave + costToPush is) (is, []) b
-irCosts (IR.CCall _ (is, [o]) b) = IR.CCall (2 + costSave + costToPush is) (is, [o]) b
+irCosts (IR.CCall _ (is, []) b) = IR.CCall (2 + costToPush is) (is, []) b
+irCosts (IR.CCall _ (is, [o]) b) = IR.CCall (2 + costToPush is) (is, [o]) b
 irCosts IR.CCall{} = error "C functions can have at most one return value!"
 
 -- does this need a monad for labels/intermediaries?
