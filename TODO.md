@@ -40,6 +40,7 @@
 - [ ] tail recursion modulo cons ?
 ## Builtins
 - [ ] `rem` builtin or the like?
+  - [ ] `sal`, `sar`?
 - [ ] `popcnt` basically
 # Test Cases
 - [ ] Unit tests for type merge?

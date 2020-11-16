@@ -29,7 +29,7 @@ import           Data.Bifunctor             (second)
 import qualified Data.ByteString            as BS
 import qualified Data.ByteString.Lazy       as BSL
 import           Data.Foldable.Ext
-import           Data.Int                   (Int64)
+import           Data.Int                   (Int64, Int8)
 import qualified Data.IntMap                as IM
 import           Data.Text.Encoding         (decodeUtf8, encodeUtf8)
 import           GHC.Generics               (Generic)
@@ -153,6 +153,8 @@ data Stmt a = Labeled { stmtCost :: a, stmtLabel :: Label }
             -- -- | MJump { stmtCost :: a, stmtM :: Exp a, stmtLabel :: Label } -- for optimizations/fallthrough?
 
 data Exp a = ConstInt { expCost :: a, expI :: Int64 }
+           | ConstInt8 { expCost :: a, expI8 :: Int8 }
+           | ConstWord { expCost :: a, expW :: Word }
            | ConstBool { expCost :: a, expB :: Bool }
            | Reg { expCost :: a, expReg :: Temp }  -- TODO: size?
            | Mem { expCost :: a, memSize :: Int64, memGet :: Exp a } -- fetch from address FIXME: how many bytes?
@@ -163,6 +165,8 @@ data Exp a = ConstInt { expCost :: a, expI :: Int64 }
            -- -- ret?
 
 data ExpF a x = ConstIntF a Int64
+              | ConstInt8F a Int8
+              | ConstWordF a Word
               | ConstBoolF a Bool
               | RegF a Temp
               | MemF a Int64 x
@@ -257,6 +261,8 @@ intRel cons = do
 -- | This throws exceptions on nonsensical input.
 writeAtom :: Atom MonoStackType -> TempM [Stmt ()]
 writeAtom (IntLit _ i)              = pure $ push 8 (ConstInt () $ fromInteger i)
+writeAtom (Int8Lit _ i)             = pure $ push 1 (ConstInt8 () i)
+writeAtom (WordLit _ w)             = pure $ push 8 (ConstWord () $ fromIntegral w)
 writeAtom (BoolLit _ b)             = pure $ push 1 (ConstBool () b)
 writeAtom (AtName _ n)              = pure . KCall () <$> lookupName n -- TODO: when to do tco?
 writeAtom (AtBuiltin ([], _) Drop)  = error "Internal error: Ill-typed drop!"
@@ -315,5 +321,7 @@ size :: KempeTy a -> Int64
 size (TyBuiltin _ TyInt)  = 8 -- since we're only targeting x86_64 and aarch64 we have 64-bit 'Int's
 size (TyBuiltin _ TyPtr)  = 8
 size (TyBuiltin _ TyBool) = 1
+size (TyBuiltin _ TyInt8) = 1
+size (TyBuiltin _ TyWord) = 8
 size TyVar{}              = error "Internal error: type variables should not be present at this stage."
 size (TyTuple _ tys)      = sum (fmap size tys)
