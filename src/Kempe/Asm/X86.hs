@@ -22,6 +22,7 @@ import           Data.Foldable.Ext
 import           Data.Functor        (($>))
 import           Data.Int            (Int64)
 import           Data.Monoid         (Sum (..))
+import           Data.Word           (Word8)
 import           Kempe.AST
 import           Kempe.Asm.X86.Type
 import qualified Kempe.IR            as IR
@@ -150,6 +151,15 @@ irEmit (IR.WrapKCall _ Cabi (is, [o]) n l) | all (\i -> IR.size i `rem` 8 == 0) 
     }
 irEmit (IR.WrapKCall _ Kabi (_, _) n l) =
     pure [BSLabel () n, Call () l, Ret ()]
+
+-- | Code to evaluate and put some expression in a chosen 'Temp'
+evalE :: IR.Exp Int64 -> IR.Temp -> WriteM [X86 AbsReg ()]
+evalE (IR.ConstInt _ i) (IR.Temp64 t) = pure [MovRC () (AllocReg64 t) i]
+evalE (IR.ConstBool _ b) (IR.Temp8 t) = pure [MovRCBool () (AllocReg8 t) (toByte b)]
+
+toByte :: Bool -> Word8
+toByte False = 0
+toByte True  = 1
 
 sizeStack :: [KempeTy a] -> Int64
 sizeStack = getSum . foldMap (Sum . IR.size)
