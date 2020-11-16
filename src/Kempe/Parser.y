@@ -76,6 +76,8 @@ import Prettyprinter (Pretty (pretty), (<+>))
     boolLit { $$@(TokBuiltin _ (BuiltinBoolLit _)) }
     bool { TokBuiltin $$ BuiltinBool }
     int { TokBuiltin $$ BuiltinInt }
+    int8 { TokBuiltin $$ BuiltinInt8 }
+    word { TokBuiltin $$ BuiltinWord }
     ptr { TokBuiltin $$ BuiltinPtr }
     dup { TokBuiltin $$ BuiltinDup }
     swap { TokBuiltin $$ BuiltinSwap }
@@ -126,6 +128,8 @@ Type :: { KempeTy AlexPosn }
      | bool { TyBuiltin $1 TyBool }
      | int { TyBuiltin $1 TyInt }
      | ptr { TyBuiltin $1 TyPtr }
+     | int8 { TyBuiltin $1 TyInt8 }
+     | word { TyBuiltin $1 TyWord }
      | lparen Type Type rparen { TyApp $1 $2 $3 }
 
 FunDecl :: { KempeDecl AlexPosn AlexPosn }

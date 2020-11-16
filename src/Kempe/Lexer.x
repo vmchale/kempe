@@ -93,6 +93,8 @@ tokens :-
         -- builtin
         dip                      { mkBuiltin BuiltinDip }
         Int                      { mkBuiltin BuiltinInt }
+        Int8                     { mkBuiltin BuiltinInt8 }
+        Word                     { mkBuiltin BuiltinWord }
         Ptr                      { mkBuiltin BuiltinPtr }
         Bool                     { mkBuiltin BuiltinBool }
         True                     { mkBuiltin (BuiltinBoolLit True) }
@@ -234,6 +236,8 @@ instance Pretty Keyword where
 data Builtin = BuiltinBool
              | BuiltinBoolLit { bool :: !Bool }
              | BuiltinInt
+             | BuiltinInt8
+             | BuiltinWord
              | BuiltinPtr
              | BuiltinDip
              | BuiltinDrop
@@ -246,6 +250,8 @@ instance Pretty Builtin where
     pretty BuiltinBool        = "Bool"
     pretty (BuiltinBoolLit b) = pretty b
     pretty BuiltinInt         = "Int"
+    pretty BuiltinInt8        = "Int8"
+    pretty BuiltinWord        = "Word"
     pretty BuiltinPtr         = "Ptr"
     pretty BuiltinDip         = "dip"
     pretty BuiltinDrop        = "drop"
