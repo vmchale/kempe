@@ -66,6 +66,8 @@ irToX86 w = runWriteM w . foldMapA (irEmit . irCosts)
 expCost :: IR.Exp a -> IR.Exp Int64
 expCost = cata a where
     a (IR.ConstIntF _ i)           = IR.ConstInt 0 i
+    a (IR.ConstInt8F _ i)          = IR.ConstInt8 0 i
+    a (IR.ConstWordF _ w)          = IR.ConstWord 0 w
     a (IR.ConstBoolF _ b)          = IR.ConstBool 0 b
     a (IR.RegF _ r)                = IR.Reg cr r
     a (IR.MemF _ sz m)             = IR.Mem (cm + IR.expCost m) sz m
@@ -97,6 +99,8 @@ irCosts (IR.MovTemp _ r e@(IR.ExprIntBinOp _ IR.IntMinusIR IR.Reg{} IR.ConstInt{
 irCosts (IR.MovTemp _ r e@(IR.ExprIntBinOp _ IR.IntPlusIR IR.Reg{} IR.ConstInt{})) = IR.MovTemp 1 r (e $> undefined)
 irCosts (IR.MovMem _ r@IR.Reg{} sz e@(IR.ExprIntBinOp _ IR.IntMinusIR IR.Reg{} IR.Reg{})) = IR.MovMem 2 (r $> undefined) sz (e $> undefined) -- TODO: size?
 irCosts (IR.MovMem _ r@IR.Reg{} sz e@IR.ConstInt{}) = IR.MovMem 1 (r $> undefined) sz (e $> undefined)
+irCosts (IR.MovMem _ r@IR.Reg{} sz e@IR.ConstInt8{}) = IR.MovMem 1 (r $> undefined) sz (e $> undefined)
+irCosts (IR.MovMem _ r@IR.Reg{} sz e@IR.ConstWord{}) = IR.MovMem 1 (r $> undefined) sz (e $> undefined)
 irCosts (IR.MovMem _ r@IR.Reg{} sz e@(IR.ExprIntBinOp _ IR.IntTimesIR _ _)) = IR.MovMem 3 (r $> undefined) sz (e $> undefined)
 irCosts (IR.MovMem _ e1@(IR.ExprIntBinOp _ _ IR.Reg{} IR.ConstInt{}) sz e2@(IR.Mem _ _ (IR.ExprIntBinOp _ IR.IntPlusIR IR.Reg{} IR.ConstInt{}))) = IR.MovMem 2 (e1 $> undefined) sz (e2 $> undefined)
 irCosts (IR.MovMem _ r@IR.Reg{} sz e@(IR.ExprIntRel _ _ IR.Reg{} IR.Reg{})) = IR.MovMem 2 (r $> undefined) sz (e $> undefined)
@@ -152,6 +156,8 @@ irEmit (IR.WrapKCall _ Cabi (is, [o]) n l) | all (\i -> IR.size i `rem` 8 == 0) 
     }
 irEmit (IR.WrapKCall _ Kabi (_, _) n l) =
     pure [BSLabel () n, Call () l, Ret ()]
+irEmit (IR.MovMem _ (IR.Reg _ r) _ (IR.ConstInt8 _ i)) = pure [ MovACi8 () (Reg $ toAbsReg r) i ]
+irEmit (IR.MovMem _ (IR.Reg _ r) _ (IR.ConstWord _ w)) = pure [ MovAWord () (Reg $ toAbsReg r) w ]
 irEmit (IR.MovMem _ (IR.Reg _ r) _ (IR.ExprIntBinOp _ IR.IntXorIR (IR.Reg _ r1) (IR.Reg _ r2))) = do
     { r' <- allocReg64
     ; pure [ MovRR () r' (toAbsReg r1), XorRR () r' (toAbsReg r2), MovAR () (Reg $ toAbsReg r) r' ]

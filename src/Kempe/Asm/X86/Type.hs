@@ -16,7 +16,7 @@ module Kempe.Asm.X86.Type ( X86 (..)
 import           Control.DeepSeq    (NFData)
 import qualified Data.ByteString    as BS
 import           Data.Foldable      (toList)
-import           Data.Int           (Int64)
+import           Data.Int           (Int64, Int8)
 import qualified Data.Set           as S
 import           Data.Text.Encoding (decodeUtf8)
 import           Data.Word          (Word8)
@@ -107,6 +107,8 @@ data X86 reg a = PushReg { ann :: a, rSrc :: reg }
                | MovRR { ann :: a, rDest :: reg, rSrc :: reg } -- for convenience
                | MovRC { ann :: a, rDest :: reg, iSrc :: Int64 }
                | MovAC { ann :: a, addrDest :: Addr reg, iSrc :: Int64 }
+               | MovACi8 { ann :: a, addrDest :: Addr reg, i8Src :: Int8 }
+               | MovAWord { ann :: a, addrDest :: Addr reg, wSrc :: Word }
                | MovRCBool { ann :: a, rDest :: reg, boolSrc :: Word8 }
                | AddRR { ann :: a, rAdd1 :: reg, rAdd2 :: reg }
                | SubRR { ann :: a, rSub1 :: reg, rSub2 :: reg }
@@ -146,10 +148,12 @@ instance Pretty reg => Pretty (X86 reg a) where
     pretty Ret{}               = i4 "ret"
     pretty (MovRA _ r a)       = i4 ("mov" <+> pretty r <> "," <+> pretty a)
     pretty (MovAR _ a r)       = i4 ("mov" <+> pretty a <> "," <+> pretty r)
-    pretty (MovABool _ a b)    = i4 ("mov byte" <+> pretty a <> "," <+> pretty b) -- TODO: indicate it's one byte?
+    pretty (MovABool _ a b)    = i4 ("mov byte" <+> pretty a <> "," <+> pretty b)
+    pretty (MovACi8 _ a i)     = i4 ("mov byte" <+> pretty a <> "," <+> pretty i)
     pretty (MovRR _ r0 r1)     = i4 ("mov" <+> pretty r0 <> "," <+> pretty r1)
     pretty (MovRC _ r i)       = i4 ("mov" <+> pretty r <> "," <+> pretty i)
     pretty (MovAC _ a i)       = i4 ("mov qword" <+> pretty a <> "," <+> pretty i)
+    pretty (MovAWord _ a w)    = i4 ("mov qword" <+> pretty a <> "," <+> pretty w)
     pretty (MovRCBool _ r b)   = i4 ("mov" <+> pretty r <> "," <+> pretty b)
     pretty (AddRR _ r0 r1)     = i4 ("add" <+> pretty r0 <> "," <> pretty r1)
     pretty (AddAC _ a c)       = i4 ("add" <+> pretty a <> "," <+> pretty c)
