@@ -122,7 +122,7 @@ instance Pretty (Stmt a) where
     pretty (KCall _ l)             = parens ("call" <+> prettyLabel l)
     pretty Ret{}                   = parens "ret"
     pretty (MovTemp _ t e)         = parens ("movtemp" <+> pretty t <+> pretty e)
-    pretty (MovMem _ e e')         = parens ("movmem" <+> pretty e <+> pretty e')
+    pretty (MovMem _ e _ e')       = parens ("movmem" <+> pretty e <+> pretty e') -- TODO: maybe print size?
     pretty (CJump _ e l l')        = parens ("cjump" <+> pretty e <+> prettyLabel l <+> prettyLabel l')
     pretty (WrapKCall _ _ ty fn l) = hardline <> "export" <+> pretty (decodeUtf8 fn) <+> braces (prettyMonoStackType ty) <+> prettyLabel l
 
@@ -146,7 +146,7 @@ data Stmt a = Labeled { stmtCost :: a, stmtLabel :: Label }
             | WrapKCall { stmtCost :: a, wrapAbi :: ABI, stmtiFnTy :: MonoStackType, stmtABI :: BS.ByteString, stmtCall :: Label }
             -- enough...)
             | MovTemp { stmtCost :: a, stmtTemp :: Temp, stmtExp :: Exp a } -- put e in temp?
-            | MovMem { stmtCost :: a, stmtExp0 :: Exp a, stmtExp1 :: Exp a } -- store e2 at address given by e1
+            | MovMem { stmtCost :: a, stmtExp0 :: Exp a, szStore :: Int64, stmtExp1 :: Exp a } -- store e2 at address given by e1
             -- -- | Seq { stmtCost :: a, stmt0 :: Stmt a, stmt1 :: Stmt a }
             | Ret { stmtCost :: a }
            deriving (Generic, NFData, Functor)
@@ -230,7 +230,7 @@ intOp cons = do
 push :: Int64 -> Exp () -> [Stmt ()]
 push off e =
     [ MovTemp () DataPointer (ExprIntBinOp () IntPlusIR (Reg () DataPointer) (ConstInt () off)) -- increment instead of decrement b/c this is the Kempe ABI
-    , MovMem () (Reg () DataPointer) e
+    , MovMem () (Reg () DataPointer) off e
     ]
 
 pop :: Int64 -> Temp -> [Stmt ()]
@@ -272,7 +272,7 @@ writeAtom (AtBuiltin (is, _) Drop)  =
 writeAtom (AtBuiltin (is, _) Dup)   =
     let sz = size (last is) in
         pure $
-             [ MovMem () (dataPointerOffset (i + sz)) (Mem () 1 $ dataPointerOffset i) | i <- [1..sz] ] -- FIXME: this should be a one-byte fetch each time
+             [ MovMem () (dataPointerOffset (i + sz)) 1 (Mem () 1 $ dataPointerOffset i) | i <- [1..sz] ] -- FIXME: this should be a one-byte fetch each time
                 ++ [ MovTemp () DataPointer (ExprIntBinOp () IntPlusIR (Reg () DataPointer) (ConstInt () sz)) ] -- move data pointer over sz bytes
 writeAtom (If _ as as') = do
     l0 <- newLabel
