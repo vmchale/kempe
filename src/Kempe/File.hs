@@ -1,4 +1,6 @@
 module Kempe.File ( tcFile
+                  , ppFile
+                  , dumpTyAnn
                   , irFile
                   , x86File
                   , compile
@@ -27,6 +29,19 @@ tcFile fp = do
 
 yeetIO :: Exception e => Either e a -> IO a
 yeetIO = either throwIO pure
+
+ppFile :: FilePath -> IO ()
+ppFile fp = do
+    contents <- BSL.readFile fp
+    (_, m) <- yeetIO $ parseWithMax contents
+    putDoc $ prettyModule m
+
+dumpTyAnn :: FilePath -> IO ()
+dumpTyAnn fp = do
+    contents <- BSL.readFile fp
+    (i, m) <- yeetIO $ parseWithMax contents
+    (res, _) <- yeetIO $ runTypeM i (assignModule m)
+    putDoc $ prettyTypedModule res
 
 dumpIR :: Int -> Module a b -> Doc ann
 dumpIR = prettyIR . fst .* irGen

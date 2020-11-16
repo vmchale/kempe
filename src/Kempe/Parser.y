@@ -145,10 +145,10 @@ FunDecl :: { KempeDecl AlexPosn AlexPosn }
 
 
 FunSig :: { (AlexPosn, Name AlexPosn, [KempeTy AlexPosn], [KempeTy AlexPosn]) }
-       : name colon many(Type) arrow many(Type) { ($2, $1, $3, $5) }
+       : name colon many(Type) arrow many(Type) { ($2, $1, reverse $3, reverse $5) }
 
 FunBody :: { [Atom AlexPosn] }
-        : defEq brackets(many(Atom)) { $2 }
+        : defEq brackets(many(Atom)) { reverse $2 }
 
 Atom :: { Atom AlexPosn }
      : name { AtName (Name.loc $1) $1 }
@@ -157,8 +157,8 @@ Atom :: { Atom AlexPosn }
      | intLit { IntLit (loc $1) (int $1) }
      | wordLit { WordLit (loc $1) (word $1) }
      | int8Lit { Int8Lit (loc $1) (int8 $1) }
-     | dip parens(many(Atom)) { Dip $1 $2 }
-     | if lparen many(Atom) comma many(Atom) rparen { If $1 $3 $5 }
+     | dip parens(many(Atom)) { Dip $1 (reverse $2) }
+     | if lparen many(Atom) comma many(Atom) rparen { If $1 (reverse $3) (reverse $5) }
      | boolLit { BoolLit (loc $1) (bool $ builtin $1) }
      | dup { AtBuiltin $1 Dup }
      | drop { AtBuiltin $1 Drop }

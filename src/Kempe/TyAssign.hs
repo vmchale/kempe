@@ -276,12 +276,12 @@ assignAtom (Case _ ls) = do
 
 assignAtoms :: [Atom a] -> TypeM () ([Atom (StackType ())], StackType ())
 assignAtoms = foldM
-    (\seed a -> do { (ty, r) <- assignAtom a ; (fst seed ++ [r] ,) <$> catTypes ty (snd seed) })
+    (\seed a -> do { (ty, r) <- assignAtom a ; (fst seed ++ [r] ,) <$> catTypes (snd seed) ty })
     ([], emptyStackType)
 
 tyAtoms :: [Atom a] -> TypeM () (StackType ())
 tyAtoms = foldM
-    (\seed a -> do { tys' <- tyAtom a ; catTypes tys' seed })
+    (\seed a -> do { tys' <- tyAtom a ; catTypes seed tys' })
     emptyStackType
 
 -- from size,
