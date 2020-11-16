@@ -1,6 +1,5 @@
 module Kempe.File ( tcFile
-                  , ppFile
-                  , dumpTyAnn
+                  , dumpMono
                   , irFile
                   , x86File
                   , compile
@@ -10,6 +9,7 @@ module Kempe.File ( tcFile
 import           Control.Composition       ((.*))
 import           Control.Exception         (Exception, throwIO)
 import qualified Data.ByteString.Lazy      as BSL
+import qualified Data.Set                  as S
 import           Kempe.AST
 import           Kempe.Asm.X86.Type
 import           Kempe.Error
@@ -17,6 +17,7 @@ import           Kempe.IR
 import           Kempe.Parser
 import           Kempe.Pipeline
 import           Kempe.Proc.Nasm
+import           Kempe.Shuttle
 import           Kempe.TyAssign
 import           Prettyprinter             (Doc, hardline)
 import           Prettyprinter.Render.Text (putDoc)
@@ -30,18 +31,13 @@ tcFile fp = do
 yeetIO :: Exception e => Either e a -> IO a
 yeetIO = either throwIO pure
 
-ppFile :: FilePath -> IO ()
-ppFile fp = do
-    contents <- BSL.readFile fp
-    (_, m) <- yeetIO $ parseWithMax contents
-    putDoc $ prettyModule m
-
-dumpTyAnn :: FilePath -> IO ()
-dumpTyAnn fp = do
+dumpMono :: FilePath -> IO ()
+dumpMono fp = do
     contents <- BSL.readFile fp
     (i, m) <- yeetIO $ parseWithMax contents
-    (res, _) <- yeetIO $ runTypeM i (assignModule m)
-    putDoc $ prettyTypedModule res
+    mMono <- yeetIO $ monomorphize i m
+    putDoc $ prettyTypedModule (fmap (fmap fromMono) mMono)
+    where fromMono (is, os) = StackType S.empty is os
 
 dumpIR :: Int -> Module a b -> Doc ann
 dumpIR = prettyIR . fst .* irGen
