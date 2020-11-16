@@ -219,6 +219,13 @@ writeDecl (Export sTy abi n) = pure . WrapKCall () abi sTy (encodeUtf8 $ name n)
 writeAtoms :: [Atom MonoStackType] -> TempM [Stmt ()]
 writeAtoms = foldMapA writeAtom
 
+intShift :: IntBinOp -> TempM [Stmt ()]
+intShift cons = do
+    t0 <- getTemp64 -- registers are 64 bits for integers
+    t1 <- getTemp8
+    pure $
+        pop 8 t0 ++ pop 1 t1 ++ push 8 (ExprIntBinOp () cons (Reg () t0) (Reg () t1))
+
 intOp :: IntBinOp -> TempM [Stmt ()]
 intOp cons = do
     t0 <- getTemp64 -- registers are 64 bits for integers
@@ -263,9 +270,14 @@ writeAtom (AtBuiltin _ IntTimes)    = intOp IntTimesIR
 writeAtom (AtBuiltin _ IntDiv)      = intOp IntDivIR -- what to do on failure?
 writeAtom (AtBuiltin _ IntMod)      = intOp IntModIR
 writeAtom (AtBuiltin _ IntXor)      = intOp IntXorIR
-writeAtom (AtBuiltin _ IntShiftR)   = intOp IntShiftRIR
-writeAtom (AtBuiltin _ IntShiftL)   = intOp IntShiftLIR
+writeAtom (AtBuiltin _ IntShiftR)   = intShift IntShiftRIR
+writeAtom (AtBuiltin _ IntShiftL)   = intShift IntShiftLIR
 writeAtom (AtBuiltin _ IntEq)       = intRel IntEqIR
+writeAtom (AtBuiltin _ WordPlus)    = intOp IntPlusIR
+writeAtom (AtBuiltin _ WordTimes)   = intOp IntTimesIR
+writeAtom (AtBuiltin _ WordXor)     = intOp IntXorIR
+writeAtom (AtBuiltin _ WordShiftL)  = intShift IntShiftLIR
+writeAtom (AtBuiltin _ WordShiftR)  = intShift IntShiftRIR
 writeAtom (AtBuiltin (is, _) Drop)  =
     let sz = size (last is) in
         pure [ MovTemp () DataPointer (ExprIntBinOp () IntMinusIR (Reg () DataPointer) (ConstInt () sz)) ] -- subtract sz from data pointer (Kempe data pointer grows up)

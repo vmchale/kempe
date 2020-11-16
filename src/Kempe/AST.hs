@@ -28,11 +28,13 @@ module Kempe.AST ( BuiltinTy (..)
 import           Control.DeepSeq         (NFData)
 import qualified Data.ByteString.Lazy    as BSL
 import           Data.Functor            (void)
+import           Data.Int                (Int8)
 import           Data.List.NonEmpty      (NonEmpty)
 import qualified Data.Set                as S
 import           Data.Text.Lazy.Encoding (decodeUtf8)
 import           GHC.Generics            (Generic)
 import           Kempe.Name
+import           Numeric.Natural
 import           Prettyprinter           (Doc, Pretty (pretty), align, braces, brackets, concatWith, fillSep, hsep, parens, pipe, sep, tupled, (<+>))
 
 data BuiltinTy = TyPtr
@@ -115,6 +117,8 @@ instance Pretty (Atom a) where
     pretty (If _ as as')   = "if(" <> align (fillSep (fmap pretty as)) <> ", " <> align (fillSep (fmap pretty as')) <> ")"
     pretty (IntLit _ i)    = pretty i
     pretty (BoolLit _ b)   = pretty b
+    pretty (WordLit _ w)   = pretty w <> "u"
+    pretty (Int8Lit _ i)   = pretty i <> "i8"
 
 prettyTyped :: Atom (StackType ()) -> Doc ann
 prettyTyped (AtName ty n)    = parens (pretty n <+> ":" <+> pretty ty)
@@ -124,12 +128,16 @@ prettyTyped (AtCons ty tn)   = parens (pretty tn <+> ":" <+> pretty ty)
 prettyTyped (If _ as as')    = "if(" <> align (fillSep (prettyTyped <$> as)) <> ", " <> align (fillSep (prettyTyped <$> as')) <> ")"
 prettyTyped (IntLit _ i)     = pretty i
 prettyTyped (BoolLit _ b)    = pretty b
+prettyTyped (Int8Lit _ i)    = pretty i <> "i8"
+prettyTyped (WordLit _ n)    = pretty n <> "u"
 
 data Atom b = AtName b (Name b)
             | Case b (NonEmpty (Pattern b, [Atom b]))
             | If b [Atom b] [Atom b]
             | Dip b [Atom b]
             | IntLit b Integer
+            | WordLit b Natural
+            | Int8Lit b Int8
             | BoolLit b Bool
             | AtBuiltin b BuiltinFn
             | AtCons b (TyName b)

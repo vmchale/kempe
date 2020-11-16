@@ -67,6 +67,8 @@ import Prettyprinter (Pretty (pretty), (<+>))
     foreignName { TokForeign _ $$ }
 
     intLit { $$@(TokInt _ _) }
+    wordLit { $$@(TokWord _ _) }
+    int8Lit { $$@(TokInt8 _ _) }
 
     type { TokKeyword $$ KwType }
     case { TokKeyword $$ KwCase }
@@ -153,6 +155,8 @@ Atom :: { Atom AlexPosn }
      | tyName { AtCons (Name.loc $1) $1 }
      | lbrace case some(CaseLeaf) rbrace { Case $2 (NE.reverse $3) }
      | intLit { IntLit (loc $1) (int $1) }
+     | wordLit { WordLit (loc $1) (word $1) }
+     | int8Lit { Int8Lit (loc $1) (int8 $1) }
      | dip parens(many(Atom)) { Dip $1 $2 }
      | if lparen many(Atom) comma many(Atom) rparen { If $1 $3 $5 }
      | boolLit { BoolLit (loc $1) (bool $ builtin $1) }

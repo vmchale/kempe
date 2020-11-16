@@ -224,6 +224,8 @@ tyAtom :: Atom a -> TypeM () (StackType ())
 tyAtom (AtBuiltin _ b) = typeOfBuiltin b
 tyAtom BoolLit{}       = pure $ StackType mempty [] [TyBuiltin () TyBool]
 tyAtom IntLit{}        = pure $ StackType mempty [] [TyBuiltin () TyInt]
+tyAtom Int8Lit{}       = pure $ StackType mempty [] [TyBuiltin () TyInt8 ]
+tyAtom WordLit{}       = pure $ StackType mempty [] [TyBuiltin () TyWord]
 tyAtom (AtName _ n)    = renameStack =<< tyLookup (void n)
 tyAtom (Dip _ as)      = dipify =<< tyAtoms as
 tyAtom (AtCons _ tn)   = renameStack =<< consLookup (void tn)
@@ -245,6 +247,12 @@ assignAtom (BoolLit _ b)   =
 assignAtom (IntLit _ i)    =
     let sTy = StackType mempty [] [TyBuiltin () TyInt]
         in pure (sTy, IntLit sTy i)
+assignAtom (Int8Lit _ i)    =
+    let sTy = StackType mempty [] [TyBuiltin () TyInt8]
+        in pure (sTy, Int8Lit sTy i)
+assignAtom (WordLit _ u)    =
+    let sTy = StackType mempty [] [TyBuiltin () TyWord]
+        in pure (sTy, WordLit sTy u)
 assignAtom (AtName _ n) = do
     sTy <- renameStack =<< tyLookup (void n)
     pure (sTy, AtName sTy (n $> sTy))

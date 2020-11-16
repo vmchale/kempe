@@ -66,6 +66,8 @@ squishTypeName :: BuiltinTy -> T.Text
 squishTypeName TyPtr  = "ptr"
 squishTypeName TyInt  = "int"
 squishTypeName TyBool = "bool"
+squishTypeName TyWord = "word"
+squishTypeName TyInt8 = "int8"
 
 squishType :: KempeTy a -> T.Text
 squishType (TyBuiltin _ b)          = squishTypeName b
@@ -88,6 +90,8 @@ renameAtom :: Atom (StackType ()) -> MonoM (Atom (StackType ()))
 renameAtom a@AtBuiltin{}            = pure a
 renameAtom (If ty as as')           = If ty <$> traverse renameAtom as <*> traverse renameAtom as'
 renameAtom a@IntLit{}               = pure a
+renameAtom a@Int8Lit{}              = pure a
+renameAtom a@WordLit{}              = pure a
 renameAtom a@BoolLit{}              = pure a
 renameAtom (Dip ty as)              = Dip ty <$> traverse renameAtom as
 renameAtom (AtName ty (Name t u l)) = do
@@ -202,6 +206,8 @@ namesInAtom (AtName _ n@(Name _ _ l))  = S.singleton (n, l)
 namesInAtom (AtCons _ tn@(Name _ _ l)) = S.singleton (tn, l)
 namesInAtom IntLit{}                   = S.empty
 namesInAtom BoolLit{}                  = S.empty
+namesInAtom Int8Lit{}                  = S.empty
+namesInAtom WordLit{}                  = S.empty
 namesInAtom (Case _ as)                = foldMap namesInAtom (foldMap snd as) -- don't need patterns since we're destructing them here?
 
 exports :: Module a b -> [(Name b, b)]

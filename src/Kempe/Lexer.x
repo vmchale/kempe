@@ -22,6 +22,7 @@ import Data.Bifunctor (first)
 import qualified Data.ByteString.Lazy as BSL
 import qualified Data.ByteString.Lazy.Char8 as ASCII
 import Data.Functor (($>))
+import Data.Int (Int8)
 import qualified Data.IntMap as IM
 import qualified Data.Map as M
 import qualified Data.Text as T
@@ -111,8 +112,8 @@ tokens :-
         xoru                     { mkBuiltin BuiltinWordXor }
 
         $digit+                  { tok (\p s -> alex $ TokInt p (read $ ASCII.unpack s)) }
-        "0x"$hexit+              { tok (\p s -> TokInt p <$> readHex' (BSL.drop 2 s)) }
         "0x"$hexit+u             { tok (\p s -> TokWord p <$> readHex' (BSL.init $ BSL.drop 2 s)) }
+        $digit+"i8"              { tok (\p s -> alex $ TokInt8 p (read $ ASCII.unpack (BSL.init $ BSL.init s))) }
 
         @name                    { tok (\p s -> TokName p <$> newIdentAlex p (mkText s)) }
         @tyname                  { tok (\p s -> TokTyName p <$> newIdentAlex p (mkText s)) }
@@ -282,6 +283,7 @@ data Token a = EOF { loc :: a }
              | TokTyName { loc :: a, _tyName :: (TyName a) }
              | TokKeyword { loc :: a, _kw :: Keyword }
              | TokInt { loc :: a, int :: Integer }
+             | TokInt8 { loc :: a, int8 :: Int8 }
              | TokWord { loc :: a, word :: Natural }
              | TokForeign { loc :: a, ident :: BSL.ByteString }
              | TokBuiltin { loc :: a, builtin :: Builtin }
@@ -294,6 +296,8 @@ instance Pretty (Token a) where
     pretty (TokTyName _ tn)  = "identifier" <+> squotes (pretty tn)
     pretty (TokKeyword _ kw) = "keyword" <+> squotes (pretty kw)
     pretty (TokInt _ i)      = pretty i
+    pretty (TokWord _ n)     = pretty n <> "u"
+    pretty (TokInt8 _ i)     = pretty i <> "i8"
     pretty (TokForeign _ fn) = dquotes (pretty $ mkText fn)
     pretty (TokBuiltin _ b)  = pretty b
 
