@@ -2,10 +2,10 @@
 
 ; given a seed, return a random value and the new seed
 next : Word -- Word Word
-     =: [ 0x9e3779b97f4a7c15 + dup
-          dup 30 >> xori 0xbf58476d1ce4e5b9 *
-          dup 27 >> xori 0x94d049bb133111eb *
-          dup 32 >> xori
+     =: [ 0x9e3779b97f4a7c15u +~ dup
+          dup 30 >>~ xoru 0xbf58476d1ce4e5b9u *~
+          dup 27 >>~ xoru 0x94d049bb133111ebu *~
+          dup 32 >>~ xoru
         ]
 
 %foreign kabi next

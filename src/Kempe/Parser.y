@@ -50,11 +50,15 @@ import Prettyprinter (Pretty (pretty), (<+>))
     underscore { TokSym $$ Underscore }
 
     plus { TokSym $$ Plus }
+    plusU { TokSym $$ PlusU }
     minus { TokSym $$ Minus }
     times { TokSym $$ Times }
+    timesU { TokSym $$ TimesU }
     div { TokSym $$ Div }
     percent { TokSym $$ Percent }
     eq { TokSym $$ Eq }
+    shiftrU { TokSym $$ ShiftRU }
+    shiftlU { TokSym $$ ShiftLU }
     shiftr { TokSym $$ ShiftR }
     shiftl { TokSym $$ ShiftL }
 
@@ -83,6 +87,7 @@ import Prettyprinter (Pretty (pretty), (<+>))
     swap { TokBuiltin $$ BuiltinSwap }
     drop { TokBuiltin $$ BuiltinDrop }
     intXor { TokBuiltin $$ BuiltinIntXor }
+    wordXor { TokBuiltin $$ BuiltinWordXor }
 
 %%
 
@@ -155,14 +160,19 @@ Atom :: { Atom AlexPosn }
      | drop { AtBuiltin $1 Drop }
      | swap { AtBuiltin $1 Swap }
      | plus { AtBuiltin $1 IntPlus }
+     | plusU { AtBuiltin $1 WordPlus }
      | minus { AtBuiltin $1 IntMinus }
      | times { AtBuiltin $1 IntTimes }
+     | timesU { AtBuiltin $1 WordTimes }
      | div { AtBuiltin $1 IntDiv }
      | percent { AtBuiltin $1 IntMod }
      | eq { AtBuiltin $1 IntEq }
      | shiftl { AtBuiltin $1 IntShiftL }
      | shiftr { AtBuiltin $1 IntShiftR }
+     | shiftlU { AtBuiltin $1 WordShiftL }
+     | shiftrU { AtBuiltin $1 WordShiftR }
      | intXor { AtBuiltin $1 IntXor }
+     | wordXor { AtBuiltin $1 WordXor }
 
 CaseLeaf :: { (Pattern AlexPosn, [Atom AlexPosn]) }
          : vbar Pattern caseArr many(Atom) { ($2, reverse $4) }

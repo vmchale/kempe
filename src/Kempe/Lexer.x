@@ -30,6 +30,7 @@ import GHC.Generics (Generic)
 import Kempe.Name
 import Kempe.Unique
 import Numeric (readHex)
+import Numeric.Natural (Natural)
 import Prettyprinter (Pretty (pretty), (<+>), colon, dquotes, squotes)
 
 }
@@ -80,6 +81,10 @@ tokens :-
         "="                      { mkSym Eq }
         "<<"                     { mkSym ShiftL }
         ">>"                     { mkSym ShiftR }
+        "+~"                     { mkSym PlusU }
+        "*~"                     { mkSym TimesU }
+        ">>~"                    { mkSym ShiftRU }
+        "<<~"                    { mkSym ShiftLU }
 
         type                     { mkKw KwType }
         import                   { mkKw KwImport }
@@ -103,9 +108,11 @@ tokens :-
         drop                     { mkBuiltin BuiltinDrop }
         swap                     { mkBuiltin BuiltinSwap }
         xori                     { mkBuiltin BuiltinIntXor }
+        xoru                     { mkBuiltin BuiltinWordXor }
 
         $digit+                  { tok (\p s -> alex $ TokInt p (read $ ASCII.unpack s)) }
         "0x"$hexit+              { tok (\p s -> TokInt p <$> readHex' (BSL.drop 2 s)) }
+        "0x"$hexit+u             { tok (\p s -> TokWord p <$> readHex' (BSL.init $ BSL.drop 2 s)) }
 
         @name                    { tok (\p s -> TokName p <$> newIdentAlex p (mkText s)) }
         @tyname                  { tok (\p s -> TokTyName p <$> newIdentAlex p (mkText s)) }
@@ -167,14 +174,18 @@ alexEOF = EOF <$> get_pos
 
 data Sym = Arrow
          | Plus
+         | PlusU
          | Minus
          | Percent
          | Div
          | Times
+         | TimesU
          | DefEq
          | Eq
          | ShiftL
          | ShiftR
+         | ShiftLU
+         | ShiftRU
          | Colon
          | LBrace
          | RBrace
@@ -192,10 +203,12 @@ data Sym = Arrow
 instance Pretty Sym where
     pretty Arrow      = "--"
     pretty Plus       = "+"
+    pretty PlusU      = "+~"
     pretty Minus      = "-"
     pretty Percent    = "%"
     pretty Div        = "/"
     pretty Times      = "*"
+    pretty TimesU     = "*~"
     pretty DefEq      = "=:"
     pretty Eq         = "="
     pretty Colon      = ":"
@@ -212,6 +225,8 @@ instance Pretty Sym where
     pretty Underscore = "_"
     pretty ShiftR     = ">>"
     pretty ShiftL     = "<<"
+    pretty ShiftRU    = ">>~"
+    pretty ShiftLU    = "<<~"
 
 data Keyword = KwType
              | KwImport
@@ -244,6 +259,7 @@ data Builtin = BuiltinBool
              | BuiltinSwap
              | BuiltinDup
              | BuiltinIntXor
+             | BuiltinWordXor
              deriving (Generic, NFData)
 
 instance Pretty Builtin where
@@ -258,6 +274,7 @@ instance Pretty Builtin where
     pretty BuiltinSwap        = "swap"
     pretty BuiltinDup         = "dup"
     pretty BuiltinIntXor      = "xori"
+    pretty BuiltinWordXor     = "xoru"
 
 data Token a = EOF { loc :: a }
              | TokSym { loc :: a, _sym :: Sym }
@@ -265,6 +282,7 @@ data Token a = EOF { loc :: a }
              | TokTyName { loc :: a, _tyName :: (TyName a) }
              | TokKeyword { loc :: a, _kw :: Keyword }
              | TokInt { loc :: a, int :: Integer }
+             | TokWord { loc :: a, word :: Natural }
              | TokForeign { loc :: a, ident :: BSL.ByteString }
              | TokBuiltin { loc :: a, builtin :: Builtin }
              deriving (Generic, NFData)

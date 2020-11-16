@@ -161,18 +161,32 @@ typeOfBuiltin Swap = do
 typeOfBuiltin Dup = do
     aN <- dummyName "a"
     pure $ StackType (S.singleton aN) [TyVar () aN] [TyVar () aN, TyVar () aN]
-typeOfBuiltin IntEq     = pure $ StackType S.empty [TyBuiltin () TyInt, TyBuiltin () TyInt] [TyBuiltin () TyBool]
-typeOfBuiltin IntMod    = pure intBinOp
-typeOfBuiltin IntDiv    = pure intBinOp
-typeOfBuiltin IntPlus   = pure intBinOp
-typeOfBuiltin IntTimes  = pure intBinOp
-typeOfBuiltin IntMinus  = pure intBinOp
-typeOfBuiltin IntShiftR = pure intBinOp
-typeOfBuiltin IntShiftL = pure intBinOp
-typeOfBuiltin IntXor    = pure intBinOp
+typeOfBuiltin IntEq      = pure $ StackType S.empty [TyBuiltin () TyInt, TyBuiltin () TyInt] [TyBuiltin () TyBool]
+typeOfBuiltin IntMod     = pure intBinOp
+typeOfBuiltin IntDiv     = pure intBinOp
+typeOfBuiltin IntPlus    = pure intBinOp
+typeOfBuiltin IntTimes   = pure intBinOp
+typeOfBuiltin IntMinus   = pure intBinOp
+typeOfBuiltin IntShiftR  = pure intShift
+typeOfBuiltin IntShiftL  = pure intBinOp
+typeOfBuiltin IntXor     = pure intBinOp
+typeOfBuiltin WordXor    = pure wordBinOp
+typeOfBuiltin WordPlus   = pure wordBinOp
+typeOfBuiltin WordTimes  = pure wordBinOp
+typeOfBuiltin WordShiftR = pure wordShift
+typeOfBuiltin WordShiftL = pure wordShift
 
 intBinOp :: StackType ()
 intBinOp = StackType S.empty [TyBuiltin () TyInt, TyBuiltin () TyInt] [TyBuiltin () TyInt]
+
+intShift :: StackType ()
+intShift = StackType S.empty [TyBuiltin () TyInt, TyBuiltin () TyInt8] [TyBuiltin () TyInt]
+
+wordBinOp :: StackType ()
+wordBinOp = StackType S.empty [TyBuiltin () TyWord, TyBuiltin () TyWord] [TyBuiltin () TyWord]
+
+wordShift :: StackType ()
+wordShift = StackType S.empty [TyBuiltin () TyWord, TyBuiltin () TyInt8] [TyBuiltin () TyWord]
 
 tyLookup :: Name a -> TypeM a (StackType a)
 tyLookup n@(Name _ (Unique i) l) = do
