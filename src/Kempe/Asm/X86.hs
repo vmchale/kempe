@@ -177,8 +177,10 @@ irEmit e = error (show $ pretty e)
 
 -- | Code to evaluate and put some expression in a chosen 'Temp'
 evalE :: IR.Exp Int64 -> IR.Temp -> WriteM [X86 AbsReg ()]
-evalE (IR.ConstInt _ i) (IR.Temp64 t) = pure [MovRC () (AllocReg64 t) i]
-evalE (IR.ConstBool _ b) (IR.Temp8 t) = pure [MovRCBool () (AllocReg8 t) (toByte b)]
+evalE (IR.ConstInt _ i) (IR.Temp64 t)  = pure [MovRC () (AllocReg64 t) i]
+evalE (IR.ConstBool _ b) (IR.Temp8 t)  = pure [MovRCBool () (AllocReg8 t) (toByte b)]
+evalE (IR.ConstInt8 _ i) (IR.Temp8 t)  = pure [MovRCi8 () (AllocReg8 t) i]
+evalE (IR.ConstWord _ w) (IR.Temp64 t) = pure [MovRWord () (AllocReg64 t) w]
 
 toByte :: Bool -> Word8
 toByte False = 0
