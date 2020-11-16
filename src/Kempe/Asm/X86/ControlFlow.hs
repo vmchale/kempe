@@ -87,6 +87,9 @@ uses (MulRR _ r r')     = S.fromList [r, r']
 uses (AddRC _ r _)      = S.singleton r
 uses (SubRC _ r _)      = S.singleton r
 uses (AddAC _ a _)      = addrRegs a
+uses (MovAWord _ a _)   = addrRegs a
+uses (MovABool _ a _)   = addrRegs a
+uses (XorRR _ r r')     = S.fromList [r, r']
 uses (CmpAddrReg _ a r) = S.singleton r <> addrRegs a
 uses (CmpRegReg _ r r') = S.fromList [r, r']
 uses _                  = S.empty
@@ -96,11 +99,14 @@ defs (MovRA _ r _)     = S.singleton r
 defs (MovRR _ r _)     = S.singleton r
 defs (MovRC _ r _)     = S.singleton r
 defs (MovRCBool _ r _) = S.singleton r
+defs (MovRCi8 _ r _)   = S.singleton r
+defs (MovRWord _ r _)  = S.singleton r
 defs (AddRR _ r _)     = S.singleton r
 defs (SubRR _ r _)     = S.singleton r
 defs (MulRR _ r _)     = S.singleton r
 defs (AddRC _ r _)     = S.singleton r
 defs (SubRC _ r _)     = S.singleton r
+defs (XorRR _ r _)     = S.singleton r
 defs _                 = S.empty
 
 next :: [X86 AbsReg ()] -> FreshM ([Int] -> [Int], [X86 AbsReg ControlAnn])

@@ -169,7 +169,7 @@ irEmit (IR.MovMem _ (IR.Reg _ r) _ (IR.ExprIntBinOp _ IR.IntXorIR (IR.Reg _ r1) 
     }
 irEmit (IR.MovMem _ (IR.Reg _ r) _ (IR.ExprIntBinOp _ IR.IntPlusIR (IR.Reg _ r1) (IR.Reg _ r2))) = do
     { r' <- allocReg64
-    ; pure [ MovRR () r' (toAbsReg r1), MulRR () r' (toAbsReg r2), MovAR () (Reg $ toAbsReg r) r' ]
+    ; pure [ MovRR () r' (toAbsReg r1), AddRR () r' (toAbsReg r2), MovAR () (Reg $ toAbsReg r) r' ]
     }
 -- total failure; try recursive back-up function at this point
 irEmit (IR.MovTemp _ r e) = let e' = expCost e in evalE e' r
