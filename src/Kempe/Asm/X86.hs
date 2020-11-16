@@ -151,6 +151,10 @@ irEmit (IR.WrapKCall _ Cabi (is, [o]) n l) | all (\i -> IR.size i `rem` 8 == 0) 
     }
 irEmit (IR.WrapKCall _ Kabi (_, _) n l) =
     pure [BSLabel () n, Call () l, Ret ()]
+irEmit (IR.MovMem _ (IR.Reg _ r) _ (IR.ExprIntBinOp _ IR.IntXorIR (IR.Reg _ r1) (IR.Reg _ r2))) = do
+    { r' <- allocReg64
+    ; pure [ MovRR () r' (toAbsReg r1), XorRR () r' (toAbsReg r2), MovAR () (Reg $ toAbsReg r) r' ]
+    }
 -- total failure; try recursive back-up function at this point
 irEmit (IR.MovTemp _ r e) = let e' = expCost e in evalE e' r
 

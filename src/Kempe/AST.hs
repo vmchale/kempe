@@ -38,6 +38,8 @@ import           Prettyprinter           (Doc, Pretty (pretty), align, braces, b
 data BuiltinTy = TyPtr
                | TyInt
                | TyBool
+               | TyInt8
+               | TyWord
                -- -- | TyFloat
                -- -- | TyArr Word
                deriving (Generic, NFData, Eq, Ord)
@@ -50,6 +52,8 @@ instance Pretty BuiltinTy where
     pretty TyPtr  = "Ptr"
     pretty TyInt  = "Int"
     pretty TyBool = "Bool"
+    pretty TyInt8 = "Int8"
+    pretty TyWord = "Word"
 
 -- special cases w.r.t. codegen
 -- dk what tensor types are (or morphisms) but they look cool?
@@ -143,22 +147,32 @@ data BuiltinFn = Drop
                | IntShiftR
                | IntShiftL
                | IntXor
+               | WordPlus
+               | WordTimes
+               | WordShiftR
+               | WordShiftL
+               | WordXor
                -- TODO: IntLt and such
                deriving (Eq, Generic, NFData)
 
 instance Pretty BuiltinFn where
-    pretty Drop      = "drop"
-    pretty Swap      = "swap"
-    pretty Dup       = "dup"
-    pretty IntPlus   = "+"
-    pretty IntMinus  = "-"
-    pretty IntTimes  = "*"
-    pretty IntDiv    = "/"
-    pretty IntMod    = "%"
-    pretty IntEq     = "="
-    pretty IntShiftR = ">>"
-    pretty IntShiftL = "<<"
-    pretty IntXor    = "xori"
+    pretty Drop       = "drop"
+    pretty Swap       = "swap"
+    pretty Dup        = "dup"
+    pretty IntPlus    = "+"
+    pretty IntMinus   = "-"
+    pretty IntTimes   = "*"
+    pretty IntDiv     = "/"
+    pretty IntMod     = "%"
+    pretty IntEq      = "="
+    pretty IntShiftR  = ">>"
+    pretty IntShiftL  = "<<"
+    pretty WordPlus   = "+~"
+    pretty WordTimes  = "*~"
+    pretty WordShiftL = "<<~"
+    pretty WordShiftR = ">>~"
+    pretty IntXor     = "xori"
+    pretty WordXor    = "xoru"
 
 data ABI = Cabi
          | Kabi
