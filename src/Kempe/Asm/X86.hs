@@ -26,6 +26,7 @@ import           Data.Word           (Word8)
 import           Kempe.AST
 import           Kempe.Asm.X86.Type
 import qualified Kempe.IR            as IR
+import           Prettyprinter
 
 toAbsReg :: IR.Temp -> AbsReg
 toAbsReg (IR.Temp8 i)   = AllocReg8 i
@@ -157,6 +158,7 @@ irEmit (IR.MovMem _ (IR.Reg _ r) _ (IR.ExprIntBinOp _ IR.IntXorIR (IR.Reg _ r1) 
     }
 -- total failure; try recursive back-up function at this point
 irEmit (IR.MovTemp _ r e) = let e' = expCost e in evalE e' r
+irEmit e = error (show $ pretty e)
 
 -- | Code to evaluate and put some expression in a chosen 'Temp'
 evalE :: IR.Exp Int64 -> IR.Temp -> WriteM [X86 AbsReg ()]

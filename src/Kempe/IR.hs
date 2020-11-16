@@ -128,6 +128,8 @@ instance Pretty (Stmt a) where
 
 instance Pretty (Exp a) where
     pretty (ConstInt _ i)           = parens ("int" <+> pretty i)
+    pretty (ConstInt8 _ i)          = parens ("int8" <+> pretty i)
+    pretty (ConstWord _ n)          = parens ("word" <+> pretty n)
     pretty (ConstBool _ False)      = parens "bool false"
     pretty (ConstBool _ True)       = parens "bool true"
     pretty (Reg _ t)                = parens ("reg" <+> pretty t)
@@ -194,19 +196,19 @@ data IntBinOp = IntPlusIR
               | IntMinusIR
               | IntModIR -- rem?
               | IntXorIR
-              | IntShiftRIR
-              | IntShiftLIR
+              | WordShiftRIR -- compiles to shr on x86
+              | WordShiftLIR
               deriving (Generic, NFData)
 
 instance Pretty IntBinOp where
-    pretty IntPlusIR   = "+"
-    pretty IntTimesIR  = "*"
-    pretty IntDivIR    = "/"
-    pretty IntMinusIR  = "-"
-    pretty IntModIR    = "%"
-    pretty IntXorIR    = "xor"
-    pretty IntShiftRIR = ">>"
-    pretty IntShiftLIR = "<<"
+    pretty IntPlusIR    = "+"
+    pretty IntTimesIR   = "*"
+    pretty IntDivIR     = "/"
+    pretty IntMinusIR   = "-"
+    pretty IntModIR     = "%"
+    pretty IntXorIR     = "xor"
+    pretty WordShiftRIR = ">>"
+    pretty WordShiftLIR = "<<"
 
 writeModule :: Module () MonoStackType -> TempM [Stmt ()]
 writeModule = foldMapA writeDecl
@@ -276,14 +278,14 @@ writeAtom (AtBuiltin _ IntTimes)    = intOp IntTimesIR
 writeAtom (AtBuiltin _ IntDiv)      = intOp IntDivIR -- what to do on failure?
 writeAtom (AtBuiltin _ IntMod)      = intOp IntModIR
 writeAtom (AtBuiltin _ IntXor)      = intOp IntXorIR
-writeAtom (AtBuiltin _ IntShiftR)   = intShift IntShiftRIR
-writeAtom (AtBuiltin _ IntShiftL)   = intShift IntShiftLIR
+writeAtom (AtBuiltin _ IntShiftR)   = intShift WordShiftRIR -- TODO: shr or sar?
+writeAtom (AtBuiltin _ IntShiftL)   = intShift WordShiftLIR
 writeAtom (AtBuiltin _ IntEq)       = intRel IntEqIR
 writeAtom (AtBuiltin _ WordPlus)    = intOp IntPlusIR
 writeAtom (AtBuiltin _ WordTimes)   = intOp IntTimesIR
 writeAtom (AtBuiltin _ WordXor)     = intOp IntXorIR
-writeAtom (AtBuiltin _ WordShiftL)  = intShift IntShiftLIR
-writeAtom (AtBuiltin _ WordShiftR)  = intShift IntShiftRIR
+writeAtom (AtBuiltin _ WordShiftL)  = intShift WordShiftLIR
+writeAtom (AtBuiltin _ WordShiftR)  = intShift WordShiftRIR
 writeAtom (AtBuiltin (is, _) Drop)  =
     let sz = size (last is) in
         pure [ MovTemp () DataPointer (ExprIntBinOp () IntMinusIR (Reg () DataPointer) (ConstInt () sz)) ] -- subtract sz from data pointer (Kempe data pointer grows up)
