@@ -12,7 +12,7 @@ moddeps.svg: $(HS_SRC)
 factorial.o: examples/factorial.kmp
 	kc $< $@
 
-factorial: rts.o factorial.o test/harness/factorial.c
+factorial: factorial.o test/harness/factorial.c
 	gcc $^ -o $@
 
 rts.o: rts.S

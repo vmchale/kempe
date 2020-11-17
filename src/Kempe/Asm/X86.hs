@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 -- | This module contains dynamic-programming optimum instruction selector.
 --
 -- It's kind of broken because
@@ -154,7 +156,7 @@ irEmit (IR.MovMem _ (IR.Reg _ r) _ (IR.ExprIntRel _ IR.IntEqIR (IR.Reg _ r1) (IR
 irEmit (IR.WrapKCall _ Cabi (is, [o]) n l) | all (\i -> IR.size i `rem` 8 == 0) is && IR.size o == 8 = do
     { let offs = zipWith const [1..] is
     ; let totalSize = sizeStack is + IR.size o -- for the output
-    ; pure $ [BSLabel () n] ++ foldMap (\i -> [PopMem () (AddrRCPlus DataPointer (i * 8))]) offs ++ [AddRC () DataPointer totalSize, Call () l, MovAR () (AddrRCMinus DataPointer (IR.size o)) CRet, Ret ()] -- TODO: are the parameters backwards?
+    ; pure $ [BSLabel () n, MovRL () DataPointer "kempe_data"] ++ foldMap (\i -> [PopMem () (AddrRCPlus DataPointer (i * 8))]) offs ++ [AddRC () DataPointer totalSize, Call () l, MovAR () (AddrRCMinus DataPointer (IR.size o)) CRet, Ret ()] -- TODO: are the parameters backwards?
     -- copy last n bytes onto the system stack
     }
 irEmit (IR.WrapKCall _ Kabi (_, _) n l) =

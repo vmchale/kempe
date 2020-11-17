@@ -219,3 +219,4 @@ allocReg (PopMem l a)                          = PopMem () <$> useAddr l a <* fr
 allocReg (AddAC l a c)                         = (AddAC () <$> useAddr l a <*> pure c) <* freeDone l
 allocReg (PushMem l a)                         = PushMem () <$> useAddr l a <* freeDone l
 allocReg (AddRR l r0 r1)                       = (AddRR () <$> useReg l r0 <*> useReg l r1) <* freeDone l
+allocReg (MovRL l r bl)                        = (MovRL () <$> useReg l r <*> pure bl) <* freeDone l

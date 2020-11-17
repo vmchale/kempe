@@ -2,6 +2,7 @@
 
 section .bss
 
+global kempe_data
 kempe_data: resb 0x800000
 
 section .text

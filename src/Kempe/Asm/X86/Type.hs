@@ -138,6 +138,7 @@ data X86 reg a = PushReg { ann :: a, rSrc :: reg }
                | MovABool { ann :: a, addrDest :: Addr reg, boolSrc :: Word8 }
                | MovRR { ann :: a, rDest :: reg, rSrc :: reg } -- for convenience
                | MovRC { ann :: a, rDest :: reg, iSrc :: Int64 }
+               | MovRL { ann :: a, rDest :: reg, bsLabel :: BS.ByteString }
                | MovAC { ann :: a, addrDest :: Addr reg, iSrc :: Int64 }
                | MovACi8 { ann :: a, addrDest :: Addr reg, i8Src :: Int8 }
                | MovAWord { ann :: a, addrDest :: Addr reg, wSrc :: Word }
@@ -191,6 +192,7 @@ instance Pretty reg => Pretty (X86 reg a) where
     pretty (MovAC _ a i)       = i4 ("mov qword" <+> pretty a <> "," <+> pretty i)
     pretty (MovAWord _ a w)    = i4 ("mov qword" <+> pretty a <> "," <+> pretty w)
     pretty (MovRCBool _ r b)   = i4 ("mov" <+> pretty r <> "," <+> pretty b)
+    pretty (MovRL _ r bl)      = i4 ("mov" <+> pretty r <> "," <+> pretty (decodeUtf8 bl))
     pretty (AddRR _ r0 r1)     = i4 ("add" <+> pretty r0 <> "," <> pretty r1)
     pretty (AddAC _ a c)       = i4 ("add" <+> pretty a <> "," <+> pretty c)
     pretty (SubRR _ r0 r1)     = i4 ("sub" <+> pretty r0 <> "," <> pretty r1)
@@ -205,4 +207,7 @@ instance Pretty reg => Pretty (X86 reg a) where
     pretty (CmpRegReg _ r0 r1) = i4 ("cmp" <+> pretty r0 <> "," <+> pretty r1)
 
 prettyAsm :: Pretty reg => [X86 reg a] -> Doc ann
-prettyAsm = (("section .text" <> hardline) <>) . concatWith (\x y -> x <> hardline <> y) . fmap pretty
+prettyAsm = ((prolegomena <> hardline <> "section .text" <> hardline) <>) . concatWith (\x y -> x <> hardline <> y) . fmap pretty
+
+prolegomena :: Doc ann
+prolegomena = "section .bss" <> hardline <> "kempe_data: resb 0x800000"
