@@ -10,3 +10,4 @@ section .text
 global kempe_init
 kempe_init:
     mov rbx, kempe_data
+    ret
