@@ -33,10 +33,10 @@ free8Lens f s = fmap (\x -> s { free8 = x }) (f (free8 s))
 
 -- | Mark all registers as free (at the beginning).
 allFree :: AllocSt
-allFree = AllocSt mempty allReg64 (S.fromList [AH .. DL])
+allFree = AllocSt mempty allReg64 (S.fromList [AH .. R15b])
 
 allReg64 :: S.Set X86Reg
-allReg64 = S.fromList [Rax .. Rdx]
+allReg64 = S.fromList [Rax .. R15]
 
 type AllocM = State AllocSt
 
@@ -47,15 +47,31 @@ runAllocM = flip evalState allFree
 -- some 'X86Reg', we need to remove several from the set of free registers up to
 -- that point.
 assoc :: X86Reg -> S.Set X86Reg
-assoc Rax = S.fromList [AH, AL]
-assoc Rcx = S.fromList [CH, CL]
-assoc Rdx = S.fromList [DH, DL]
-assoc AH  = S.singleton Rax
-assoc AL  = S.singleton Rax
-assoc CH  = S.singleton Rcx
-assoc CL  = S.singleton Rcx
-assoc DH  = S.singleton Rdx
-assoc DL  = S.singleton Rdx
+assoc Rax  = S.fromList [AH, AL]
+assoc Rdx  = S.fromList [DH, DL]
+assoc R8   = S.singleton R8b
+assoc R9   = S.singleton R9b
+assoc R10  = S.singleton R10b
+assoc R11  = S.singleton R11b
+assoc R12  = S.singleton R12b
+assoc R13  = S.singleton R13b
+assoc R14  = S.singleton R14b
+assoc R15  = S.singleton R15b
+assoc AH   = S.singleton Rax
+assoc AL   = S.singleton Rax
+assoc DH   = S.singleton Rdx
+assoc DL   = S.singleton Rdx
+assoc R8b  = S.singleton R8
+assoc R9b  = S.singleton R9
+assoc R10b = S.singleton R10
+assoc R11b = S.singleton R11
+assoc R12b = S.singleton R12
+assoc R13b = S.singleton R13
+assoc R14b = S.singleton R14
+assoc R15b = S.singleton R15
+assoc Rcx  = S.fromList [CH, CL]
+assoc CH   = S.singleton Rcx
+assoc CL   = S.singleton Rcx
 
 allocRegs :: [X86 AbsReg Liveness] -> [X86 X86Reg ()]
 allocRegs = runAllocM . traverse allocReg

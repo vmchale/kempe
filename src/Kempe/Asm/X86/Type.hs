@@ -40,35 +40,67 @@ data ControlAnn = ControlAnn { node     :: !Int
 
 -- currently just has 64-bit and 8-bit registers
 data X86Reg = Rax
-            | Rcx
             | Rdx
-            | Rsp
-            | Rbp
+            | R8
+            | R9
+            | R10
+            | R11
+            | R12
+            | R13
+            | R14
+            | R15
             | AH
             | AL
             -- -- | BH
             -- -- | BL
-            | CH
-            | CL
             | DH
             | DL
+            | R8b
+            | R9b
+            | R10b
+            | R11b
+            | R12b
+            | R13b
+            | R14b
+            | R15b
+            | Rsp
+            | Rbp
             | Rbx
-            -- TODO: 64-bit registers r8-r15
+            -- cl is reserved which it really shouldn't be
+            | Rcx
+            | CH
+            | CL
             deriving (Eq, Ord, Enum, Bounded, Generic, NFData)
 
 instance Pretty X86Reg where
-    pretty Rax = "rax"
-    pretty Rcx = "rcx"
-    pretty Rdx = "rdx"
-    pretty Rsp = "rsp"
-    pretty Rbp = "rbp"
-    pretty AH  = "ah"
-    pretty AL  = "al"
-    pretty CH  = "ch"
-    pretty CL  = "cl"
-    pretty DH  = "dh"
-    pretty DL  = "dl"
-    pretty Rbx = "rbx"
+    pretty Rax  = "rax"
+    pretty Rcx  = "rcx"
+    pretty Rdx  = "rdx"
+    pretty Rsp  = "rsp"
+    pretty Rbp  = "rbp"
+    pretty AH   = "ah"
+    pretty AL   = "al"
+    pretty CH   = "ch"
+    pretty CL   = "cl"
+    pretty DH   = "dh"
+    pretty DL   = "dl"
+    pretty Rbx  = "rbx"
+    pretty R8   = "r8"
+    pretty R9   = "r9"
+    pretty R10  = "r10"
+    pretty R11  = "r11"
+    pretty R12  = "r12"
+    pretty R13  = "r13"
+    pretty R14  = "r14"
+    pretty R15  = "r15"
+    pretty R8b  = "r8b"
+    pretty R9b  = "r9b"
+    pretty R10b = "r10b"
+    pretty R11b = "r11b"
+    pretty R12b = "r12b"
+    pretty R13b = "r13b"
+    pretty R14b = "r14b"
+    pretty R15b = "r15b"
 
 data AbsReg = DataPointer
             | AllocReg64 !Int -- TODO: register by size
