@@ -157,7 +157,7 @@ irEmit (IR.WrapKCall _ Cabi (is, [o]) n l) | all (\i -> IR.size i == 8) is && IR
     { let offs = zipWith const [0..] is
     ; let totalSize = sizeStack is + IR.size o -- for the output
     ; let argRegs = [CArg1, CArg2, CArg3, CArg4, CArg5, CArg6]
-    ; pure $ [BSLabel () n, MovRL () DataPointer "kempe_data"] ++ zipWith (\r i -> MovAR () (AddrRCPlus DataPointer (i * 8)) r) argRegs offs ++ [AddRC () DataPointer totalSize, Call () l, MovAR () (AddrRCMinus DataPointer (IR.size o)) CRet, Ret ()] -- TODO: are the parameters backwards?
+    ; pure $ [BSLabel () n, MovRL () DataPointer "kempe_data"] ++ zipWith (\r i -> MovAR () (AddrRCPlus DataPointer (i * 8)) r) argRegs offs ++ [AddRC () DataPointer totalSize, Call () l, MovRA () CRet (AddrRCMinus DataPointer (IR.size o)), Ret ()] -- TODO: are the parameters backwards?
     -- copy last n bytes onto the system stack
     }
 irEmit (IR.WrapKCall _ Kabi (_, _) n l) =
