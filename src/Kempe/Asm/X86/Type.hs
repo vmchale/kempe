@@ -105,6 +105,12 @@ instance Pretty X86Reg where
 data AbsReg = DataPointer
             | AllocReg64 !Int -- TODO: register by size
             | AllocReg8 !Int
+            | CArg1
+            | CArg2
+            | CArg3
+            | CArg4
+            | CArg5
+            | CArg6
             | CRet -- x0 on aarch64
             deriving (Eq, Ord, Generic, NFData)
 
@@ -113,6 +119,12 @@ instance Pretty AbsReg where
     pretty (AllocReg64 i) = "r" <> pretty i
     pretty (AllocReg8 i)  = "HL" <> pretty i
     pretty CRet           = "rax"
+    pretty CArg1 = "rdi"
+    pretty CArg2 = "rsi"
+    pretty CArg3 = "rdx"
+    pretty CArg4 = "rcx"
+    pretty CArg5 = "r8"
+    pretty CArg6 = "r9"
 
 -- [ebx+ecx*4h-20h]
 data Addr reg = Reg reg
