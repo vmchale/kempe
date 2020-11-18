@@ -10,10 +10,10 @@ moddeps.svg: $(HS_SRC)
 	graphmod src | dot -Tsvg -o$@
 
 factorial.o: examples/factorial.kmp
-	kc $< $@
+	kc -g $< $@
 
 factorial: factorial.o test/harness/factorial.c
-	gcc $^ -o $@
+	gcc -g $^ -o $@
 
 rts.o: rts.S
 	nasm $^ -f elf64 -o $@
