@@ -66,7 +66,9 @@ data X86Reg = Rax
             | Rsp
             | Rbp
             | Rbx
-            -- cl is reserved which it really shouldn't be
+            | Rdi
+            | Rsi
+            -- cl is reserved in this implementation which it really shouldn't be
             | Rcx
             | CH
             | CL
@@ -101,6 +103,8 @@ instance Pretty X86Reg where
     pretty R13b = "r13b"
     pretty R14b = "r14b"
     pretty R15b = "r15b"
+    pretty Rsi = "rsi"
+    pretty Rdi = "rdi"
 
 data AbsReg = DataPointer
             | AllocReg64 !Int -- TODO: register by size
