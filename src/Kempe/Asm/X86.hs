@@ -106,7 +106,7 @@ irCosts (IR.MovMem _ r@IR.Reg{} sz e@IR.ConstWord{}) = IR.MovMem 1 (r $> undefin
 irCosts (IR.MovMem _ r@IR.Reg{} sz e@(IR.ExprIntBinOp _ IR.IntTimesIR _ _)) = IR.MovMem 3 (r $> undefined) sz (e $> undefined)
 irCosts (IR.MovMem _ e1@(IR.ExprIntBinOp _ _ IR.Reg{} IR.ConstInt{}) sz e2@(IR.Mem _ _ (IR.ExprIntBinOp _ IR.IntPlusIR IR.Reg{} IR.ConstInt{}))) = IR.MovMem 2 (e1 $> undefined) sz (e2 $> undefined)
 irCosts (IR.MovMem _ r@IR.Reg{} sz e@(IR.ExprIntRel _ _ IR.Reg{} IR.Reg{})) = IR.MovMem 2 (r $> undefined) sz (e $> undefined)
-irCosts (IR.WrapKCall _ Cabi (is, o) n l) | all (\i -> IR.size i == 0) is = IR.WrapKCall (3 + sizeStack is `quot` 8) Cabi (is, o) n l -- FIXME: size appropriately
+irCosts (IR.WrapKCall _ Cabi (is, o) n l) | all (\i -> IR.size i == 8) is = IR.WrapKCall (3 + sizeStack is `quot` 8) Cabi (is, o) n l -- FIXME: size appropriately
 irCosts (IR.WrapKCall _ Kabi (is, os) n l) = IR.WrapKCall 3 Kabi (is, os) n l
 irCosts (IR.MovTemp _ r e) = let e' = expCost e in IR.MovTemp (1 + IR.expCost e') r e'
 irCosts (IR.MovMem _ e sz e') = let (e'', e''') = (expCost e, expCost e') in IR.MovMem (2 + IR.expCost e'' + IR.expCost e''') e'' sz e''' -- TODO: size?
