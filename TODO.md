@@ -30,6 +30,7 @@
 - [ ] https://www.cs.princeton.edu/courses/archive/spr19/cos217/lectures/13_Assembly1.pdf (von neumann -> c where int ptrs, ATS & such are useful...)
 - [ ] http://hackage.haskell.org/package/x86-64bit-0.4.6.1/docs/CodeGen-X86.html
 # Features
+- [ ] Float ABI support
 - [ ] `fmt` subcommand
 - [ ] `abstype` for pointer abstract types?
 - [ ] REPL for type inspection?
