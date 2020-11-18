@@ -169,6 +169,12 @@ useReg :: Liveness -> AbsReg -> AllocM X86Reg
 useReg l (AllocReg64 i) = useReg64 l i
 useReg l (AllocReg8 i)  = useReg8 l i
 useReg _ DataPointer    = pure Rbx
+useReg _ CArg1          = pure Rdi -- shouldn't clobber anything because it's just used in function wrapper to push onto the kempe stack
+useReg _ CArg2          = pure Rsi
+useReg _ CArg3          = pure Rdx
+useReg _ CArg4          = pure Rcx
+useReg _ CArg5          = pure R8
+useReg _ CArg6          = pure R9
 useReg _ CRet           = pure Rax -- shouldn't clobber anything because this is used at end of function calls/wrappers anyway
 -- TODO: ig we should have a sanity check here?
 

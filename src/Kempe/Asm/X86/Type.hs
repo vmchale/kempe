@@ -103,8 +103,8 @@ instance Pretty X86Reg where
     pretty R13b = "r13b"
     pretty R14b = "r14b"
     pretty R15b = "r15b"
-    pretty Rsi = "rsi"
-    pretty Rdi = "rdi"
+    pretty Rsi  = "rsi"
+    pretty Rdi  = "rdi"
 
 data AbsReg = DataPointer
             | AllocReg64 !Int -- TODO: register by size
@@ -123,12 +123,12 @@ instance Pretty AbsReg where
     pretty (AllocReg64 i) = "r" <> pretty i
     pretty (AllocReg8 i)  = "HL" <> pretty i
     pretty CRet           = "rax"
-    pretty CArg1 = "rdi"
-    pretty CArg2 = "rsi"
-    pretty CArg3 = "rdx"
-    pretty CArg4 = "rcx"
-    pretty CArg5 = "r8"
-    pretty CArg6 = "r9"
+    pretty CArg1          = "rdi"
+    pretty CArg2          = "rsi"
+    pretty CArg3          = "rdx"
+    pretty CArg4          = "rcx"
+    pretty CArg5          = "r8"
+    pretty CArg6          = "r9"
 
 -- [ebx+ecx*4h-20h]
 data Addr reg = Reg reg

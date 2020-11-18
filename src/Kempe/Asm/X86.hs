@@ -153,11 +153,11 @@ irEmit (IR.MovMem _ (IR.Reg _ r) _ (IR.ExprIntRel _ IR.IntEqIR (IR.Reg _ r1) (IR
     ; l1 <- getLabel
     ; pure [ CmpRegReg () (toAbsReg r1) (toAbsReg r2), Je () l0, Jump () l1, Label () l0, MovABool () (Reg $ toAbsReg r) 1, Label () l1, MovABool () (Reg $ toAbsReg r) 0 ]
     }
-irEmit (IR.WrapKCall _ Cabi (is, [o]) n l) | all (\i -> IR.size i `rem` 8 == 0) is && IR.size o == 8 = do
+irEmit (IR.WrapKCall _ Cabi (is, [o]) n l) | all (\i -> IR.size i == 8) is && IR.size o <= 8 && length is <= 6 = do
     { let offs = zipWith const [1..] is
     ; let totalSize = sizeStack is + IR.size o -- for the output
-    -- FIXME: first six integer/pointer arguments passed in RDI, RSI, RDX, RCX, R8, R9
-    ; pure $ [BSLabel () n, MovRL () DataPointer "kempe_data"] ++ foldMap (\i -> [PopMem () (AddrRCPlus DataPointer (i * 8))]) offs ++ [AddRC () DataPointer totalSize, Call () l, MovAR () (AddrRCMinus DataPointer (IR.size o)) CRet, Ret ()] -- TODO: are the parameters backwards?
+    ; let argRegs = [CArg1, CArg2, CArg3, CArg4, CArg5, CArg6]
+    ; pure $ [BSLabel () n, MovRL () DataPointer "kempe_data"] ++ zipWith (\r i -> MovAR () (AddrRCPlus DataPointer (i * 8)) r) argRegs offs ++ [AddRC () DataPointer totalSize, Call () l, MovAR () (AddrRCMinus DataPointer (IR.size o)) CRet, Ret ()] -- TODO: are the parameters backwards?
     -- copy last n bytes onto the system stack
     }
 irEmit (IR.WrapKCall _ Kabi (_, _) n l) =
