@@ -7,20 +7,26 @@ import           Options.Applicative
 import qualified Paths_kempe         as P
 
 data Command = TypeCheck !FilePath
-             | Compile !FilePath !(Maybe FilePath) !Bool !Bool -- TODO: take arch on cli
+             | Compile !FilePath !(Maybe FilePath) !Bool !Bool !Bool -- TODO: take arch on cli
 
 run :: Command -> IO ()
-run (TypeCheck fp)                    = either throwIO pure =<< tcFile fp
-run (Compile _ Nothing False False)   = putStrLn "No output file specified!"
-run (Compile fp (Just o) False False) = compile fp o
-run (Compile fp Nothing True False)   = irFile fp
-run (Compile fp Nothing False True)   = x86File fp
+run (TypeCheck fp)                        = either throwIO pure =<< tcFile fp
+run (Compile _ Nothing _ False False)     = putStrLn "No output file specified!"
+run (Compile fp (Just o) dbg False False) = compile fp o dbg
+run (Compile fp Nothing False True False) = irFile fp
+run (Compile fp Nothing False False True) = x86File fp
 
 kmpFile :: Parser FilePath
 kmpFile = argument str
     (metavar "FILE"
     <> help "Source file"
     <> kmpCompletions)
+
+debugSwitch :: Parser Bool
+debugSwitch = switch
+    (long "debug"
+    <> short 'g'
+    <> help "Include debug symbols")
 
 irSwitch :: Parser Bool
 irSwitch = switch
@@ -46,7 +52,7 @@ commandP = hsubparser
     <|> compileP
     where
         tcP = TypeCheck <$> kmpFile
-        compileP = Compile <$> kmpFile <*> exeFile <*> irSwitch <*> asmSwitch
+        compileP = Compile <$> kmpFile <*> exeFile <*> debugSwitch <*> irSwitch <*> asmSwitch
 
 wrapper :: ParserInfo Command
 wrapper = info (helper <*> versionMod <*> commandP)

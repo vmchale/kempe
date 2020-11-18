@@ -9,8 +9,12 @@ import           System.IO.Temp            (withSystemTempFile)
 import           System.Process            (CreateProcess (..), StdStream (Inherit), proc, readCreateProcess)
 
 -- | Assemble using @nasm@, output in some file.
-writeO :: Doc ann -> FilePath -> IO ()
-writeO p fpO = withSystemTempFile "kmp.S" $ \fp h -> do
+writeO :: Doc ann
+       -> FilePath
+       -> Bool -- ^ Debug symbols?
+       -> IO ()
+writeO p fpO dbg = withSystemTempFile "kmp.S" $ \fp h -> do
     renderIO h (layoutPretty defaultLayoutOptions p)
     hFlush h
-    void $ readCreateProcess ((proc "nasm" [fp, "-f", "elf64", "-o", fpO]) { std_err = Inherit }) ""
+    let debugFlag = if dbg then ("-g":) else id
+    void $ readCreateProcess ((proc "nasm" (debugFlag [fp, "-f", "elf64", "-o", fpO])) { std_err = Inherit }) ""

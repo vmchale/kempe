@@ -57,8 +57,11 @@ x86File fp = do
     res <- yeetIO $ parseWithMax contents
     putDoc $ uncurry dumpX86 res <> hardline
 
-compile :: FilePath -> FilePath -> IO ()
-compile fp o = do
+compile :: FilePath
+        -> FilePath
+        -> Bool -- ^ Debug symbols?
+        -> IO ()
+compile fp o dbg = do
     contents <- BSL.readFile fp
     res <- yeetIO $ parseWithMax contents
-    writeO (uncurry dumpX86 res) o
+    writeO (uncurry dumpX86 res) o dbg
