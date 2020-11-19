@@ -190,11 +190,11 @@ irEmit (IR.MovMem _ (IR.Reg _ r) _ (IR.ExprIntBinOp _ IR.IntPlusIR (IR.Reg _ r1)
     }
 irEmit (IR.MovMem _ (IR.Reg _ r) _ (IR.ExprIntBinOp _ IR.WordShiftRIR (IR.Reg _ r1) (IR.Reg _ r2))) = do
     { r' <- allocReg64
-    ; pure [ MovRR () r' (toAbsReg r1), ShiftRRR () r' (toAbsReg r2), MovAR () (Reg $ toAbsReg r) r' ]
+    ; pure [ MovRR () ShiftExponent (toAbsReg r2), MovRR () r' (toAbsReg r1), ShiftRRR () r' ShiftExponent, MovAR () (Reg $ toAbsReg r) r' ]
     }
 irEmit (IR.MovMem _ (IR.Reg _ r) _ (IR.ExprIntBinOp _ IR.WordShiftLIR (IR.Reg _ r1) (IR.Reg _ r2))) = do
     { r' <- allocReg64
-    ; pure [ MovRR () r' (toAbsReg r1), ShiftLRR () r' (toAbsReg r2), MovAR () (Reg $ toAbsReg r) r' ]
+    ; pure [ MovRR () ShiftExponent (toAbsReg r2), MovRR () r' (toAbsReg r1), ShiftLRR () r' ShiftExponent, MovAR () (Reg $ toAbsReg r) r' ]
     }
 -- total failure; try recursive back-up function at this point
 irEmit (IR.MovTemp _ r e) = let e' = expCost e in evalE e' r

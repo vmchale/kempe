@@ -195,7 +195,7 @@ prettyLabel :: Label -> Doc ann
 prettyLabel l = "kmp_" <> pretty l
 
 prettyHex :: (Integral a, Show a) => a -> Doc ann
-prettyHex x = pretty (showHex x mempty)
+prettyHex x = "0x" <> pretty (showHex x mempty)
 
 -- intel syntax
 instance Pretty reg => Pretty (X86 reg a) where
