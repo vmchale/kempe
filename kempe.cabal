@@ -60,7 +60,8 @@ library
     other-extensions:
         DeriveFoldable DeriveFunctor DeriveGeneric DeriveTraversable
         FlexibleContexts GeneralizedNewtypeDeriving OverloadedStrings
-        StandaloneDeriving TupleSections
+        StandaloneDeriving TupleSections TypeFamilies DeriveAnyClass
+        StandaloneDeriving
 
     ghc-options:      -Wall -O2
     build-depends:
