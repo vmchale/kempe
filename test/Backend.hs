@@ -28,8 +28,11 @@ backendTests =
         , x86NoYeet "examples/factorial.kmp"
         , x86NoYeet "examples/splitmix.kmp"
         , controlFlowGraph "examples/factorial.kmp"
+        , controlFlowGraph "examples/splitmix.kmp"
         , liveness "examples/factorial.kmp"
+        , liveness "examples/splitmix.kmp"
         , codegen "examples/factorial.kmp"
+        , codegen "examples/splitmix.kmp"
         ]
 
 codegen :: FilePath -> TestTree

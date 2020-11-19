@@ -15,6 +15,7 @@ import qualified Data.Set            as S
 import           Kempe.Asm.X86.Type
 import           Lens.Micro          (Lens')
 import           Lens.Micro.Mtl      (modifying, (.=))
+import           Prettyprinter
 
 -- set of free registers we iterate over
 data AllocSt = AllocSt { allocs :: M.Map AbsReg X86Reg -- ^ Already allocated registers
@@ -176,6 +177,7 @@ useReg _ CArg3          = pure Rdx
 useReg _ CArg4          = pure Rcx
 useReg _ CArg5          = pure R8
 useReg _ CArg6          = pure R9
+useReg _ ShiftExponent  = pure CL
 useReg _ CRet           = pure Rax -- shouldn't clobber anything because this is used at end of function calls/wrappers anyway
 -- TODO: ig we should have a sanity check here?
 
@@ -215,6 +217,12 @@ allocReg (AddAC _ (Reg DataPointer) c)         = pure $ AddAC () (Reg Rbx) c
 allocReg (MovRCBool _ DataPointer _)           = illTyped
 allocReg (MovRCBool _ AllocReg64{} _)          = illTyped
 allocReg (MovRCBool _ CRet _)                  = illTyped
+allocReg (MovRCBool _ CArg1 _)                 = illTyped
+allocReg (MovRCBool _ CArg2 _)                 = illTyped
+allocReg (MovRCBool _ CArg3 _)                 = illTyped
+allocReg (MovRCBool _ CArg4 _)                 = illTyped
+allocReg (MovRCBool _ CArg5 _)                 = illTyped
+allocReg (MovRCBool _ CArg6 _)                 = illTyped
 allocReg (AddRC l (AllocReg64 i) c)            = (AddRC () <$> useReg64 l i <*> pure c) <* freeDone l
 allocReg (SubRC l (AllocReg64 i) c)            = (SubRC () <$> useReg64 l i <*> pure c) <* freeDone l
 allocReg (AddRC _ AllocReg8{} _)               = illTyped
@@ -222,9 +230,15 @@ allocReg (AddRC _ CRet _)                      = questionable
 allocReg (SubRC _ AllocReg8{} _)               = illTyped
 allocReg (SubRC _ CRet _)                      = questionable
 allocReg (MovAC l a c)                         = (MovAC () <$> useAddr l a <*> pure c) <* freeDone l
+allocReg (MovAWord l a c)                      = (MovAWord () <$> useAddr l a <*> pure c) <* freeDone l
+allocReg (MovACi8 l a c)                       = (MovACi8 () <$> useAddr l a <*> pure c) <* freeDone l
 allocReg (MovABool l a b)                      = (MovABool () <$> useAddr l a <*> pure b) <* freeDone l
 allocReg (PopMem l a)                          = PopMem () <$> useAddr l a <* freeDone l
 allocReg (AddAC l a c)                         = (AddAC () <$> useAddr l a <*> pure c) <* freeDone l
 allocReg (PushMem l a)                         = PushMem () <$> useAddr l a <* freeDone l
 allocReg (AddRR l r0 r1)                       = (AddRR () <$> useReg l r0 <*> useReg l r1) <* freeDone l
 allocReg (MovRL l r bl)                        = (MovRL () <$> useReg l r <*> pure bl) <* freeDone l
+allocReg (XorRR l r0 r1)                       = (XorRR () <$> useReg l r0 <*> useReg l r1) <* freeDone l
+allocReg (ShiftLRR l r0 r1)                    = (ShiftLRR () <$> useReg l r0 <*> useReg l r1) <* freeDone l
+allocReg (ShiftRRR l r0 r1)                    = (ShiftRRR () <$> useReg l r0 <*> useReg l r1) <* freeDone l
+allocReg instr                                 = error (show $ pretty instr)

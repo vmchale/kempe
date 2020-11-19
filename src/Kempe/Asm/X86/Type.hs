@@ -116,6 +116,7 @@ data AbsReg = DataPointer
             | CArg5
             | CArg6
             | CRet -- x0 on aarch64
+            | ShiftExponent
             deriving (Eq, Ord, Generic, NFData)
 
 instance Pretty AbsReg where
@@ -129,6 +130,7 @@ instance Pretty AbsReg where
     pretty CArg4          = "rcx"
     pretty CArg5          = "r8"
     pretty CArg6          = "r9"
+    pretty ShiftExponent  = "cl"
 
 -- [ebx+ecx*4h-20h]
 data Addr reg = Reg reg
@@ -168,6 +170,8 @@ data X86 reg a = PushReg { ann :: a, rSrc :: reg }
                | AddAC { ann :: a, addrAdd1 :: Addr reg, iAdd2 :: Int64 }
                | AddRC { ann :: a, rAdd1 :: reg, iAdd2 :: Int64 }
                | SubRC { ann :: a, rSub1 :: reg, iSub2 :: Int64 }
+               | ShiftLRR { ann :: a, rDest :: reg, rSrc :: reg }
+               | ShiftRRR { ann :: a, rDest :: reg, rSrc :: reg }
                | Label { ann :: a, label :: Label }
                | BSLabel { ann :: a, bsLabel :: BS.ByteString }
                | Je { ann :: a, jLabel :: Label }
@@ -223,6 +227,8 @@ instance Pretty reg => Pretty (X86 reg a) where
     pretty (CmpAddrReg _ a r)  = i4 ("cmp" <+> pretty a <> "," <+> pretty r)
     pretty (CmpRegReg _ r0 r1) = i4 ("cmp" <+> pretty r0 <> "," <+> pretty r1)
     pretty (CmpAddrBool _ a b) = i4 ("cmp byte" <+> pretty a <> "," <+> pretty b)
+    pretty (ShiftRRR _ r0 r1)  = i4 ("shr" <+> pretty r0 <> "," <+> pretty r1)
+    pretty (ShiftLRR _ r0 r1)  = i4 ("slr" <+> pretty r0 <> "," <+> pretty r1)
 
 prettyAsm :: Pretty reg => [X86 reg a] -> Doc ann
 prettyAsm = ((prolegomena <> hardline <> "section .text" <> hardline) <>) . concatWith (\x y -> x <> hardline <> y) . fmap pretty
