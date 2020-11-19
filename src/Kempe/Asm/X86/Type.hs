@@ -173,6 +173,7 @@ data X86 reg a = PushReg { ann :: a, rSrc :: reg }
                | Je { ann :: a, jLabel :: Label }
                | CmpAddrReg { ann :: a, addrCmp :: Addr reg, rCmp :: reg }
                | CmpRegReg { ann :: a, rCmp :: reg, rCmp' :: reg } -- for simplicity
+               | CmpAddrConst { ann :: a, addrCmp :: Addr reg, iCmp :: Int64 }
                deriving (Generic, NFData, Functor)
 
 i4 :: Doc ann -> Doc ann
@@ -190,37 +191,38 @@ prettyLabel l = "kmp_" <> pretty l
 
 -- intel syntax
 instance Pretty reg => Pretty (X86 reg a) where
-    pretty (PushReg _ r)       = i4 ("push" <+> pretty r)
-    pretty (PushMem _ a)       = i4 ("push" <+> pretty a)
-    pretty (PopMem _ a)        = i4 ("pop qword" <+> pretty a)
-    pretty (PushConst _ i)     = i4 ("push" <+> pretty i)
-    pretty (Jump _ l)          = i4 ("jmp" <+> prettyLabel l)
-    pretty (Call _ l)          = i4 ("call" <+> prettyLabel l)
-    pretty Ret{}               = i4 "ret"
-    pretty (MovRA _ r a)       = i4 ("mov" <+> pretty r <> "," <+> pretty a)
-    pretty (MovAR _ a r)       = i4 ("mov" <+> pretty a <> "," <+> pretty r)
-    pretty (MovABool _ a b)    = i4 ("mov byte" <+> pretty a <> "," <+> pretty b)
-    pretty (MovACi8 _ a i)     = i4 ("mov byte" <+> pretty a <> "," <+> pretty i)
-    pretty (MovRCi8 _ r i)     = i4 ("mov byte" <+> pretty r <> "," <+> pretty i)
-    pretty (MovRWord _ r w)    = i4 ("mov qword" <+> pretty r <+> pretty w)
-    pretty (MovRR _ r0 r1)     = i4 ("mov" <+> pretty r0 <> "," <+> pretty r1)
-    pretty (MovRC _ r i)       = i4 ("mov" <+> pretty r <> "," <+> pretty i)
-    pretty (MovAC _ a i)       = i4 ("mov qword" <+> pretty a <> "," <+> pretty i)
-    pretty (MovAWord _ a w)    = i4 ("mov qword" <+> pretty a <> "," <+> pretty w)
-    pretty (MovRCBool _ r b)   = i4 ("mov" <+> pretty r <> "," <+> pretty b)
-    pretty (MovRL _ r bl)      = i4 ("mov" <+> pretty r <> "," <+> pretty (decodeUtf8 bl))
-    pretty (AddRR _ r0 r1)     = i4 ("add" <+> pretty r0 <> "," <> pretty r1)
-    pretty (AddAC _ a c)       = i4 ("add" <+> pretty a <> "," <+> pretty c)
-    pretty (SubRR _ r0 r1)     = i4 ("sub" <+> pretty r0 <> "," <> pretty r1)
-    pretty (MulRR _ r0 r1)     = i4 ("imul" <+> pretty r0 <> "," <+> pretty r1)
-    pretty (XorRR _ r0 r1)     = i4 ("xor" <+> pretty r0 <> "," <+> pretty r1)
-    pretty (AddRC _ r0 c)      = i4 ("add" <+> pretty r0 <> "," <+> pretty c)
-    pretty (SubRC _ r0 c)      = i4 ("sub" <+> pretty r0 <> "," <+> pretty c)
-    pretty (Label _ l)         = prettyLabel l <> colon
-    pretty (BSLabel _ b)       = let pl = pretty (decodeUtf8 b) in "global" <+> pl <> hardline <> pl <> colon
-    pretty (Je _ l)            = i4 ("je" <+> prettyLabel l)
-    pretty (CmpAddrReg _ a r)  = i4 ("cmp" <+> pretty a <> "," <+> pretty r)
-    pretty (CmpRegReg _ r0 r1) = i4 ("cmp" <+> pretty r0 <> "," <+> pretty r1)
+    pretty (PushReg _ r)        = i4 ("push" <+> pretty r)
+    pretty (PushMem _ a)        = i4 ("push" <+> pretty a)
+    pretty (PopMem _ a)         = i4 ("pop qword" <+> pretty a)
+    pretty (PushConst _ i)      = i4 ("push" <+> pretty i)
+    pretty (Jump _ l)           = i4 ("jmp" <+> prettyLabel l)
+    pretty (Call _ l)           = i4 ("call" <+> prettyLabel l)
+    pretty Ret{}                = i4 "ret"
+    pretty (MovRA _ r a)        = i4 ("mov" <+> pretty r <> "," <+> pretty a)
+    pretty (MovAR _ a r)        = i4 ("mov" <+> pretty a <> "," <+> pretty r)
+    pretty (MovABool _ a b)     = i4 ("mov byte" <+> pretty a <> "," <+> pretty b)
+    pretty (MovACi8 _ a i)      = i4 ("mov byte" <+> pretty a <> "," <+> pretty i)
+    pretty (MovRCi8 _ r i)      = i4 ("mov byte" <+> pretty r <> "," <+> pretty i)
+    pretty (MovRWord _ r w)     = i4 ("mov qword" <+> pretty r <+> pretty w)
+    pretty (MovRR _ r0 r1)      = i4 ("mov" <+> pretty r0 <> "," <+> pretty r1)
+    pretty (MovRC _ r i)        = i4 ("mov" <+> pretty r <> "," <+> pretty i)
+    pretty (MovAC _ a i)        = i4 ("mov qword" <+> pretty a <> "," <+> pretty i)
+    pretty (MovAWord _ a w)     = i4 ("mov qword" <+> pretty a <> "," <+> pretty w)
+    pretty (MovRCBool _ r b)    = i4 ("mov" <+> pretty r <> "," <+> pretty b)
+    pretty (MovRL _ r bl)       = i4 ("mov" <+> pretty r <> "," <+> pretty (decodeUtf8 bl))
+    pretty (AddRR _ r0 r1)      = i4 ("add" <+> pretty r0 <> "," <> pretty r1)
+    pretty (AddAC _ a c)        = i4 ("add" <+> pretty a <> "," <+> pretty c)
+    pretty (SubRR _ r0 r1)      = i4 ("sub" <+> pretty r0 <> "," <> pretty r1)
+    pretty (MulRR _ r0 r1)      = i4 ("imul" <+> pretty r0 <> "," <+> pretty r1)
+    pretty (XorRR _ r0 r1)      = i4 ("xor" <+> pretty r0 <> "," <+> pretty r1)
+    pretty (AddRC _ r0 c)       = i4 ("add" <+> pretty r0 <> "," <+> pretty c)
+    pretty (SubRC _ r0 c)       = i4 ("sub" <+> pretty r0 <> "," <+> pretty c)
+    pretty (Label _ l)          = prettyLabel l <> colon
+    pretty (BSLabel _ b)        = let pl = pretty (decodeUtf8 b) in "global" <+> pl <> hardline <> pl <> colon
+    pretty (Je _ l)             = i4 ("je" <+> prettyLabel l)
+    pretty (CmpAddrReg _ a r)   = i4 ("cmp" <+> pretty a <> "," <+> pretty r)
+    pretty (CmpRegReg _ r0 r1)  = i4 ("cmp" <+> pretty r0 <> "," <+> pretty r1)
+    pretty (CmpAddrConst _ a c) = i4 ("cmp qword" <+> pretty a <> "," <+> pretty c)
 
 prettyAsm :: Pretty reg => [X86 reg a] -> Doc ann
 prettyAsm = ((prolegomena <> hardline <> "section .text" <> hardline) <>) . concatWith (\x y -> x <> hardline <> y) . fmap pretty

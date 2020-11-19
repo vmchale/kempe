@@ -95,7 +95,7 @@ irCosts (IR.Jump _ l) = IR.Jump 1 l
 irCosts (IR.KCall _ l) = IR.KCall 2 l
 irCosts IR.Ret{} = IR.Ret 1
 irCosts (IR.Labeled _ l) = IR.Labeled 0 l
-irCosts (IR.CJump _ e@(IR.Mem _ _ (IR.ExprIntBinOp _ IR.IntPlusIR IR.Reg{} IR.ConstInt{})) l l') = IR.CJump 3 (e $> undefined) l l'
+irCosts (IR.CJump _ e@(IR.Mem _ _ (IR.ExprIntBinOp _ IR.IntPlusIR IR.Reg{} IR.ConstInt{})) l l') = IR.CJump 2 (e $> undefined) l l'
 irCosts (IR.MovTemp _ r m@(IR.Mem _ _ IR.Reg{})) = IR.MovTemp 1 r (m $> undefined)
 irCosts (IR.MovTemp _ r e@(IR.ExprIntBinOp _ IR.IntMinusIR IR.Reg{} IR.ConstInt{})) = IR.MovTemp 1 r (e $> undefined)
 irCosts (IR.MovTemp _ r e@(IR.ExprIntBinOp _ IR.IntPlusIR IR.Reg{} IR.ConstInt{})) = IR.MovTemp 1 r (e $> undefined)
@@ -121,10 +121,8 @@ irEmit (IR.Jump _ l) = pure [Jump () l]
 irEmit (IR.Labeled _ l) = pure [Label () l]
 irEmit (IR.KCall _ l) = pure [Call () l]
 irEmit IR.Ret{} = pure [Ret ()]
-irEmit (IR.CJump _ (IR.Mem _ 1 (IR.ExprIntBinOp _ IR.IntPlusIR (IR.Reg _ r) (IR.ConstInt _ i))) l l') = do
-    { r' <- allocReg8
-    ; pure [MovRCBool () r' 0, CmpAddrReg () (AddrRCPlus (toAbsReg r) i) r', Je () l, Jump () l']
-    }
+irEmit (IR.CJump _ (IR.Mem _ 1 (IR.ExprIntBinOp _ IR.IntPlusIR (IR.Reg _ r) (IR.ConstInt _ i))) l l') =
+    pure [CmpAddrConst () (AddrRCPlus (toAbsReg r) i) i, Je () l, Jump () l']
 irEmit (IR.MovTemp _ r (IR.Mem _ _ (IR.Reg _ r1))) = pure [MovRA () (toAbsReg r) (Reg $ toAbsReg r1)] -- TODO: sanity check reg/mem access size?
 irEmit (IR.MovTemp _ r (IR.ExprIntBinOp _ IR.IntMinusIR (IR.Reg _ r1) (IR.ConstInt _ i))) | r == r1 =
     pure [SubRC () (toAbsReg r) i]

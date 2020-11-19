@@ -75,24 +75,25 @@ addControlFlow (asm:asms) = do
     }
 
 uses :: Ord reg => X86 reg ann -> S.Set reg
-uses (PushReg _ r)      = S.singleton r
-uses (PushMem _ a)      = addrRegs a
-uses (PopMem _ a)       = addrRegs a
-uses (MovRA _ _ a)      = addrRegs a
-uses (MovAR _ a r)      = S.singleton r <> addrRegs a
-uses (MovRR _ _ r)      = S.singleton r
-uses (AddRR _ r r')     = S.fromList [r, r']
-uses (SubRR _ r r')     = S.fromList [r, r']
-uses (MulRR _ r r')     = S.fromList [r, r']
-uses (AddRC _ r _)      = S.singleton r
-uses (SubRC _ r _)      = S.singleton r
-uses (AddAC _ a _)      = addrRegs a
-uses (MovAWord _ a _)   = addrRegs a
-uses (MovABool _ a _)   = addrRegs a
-uses (XorRR _ r r')     = S.fromList [r, r']
-uses (CmpAddrReg _ a r) = S.singleton r <> addrRegs a
-uses (CmpRegReg _ r r') = S.fromList [r, r']
-uses _                  = S.empty
+uses (PushReg _ r)        = S.singleton r
+uses (PushMem _ a)        = addrRegs a
+uses (PopMem _ a)         = addrRegs a
+uses (MovRA _ _ a)        = addrRegs a
+uses (MovAR _ a r)        = S.singleton r <> addrRegs a
+uses (MovRR _ _ r)        = S.singleton r
+uses (AddRR _ r r')       = S.fromList [r, r']
+uses (SubRR _ r r')       = S.fromList [r, r']
+uses (MulRR _ r r')       = S.fromList [r, r']
+uses (AddRC _ r _)        = S.singleton r
+uses (SubRC _ r _)        = S.singleton r
+uses (AddAC _ a _)        = addrRegs a
+uses (MovAWord _ a _)     = addrRegs a
+uses (MovABool _ a _)     = addrRegs a
+uses (XorRR _ r r')       = S.fromList [r, r']
+uses (CmpAddrReg _ a r)   = S.singleton r <> addrRegs a
+uses (CmpRegReg _ r r')   = S.fromList [r, r']
+uses (CmpAddrConst _ a _) = addrRegs a
+uses _                    = S.empty
 
 defs :: X86 reg ann -> S.Set reg
 defs (MovRA _ r _)     = S.singleton r

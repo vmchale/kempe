@@ -195,6 +195,7 @@ allocReg (Jump _ l)                            = pure $ Jump () l
 allocReg (Label _ l)                           = pure $ Label () l
 allocReg (MovRCBool l (AllocReg8 i) b)         = (MovRCBool () <$> useReg8 l i <*> pure b) <* freeDone l
 allocReg (CmpAddrReg l a r)                    = (CmpAddrReg () <$> useAddr l a <*> useReg l r) <* freeDone l
+allocReg (CmpAddrConst l a c)                  = (CmpAddrConst () <$> useAddr l a <*> pure c) <* freeDone l
 allocReg (AddRC _ DataPointer c)               = pure $ AddRC () Rbx c
 allocReg (SubRC _ DataPointer c)               = pure $ SubRC () Rbx c
 allocReg (MovRA l r0 (Reg r1))                 = (MovRA () <$> useReg l r0 <*> fmap Reg (useReg l r1)) <* freeDone l
