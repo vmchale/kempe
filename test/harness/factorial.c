@@ -3,5 +3,5 @@
 extern int fac(int);
 
 int main(int argc, char *argv[]) {
-    printf("%d\n", fac(1));
+    printf("%d\n", fac(3));
 }
