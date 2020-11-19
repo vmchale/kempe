@@ -56,6 +56,7 @@ main =
                         ]
                   , bgroup "Pipeline"
                         [ bench "Object file (examples/factorial.kmp)" $ nfIO (compile "examples/factorial.kmp" "/tmp/factorial.o")
+                        -- TODO: tcFile
                         ]
                 ]
     where parsedM = yeetIO . parseWithMax =<< BSL.readFile "test/data/ty.kmp"
