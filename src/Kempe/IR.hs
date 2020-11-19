@@ -301,7 +301,7 @@ writeAtom (If _ as as') = do
     asIR <- writeAtoms as
     asIR' <- writeAtoms as'
     l2 <- newLabel
-    pure $ ifIR : (Labeled () l0 : asIR ++ [Jump () l2]) ++ (Labeled () l1 : asIR' ++ [Jump () l2]) ++ [Labeled () l2]
+    pure $ ifIR : (Labeled () l0 : asIR ++ [Jump () l2]) ++ (Labeled () l1 : asIR') ++ [Labeled () l2]
 writeAtom (Dip (is, _) as) =
     let sz = size (last is)
         shiftNext = MovTemp () DataPointer (ExprIntBinOp () IntMinusIR (Reg () DataPointer) (ConstInt () sz))
