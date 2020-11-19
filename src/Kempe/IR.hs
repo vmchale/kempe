@@ -230,7 +230,7 @@ intShift cons = do
     t0 <- getTemp64 -- registers are 64 bits for integers
     t1 <- getTemp8
     pure $
-        pop 8 t0 ++ pop 1 t1 ++ push 8 (ExprIntBinOp () cons (Reg () t0) (Reg () t1))
+        pop 8 t0 ++ pop 1 t1 ++ push 8 (ExprIntBinOp () cons (Reg () t1) (Reg () t0))
 
 intOp :: IntBinOp -> TempM [Stmt ()]
 intOp cons = do
