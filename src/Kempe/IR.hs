@@ -312,11 +312,13 @@ writeAtom (Dip (is, _) as) =
             -- TODO: possible optimization: don't shift stack pointer but rather
             -- grab Stmts and shift them over to use sz bytes over or whatever?
 writeAtom (AtBuiltin ([i0, i1], _) Swap) =
-    let sz0 = size i0 in
+    let sz0 = size i0
+        sz1 = size i1
+    in
         pure $
-             [ MovMem () (dataPointerOffset i) 1 (Mem () 1 $ dataPointerAt (sz0-i)) | i <- [0..(sz0-1)] -- copy i0 to end of the stack
-             , undefined
-             ]
+             [ MovMem () (dataPointerOffset i) 1 (Mem () 1 $ dataPointerAt (sz0-i)) | i <- [0..(sz0-1)] ] -- copy i0 to end of the stack
+                ++ [ MovMem () (dataPointerAt (sz0 + sz1 - i)) 1 (Mem () 1 $ dataPointerAt (sz0 + i)) | i <- [0..(sz1-1)] ] -- copy i1 to where i0 used to be
+                ++ [ MovMem () (dataPointerAt (sz0 - i)) 1 (Mem () 1 $ dataPointerOffset i) | i <- [0..(sz0-1)] ] -- copy i0 at end of stack to its new place
 writeAtom (AtBuiltin _ Swap) = error "Ill-typed swap!"
 
 -- TODO: need consistent ABI for constructors
