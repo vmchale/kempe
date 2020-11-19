@@ -30,7 +30,6 @@ compileOutput fp harness =
         ASCII.pack <$> readExe exe
     where readExe fp' = readCreateProcess ((proc fp' []) { std_err = Inherit }) ""
 
-
 goldenOutput :: FilePath -- ^ Kempe file
              -> FilePath -- ^ C test harness
              -> FilePath -- ^ Golden file path
