@@ -214,5 +214,3 @@ sizeStack :: [KempeTy a] -> Int64
 sizeStack = getSum . foldMap (Sum . IR.size)
 
 -- I wonder if I could use a hylo.?
---
--- do both with a zipper...? or both ways idk

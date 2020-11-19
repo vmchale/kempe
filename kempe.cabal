@@ -40,6 +40,7 @@ library
         Kempe.Pipeline
         Kempe.Shuttle
         Kempe.IR
+        Kempe.IR.Opt
         Kempe.Asm.X86
         Kempe.Asm.X86.ControlFlow
         Kempe.Asm.X86.Liveness
