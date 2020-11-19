@@ -8,6 +8,7 @@ import           Kempe.Asm.X86
 import           Kempe.Asm.X86.ControlFlow
 import           Kempe.Asm.X86.Linear
 import           Kempe.Asm.X86.Liveness
+import           Kempe.File
 import           Kempe.IR
 import           Kempe.Lexer
 import           Kempe.Monomorphize
@@ -55,7 +56,7 @@ main =
                         [ bench "X86/linear (examples/factorial.kmp)" $ nf allocRegs f
                         ]
                   , bgroup "Pipeline"
-                        [ bench "Object file (examples/factorial.kmp)" $ nfIO (compile "examples/factorial.kmp" "/tmp/factorial.o")
+                        [ bench "Object file (examples/factorial.kmp)" $ nfIO (compile "examples/factorial.kmp" "/tmp/factorial.o" False)
                         -- TODO: tcFile
                         ]
                 ]
