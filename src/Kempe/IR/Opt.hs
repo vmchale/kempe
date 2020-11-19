@@ -13,7 +13,7 @@ optimize = successiveBumps
 --
 -- i.e. push a value and immediately pop it for use.
 --
--- This is obviously silly and we can remove it
+-- This is silly and we remove it in this pass.
 successiveBumps :: [Stmt ()] -> [Stmt ()]
 successiveBumps [] = []
 successiveBumps
