@@ -167,7 +167,9 @@ benchmark kempe-bench
         base -any,
         kempe -any,
         bytestring -any,
-        criterion -any
+        criterion -any,
+        prettyprinter -any,
+        text -any
 
     if impl(ghc >=8.0)
         ghc-options:

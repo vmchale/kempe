@@ -2,6 +2,7 @@ module Kempe.File ( tcFile
                   , dumpMono
                   , irFile
                   , x86File
+                  , dumpX86
                   , compile
                   ) where
 

@@ -1,9 +1,10 @@
 module Main (main) where
 
-import           Control.Exception         (throw, throwIO)
+import           Control.Exception         (Exception, throw, throwIO)
 import           Criterion.Main
 import qualified Data.ByteString.Lazy      as BSL
 import           Data.Functor              (void)
+import qualified Data.Text                 as T
 import           Kempe.Asm.X86
 import           Kempe.Asm.X86.ControlFlow
 import           Kempe.Asm.X86.Linear
@@ -15,6 +16,8 @@ import           Kempe.Monomorphize
 import           Kempe.Parser
 import           Kempe.Shuttle
 import           Kempe.TyAssign
+import           Prettyprinter             (defaultLayoutOptions, layoutPretty)
+import           Prettyprinter.Render.Text (renderStrict)
 
 main :: IO ()
 main =
@@ -57,6 +60,7 @@ main =
                         ]
                   , bgroup "Pipeline"
                         [ bench "Validate (examples/factorial.kmp)" $ nfIO (tcFile "examples/factorial.kmp")
+                        , bench "Generate assembly (examples/factorial.kmp)" $ nfIO (writeAsm "examples/factorial.kmp")
                         , bench "Object file (examples/factorial.kmp)" $ nfIO (compile "examples/factorial.kmp" "/tmp/factorial.o" False)
                         ]
                 ]
@@ -65,7 +69,6 @@ main =
           fac = yeetIO . parseWithMax =<< BSL.readFile "examples/factorial.kmp"
           prelude = yeetIO . parseWithMax =<< BSL.readFile "prelude/fn.kmp"
           forTyEnv = (,,) <$> parsedM <*> splitmix <*> prelude
-          yeetIO = either throwIO pure
           runCheck (maxU, m) = runTypeM maxU (checkModule m)
           runAssign (maxU, m) = runTypeM maxU (assignModule m)
           runSpecialize (m, i) = runMonoM i (closedModule m)
@@ -78,3 +81,14 @@ main =
           facX86Cf = mkControlFlow <$> facX86
           absX86 = reconstruct <$> facX86Cf
           -- facIR = runIR <$> facMono
+
+yeetIO :: Exception e => Either e a -> IO a
+yeetIO = either throwIO pure
+
+writeAsm :: FilePath
+         -> IO T.Text
+writeAsm fp = do
+    contents <- BSL.readFile fp
+    res <- yeetIO $ parseWithMax contents
+    pure $ renderText $ uncurry dumpX86 res
+    where renderText = renderStrict . layoutPretty defaultLayoutOptions
