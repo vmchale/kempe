@@ -5,6 +5,7 @@ module Main (main) where
 import           Control.DeepSeq           (deepseq)
 import           Control.Exception         (Exception, throwIO)
 import qualified Data.ByteString.Lazy      as BSL
+import           Harness
 import           Kempe.AST
 import           Kempe.Asm.X86.ControlFlow
 import           Kempe.Asm.X86.Liveness
@@ -54,6 +55,9 @@ main = defaultMain $
             , controlFlowGraph "examples/factorial.kmp"
             , liveness "examples/factorial.kmp"
             , codegen "examples/factorial.kmp"
+            ]
+          , testGroup "Golden output tests"
+            [ goldenOutput "examples/factorial.kmp" "test/harness/factorial.c" "test/golden/factorial.out"
             ]
         ]
 
