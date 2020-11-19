@@ -121,6 +121,8 @@ irEmit (IR.Jump _ l) = pure [Jump () l]
 irEmit (IR.Labeled _ l) = pure [Label () l]
 irEmit (IR.KCall _ l) = pure [Call () l]
 irEmit IR.Ret{} = pure [Ret ()]
+irEmit (IR.CJump _ (IR.Mem _ 1 (IR.Reg _ r)) l l') =
+    pure [CmpAddrConst () (Reg (toAbsReg r)) 1, Je () l, Jump () l']
 irEmit (IR.CJump _ (IR.Mem _ 1 (IR.ExprIntBinOp _ IR.IntMinusIR (IR.Reg _ r) (IR.ConstInt _ i))) l l') =
     pure [CmpAddrConst () (AddrRCMinus (toAbsReg r) i) 1, Je () l, Jump () l']
 irEmit (IR.CJump _ (IR.Mem _ 1 (IR.ExprIntBinOp _ IR.IntPlusIR (IR.Reg _ r) (IR.ConstInt _ i))) l l') =

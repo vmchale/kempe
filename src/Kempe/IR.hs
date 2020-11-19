@@ -297,12 +297,12 @@ writeAtom (AtBuiltin (is, _) Dup)   =
 writeAtom (If _ as as') = do
     l0 <- newLabel
     l1 <- newLabel
-    let ifIR = CJump () (Mem () 1 $ dataPointerAt 1) l0 l1
+    let ifIR = CJump () (Mem () 1 (Reg () DataPointer)) l0 l1
         dataPointerDec = MovTemp () DataPointer (ExprIntBinOp () IntMinusIR (Reg () DataPointer) (ConstInt () 1))
     asIR <- writeAtoms as
     asIR' <- writeAtoms as'
     l2 <- newLabel
-    pure $ ifIR : dataPointerDec : (Labeled () l0 : asIR ++ [Jump () l2]) ++ (Labeled () l1 : asIR') ++ [Labeled () l2]
+    pure $ dataPointerDec : ifIR : (Labeled () l0 : asIR ++ [Jump () l2]) ++ (Labeled () l1 : asIR') ++ [Labeled () l2]
 writeAtom (Dip (is, _) as) =
     let sz = size (last is)
         shiftNext = MovTemp () DataPointer (ExprIntBinOp () IntMinusIR (Reg () DataPointer) (ConstInt () sz))
