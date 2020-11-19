@@ -89,6 +89,7 @@ freeDone l = traverse_ freeAbsReg absRs
 freeAbsReg :: AbsReg -> AllocM ()
 freeAbsReg (AllocReg64 i) = freeAbsReg64 i
 freeAbsReg (AllocReg8 i)  = freeAbsReg8 i
+freeAbsReg DataPointer{}  = pure () -- maybe sketchy?
 
 freeAbsReg8 :: Int -> AllocM ()
 freeAbsReg8 i = do

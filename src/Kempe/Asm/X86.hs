@@ -150,6 +150,14 @@ irEmit (IR.MovMem _ (IR.ExprIntBinOp _ IR.IntPlusIR (IR.Reg _ r0) (IR.ConstInt _
     { r' <- allocReg8
     ; pure [ MovRA () r' (AddrRCMinus (toAbsReg r1) j), MovAR () (AddrRCPlus (toAbsReg r0) i) r' ]
     }
+irEmit (IR.MovMem _ (IR.ExprIntBinOp _ IR.IntMinusIR (IR.Reg _ r0) (IR.ConstInt _ i)) _ (IR.Mem _ 1 (IR.ExprIntBinOp _ IR.IntMinusIR (IR.Reg _ r1) (IR.ConstInt _ j)))) = do
+    { r' <- allocReg8
+    ; pure [ MovRA () r' (AddrRCMinus (toAbsReg r1) j), MovAR () (AddrRCMinus (toAbsReg r0) i) r' ]
+    }
+irEmit (IR.MovMem _ (IR.ExprIntBinOp _ IR.IntMinusIR (IR.Reg _ r0) (IR.ConstInt _ i)) _ (IR.Mem _ 1 (IR.ExprIntBinOp _ IR.IntPlusIR (IR.Reg _ r1) (IR.ConstInt _ j)))) = do
+    { r' <- allocReg8
+    ; pure [ MovRA () r' (AddrRCPlus (toAbsReg r1) j), MovAR () (AddrRCMinus (toAbsReg r0) i) r' ]
+    }
 irEmit (IR.MovMem _ (IR.ExprIntBinOp _ IR.IntPlusIR (IR.Reg _ r0) (IR.ConstInt _ i)) _ (IR.Mem _ 8 (IR.ExprIntBinOp _ IR.IntPlusIR (IR.Reg _ r1) (IR.ConstInt _ j)))) = do
     { r' <- allocReg64
     ; pure [ MovRA () r' (AddrRCPlus (toAbsReg r1) j), MovAR () (AddrRCPlus (toAbsReg r0) i) r' ]
