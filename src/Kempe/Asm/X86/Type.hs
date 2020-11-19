@@ -232,7 +232,7 @@ instance Pretty reg => Pretty (X86 reg a) where
     pretty (CmpRegReg _ r0 r1) = i4 ("cmp" <+> pretty r0 <> "," <+> pretty r1)
     pretty (CmpAddrBool _ a b) = i4 ("cmp byte" <+> pretty a <> "," <+> pretty b)
     pretty (ShiftRRR _ r0 r1)  = i4 ("shr" <+> pretty r0 <> "," <+> pretty r1)
-    pretty (ShiftLRR _ r0 r1)  = i4 ("slr" <+> pretty r0 <> "," <+> pretty r1)
+    pretty (ShiftLRR _ r0 r1)  = i4 ("shl" <+> pretty r0 <> "," <+> pretty r1)
 
 prettyAsm :: Pretty reg => [X86 reg a] -> Doc ann
 prettyAsm = ((prolegomena <> hardline <> "section .text" <> hardline) <>) . concatWith (\x y -> x <> hardline <> y) . fmap pretty
