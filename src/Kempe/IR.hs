@@ -268,8 +268,6 @@ writeAtom (WordLit _ w)             = pure $ push 8 (ConstWord () $ fromIntegral
 writeAtom (BoolLit _ b)             = pure $ push 1 (ConstBool () b)
 writeAtom (AtName _ n)              = pure . KCall () <$> lookupName n -- TODO: when to do tco?
 writeAtom (AtBuiltin ([], _) Drop)  = error "Internal error: Ill-typed drop!"
-writeAtom (AtBuiltin ([], _) Swap)  = error "Internal error: Ill-typed swap!"
-writeAtom (AtBuiltin ([_], _) Swap) = error "Internal error: Ill-typed swap!"
 writeAtom (AtBuiltin ([], _) Dup)   = error "Internal error: Ill-typed dup!"
 writeAtom (Dip ([], _) _)           = error "Internal error: Ill-typed dip()!"
 writeAtom (AtBuiltin _ IntPlus)     = intOp IntPlusIR
@@ -305,7 +303,7 @@ writeAtom (If _ as as') = do
     pure $ dataPointerDec : ifIR : (Labeled () l0 : asIR ++ [Jump () l2]) ++ (Labeled () l1 : asIR') ++ [Labeled () l2]
 writeAtom (Dip (is, _) as) =
     let sz = size (last is)
-        shiftNext = MovTemp () DataPointer (ExprIntBinOp () IntMinusIR (Reg () DataPointer) (ConstInt () sz))
+        shiftNext = MovTemp () DataPointer (ExprIntBinOp () IntMinusIR (Reg () DataPointer) (ConstInt () sz)) -- FIXME: this doesn't work with swap
         shiftBack = MovTemp () DataPointer (ExprIntBinOp () IntPlusIR (Reg () DataPointer) (ConstInt () sz))
     in
         do
@@ -313,6 +311,13 @@ writeAtom (Dip (is, _) as) =
             pure ((shiftNext : aStmt) ++ [shiftBack])
             -- TODO: possible optimization: don't shift stack pointer but rather
             -- grab Stmts and shift them over to use sz bytes over or whatever?
+writeAtom (AtBuiltin ([i0, i1], _) Swap) =
+    let sz0 = size i0 in
+        pure $
+             [ MovMem () (dataPointerOffset i) 1 (Mem () 1 $ dataPointerAt (sz0-i)) | i <- [0..(sz0-1)] -- copy i0 to end of the stack
+             , undefined
+             ]
+writeAtom (AtBuiltin _ Swap) = error "Ill-typed swap!"
 
 -- TODO: need consistent ABI for constructors
 

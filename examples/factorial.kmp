@@ -4,6 +4,8 @@ loop : Int Int -- Int Int
         ]
 
 ; tail recursive factorial
+;
+; see C example: https://wiki.c2.com/?TailRecursion
 fac_tailrec : Int -- Int
         =: [ 1 loop dip(drop) ]
 
