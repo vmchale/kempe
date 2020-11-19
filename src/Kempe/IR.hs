@@ -292,7 +292,7 @@ writeAtom (AtBuiltin (is, _) Drop)  =
 writeAtom (AtBuiltin (is, _) Dup)   =
     let sz = size (last is) in
         pure $
-             [ MovMem () (dataPointerOffset (i + sz)) 1 (Mem () 1 $ dataPointerOffset i) | i <- [1..sz] ] -- FIXME: this should be a one-byte fetch each time
+             [ MovMem () (dataPointerOffset i) 1 (Mem () 1 $ dataPointerAt (sz - i)) | i <- [0..(sz-1)] ]
                 ++ [ MovTemp () DataPointer (ExprIntBinOp () IntPlusIR (Reg () DataPointer) (ConstInt () sz)) ] -- move data pointer over sz bytes
 writeAtom (If _ as as') = do
     l0 <- newLabel
