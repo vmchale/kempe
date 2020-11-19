@@ -27,3 +27,5 @@ cabal.sandbox.config
 *_stubs.h
 factorial.S
 factorial
+splitmix.S
+splitmix

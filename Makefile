@@ -9,6 +9,12 @@ HS_SRC := $(shell find src -type f) kempe.cabal
 moddeps.svg: $(HS_SRC)
 	graphmod src | dot -Tsvg -o$@
 
+splitmix.o: examples/splitmix.kmp
+	kc -g $< $@
+
+splitmix: splitmix.o test/harness/splitmix.c
+	gcc -g $^ -o $@
+
 factorial.o: examples/factorial.kmp
 	kc -g $< $@
 
