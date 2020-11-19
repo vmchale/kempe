@@ -1,7 +1,7 @@
 module Kempe.IR.Opt ( optimize
                     ) where
 
-import Kempe.IR
+import           Kempe.IR
 
 optimize :: [Stmt ()] -> [Stmt ()]
 optimize = successiveBumps
@@ -19,14 +19,14 @@ successiveBumps [] = []
 successiveBumps
     ((MovTemp _ DataPointer (ExprIntBinOp _ IntPlusIR (Reg _ DataPointer) (ConstInt _ i)))
         :(MovTemp _ DataPointer (ExprIntBinOp _ IntMinusIR (Reg _ DataPointer) (ConstInt _ i')))
-        :ss) | i == i' = ss
+        :ss) | i == i' = successiveBumps ss
 successiveBumps
     ((MovTemp _ DataPointer (ExprIntBinOp _ IntMinusIR (Reg _ DataPointer) (ConstInt _ i)))
         :(MovTemp _ DataPointer (ExprIntBinOp _ IntPlusIR (Reg _ DataPointer) (ConstInt _ i')))
-        :ss) | i == i' = ss
+        :ss) | i == i' = successiveBumps ss
 successiveBumps
     ((MovTemp _ DataPointer (ExprIntBinOp _ IntPlusIR (Reg _ DataPointer) (ConstInt _ i)))
         :(MovTemp _ DataPointer (ExprIntBinOp _ IntPlusIR (Reg _ DataPointer) (ConstInt _ i')))
         :ss) =
-            MovTemp () DataPointer (ExprIntBinOp () IntPlusIR (Reg () DataPointer) (ConstInt () $ i+i')):ss
+            MovTemp () DataPointer (ExprIntBinOp () IntPlusIR (Reg () DataPointer) (ConstInt () $ i+i')) : successiveBumps ss
 successiveBumps (s:ss) = s : successiveBumps ss

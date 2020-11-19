@@ -5,6 +5,7 @@ module Kempe.Pipeline ( irGen
 
 import           Control.Composition       ((.*))
 import           Control.Exception         (throw)
+import           Data.Bifunctor            (first)
 import           Kempe.AST
 import           Kempe.Asm.X86
 import           Kempe.Asm.X86.ControlFlow
@@ -12,7 +13,6 @@ import           Kempe.Asm.X86.Linear
 import           Kempe.Asm.X86.Liveness
 import           Kempe.IR
 import           Kempe.IR.Opt
-import Data.Bifunctor (first)
 import           Kempe.Shuttle
 
 irGen :: Int -- ^ Thread uniques through
