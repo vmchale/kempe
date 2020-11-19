@@ -242,14 +242,14 @@ intOp cons = do
 -- | Push bytes onto the Kempe data pointer
 push :: Int64 -> Exp () -> [Stmt ()]
 push off e =
-    [ MovTemp () DataPointer (ExprIntBinOp () IntPlusIR (Reg () DataPointer) (ConstInt () off)) -- increment instead of decrement b/c this is the Kempe ABI
-    , MovMem () (Reg () DataPointer) off e
+    [ MovMem () (Reg () DataPointer) off e
+    , MovTemp () DataPointer (ExprIntBinOp () IntPlusIR (Reg () DataPointer) (ConstInt () off)) -- increment instead of decrement b/c this is the Kempe ABI
     ]
 
 pop :: Int64 -> Temp -> [Stmt ()]
 pop sz t =
-    [ MovTemp () t (Mem () sz (Reg () DataPointer))
-    , MovTemp () DataPointer (ExprIntBinOp () IntMinusIR (Reg () DataPointer) (ConstInt () sz))
+    [ MovTemp () DataPointer (ExprIntBinOp () IntMinusIR (Reg () DataPointer) (ConstInt () sz))
+    , MovTemp () t (Mem () sz (Reg () DataPointer))
     ]
 
 -- FIXME: just use expressions from memory accesses
