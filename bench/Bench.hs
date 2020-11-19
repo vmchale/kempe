@@ -42,17 +42,20 @@ main =
                         [ bench "IR pipeline (examples/splitmix.kmp)" $ nf (fst . runIR) s -- IR benchmarks are a bit silly; I will use them to decide if I should use difference lists
                         , bench "IR pipeline (examples/factorial.kmp)" $ nf (fst . runIR) f
                         ]
-                  , env facMono $ \f ->
+                  , env irEnv $ \ ~(s, f) ->
                       bgroup "Instruction selection"
                         [ bench "X86 (examples/factorial.kmp)" $ nf genX86 f
+                        , bench "X86 (examples/splitmix.kmp)" $ nf genX86 s
                         ]
-                  , env facX86 $ \f ->
+                  , env x86Env $ \ ~(s, f) ->
                       bgroup "Control flow graph"
                         [ bench "X86 (examples/factorial.kmp)" $ nf mkControlFlow f
+                        , bench "X86 (examples/splitmix.kmp)" $ nf mkControlFlow s
                         ]
-                  , env facX86Cf $ \f ->
+                  , env cfEnv $ \ ~(s, f) ->
                       bgroup "Liveness analysis"
                         [ bench "X86 (examples/factorial.kmp)" $ nf reconstruct f
+                        , bench "X86 (examples/splitmix.kmp)" $ nf reconstruct s
                         ]
                   , env absX86 $ \f ->
                       bgroup "Register allocation"
@@ -78,9 +81,12 @@ main =
           runIR = runTempM . writeModule
           genX86 m = let (ir, u) = runIR m in irToX86 u ir
           facX86 = genX86 <$> facMono
+          splitmixX86 = genX86 <$> splitmixMono
+          x86Env = (,) <$> splitmixX86 <*> facX86
           facX86Cf = mkControlFlow <$> facX86
+          splitmixX86Cf = mkControlFlow <$> splitmixX86
+          cfEnv = (,) <$> splitmixX86Cf <*> facX86Cf
           absX86 = reconstruct <$> facX86Cf
-          -- facIR = runIR <$> facMono
 
 yeetIO :: Exception e => Either e a -> IO a
 yeetIO = either throwIO pure
