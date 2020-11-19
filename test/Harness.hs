@@ -27,8 +27,8 @@ compileOutput fp harness =
             exe = dir </> "kempe"
         compile fp oFile False
         runGcc [oFile, harness] exe
-        ASCII.pack <$> readExe exe
-    where readExe fp' = readCreateProcess ((proc fp' []) { std_err = Inherit }) ""
+        readExe exe
+    where readExe fp' = ASCII.pack <$> readCreateProcess ((proc fp' []) { std_err = Inherit }) ""
 
 goldenOutput :: FilePath -- ^ Kempe file
              -> FilePath -- ^ C test harness
