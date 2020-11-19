@@ -121,6 +121,8 @@ irEmit (IR.Jump _ l) = pure [Jump () l]
 irEmit (IR.Labeled _ l) = pure [Label () l]
 irEmit (IR.KCall _ l) = pure [Call () l]
 irEmit IR.Ret{} = pure [Ret ()]
+irEmit (IR.CJump _ (IR.Mem _ 1 (IR.ExprIntBinOp _ IR.IntMinusIR (IR.Reg _ r) (IR.ConstInt _ i))) l l') =
+    pure [CmpAddrConst () (AddrRCMinus (toAbsReg r) i) i, Je () l, Jump () l']
 irEmit (IR.CJump _ (IR.Mem _ 1 (IR.ExprIntBinOp _ IR.IntPlusIR (IR.Reg _ r) (IR.ConstInt _ i))) l l') =
     pure [CmpAddrConst () (AddrRCPlus (toAbsReg r) i) i, Je () l, Jump () l']
 irEmit (IR.MovTemp _ r (IR.Mem _ _ (IR.Reg _ r1))) = pure [MovRA () (toAbsReg r) (Reg $ toAbsReg r1)] -- TODO: sanity check reg/mem access size?

@@ -297,7 +297,7 @@ writeAtom (AtBuiltin (is, _) Dup)   =
 writeAtom (If _ as as') = do
     l0 <- newLabel
     l1 <- newLabel
-    let ifIR = CJump () (Mem () 1 $ dataPointerOffset 1) l0 l1
+    let ifIR = CJump () (Mem () 1 $ dataPointerAt 1) l0 l1
     asIR <- writeAtoms as
     asIR' <- writeAtoms as'
     l2 <- newLabel
@@ -314,6 +314,9 @@ writeAtom (Dip (is, _) as) =
             -- grab Stmts and shift them over to use sz bytes over or whatever?
 
 -- TODO: need consistent ABI for constructors
+
+dataPointerAt :: Int64 -> Exp ()
+dataPointerAt off = ExprIntBinOp () IntMinusIR (Reg () DataPointer) (ConstInt () off)
 
 dataPointerOffset :: Int64 -> Exp ()
 dataPointerOffset off = ExprIntBinOp () IntPlusIR (Reg () DataPointer) (ConstInt () off)
