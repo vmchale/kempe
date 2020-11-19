@@ -56,8 +56,8 @@ main =
                         [ bench "X86/linear (examples/factorial.kmp)" $ nf allocRegs f
                         ]
                   , bgroup "Pipeline"
-                        [ bench "Object file (examples/factorial.kmp)" $ nfIO (compile "examples/factorial.kmp" "/tmp/factorial.o" False)
-                        -- TODO: tcFile
+                        [ bench "Validate (examples/factorial.kmp)" $ nfIO (tcFile "examples/factorial.kmp")
+                        , bench "Object file (examples/factorial.kmp)" $ nfIO (compile "examples/factorial.kmp" "/tmp/factorial.o" False)
                         ]
                 ]
     where parsedM = yeetIO . parseWithMax =<< BSL.readFile "test/data/ty.kmp"
