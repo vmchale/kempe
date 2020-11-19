@@ -9,7 +9,8 @@ fac_tailrec : Int -- Int
 
 ; naïve factorial
 fac : Int -- Int
-    =: [ dup 0 =
+    =: [ ; dup 0 =
+         3 0 =
          if( drop 1
            , dup 1 - fac * )
        ]
