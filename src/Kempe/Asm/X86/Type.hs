@@ -21,6 +21,7 @@ import qualified Data.Set           as S
 import           Data.Text.Encoding (decodeUtf8)
 import           Data.Word          (Word8)
 import           GHC.Generics       (Generic)
+import           Numeric            (showHex)
 import           Prettyprinter      (Doc, Pretty (pretty), braces, brackets, colon, concatWith, hardline, indent, punctuate, (<+>))
 
 type Label = Word
@@ -193,6 +194,9 @@ instance Pretty reg => Pretty (Addr reg) where
 prettyLabel :: Label -> Doc ann
 prettyLabel l = "kmp_" <> pretty l
 
+prettyHex :: (Integral a, Show a) => a -> Doc ann
+prettyHex x = pretty (showHex x mempty)
+
 -- intel syntax
 instance Pretty reg => Pretty (X86 reg a) where
     pretty (PushReg _ r)       = i4 ("push" <+> pretty r)
@@ -207,11 +211,11 @@ instance Pretty reg => Pretty (X86 reg a) where
     pretty (MovABool _ a b)    = i4 ("mov byte" <+> pretty a <> "," <+> pretty b)
     pretty (MovACi8 _ a i)     = i4 ("mov byte" <+> pretty a <> "," <+> pretty i)
     pretty (MovRCi8 _ r i)     = i4 ("mov byte" <+> pretty r <> "," <+> pretty i)
-    pretty (MovRWord _ r w)    = i4 ("mov qword" <+> pretty r <+> pretty w)
+    pretty (MovRWord _ r w)    = i4 ("mov qword" <+> pretty r <+> prettyHex w)
     pretty (MovRR _ r0 r1)     = i4 ("mov" <+> pretty r0 <> "," <+> pretty r1)
     pretty (MovRC _ r i)       = i4 ("mov" <+> pretty r <> "," <+> pretty i)
     pretty (MovAC _ a i)       = i4 ("mov qword" <+> pretty a <> "," <+> pretty i)
-    pretty (MovAWord _ a w)    = i4 ("mov qword" <+> pretty a <> "," <+> pretty w)
+    pretty (MovAWord _ a w)    = i4 ("mov qword" <+> pretty a <> "," <+> prettyHex w)
     pretty (MovRCBool _ r b)   = i4 ("mov" <+> pretty r <> "," <+> pretty b)
     pretty (MovRL _ r bl)      = i4 ("mov" <+> pretty r <> "," <+> pretty (decodeUtf8 bl))
     pretty (AddRR _ r0 r1)     = i4 ("add" <+> pretty r0 <> "," <> pretty r1)
