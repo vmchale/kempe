@@ -237,7 +237,7 @@ intOp cons = do
     t0 <- getTemp64 -- registers are 64 bits for integers
     t1 <- getTemp64
     pure $
-        pop 8 t0 ++ pop 8 t1 ++ push 8 (ExprIntBinOp () cons (Reg () t0) (Reg () t1))
+        pop 8 t0 ++ pop 8 t1 ++ push 8 (ExprIntBinOp () cons (Reg () t1) (Reg () t0))
 
 -- | Push bytes onto the Kempe data pointer
 push :: Int64 -> Exp () -> [Stmt ()]
@@ -258,7 +258,7 @@ intRel cons = do
     t0 <- getTemp64
     t1 <- getTemp64
     pure $
-        pop 8 t0 ++ pop 8 t1 ++ push 1 (ExprIntRel () cons (Reg () t0) (Reg () t1))
+        pop 8 t0 ++ pop 8 t1 ++ push 1 (ExprIntRel () cons (Reg () t1) (Reg () t0))
 
 -- | This throws exceptions on nonsensical input.
 writeAtom :: Atom MonoStackType -> TempM [Stmt ()]
