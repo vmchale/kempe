@@ -202,6 +202,7 @@ instance Pretty (KempeDecl a b) where
 prettyTyLeaf :: TyName a -> [KempeTy b] -> Doc ann
 prettyTyLeaf cn vars = pretty cn <+> hsep (fmap pretty vars)
 
+-- TODO: separate annotations for TyName in TyDecl
 data KempeDecl a b = TyDecl a (TyName a) [Name a] [(TyName b, [KempeTy a])]
                    | FunDecl b (Name b) [KempeTy a] [KempeTy a] [Atom b]
                    | ExtFnDecl b (Name b) [KempeTy a] [KempeTy a] BSL.ByteString -- ShortByteString?
