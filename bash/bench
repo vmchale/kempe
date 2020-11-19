@@ -12,6 +12,6 @@ bench 'gcc -fsyntax-only benchmarks/splitmix64.c' \
     'rustc --crate-type=lib --emit=dep-info,metadata benchmarks/splitmix.rs' \
     'rustc --crate-type=lib benchmarks/splitmix.rs' \
     'rustc --crate-type=cdylib benchmarks/splitmix.rs' \
-    'kc examples/factorial.kmp factorial.o'
+    'kc examples/splitmix.kmp splitmix.o'
 
 #     'pgcc -O0 -c benchmarks/splitmix64.c -Mnollvm' \
