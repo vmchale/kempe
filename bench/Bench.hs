@@ -54,6 +54,9 @@ main =
                       bgroup "Register allocation"
                         [ bench "X86/linear (examples/factorial.kmp)" $ nf allocRegs f
                         ]
+                  , bgroup "Pipeline"
+                        [ bench "Object file (examples/factorial.kmp)" $ nfIO (compile "examples/factorial.kmp" "/tmp/factorial.o")
+                        ]
                 ]
     where parsedM = yeetIO . parseWithMax =<< BSL.readFile "test/data/ty.kmp"
           splitmix = yeetIO . parseWithMax =<< BSL.readFile "examples/splitmix.kmp"
