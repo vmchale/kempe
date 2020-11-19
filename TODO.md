@@ -25,6 +25,7 @@
 - [x] Exported functions w/ C ABI should be there (so it can link)
 - [ ] Throw error when return value in C ABI is too big
 - [ ] Constructors aren't monomorphized
+- [ ] Correctly restore registers (C ABI)
 # Pipeline
 - [ ] Inliner (all non-recursive?)
 - [ ] https://www.cs.princeton.edu/courses/archive/spr19/cos217/lectures/13_Assembly1.pdf (von neumann -> c where int ptrs, ATS & such are useful...)
