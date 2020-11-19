@@ -149,11 +149,12 @@ irEmit (IR.MovMem _ (IR.ExprIntBinOp _ _ (IR.Reg _ r0) (IR.ConstInt _ i)) _ (IR.
 irEmit (IR.MovMem _ (IR.Reg _ r) _ (IR.ExprIntRel _ IR.IntEqIR (IR.Reg _ r1) (IR.Reg _ r2))) = do
     { l0 <- getLabel
     ; l1 <- getLabel
-    ; pure [ CmpRegReg () (toAbsReg r1) (toAbsReg r2), Je () l0, Jump () l1, Label () l0, MovABool () (Reg $ toAbsReg r) 1, Label () l1, MovABool () (Reg $ toAbsReg r) 0 ]
+    ; l2 <- getLabel
+    ; pure [ CmpRegReg () (toAbsReg r1) (toAbsReg r2), Je () l0, Jump () l1, Label () l0, MovABool () (Reg $ toAbsReg r) 1, Jump () l2, Label () l1, MovABool () (Reg $ toAbsReg r) 0, Label () l2 ]
     }
 irEmit (IR.WrapKCall _ Cabi (is, [o]) n l) | all (\i -> IR.size i == 8) is && IR.size o <= 8 && length is <= 6 = do
     { let offs = zipWith const [0..] is
-    ; let totalSize = sizeStack is + IR.size o -- for the output
+    ; let totalSize = sizeStack is
     ; let argRegs = [CArg1, CArg2, CArg3, CArg4, CArg5, CArg6]
     ; pure $ [BSLabel () n, MovRL () DataPointer "kempe_data"] ++ zipWith (\r i -> MovAR () (AddrRCPlus DataPointer (i * 8)) r) argRegs offs ++ [AddRC () DataPointer totalSize, Call () l, MovRA () CRet (AddrRCMinus DataPointer (IR.size o)), Ret ()] -- TODO: are the parameters backwards?
     -- copy last n bytes onto the system stack
