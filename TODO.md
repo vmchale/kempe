@@ -6,6 +6,7 @@
 # Examples
 - [ ] delink?
 - [ ] Primality test (and link to C...)
+  - [ ] Totient function
   - [ ] Needs sensible float support!
 - [x] splitmix random number generator? (or rather any pseudorandom number
   generator...)
