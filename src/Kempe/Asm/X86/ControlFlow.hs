@@ -95,7 +95,6 @@ uses (CmpAddrBool _ a _) = addrRegs a
 uses (ShiftLRR _ r r')   = S.fromList [r, r']
 uses (ShiftRRR _ r r')   = S.fromList [r, r']
 uses (MovRCi8 _ r _)     = S.singleton r
-uses (PopReg _ r)        = S.singleton r
 uses (MovACi8 _ a _)     = addrRegs a
 uses _                   = S.empty
 
@@ -114,6 +113,7 @@ defs (SubRC _ r _)     = S.singleton r
 defs (XorRR _ r _)     = S.singleton r
 defs (MovRL _ r _)     = S.singleton r
 defs (ShiftRRR _ r _)  = S.singleton r
+defs (PopReg _ r)      = S.singleton r
 defs (ShiftLRR _ r _)  = S.singleton r
 defs _                 = S.empty
 
