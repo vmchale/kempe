@@ -13,14 +13,13 @@
   - [ ] http://prng.di.unimi.it/xoroshiro128plus.c
 # Backends
 - [ ] Linear scan register allocator
-  - [ ] "needed" for REPL
 - [ ] Graph (?) register allocator
 # Performance
 - [ ] Liveness analysis on a per-decl basis?
 ## Data Structures
 - [ ] Difference lists when laying down atoms/IR
 - [ ] Do sets actually help?
-  - [ ] https://hackage.haskell.org/package/hoopl ->
+  - [ ] https://hackage.haskell.org/package/hoopl (may be faster)
 # Bugs
 - [x] The current setup ignores extern imports -> no it doesn't
 - [x] Exported functions w/ C ABI should be there (so it can link)
