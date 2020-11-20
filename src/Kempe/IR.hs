@@ -318,6 +318,8 @@ writeAtom (AtBuiltin _ Swap) = error "Ill-typed swap!"
 
 dipify :: Int64 -> Atom MonoStackType -> TempM [Stmt ()]
 dipify sz (AtBuiltin (is, _) Drop) = undefined
+dipify sz (AtBuiltin ([i0, i1], _) Swap) = undefined
+dipify sz (AtBuiltin _ Swap) = error "Ill-typed swap!"
 dipify sz a = -- backup approach; I think this is cursèd
     let shiftNext = MovTemp () DataPointer (ExprIntBinOp () IntMinusIR (Reg () DataPointer) (ConstInt () sz)) -- FIXME: this doesn't work with swap
         shiftBack = MovTemp () DataPointer (ExprIntBinOp () IntPlusIR (Reg () DataPointer) (ConstInt () sz))
