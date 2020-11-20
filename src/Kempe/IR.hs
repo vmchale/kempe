@@ -319,7 +319,7 @@ writeAtom (AtBuiltin _ Swap) = error "Ill-typed swap!"
 -- TODO: need consistent ABI for constructors
 
 dipify :: Int64 -> Atom MonoStackType -> TempM [Stmt ()]
-dipify _ (AtBuiltin ([], _) Drop) = error "Ill-typed drop!"
+dipify _ (AtBuiltin ([], _) Drop) = error "Internal error: Ill-typed drop!"
 dipify sz (AtBuiltin (is, _) Drop) =
     let sz' = size (last is)
         shift = MovTemp () DataPointer (ExprIntBinOp () IntMinusIR (Reg () DataPointer) (ConstInt () sz')) -- shift data pointer over by sz' bytes
@@ -327,7 +327,11 @@ dipify sz (AtBuiltin (is, _) Drop) =
         copyBytes = [ MovMem () (dataPointerAt (sz + sz' - i)) 1 (Mem () 1 $ dataPointerAt (sz - i)) | i <- [0..(sz-1)] ]
         in pure $ copyBytes ++ [shift]
 dipify sz (AtBuiltin ([i0, i1], _) Swap) = undefined
-dipify _ (AtBuiltin _ Swap) = error "Ill-typed swap!"
+dipify _ (Dip ([], _) as) = error "Internal error: Ill-typed dip()!"
+dipify sz (Dip (is, _) as) =
+    let sz' = size (last is)
+        in foldMapA (dipify (sz + sz')) as
+dipify _ (AtBuiltin _ Swap) = error "Internal error: Ill-typed swap!"
 dipify sz a = -- backup approach; I think this is cursèd
     let shiftNext = MovTemp () DataPointer (ExprIntBinOp () IntMinusIR (Reg () DataPointer) (ConstInt () sz)) -- FIXME: this doesn't work with swap
         shiftBack = MovTemp () DataPointer (ExprIntBinOp () IntPlusIR (Reg () DataPointer) (ConstInt () sz))
