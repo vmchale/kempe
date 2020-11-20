@@ -148,6 +148,7 @@ data Addr reg = Reg reg
 data X86 reg a = PushReg { ann :: a, rSrc :: reg }
                | PushMem { ann :: a, addr :: Addr reg }
                | PopMem { ann :: a, addr :: Addr reg }
+               | PopReg { ann :: a, reg :: reg }
                | PushConst { ann :: a, iSrc :: Int64 }
                | Jump { ann :: a, label :: Label }
                | Call { ann :: a, label :: Label }
@@ -202,6 +203,7 @@ instance Pretty reg => Pretty (X86 reg a) where
     pretty (PushReg _ r)       = i4 ("push" <+> pretty r)
     pretty (PushMem _ a)       = i4 ("push" <+> pretty a)
     pretty (PopMem _ a)        = i4 ("pop qword" <+> pretty a)
+    pretty (PopReg _ r)        = i4 ("pop" <+> pretty r)
     pretty (PushConst _ i)     = i4 ("push" <+> pretty i)
     pretty (Jump _ l)          = i4 ("jmp" <+> prettyLabel l)
     pretty (Call _ l)          = i4 ("call" <+> prettyLabel l)
