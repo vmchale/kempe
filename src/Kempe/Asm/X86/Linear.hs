@@ -33,10 +33,10 @@ free8Lens f s = fmap (\x -> s { free8 = x }) (f (free8 s))
 
 -- | Mark all registers as free (at the beginning).
 allFree :: AllocSt
-allFree = AllocSt mempty allReg64 (S.fromList [R8b .. R15b])
+allFree = AllocSt mempty allReg64 (S.fromList [AH .. R15b])
 
 allReg64 :: S.Set X86Reg
-allReg64 = S.fromList [R8 .. R15]
+allReg64 = S.fromList [Rax .. R15]
 
 type AllocM = State AllocSt
 
@@ -208,7 +208,6 @@ allocReg (SubRR l r0 r1)                       = (SubRR () <$> useReg l r0 <*> u
 allocReg (MovAR l a r)                         = (MovAR () <$> useAddr l a <*> useReg l r) <* freeDone l
 allocReg (MovAC _ (Reg DataPointer) i)         = pure $ MovAC () (Reg Rbx) i
 allocReg (MovRR l r0 r1)                       = (MovRR () <$> useReg l r0 <*> useReg l r1) <* freeDone l
-allocReg (MulR l r0)                           = (MulR () <$> useReg l r0) <* freeDone l
 allocReg (MovRA l r a)                         = (MovRA () <$> useReg l r <*> useAddr l a) <* freeDone l
 allocReg (CmpRegReg l r0 r1)                   = (CmpRegReg () <$> useReg l r0 <*> useReg l r1) <* freeDone l
 allocReg (MovABool _ (Reg DataPointer) b)      = pure $ MovABool () (Reg Rbx) b

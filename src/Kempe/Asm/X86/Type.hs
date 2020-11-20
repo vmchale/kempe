@@ -40,7 +40,9 @@ data ControlAnn = ControlAnn { node     :: !Int
                              } deriving (Generic, NFData)
 
 -- currently just has 64-bit and 8-bit registers
-data X86Reg = R8
+data X86Reg = Rax
+            | Rdx
+            | R8
             | R9
             | R10
             | R11
@@ -48,8 +50,12 @@ data X86Reg = R8
             | R13
             | R14
             | R15
+            | AH
+            | AL
             -- -- | BH
             -- -- | BL
+            | DH
+            | DL
             | R8b
             | R9b
             | R10b
@@ -65,15 +71,9 @@ data X86Reg = R8
             | Rsi
             -- cl is reserved in this implementation which it really shouldn't be
             -- rax and rdx (and friends) are reserved for unsigned mult.
-            | Rax
-            | AH
-            | AL
-            | Rdx
             | Rcx
             | CH
             | CL
-            | DH
-            | DL
             deriving (Eq, Ord, Enum, Bounded, Generic, NFData)
 
 instance Pretty X86Reg where
@@ -174,7 +174,6 @@ data X86 reg a = PushReg { ann :: a, rSrc :: reg }
                | SubRR { ann :: a, rSub1 :: reg, rSub2 :: reg }
                | XorRR { ann :: a, rXor1 :: reg, rXor2 :: reg }
                | ImulRR { ann :: a, rMul1 :: reg, rMul2 :: reg }
-               | MulR { ann :: a, rMultiplicand :: reg } -- implicit argument Multiplier reg
                | AddAC { ann :: a, addrAdd1 :: Addr reg, iAdd2 :: Int64 }
                | AddRC { ann :: a, rAdd1 :: reg, iAdd2 :: Int64 }
                | SubRC { ann :: a, rSub1 :: reg, iSub2 :: Int64 }
@@ -228,7 +227,6 @@ instance Pretty reg => Pretty (X86 reg a) where
     pretty (AddAC _ a c)       = i4 ("add" <+> pretty a <> "," <+> pretty c)
     pretty (SubRR _ r0 r1)     = i4 ("sub" <+> pretty r0 <> "," <> pretty r1)
     pretty (ImulRR _ r0 r1)    = i4 ("imul" <+> pretty r0 <> "," <+> pretty r1)
-    pretty (MulR _ r0)         = i4 ("mul" <+> pretty r0)
     pretty (XorRR _ r0 r1)     = i4 ("xor" <+> pretty r0 <> "," <+> pretty r1)
     pretty (AddRC _ r0 c)      = i4 ("add" <+> pretty r0 <> "," <+> pretty c)
     pretty (SubRC _ r0 c)      = i4 ("sub" <+> pretty r0 <> "," <+> pretty c)
