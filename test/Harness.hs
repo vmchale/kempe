@@ -16,7 +16,7 @@ runGcc :: [FilePath]
        -> FilePath
        -> IO ()
 runGcc fps o =
-    void $ readCreateProcess ((proc "gcc" (fps ++ ["-o", o])) { std_err = Inherit }) ""
+    void $ readCreateProcess ((proc "cc" (fps ++ ["-o", o])) { std_err = Inherit }) ""
 
 compileOutput :: FilePath
               -> FilePath
