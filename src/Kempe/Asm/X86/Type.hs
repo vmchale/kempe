@@ -64,6 +64,7 @@ data X86Reg = R8
             | Rdi
             | Rsi
             -- cl is reserved in this implementation which it really shouldn't be
+            -- rax and rdx (and friends) are reserved for unsigned mult.
             | Rax
             | AH
             | AL
