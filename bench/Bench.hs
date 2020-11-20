@@ -57,9 +57,10 @@ main =
                         [ bench "X86 (examples/factorial.kmp)" $ nf reconstruct f
                         , bench "X86 (examples/splitmix.kmp)" $ nf reconstruct s
                         ]
-                  , env absX86 $ \f ->
+                  , env absX86 $ \ ~(s, f) ->
                       bgroup "Register allocation"
                         [ bench "X86/linear (examples/factorial.kmp)" $ nf allocRegs f
+                        , bench "X86/linear (examples/splitmix.kmp)" $ nf allocRegs s
                         ]
                   , bgroup "Pipeline"
                         [ bench "Validate (examples/factorial.kmp)" $ nfIO (tcFile "examples/factorial.kmp")
@@ -86,7 +87,9 @@ main =
           facX86Cf = mkControlFlow <$> facX86
           splitmixX86Cf = mkControlFlow <$> splitmixX86
           cfEnv = (,) <$> splitmixX86Cf <*> facX86Cf
-          absX86 = reconstruct <$> facX86Cf
+          facAbsX86 = reconstruct <$> facX86Cf
+          splitmixAbsX86 = reconstruct <$> splitmixX86Cf
+          absX86 = (,) <$> splitmixAbsX86 <*> facAbsX86
 
 yeetIO :: Exception e => Either e a -> IO a
 yeetIO = either throwIO pure
