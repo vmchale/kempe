@@ -327,7 +327,7 @@ dipify sz (AtBuiltin (is, _) Drop) =
         copyBytes = [ MovMem () (dataPointerAt (sz + sz' - i)) 1 (Mem () 1 $ dataPointerAt (sz - i)) | i <- [0..(sz-1)] ]
         in pure $ copyBytes ++ [shift]
 dipify sz (AtBuiltin ([i0, i1], _) Swap) = undefined
-dipify _ (Dip ([], _) as) = error "Internal error: Ill-typed dip()!"
+dipify _ (Dip ([], _) _) = error "Internal error: Ill-typed dip()!"
 dipify sz (Dip (is, _) as) =
     let sz' = size (last is)
         in foldMapA (dipify (sz + sz')) as
