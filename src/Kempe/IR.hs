@@ -317,7 +317,10 @@ writeAtom (AtBuiltin _ Swap) = error "Ill-typed swap!"
 -- TODO: need consistent ABI for constructors
 
 dipify :: Int64 -> Atom MonoStackType -> TempM [Stmt ()]
-dipify sz (AtBuiltin (is, _) Drop) = undefined
+dipify sz (AtBuiltin ([], _) Drop) = error "Ill-typed drop!"
+dipify sz (AtBuiltin (is, _) Drop) =
+    let sz' = size (last is)
+        in undefined
 dipify sz (AtBuiltin ([i0, i1], _) Swap) = undefined
 dipify sz (AtBuiltin _ Swap) = error "Ill-typed swap!"
 dipify sz a = -- backup approach; I think this is cursèd
