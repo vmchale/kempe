@@ -33,10 +33,10 @@ free8Lens f s = fmap (\x -> s { free8 = x }) (f (free8 s))
 
 -- | Mark all registers as free (at the beginning).
 allFree :: AllocSt
-allFree = AllocSt mempty allReg64 (S.fromList [AH .. R15b])
+allFree = AllocSt mempty allReg64 (S.fromList [R8b .. R15b])
 
 allReg64 :: S.Set X86Reg
-allReg64 = S.fromList [Rax .. R15]
+allReg64 = S.fromList [R8 .. R15]
 
 type AllocM = State AllocSt
 
