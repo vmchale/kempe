@@ -8,4 +8,8 @@ next : Word -- Word Word
           dup 31i8 >>~ xoru
         ]
 
+from_seed : Word -- Word
+          =: [ next dip(drop) ]
+
 %foreign kabi next
+%foreign cabi from_seed
