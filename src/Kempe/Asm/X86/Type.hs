@@ -119,9 +119,6 @@ data AbsReg = DataPointer
             | CArg6
             | CRet -- x0 on aarch64
             | ShiftExponent
-            | Multiplier
-            | ProductHigher
-            | ProductLower
             deriving (Eq, Ord, Generic, NFData)
 
 instance Pretty AbsReg where
@@ -136,9 +133,6 @@ instance Pretty AbsReg where
     pretty CArg5          = "r8"
     pretty CArg6          = "r9"
     pretty ShiftExponent  = "cl"
-    pretty Multiplier     = "rax"
-    pretty ProductHigher  = "rdx"
-    pretty ProductLower   = "rax"
 
 -- [ebx+ecx*4h-20h]
 data Addr reg = Reg reg

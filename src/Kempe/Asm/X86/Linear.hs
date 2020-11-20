@@ -178,9 +178,6 @@ useReg _ CArg5          = pure R8
 useReg _ CArg6          = pure R9
 useReg _ ShiftExponent  = pure CL
 useReg _ CRet           = pure Rax -- shouldn't clobber anything because this is used at end of function calls/wrappers anyway
-useReg _ Multiplier     = pure Rax
-useReg _ ProductLower   = pure Rax
-useReg _ ProductHigher  = pure Rdx
 -- TODO: ig we should have a sanity check here?
 
 illTyped :: a

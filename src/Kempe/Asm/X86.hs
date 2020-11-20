@@ -173,8 +173,7 @@ irEmit (IR.WrapKCall _ Cabi (is, [o]) n l) | all (\i -> IR.size i <= 8) is && IR
     { let offs = scanl' (+) 0 (fmap IR.size is)
     ; let totalSize = sizeStack is
     ; let argRegs = [CArg1, CArg2, CArg3, CArg4, CArg5, CArg6]
-    ; pure $ [BSLabel () n, MovRL () DataPointer "kempe_data"] ++ zipWith (\r i-> MovAR () (AddrRCPlus DataPointer i) r) argRegs offs ++ [AddRC () DataPointer totalSize, Call () l, MovRA () CRet (AddrRCMinus DataPointer (IR.size o)), Ret ()] -- TODO: are the parameters backwards?
-    -- copy last n bytes onto the system stack
+    ; pure $ [BSLabel () n, MovRL () DataPointer "kempe_data"] ++ zipWith (\r i-> MovAR () (AddrRCPlus DataPointer i) r) argRegs offs ++ [AddRC () DataPointer totalSize, Call () l, MovRA () CRet (AddrRCMinus DataPointer (IR.size o)), Ret ()] -- TODO: bytes on the stack eh
     }
 irEmit (IR.WrapKCall _ Kabi (_, _) n l) =
     pure [BSLabel () n, Call () l, Ret ()]
@@ -202,6 +201,9 @@ irEmit (IR.MovMem _ (IR.Reg _ r) _ (IR.ExprIntBinOp _ IR.WordShiftLIR (IR.Reg _ 
     }
 -- total failure; try recursive back-up function at this point
 irEmit (IR.MovTemp _ r e) = let e' = expCost e in evalE e' r
+
+-- rbx, rbp, r12-r15 callee-saved (non-volatile)
+-- rest caller-saved (volatile)
 
 -- | Code to evaluate and put some expression in a chosen 'Temp'
 evalE :: IR.Exp Int64 -> IR.Temp -> WriteM [X86 AbsReg ()]
