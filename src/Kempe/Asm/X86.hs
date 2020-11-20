@@ -18,16 +18,16 @@ module Kempe.Asm.X86 ( X86 (..)
                      , WriteM
                      ) where
 
-import           Control.Monad.State (State, evalState, gets, modify)
-import           Control.Recursion   (cata)
+import           Control.Monad.State.Strict (State, evalState, gets, modify)
+import           Control.Recursion          (cata)
 import           Data.Foldable.Ext
-import           Data.Functor        (($>))
-import           Data.Int            (Int64)
-import           Data.Monoid         (Sum (..))
-import           Data.Word           (Word8)
+import           Data.Functor               (($>))
+import           Data.Int                   (Int64)
+import           Data.Monoid                (Sum (..))
+import           Data.Word                  (Word8)
 import           Kempe.AST
 import           Kempe.Asm.X86.Type
-import qualified Kempe.IR            as IR
+import qualified Kempe.IR                   as IR
 
 toAbsReg :: IR.Temp -> AbsReg
 toAbsReg (IR.Temp8 i)   = AllocReg8 i

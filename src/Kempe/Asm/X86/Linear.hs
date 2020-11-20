@@ -7,14 +7,14 @@ module Kempe.Asm.X86.Linear ( X86Reg (..)
                             , allocRegs
                             ) where
 
-import           Control.Monad.State (State, evalState, gets)
-import           Data.Foldable       (traverse_)
-import qualified Data.Map            as M
-import           Data.Maybe          (fromMaybe)
-import qualified Data.Set            as S
+import           Control.Monad.State.Strict (State, evalState, gets)
+import           Data.Foldable              (traverse_)
+import qualified Data.Map                   as M
+import           Data.Maybe                 (fromMaybe)
+import qualified Data.Set                   as S
 import           Kempe.Asm.X86.Type
-import           Lens.Micro          (Lens')
-import           Lens.Micro.Mtl      (modifying, (.=))
+import           Lens.Micro                 (Lens')
+import           Lens.Micro.Mtl             (modifying, (.=))
 import           Prettyprinter
 
 -- set of free registers we iterate over
@@ -88,10 +88,9 @@ freeDone l = traverse_ freeAbsReg absRs
     where absRs = done l
 
 freeAbsReg :: AbsReg -> AllocM ()
-freeAbsReg (AllocReg64 i)  = freeAbsReg64 i
-freeAbsReg (AllocReg8 i)   = freeAbsReg8 i
-freeAbsReg DataPointer{}   = pure () -- maybe sketchy?
-freeAbsReg ShiftExponent{} = pure ()
+freeAbsReg (AllocReg64 i) = freeAbsReg64 i
+freeAbsReg (AllocReg8 i)  = freeAbsReg8 i
+freeAbsReg _              = pure () -- maybe sketchy?
 
 freeAbsReg8 :: Int -> AllocM ()
 freeAbsReg8 i = do
