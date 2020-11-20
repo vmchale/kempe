@@ -179,8 +179,10 @@ irEmit (IR.WrapKCall _ Kabi (_, _) n l) =
     pure [BSLabel () n, Call () l, Ret ()]
 irEmit (IR.MovMem _ (IR.Reg _ r) _ (IR.ConstInt8 _ i)) =
     pure [ MovACi8 () (Reg $ toAbsReg r) i ]
-irEmit (IR.MovMem _ (IR.Reg _ r) _ (IR.ConstWord _ w)) =
-    pure [ MovAWord () (Reg $ toAbsReg r) w ]
+irEmit (IR.MovMem _ (IR.Reg _ r) _ (IR.ConstWord _ w)) = do
+    { r' <- allocReg64
+    ; pure [ MovRWord () r' w, MovAR () (Reg $ toAbsReg r) r' ] -- see: https://github.com/cirosantilli/x86-assembly-cheat/blob/master/x86-64/movabs.asm
+    }
 irEmit (IR.MovMem _ (IR.Reg _ r) _ (IR.ExprIntBinOp _ IR.IntXorIR (IR.Reg _ r1) (IR.Reg _ r2))) = do
     { r' <- allocReg64
     ; pure [ MovRR () r' (toAbsReg r1), XorRR () r' (toAbsReg r2), MovAR () (Reg $ toAbsReg r) r' ]

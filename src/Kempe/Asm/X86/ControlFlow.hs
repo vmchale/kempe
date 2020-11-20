@@ -88,7 +88,6 @@ uses (ImulRR _ r r')     = S.fromList [r, r']
 uses (AddRC _ r _)       = S.singleton r
 uses (SubRC _ r _)       = S.singleton r
 uses (AddAC _ a _)       = addrRegs a
-uses (MovAWord _ a _)    = addrRegs a
 uses (MovABool _ a _)    = addrRegs a
 uses (XorRR _ r r')      = S.fromList [r, r']
 uses (CmpAddrReg _ a r)  = S.singleton r <> addrRegs a

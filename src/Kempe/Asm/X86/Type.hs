@@ -167,7 +167,6 @@ data X86 reg a = PushReg { ann :: a, rSrc :: reg }
                | MovRL { ann :: a, rDest :: reg, bsLabel :: BS.ByteString }
                | MovAC { ann :: a, addrDest :: Addr reg, iSrc :: Int64 }
                | MovACi8 { ann :: a, addrDest :: Addr reg, i8Src :: Int8 }
-               | MovAWord { ann :: a, addrDest :: Addr reg, wSrc :: Word }
                | MovRCBool { ann :: a, rDest :: reg, boolSrc :: Word8 }
                | MovRCi8 { ann :: a, rDest :: reg, i8Src :: Int8 }
                | MovRWord { ann :: a, rDest :: reg, wSrc :: Word }
@@ -219,11 +218,10 @@ instance Pretty reg => Pretty (X86 reg a) where
     pretty (MovABool _ a b)    = i4 ("mov byte" <+> pretty a <> "," <+> pretty b)
     pretty (MovACi8 _ a i)     = i4 ("mov byte" <+> pretty a <> "," <+> pretty i)
     pretty (MovRCi8 _ r i)     = i4 ("mov byte" <+> pretty r <> "," <+> pretty i)
-    pretty (MovRWord _ r w)    = i4 ("mov qword" <+> pretty r <+> prettyHex w)
+    pretty (MovRWord _ r w)    = i4 ("mov qword" <+> pretty r <> "," <+> prettyHex w)
     pretty (MovRR _ r0 r1)     = i4 ("mov" <+> pretty r0 <> "," <+> pretty r1)
     pretty (MovRC _ r i)       = i4 ("mov" <+> pretty r <> "," <+> pretty i)
     pretty (MovAC _ a i)       = i4 ("mov qword" <+> pretty a <> "," <+> pretty i)
-    pretty (MovAWord _ a w)    = i4 ("mov qword" <+> pretty a <> "," <+> prettyHex w)
     pretty (MovRCBool _ r b)   = i4 ("mov" <+> pretty r <> "," <+> pretty b)
     pretty (MovRL _ r bl)      = i4 ("mov" <+> pretty r <> "," <+> pretty (decodeUtf8 bl))
     pretty (AddRR _ r0 r1)     = i4 ("add" <+> pretty r0 <> "," <> pretty r1)
