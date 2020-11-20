@@ -23,6 +23,7 @@ import           Control.Recursion          (cata)
 import           Data.Foldable.Ext
 import           Data.Functor               (($>))
 import           Data.Int                   (Int64)
+import           Data.List                  (scanl')
 import           Data.Monoid                (Sum (..))
 import           Data.Word                  (Word8)
 import           Kempe.AST
@@ -167,12 +168,12 @@ irEmit (IR.MovMem _ (IR.Reg _ r) _ (IR.ExprIntRel _ IR.IntEqIR (IR.Reg _ r1) (IR
     ; l2 <- getLabel
     ; pure [ CmpRegReg () (toAbsReg r1) (toAbsReg r2), Je () l0, Jump () l1, Label () l0, MovABool () (Reg $ toAbsReg r) 1, Jump () l2, Label () l1, MovABool () (Reg $ toAbsReg r) 0, Label () l2 ]
     }
-    -- FIXME: For 128-bit return values, use Eax AND Edx
-irEmit (IR.WrapKCall _ Cabi (is, [o]) n l) | all (\i -> IR.size i == 8) is && IR.size o <= 8 && length is <= 6 = do
-    { let offs = zipWith const [0..] is
+-- For 128-bit returns we'd have to use rax and rdx
+irEmit (IR.WrapKCall _ Cabi (is, [o]) n l) | all (\i -> IR.size i <= 8) is && IR.size o <= 8 && length is <= 6 = do
+    { let offs = scanl' (+) 0 (fmap IR.size is)
     ; let totalSize = sizeStack is
     ; let argRegs = [CArg1, CArg2, CArg3, CArg4, CArg5, CArg6]
-    ; pure $ [BSLabel () n, MovRL () DataPointer "kempe_data"] ++ zipWith (\r i -> MovAR () (AddrRCPlus DataPointer (i * 8)) r) argRegs offs ++ [AddRC () DataPointer totalSize, Call () l, MovRA () CRet (AddrRCMinus DataPointer (IR.size o)), Ret ()] -- TODO: are the parameters backwards?
+    ; pure $ [BSLabel () n, MovRL () DataPointer "kempe_data"] ++ zipWith (\r i-> MovAR () (AddrRCPlus DataPointer i) r) argRegs offs ++ [AddRC () DataPointer totalSize, Call () l, MovRA () CRet (AddrRCMinus DataPointer (IR.size o)), Ret ()] -- TODO: are the parameters backwards?
     -- copy last n bytes onto the system stack
     }
 irEmit (IR.WrapKCall _ Kabi (_, _) n l) =
