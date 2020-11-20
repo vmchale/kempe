@@ -74,7 +74,7 @@ addControlFlow (asm:asms) = do
     ; pure ((asm $> ControlAnn i (f []) (uses asm) (defs asm)) : asms')
     }
 
-uses :: Ord reg => X86 reg ann -> S.Set reg
+uses :: X86 AbsReg ann -> S.Set AbsReg
 uses (PushReg _ r)       = S.singleton r
 uses (PushMem _ a)       = addrRegs a
 uses (PopMem _ a)        = addrRegs a
@@ -83,7 +83,7 @@ uses (MovAR _ a r)       = S.singleton r <> addrRegs a
 uses (MovRR _ _ r)       = S.singleton r
 uses (AddRR _ r r')      = S.fromList [r, r']
 uses (SubRR _ r r')      = S.fromList [r, r']
-uses (MulRR _ r r')      = S.fromList [r, r'] -- FIXME: single argument
+uses (MulR _ r)          = S.fromList [r, Multiplier]
 uses (ImulRR _ r r')     = S.fromList [r, r']
 uses (AddRC _ r _)       = S.singleton r
 uses (SubRC _ r _)       = S.singleton r
@@ -100,7 +100,7 @@ uses (MovRCi8 _ r _)     = S.singleton r
 uses (MovACi8 _ a _)     = addrRegs a
 uses _                   = S.empty
 
-defs :: X86 reg ann -> S.Set reg
+defs :: X86 AbsReg ann -> S.Set AbsReg
 defs (MovRA _ r _)     = S.singleton r
 defs (MovRR _ r _)     = S.singleton r
 defs (MovRC _ r _)     = S.singleton r
@@ -109,7 +109,7 @@ defs (MovRCi8 _ r _)   = S.singleton r
 defs (MovRWord _ r _)  = S.singleton r
 defs (AddRR _ r _)     = S.singleton r
 defs (SubRR _ r _)     = S.singleton r
-defs (MulRR _ r _)     = S.singleton r -- FIXME: use MulR instruction
+defs MulR{}            = S.fromList [ProductLower, ProductHigher]
 defs (ImulRR _ r _)    = S.singleton r
 defs (AddRC _ r _)     = S.singleton r
 defs (SubRC _ r _)     = S.singleton r

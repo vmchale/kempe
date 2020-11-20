@@ -198,7 +198,7 @@ irEmit (IR.MovMem _ (IR.Reg _ r) _ (IR.ExprIntBinOp _ IR.WordShiftLIR (IR.Reg _ 
     ; pure [ MovRR () ShiftExponent (toAbsReg r2), MovRR () r' (toAbsReg r1), ShiftLRR () r' ShiftExponent, MovAR () (Reg $ toAbsReg r) r' ]
     }
 irEmit (IR.MovMem _ (IR.Reg _ r) _ (IR.ExprIntBinOp _ IR.WordTimesIR (IR.Reg _ r1) (IR.Reg _ r2))) = do
-    pure [ MovRR () Multiplier (toAbsReg r1), MulRR () Multiplier (toAbsReg r2), MovAR () (Reg $ toAbsReg r) ProductLower ]
+    pure [ MovRR () Multiplier (toAbsReg r1), MulR () (toAbsReg r2), MovAR () (Reg $ toAbsReg r) ProductLower ]
 -- total failure; try recursive back-up function at this point
 irEmit (IR.MovTemp _ r e) = let e' = expCost e in evalE e' r
 

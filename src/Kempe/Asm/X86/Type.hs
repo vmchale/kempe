@@ -174,7 +174,7 @@ data X86 reg a = PushReg { ann :: a, rSrc :: reg }
                | SubRR { ann :: a, rSub1 :: reg, rSub2 :: reg }
                | XorRR { ann :: a, rXor1 :: reg, rXor2 :: reg }
                | ImulRR { ann :: a, rMul1 :: reg, rMul2 :: reg }
-               | MulRR { ann :: a, rMul1 :: reg, rMul2 :: reg }
+               | MulR { ann :: a, rMultiplicand :: reg } -- implicit argument Multiplier reg
                | AddAC { ann :: a, addrAdd1 :: Addr reg, iAdd2 :: Int64 }
                | AddRC { ann :: a, rAdd1 :: reg, iAdd2 :: Int64 }
                | SubRC { ann :: a, rSub1 :: reg, iSub2 :: Int64 }
@@ -229,7 +229,7 @@ instance Pretty reg => Pretty (X86 reg a) where
     pretty (AddAC _ a c)       = i4 ("add" <+> pretty a <> "," <+> pretty c)
     pretty (SubRR _ r0 r1)     = i4 ("sub" <+> pretty r0 <> "," <> pretty r1)
     pretty (ImulRR _ r0 r1)    = i4 ("imul" <+> pretty r0 <> "," <+> pretty r1)
-    pretty (MulRR _ r0 r1)     = i4 ("mul" <+> pretty r0 <> "," <+> pretty r1)
+    pretty (MulR _ r0)         = i4 ("mul" <+> pretty r0)
     pretty (XorRR _ r0 r1)     = i4 ("xor" <+> pretty r0 <> "," <+> pretty r1)
     pretty (AddRC _ r0 c)      = i4 ("add" <+> pretty r0 <> "," <+> pretty c)
     pretty (SubRC _ r0 c)      = i4 ("sub" <+> pretty r0 <> "," <+> pretty c)
