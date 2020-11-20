@@ -303,14 +303,7 @@ writeAtom (If _ as as') = do
     pure $ dataPointerDec : ifIR : (Labeled () l0 : asIR ++ [Jump () l2]) ++ (Labeled () l1 : asIR') ++ [Labeled () l2]
 writeAtom (Dip (is, _) as) =
     let sz = size (last is)
-        shiftNext = MovTemp () DataPointer (ExprIntBinOp () IntMinusIR (Reg () DataPointer) (ConstInt () sz)) -- FIXME: this doesn't work with swap
-        shiftBack = MovTemp () DataPointer (ExprIntBinOp () IntPlusIR (Reg () DataPointer) (ConstInt () sz))
-    in
-        do
-            aStmt <- writeAtoms as
-            pure ((shiftNext : aStmt) ++ [shiftBack])
-            -- TODO: possible optimization: don't shift stack pointer but rather
-            -- grab Stmts and shift them over to use sz bytes over or whatever?
+    in foldMapA (dipify sz) as
 writeAtom (AtBuiltin ([i0, i1], _) Swap) =
     let sz0 = size i0
         sz1 = size i1
@@ -322,6 +315,16 @@ writeAtom (AtBuiltin ([i0, i1], _) Swap) =
 writeAtom (AtBuiltin _ Swap) = error "Ill-typed swap!"
 
 -- TODO: need consistent ABI for constructors
+
+dipify :: Int64 -> Atom MonoStackType -> TempM [Stmt ()]
+dipify sz (AtBuiltin (is, _) Drop) = undefined
+dipify sz a = -- backup approach; I think this is cursèd
+    let shiftNext = MovTemp () DataPointer (ExprIntBinOp () IntMinusIR (Reg () DataPointer) (ConstInt () sz)) -- FIXME: this doesn't work with swap
+        shiftBack = MovTemp () DataPointer (ExprIntBinOp () IntPlusIR (Reg () DataPointer) (ConstInt () sz))
+    in
+        do
+            aStmt <- writeAtom a
+            pure (shiftNext : aStmt ++ [shiftBack])
 
 dataPointerAt :: Int64 -> Exp ()
 dataPointerAt off = ExprIntBinOp () IntMinusIR (Reg () DataPointer) (ConstInt () off)
