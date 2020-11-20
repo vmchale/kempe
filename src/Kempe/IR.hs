@@ -320,7 +320,10 @@ dipify :: Int64 -> Atom MonoStackType -> TempM [Stmt ()]
 dipify sz (AtBuiltin ([], _) Drop) = error "Ill-typed drop!"
 dipify sz (AtBuiltin (is, _) Drop) =
     let sz' = size (last is)
-        in undefined
+        shift = MovTemp () DataPointer (ExprIntBinOp () IntMinusIR (Reg () DataPointer) (ConstInt () sz')) -- shift data pointer over by sz' bytes
+        -- copy sz bytes over (-sz') bytes from the data pointer
+        copyBytes = [ MovMem () (dataPointerAt (sz' + i)) 1 (Mem () 1 $ dataPointerAt (sz' - i)) | i <- [0..(sz-1)] ]
+        in pure $ copyBytes ++ [shift]
 dipify sz (AtBuiltin ([i0, i1], _) Swap) = undefined
 dipify sz (AtBuiltin _ Swap) = error "Ill-typed swap!"
 dipify sz a = -- backup approach; I think this is cursèd
