@@ -167,6 +167,7 @@ irEmit (IR.MovMem _ (IR.Reg _ r) _ (IR.ExprIntRel _ IR.IntEqIR (IR.Reg _ r1) (IR
     ; l2 <- getLabel
     ; pure [ CmpRegReg () (toAbsReg r1) (toAbsReg r2), Je () l0, Jump () l1, Label () l0, MovABool () (Reg $ toAbsReg r) 1, Jump () l2, Label () l1, MovABool () (Reg $ toAbsReg r) 0, Label () l2 ]
     }
+    -- FIXME: For 128-bit return values, use Eax AND Edx
 irEmit (IR.WrapKCall _ Cabi (is, [o]) n l) | all (\i -> IR.size i == 8) is && IR.size o <= 8 && length is <= 6 = do
     { let offs = zipWith const [0..] is
     ; let totalSize = sizeStack is
