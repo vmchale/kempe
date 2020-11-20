@@ -11,6 +11,7 @@ import           Kempe.Asm.X86.Linear
 import           Kempe.Asm.X86.Liveness
 import           Kempe.File
 import           Kempe.IR
+import           Kempe.IR.Opt
 import           Kempe.Lexer
 import           Kempe.Monomorphize
 import           Kempe.Parser
@@ -41,6 +42,11 @@ main =
                       bgroup "IR"
                         [ bench "IR pipeline (examples/splitmix.kmp)" $ nf (fst . runIR) s -- IR benchmarks are a bit silly; I will use them to decide if I should use difference lists
                         , bench "IR pipeline (examples/factorial.kmp)" $ nf (fst . runIR) f
+                        ]
+                  , env envIR $ \ ~(s, f) ->
+                      bgroup "opt"
+                        [ bench "IR optimization (examples/splitmix.kmp)" $ nf optimize s
+                        , bench "IR optimization (examples/factorial.kmp)" $ nf optimize f
                         ]
                   , env irEnv $ \ ~(s, f) ->
                       bgroup "Instruction selection"
@@ -79,8 +85,13 @@ main =
           splitmixMono = either throw id . uncurry monomorphize <$> splitmix
           facMono = either throw id . uncurry monomorphize <$> fac
           irEnv = (,) <$> splitmixMono <*> facMono
+          -- TODO: bench optimization
           runIR = runTempM . writeModule
-          genX86 m = let (ir, u) = runIR m in irToX86 u ir
+          genIR = fst . runTempM . writeModule
+          genX86 m = let (ir, u) = runIR m in irToX86 u (optimize ir)
+          facIR = genIR <$> facMono
+          splitmixIR = genIR <$> splitmixMono
+          envIR = (,) <$> splitmixIR <*> facIR
           facX86 = genX86 <$> facMono
           splitmixX86 = genX86 <$> splitmixMono
           x86Env = (,) <$> splitmixX86 <*> facX86
