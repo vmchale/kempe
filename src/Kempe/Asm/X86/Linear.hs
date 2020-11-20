@@ -15,7 +15,6 @@ import qualified Data.Set                   as S
 import           Kempe.Asm.X86.Type
 import           Lens.Micro                 (Lens')
 import           Lens.Micro.Mtl             (modifying, (.=))
-import           Prettyprinter
 
 -- set of free registers we iterate over
 data AllocSt = AllocSt { allocs :: M.Map AbsReg X86Reg -- ^ Already allocated registers
@@ -179,6 +178,9 @@ useReg _ CArg5          = pure R8
 useReg _ CArg6          = pure R9
 useReg _ ShiftExponent  = pure CL
 useReg _ CRet           = pure Rax -- shouldn't clobber anything because this is used at end of function calls/wrappers anyway
+useReg _ Multiplier     = pure Rax
+useReg _ ProductLower   = pure Rax
+useReg _ ProductHigher  = pure Rdx
 -- TODO: ig we should have a sanity check here?
 
 illTyped :: a
@@ -241,4 +243,4 @@ allocReg (MovRL l r bl)                        = (MovRL () <$> useReg l r <*> pu
 allocReg (XorRR l r0 r1)                       = (XorRR () <$> useReg l r0 <*> useReg l r1) <* freeDone l
 allocReg (ShiftLRR l r0 r1)                    = (ShiftLRR () <$> useReg l r0 <*> useReg l r1) <* freeDone l
 allocReg (ShiftRRR l r0 r1)                    = (ShiftRRR () <$> useReg l r0 <*> useReg l r1) <* freeDone l
-allocReg instr                                 = error (show $ pretty instr)
+allocReg (ImulRR l r0 r1)                      = (ImulRR () <$> useReg l r0 <*> useReg l r1) <* freeDone l

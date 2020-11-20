@@ -196,6 +196,7 @@ data IntBinOp = IntPlusIR
               | IntMinusIR
               | IntModIR -- rem?
               | IntXorIR
+              | WordTimesIR
               | WordShiftRIR -- compiles to shr on x86
               | WordShiftLIR
               deriving (Generic, NFData)
@@ -209,6 +210,7 @@ instance Pretty IntBinOp where
     pretty IntXorIR     = "xor"
     pretty WordShiftRIR = ">>"
     pretty WordShiftLIR = "<<"
+    pretty WordTimesIR  = "*~"
 
 writeModule :: Module () MonoStackType -> TempM [Stmt ()]
 writeModule = foldMapA writeDecl
@@ -280,7 +282,7 @@ writeAtom (AtBuiltin _ IntShiftR)   = intShift WordShiftRIR -- TODO: shr or sar?
 writeAtom (AtBuiltin _ IntShiftL)   = intShift WordShiftLIR
 writeAtom (AtBuiltin _ IntEq)       = intRel IntEqIR
 writeAtom (AtBuiltin _ WordPlus)    = intOp IntPlusIR
-writeAtom (AtBuiltin _ WordTimes)   = intOp IntTimesIR
+writeAtom (AtBuiltin _ WordTimes)   = intOp WordTimesIR
 writeAtom (AtBuiltin _ WordXor)     = intOp IntXorIR
 writeAtom (AtBuiltin _ WordShiftL)  = intShift WordShiftLIR
 writeAtom (AtBuiltin _ WordShiftR)  = intShift WordShiftRIR
@@ -317,7 +319,7 @@ writeAtom (AtBuiltin _ Swap) = error "Ill-typed swap!"
 -- TODO: need consistent ABI for constructors
 
 dipify :: Int64 -> Atom MonoStackType -> TempM [Stmt ()]
-dipify sz (AtBuiltin ([], _) Drop) = error "Ill-typed drop!"
+dipify _ (AtBuiltin ([], _) Drop) = error "Ill-typed drop!"
 dipify sz (AtBuiltin (is, _) Drop) =
     let sz' = size (last is)
         shift = MovTemp () DataPointer (ExprIntBinOp () IntMinusIR (Reg () DataPointer) (ConstInt () sz')) -- shift data pointer over by sz' bytes
@@ -325,7 +327,7 @@ dipify sz (AtBuiltin (is, _) Drop) =
         copyBytes = [ MovMem () (dataPointerAt (sz + sz' - i)) 1 (Mem () 1 $ dataPointerAt (sz - i)) | i <- [0..(sz-1)] ]
         in pure $ copyBytes ++ [shift]
 dipify sz (AtBuiltin ([i0, i1], _) Swap) = undefined
-dipify sz (AtBuiltin _ Swap) = error "Ill-typed swap!"
+dipify _ (AtBuiltin _ Swap) = error "Ill-typed swap!"
 dipify sz a = -- backup approach; I think this is cursèd
     let shiftNext = MovTemp () DataPointer (ExprIntBinOp () IntMinusIR (Reg () DataPointer) (ConstInt () sz)) -- FIXME: this doesn't work with swap
         shiftBack = MovTemp () DataPointer (ExprIntBinOp () IntPlusIR (Reg () DataPointer) (ConstInt () sz))

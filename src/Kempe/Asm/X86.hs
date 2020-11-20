@@ -139,7 +139,7 @@ irEmit (IR.MovMem _ (IR.Reg _ r) _ (IR.ConstInt _ i)) =
     pure [ MovAC () (Reg $ toAbsReg r) i ]
 irEmit (IR.MovMem _ (IR.Reg _ r) _ (IR.ExprIntBinOp _ IR.IntTimesIR (IR.Reg _ r1) (IR.Reg _ r2))) = do
     { r' <- allocReg64
-    ; pure [ MovRR () r' (toAbsReg r1), MulRR () r' (toAbsReg r2), MovAR () (Reg $ toAbsReg r) r' ]
+    ; pure [ MovRR () r' (toAbsReg r1), ImulRR () r' (toAbsReg r2), MovAR () (Reg $ toAbsReg r) r' ]
     }
 irEmit (IR.MovMem _ (IR.ExprIntBinOp _ IR.IntPlusIR (IR.Reg _ r0) (IR.ConstInt _ i)) _ (IR.Mem _ 1 (IR.ExprIntBinOp _ IR.IntPlusIR (IR.Reg _ r1) (IR.ConstInt _ j)))) = do
     { r' <- allocReg8
@@ -197,6 +197,8 @@ irEmit (IR.MovMem _ (IR.Reg _ r) _ (IR.ExprIntBinOp _ IR.WordShiftLIR (IR.Reg _ 
     { r' <- allocReg64
     ; pure [ MovRR () ShiftExponent (toAbsReg r2), MovRR () r' (toAbsReg r1), ShiftLRR () r' ShiftExponent, MovAR () (Reg $ toAbsReg r) r' ]
     }
+irEmit (IR.MovMem _ (IR.Reg _ r) _ (IR.ExprIntBinOp _ IR.WordTimesIR (IR.Reg _ r1) (IR.Reg _ r2))) = do
+    pure [ MovRR () Multiplier (toAbsReg r1), MulRR () Multiplier (toAbsReg r2), MovAR () (Reg $ toAbsReg r) ProductLower ]
 -- total failure; try recursive back-up function at this point
 irEmit (IR.MovTemp _ r e) = let e' = expCost e in evalE e' r
 
