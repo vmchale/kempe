@@ -9,7 +9,7 @@ next : Word -- Word Word
         ]
 
 from_seed : Word -- Word
-          =: [ next dip(drop) ] ; TODO: dip(drop) doesn't work lol
+          =: [ next dip(drop) ]
 
 %foreign kabi next
 %foreign cabi from_seed
