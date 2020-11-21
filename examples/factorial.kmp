@@ -1,15 +1,15 @@
 loop : Int Int -- Int
-     ; =: [ swap dup 0 =
-          ; if( drop
-            ; , dup 1 - dip(*) swap loop )
-        ; ]
-     =: [ swap dup drop drop ]
+     =: [ swap dup 0 =
+          if( drop
+            , dup 1 - dip(*) swap loop )
+        ]
 
 ; tail recursive factorial
 ;
 ; see C example: https://wiki.c2.com/?TailRecursion
 fac_tailrec : Int -- Int
-        =: [ 1 loop ]
+        ; =: [ 1 loop ]
+        =: [ 1 swap dup drop drop ]
 
 ; naïve factorial
 fac : Int -- Int
