@@ -10,9 +10,6 @@ loop : Int Int -- Int
 fac_tailrec : Int -- Int
             =: [ 1 loop ]
 
-fac_tailrec : Int -- Int
-            =: [ 1 swap dup drop drop ]
-
 ; naïve factorial
 fac : Int -- Int
     =: [ dup 0 =
