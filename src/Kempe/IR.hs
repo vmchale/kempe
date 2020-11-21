@@ -281,7 +281,7 @@ writeAtom (AtBuiltin (is, _) Dup)   =
     let sz = size (last is) in
         pure $
              [ MovMem () (dataPointerOffset i) 1 (Mem () 1 $ dataPointerAt (sz-i)) | i <- [0..(sz-1)] ]
-                ++ [ MovTemp () DataPointer (ExprIntBinOp () IntPlusIR (Reg () DataPointer) (ConstInt () sz)) ] -- move data pointer over sz bytes
+                ++ [ dataPointerInc sz ] -- move data pointer over sz bytes
 writeAtom (If _ as as') = do
     l0 <- newLabel
     l1 <- newLabel
@@ -327,8 +327,8 @@ dipify sz (Dip (is, _) as) =
         in foldMapA (dipify (sz + sz')) as
 dipify _ (AtBuiltin _ Swap) = error "Internal error: Ill-typed swap!"
 dipify sz a = -- backup approach; I think this is cursèd
-    let shiftNext = MovTemp () DataPointer (ExprIntBinOp () IntMinusIR (Reg () DataPointer) (ConstInt () sz)) -- FIXME: this doesn't work with swap
-        shiftBack = MovTemp () DataPointer (ExprIntBinOp () IntPlusIR (Reg () DataPointer) (ConstInt () sz))
+    let shiftNext = dataPointerDec sz
+        shiftBack = dataPointerInc sz
     in
         do
             aStmt <- writeAtom a
@@ -336,6 +336,9 @@ dipify sz a = -- backup approach; I think this is cursèd
 
 dataPointerDec :: Int64 -> Stmt ()
 dataPointerDec i = MovTemp () DataPointer (ExprIntBinOp () IntMinusIR (Reg () DataPointer) (ConstInt () i))
+
+dataPointerInc :: Int64 -> Stmt ()
+dataPointerInc i = MovTemp () DataPointer (ExprIntBinOp () IntPlusIR (Reg () DataPointer) (ConstInt () i))
 
 dataPointerPlus :: Int64 -> Exp ()
 dataPointerPlus off =
