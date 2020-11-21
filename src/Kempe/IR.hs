@@ -313,7 +313,14 @@ dipify sz (AtBuiltin (is, _) Drop) =
         -- copy sz bytes over (-sz') bytes from the data pointer
         copyBytes = [ MovMem () (dataPointerAt (sz + sz' - i)) 1 (Mem () 1 $ dataPointerAt (sz - i)) | i <- [0..(sz-1)] ]
         in pure $ copyBytes ++ [shift]
-dipify sz (AtBuiltin ([i0, i1], _) Swap) = undefined
+dipify sz (AtBuiltin ([i0, i1], _) Swap) =
+    let sz0 = size i0
+        sz1 = size i1
+    in
+        pure $
+             [ MovMem () (dataPointerOffset i) 1 (Mem () 1 $ dataPointerAt (sz+sz0-i)) | i <- [0..(sz0-1)] ] -- copy i0 to end of the stack
+                ++ [ MovMem () (dataPointerAt (sz + sz0 + sz1 - i)) 1 (Mem () 1 $ dataPointerAt (sz + sz0 + i)) | i <- [0..(sz1-1)] ] -- copy i1 to where i0 used to be
+                ++ [ MovMem () (dataPointerAt (sz + sz0 - i)) 1 (Mem () 1 $ dataPointerPlus (i - sz)) | i <- [0..(sz0-1)] ] -- copy i0 at end of stack to its new place
 dipify _ (Dip ([], _) _) = error "Internal error: Ill-typed dip()!"
 dipify sz (Dip (is, _) as) =
     let sz' = size (last is)
