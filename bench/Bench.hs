@@ -70,7 +70,9 @@ main =
                         ]
                   , bgroup "Pipeline"
                         [ bench "Validate (examples/factorial.kmp)" $ nfIO (tcFile "examples/factorial.kmp")
+                        , bench "Validate (examples/splitmix.kmp)" $ nfIO (tcFile "examples/splitmix.kmp")
                         , bench "Generate assembly (examples/factorial.kmp)" $ nfIO (writeAsm "examples/factorial.kmp")
+                        , bench "Generate assembly (examples/splitmix.kmp)" $ nfIO (writeAsm "examples/splitmix.kmp")
                         , bench "Object file (examples/factorial.kmp)" $ nfIO (compile "examples/factorial.kmp" "/tmp/factorial.o" False)
                         ]
                 ]
