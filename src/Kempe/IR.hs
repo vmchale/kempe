@@ -65,8 +65,6 @@ data TempSt = TempSt { labels     :: [Label]
 asWriteSt :: TempSt -> WriteSt
 asWriteSt (TempSt ls ts _) = WriteSt ls ts
 
--- TODO: return temp supply?
--- also label supply ig
 runTempM :: TempM a -> (a, WriteSt)
 runTempM = second asWriteSt . flip runState (TempSt [1..] [1..] mempty)
 
@@ -104,11 +102,6 @@ lookupName (Name _ (Unique i) _) =
     gets
         (IM.findWithDefault (error "Internal error in IR phase: could not look find label for name") i . atLabels)
 
--- foldStmt :: NonEmpty (Stmt ()) -> Stmt ()
--- foldStmt (s :| ss) = foldr (Seq ()) s ss
-
--- TODO: pretty-printer?
-
 prettyIR :: [Stmt a] -> Doc ann
 prettyIR = concatWith (\x y -> x <> hardline <> y) . fmap pretty
 
@@ -143,26 +136,23 @@ data Stmt a = Labeled { stmtCost :: a, stmtLabel :: Label }
             -- conditional jump for ifs
             | CJump { stmtCost :: a, stmtSwitch :: Exp a, stmtJmp0 :: Label, stmtJmp1 :: Label }
             | CCall { stmtCost :: a, stmtExtTy :: MonoStackType, stmtCCall :: BSL.ByteString }
-            | KCall { stmtCost :: a, stmtCall :: Label } -- KCall is a jump to a Kempe procedure (and jump back, later)
+            | KCall { stmtCost :: a, stmtCall :: Label } -- KCall is a jump to a Kempe procedure
             | WrapKCall { stmtCost :: a, wrapAbi :: ABI, stmtiFnTy :: MonoStackType, stmtABI :: BS.ByteString, stmtCall :: Label }
-            -- enough...)
-            | MovTemp { stmtCost :: a, stmtTemp :: Temp, stmtExp :: Exp a } -- put e in temp?
+            | MovTemp { stmtCost :: a, stmtTemp :: Temp, stmtExp :: Exp a } -- put e in temp
             | MovMem { stmtCost :: a, stmtExp0 :: Exp a, szStore :: Int64, stmtExp1 :: Exp a } -- store e2 at address given by e1
             | Ret { stmtCost :: a }
            deriving (Generic, NFData, Functor)
-            -- -- | MJump { stmtCost :: a, stmtM :: Exp a, stmtLabel :: Label } -- for optimizations/fallthrough?
 
 data Exp a = ConstInt { expCost :: a, expI :: Int64 }
            | ConstInt8 { expCost :: a, expI8 :: Int8 }
            | ConstWord { expCost :: a, expW :: Word }
            | ConstBool { expCost :: a, expB :: Bool }
            | Reg { expCost :: a, expReg :: Temp }  -- TODO: size?
-           | Mem { expCost :: a, memSize :: Int64, memGet :: Exp a } -- fetch from address FIXME: how many bytes?
-           | ExprIntBinOp { expCost :: a, expOp :: IntBinOp, exp0 :: Exp a, exp1 :: Exp a } -- SEMANTICS: this is not side-effecting
+           | Mem { expCost :: a, memSize :: Int64, memGet :: Exp a } -- fetch from address
+           | ExprIntBinOp { expCost :: a, expOp :: IntBinOp, exp0 :: Exp a, exp1 :: Exp a }
            | ExprIntRel { expCost :: a, expRel :: RelBinOp, exp0 :: Exp a, exp1 :: Exp a }
            deriving (Generic, NFData, Functor, Recursive)
            -- TODO: one for data, one for C ABI
-           -- -- ret?
 
 data ExpF a x = ConstIntF a Int64
               | ConstInt8F a Int8
