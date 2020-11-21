@@ -139,17 +139,15 @@ instance Pretty (Exp a) where
 
 -- | Type parameter @a@ so we can annotate with 'Int's later.
 data Stmt a = Labeled { stmtCost :: a, stmtLabel :: Label }
-            -- -- | BsLabel { stmtCost :: a, stmtLabelBS :: BS.ByteString }
             | Jump { stmtCost :: a, stmtJmp :: Label }
             -- conditional jump for ifs
             | CJump { stmtCost :: a, stmtSwitch :: Exp a, stmtJmp0 :: Label, stmtJmp1 :: Label }
-            | CCall { stmtCost :: a, stmtExtTy :: MonoStackType, stmtCCall :: BSL.ByteString } -- TODO: ShortByteString?
+            | CCall { stmtCost :: a, stmtExtTy :: MonoStackType, stmtCCall :: BSL.ByteString }
             | KCall { stmtCost :: a, stmtCall :: Label } -- KCall is a jump to a Kempe procedure (and jump back, later)
             | WrapKCall { stmtCost :: a, wrapAbi :: ABI, stmtiFnTy :: MonoStackType, stmtABI :: BS.ByteString, stmtCall :: Label }
             -- enough...)
             | MovTemp { stmtCost :: a, stmtTemp :: Temp, stmtExp :: Exp a } -- put e in temp?
             | MovMem { stmtCost :: a, stmtExp0 :: Exp a, szStore :: Int64, stmtExp1 :: Exp a } -- store e2 at address given by e1
-            -- -- | Seq { stmtCost :: a, stmt0 :: Stmt a, stmt1 :: Stmt a }
             | Ret { stmtCost :: a }
            deriving (Generic, NFData, Functor)
             -- -- | MJump { stmtCost :: a, stmtM :: Exp a, stmtLabel :: Label } -- for optimizations/fallthrough?

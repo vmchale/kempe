@@ -69,7 +69,7 @@ expCost :: IR.Exp a -> IR.Exp Int64
 expCost = cata a where
     a (IR.ConstIntF _ i)           = IR.ConstInt 0 i
     a (IR.ConstInt8F _ i)          = IR.ConstInt8 0 i
-    a (IR.ConstWordF _ w)          = IR.ConstWord 0 w
+    a (IR.ConstWordF _ w)          = IR.ConstWord 1 w -- b/c nasm lol
     a (IR.ConstBoolF _ b)          = IR.ConstBool 0 b
     a (IR.RegF _ r)                = IR.Reg cr r
     a (IR.MemF _ sz m)             = IR.Mem (cm + IR.expCost m) sz m
@@ -78,18 +78,14 @@ expCost = cata a where
 
 -- | Cost of a memory fetch
 cm :: Int64
-cm = undefined
+cm = 10
 
 -- | Cost of register read
 cr :: Int64
-cr = undefined
-
-costToPush :: [KempeTy a] -> Int64
-costToPush = undefined
+cr = 3
 
 -- TODO: match multiple statements
 -- this isn't even recursive lmao
--- TODO: something to eval general expressions
 irCosts :: IR.Stmt () -> IR.Stmt Int64
 irCosts (IR.Jump _ l) = IR.Jump 1 l
 irCosts (IR.KCall _ l) = IR.KCall 2 l
@@ -106,13 +102,13 @@ irCosts (IR.MovMem _ r@IR.Reg{} sz e@IR.ConstWord{}) = IR.MovMem 1 (r $> undefin
 irCosts (IR.MovMem _ r@IR.Reg{} sz e@(IR.ExprIntBinOp _ IR.IntTimesIR _ _)) = IR.MovMem 3 (r $> undefined) sz (e $> undefined)
 irCosts (IR.MovMem _ e1@(IR.ExprIntBinOp _ _ IR.Reg{} IR.ConstInt{}) sz e2@(IR.Mem _ _ (IR.ExprIntBinOp _ IR.IntPlusIR IR.Reg{} IR.ConstInt{}))) = IR.MovMem 2 (e1 $> undefined) sz (e2 $> undefined)
 irCosts (IR.MovMem _ r@IR.Reg{} sz e@(IR.ExprIntRel _ _ IR.Reg{} IR.Reg{})) = IR.MovMem 2 (r $> undefined) sz (e $> undefined)
-irCosts (IR.WrapKCall _ Cabi (is, o) n l) | all (\i -> IR.size i == 8) is = IR.WrapKCall (3 + sizeStack is `quot` 8) Cabi (is, o) n l -- FIXME: size appropriately
-irCosts (IR.WrapKCall _ Kabi (is, os) n l) = IR.WrapKCall 3 Kabi (is, os) n l
+irCosts (IR.WrapKCall _ Cabi (is, o) n l) = IR.WrapKCall undefined Cabi (is, o) n l -- FIXME: size appropriately
+irCosts (IR.WrapKCall _ Kabi (is, os) n l) = IR.WrapKCall undefined Kabi (is, os) n l
 irCosts (IR.MovTemp _ r e) = let e' = expCost e in IR.MovTemp (1 + IR.expCost e') r e'
 irCosts (IR.MovMem _ e sz e') = let (e'', e''') = (expCost e, expCost e') in IR.MovMem (2 + IR.expCost e'' + IR.expCost e''') e'' sz e''' -- TODO: size?
 irCosts (IR.CJump _ e l l') = let e' = expCost e in IR.CJump (2 + IR.expCost e') e' l l'
-irCosts (IR.CCall _ (is, []) b) = IR.CCall (2 + costToPush is) (is, []) b
-irCosts (IR.CCall _ (is, [o]) b) = IR.CCall (2 + costToPush is) (is, [o]) b
+irCosts (IR.CCall _ (is, []) b) = IR.CCall undefined (is, []) b
+irCosts (IR.CCall _ (is, [o]) b) = IR.CCall undefined (is, [o]) b
 irCosts IR.CCall{} = error "C functions can have at most one return value!"
 
 -- does this need a monad for labels/intermediaries?
@@ -207,10 +203,13 @@ irEmit (IR.MovTemp _ r e) = let e' = expCost e in evalE e' r
 
 -- | Code to evaluate and put some expression in a chosen 'Temp'
 evalE :: IR.Exp Int64 -> IR.Temp -> WriteM [X86 AbsReg ()]
-evalE (IR.ConstInt _ i) (IR.Temp64 t)  = pure [MovRC () (AllocReg64 t) i]
-evalE (IR.ConstBool _ b) (IR.Temp8 t)  = pure [MovRCBool () (AllocReg8 t) (toByte b)]
-evalE (IR.ConstInt8 _ i) (IR.Temp8 t)  = pure [MovRCi8 () (AllocReg8 t) i]
-evalE (IR.ConstWord _ w) (IR.Temp64 t) = pure [MovRWord () (AllocReg64 t) w]
+evalE (IR.ConstInt _ i) (IR.Temp64 t)         = pure [MovRC () (AllocReg64 t) i]
+evalE (IR.ConstBool _ b) (IR.Temp8 t)         = pure [MovRCBool () (AllocReg8 t) (toByte b)]
+evalE (IR.ConstInt8 _ i) (IR.Temp8 t)         = pure [MovRCi8 () (AllocReg8 t) i]
+evalE (IR.ConstWord _ w) (IR.Temp64 t)        = pure [MovRWord () (AllocReg64 t) w]
+evalE (IR.Reg _ (IR.Temp64 t)) (IR.Temp64 t') = pure [MovRR () (AllocReg64 t) (AllocReg64 t')]
+evalE (IR.Reg _ (IR.Temp8 t)) (IR.Temp8 t')   = pure [MovRR () (AllocReg8 t) (AllocReg8 t')]
+evalE IR.Reg{} _                              = error "Internal error: nonsensical reg"
 
 toByte :: Bool -> Word8
 toByte False = 0
