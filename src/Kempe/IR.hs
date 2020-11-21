@@ -203,6 +203,7 @@ instance Pretty IntBinOp where
 writeModule :: Module () MonoStackType -> TempM [Stmt ()]
 writeModule = foldMapA writeDecl
 
+-- FIXME: Current broadcast + write approach fails mutually recursive functions
 writeDecl :: KempeDecl () MonoStackType -> TempM [Stmt ()]
 writeDecl (FunDecl _ (Name _ u _) _ _ as) = do
     bl <- broadcastName u
