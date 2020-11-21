@@ -8,8 +8,10 @@ loop : Int Int -- Int
 ;
 ; see C example: https://wiki.c2.com/?TailRecursion
 fac_tailrec : Int -- Int
-        ; =: [ 1 loop ]
-        =: [ 1 swap dup drop drop ]
+            =: [ 1 loop ]
+
+fac_tailrec : Int -- Int
+            =: [ 1 swap dup drop drop ]
 
 ; naïve factorial
 fac : Int -- Int
