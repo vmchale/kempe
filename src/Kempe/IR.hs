@@ -341,7 +341,6 @@ dipOp sz op =
             aStmt <- intOp op
             pure (shiftNext : aStmt ++ copyBytes ++ [shiftBack])
 
-
 dataPointerDec :: Int64 -> Stmt ()
 dataPointerDec i = MovTemp () DataPointer (ExprIntBinOp () IntMinusIR (Reg () DataPointer) (ConstInt () i))
 
