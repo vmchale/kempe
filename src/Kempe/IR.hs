@@ -276,7 +276,7 @@ writeAtom (AtBuiltin _ WordShiftL)  = intShift WordShiftLIR
 writeAtom (AtBuiltin _ WordShiftR)  = intShift WordShiftRIR
 writeAtom (AtBuiltin (is, _) Drop)  =
     let sz = size (last is) in
-        pure [ MovTemp () DataPointer (ExprIntBinOp () IntMinusIR (Reg () DataPointer) (ConstInt () sz)) ] -- subtract sz from data pointer (Kempe data pointer grows up)
+        pure [ dataPointerDec sz ]
 writeAtom (AtBuiltin (is, _) Dup)   =
     let sz = size (last is) in
         pure $
@@ -286,11 +286,10 @@ writeAtom (If _ as as') = do
     l0 <- newLabel
     l1 <- newLabel
     let ifIR = CJump () (Mem () 1 (Reg () DataPointer)) l0 l1
-        dataPointerDec = MovTemp () DataPointer (ExprIntBinOp () IntMinusIR (Reg () DataPointer) (ConstInt () 1))
     asIR <- writeAtoms as
     asIR' <- writeAtoms as'
     l2 <- newLabel
-    pure $ dataPointerDec : ifIR : (Labeled () l0 : asIR ++ [Jump () l2]) ++ (Labeled () l1 : asIR') ++ [Labeled () l2]
+    pure $ dataPointerDec 1 : ifIR : (Labeled () l0 : asIR ++ [Jump () l2]) ++ (Labeled () l1 : asIR') ++ [Labeled () l2]
 writeAtom (Dip (is, _) as) =
     let sz = size (last is)
     in foldMapA (dipify sz) as
@@ -310,7 +309,7 @@ dipify :: Int64 -> Atom MonoStackType -> TempM [Stmt ()]
 dipify _ (AtBuiltin ([], _) Drop) = error "Internal error: Ill-typed drop!"
 dipify sz (AtBuiltin (is, _) Drop) =
     let sz' = size (last is)
-        shift = MovTemp () DataPointer (ExprIntBinOp () IntMinusIR (Reg () DataPointer) (ConstInt () sz')) -- shift data pointer over by sz' bytes
+        shift = dataPointerDec sz' -- shift data pointer over by sz' bytes
         -- copy sz bytes over (-sz') bytes from the data pointer
         copyBytes = [ MovMem () (dataPointerAt (sz + sz' - i)) 1 (Mem () 1 $ dataPointerAt (sz - i)) | i <- [0..(sz-1)] ]
         in pure $ copyBytes ++ [shift]
@@ -327,6 +326,15 @@ dipify sz a = -- backup approach; I think this is cursèd
         do
             aStmt <- writeAtom a
             pure (shiftNext : aStmt ++ [shiftBack])
+
+dataPointerDec :: Int64 -> Stmt ()
+dataPointerDec i = MovTemp () DataPointer (ExprIntBinOp () IntMinusIR (Reg () DataPointer) (ConstInt () i))
+
+dataPointerPlus :: Int64 -> Exp ()
+dataPointerPlus off =
+    if off > 0
+        then ExprIntBinOp () IntPlusIR (Reg () DataPointer) (ConstInt () off)
+        else ExprIntBinOp () IntMinusIR (Reg () DataPointer) (ConstInt () (negate off))
 
 dataPointerAt :: Int64 -> Exp ()
 dataPointerAt off = ExprIntBinOp () IntMinusIR (Reg () DataPointer) (ConstInt () off)
