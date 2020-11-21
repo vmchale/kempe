@@ -326,15 +326,21 @@ dipify sz (Dip (is, _) as) =
     let sz' = size (last is)
         in foldMapA (dipify (sz + sz')) as
 dipify _ (AtBuiltin _ Swap) = error "Internal error: Ill-typed swap!"
-dipify sz (AtBuiltin _ IntTimes) =
+dipify sz (AtBuiltin _ IntTimes) = dipOp sz IntTimesIR
+dipify sz (AtBuiltin _ IntPlus)  = dipOp sz IntPlusIR
+dipify sz (AtBuiltin _ IntMinus) = dipOp sz IntMinusIR
+
+dipOp :: Int64 -> IntBinOp -> TempM [Stmt ()]
+dipOp sz op =
     let shiftNext = dataPointerDec sz
         shiftBack = dataPointerInc sz
         -- copy sz bytes over
         copyBytes = [ MovMem () (dataPointerOffset i) 1 (Mem () 1 $ dataPointerOffset (sz + i)) | i <- [0..(sz-1)] ]
     in
         do
-            aStmt <- intOp IntTimesIR
+            aStmt <- intOp op
             pure (shiftNext : aStmt ++ copyBytes ++ [shiftBack])
+
 
 dataPointerDec :: Int64 -> Stmt ()
 dataPointerDec i = MovTemp () DataPointer (ExprIntBinOp () IntMinusIR (Reg () DataPointer) (ConstInt () i))
