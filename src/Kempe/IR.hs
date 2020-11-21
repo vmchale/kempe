@@ -330,6 +330,7 @@ dipify _ (AtBuiltin _ Swap) = error "Internal error: Ill-typed swap!"
 dipify sz (AtBuiltin _ IntTimes) = dipOp sz IntTimesIR
 dipify sz (AtBuiltin _ IntPlus)  = dipOp sz IntPlusIR
 dipify sz (AtBuiltin _ IntMinus) = dipOp sz IntMinusIR
+dipify sz (AtBuiltin _ IntDiv)   = dipOp sz IntDivIR
 
 dipOp :: Int64 -> IntBinOp -> TempM [Stmt ()]
 dipOp sz op =
