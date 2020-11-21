@@ -1,7 +1,7 @@
 loop : Int Int -- Int
      =: [ swap dup 0 =
           if( drop
-            , dup 1 - dip(*) swap loop )
+            , dup 1 - dip(*) swap loop ) ; TODO: dip(*) is screwy?
         ]
 
 ; tail recursive factorial
