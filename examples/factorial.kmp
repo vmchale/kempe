@@ -3,8 +3,7 @@ loop : Int Int -- Int
           ; if( drop
             ; , dup 1 - dip(*) swap loop )
         ; ]
-     =: [ swap dup 0 =
-          drop drop ]
+     =: [ swap dup drop drop ]
 
 ; tail recursive factorial
 ;
