@@ -35,6 +35,7 @@
 - [ ] `fmt` subcommand
 - [ ] `abstype` for pointer abstract types?
 - [ ] REPL for type inspection?
+  - [ ] ─
 - [ ] Pattern match exhaustiveness checker
 - [ ] Tuples (?)
 - [ ] Error messages should have line numbers
