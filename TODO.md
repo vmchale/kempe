@@ -43,6 +43,7 @@
 - [ ] Tail-call optimization (easier than I thought?)
   - [ ]  Mutually recursive function optimization
 - [ ] tail recursion modulo cons ?
+- [ ] `.intel_syntax noprefix` for arm
 ## Builtins
 - [ ] `rem` builtin or the like?
   - [ ] `sal`, `sar`?
