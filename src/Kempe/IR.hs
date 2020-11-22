@@ -343,7 +343,10 @@ dipOp sz op =
             aStmt <- intOp op
             pure (shiftNext : aStmt ++ copyBytes' ++ [shiftBack])
 
-copyBytes :: Int64 -> Int64 -> Int64 -> [Stmt ()]
+copyBytes :: Int64 -- ^ dest offset
+          -> Int64 -- ^ src offset
+          -> Int64 -- ^ Number of bytes to copy
+          -> [Stmt ()]
 copyBytes off1 off2 b =
     [ MovMem () (dataPointerPlus (i + off1)) 1 (Mem () 1 $ dataPointerPlus (i + off2)) | i <- [0..(b-1)] ]
 
