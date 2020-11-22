@@ -154,6 +154,14 @@ irEmit (IR.MovMem _ (IR.ExprIntBinOp _ IR.IntMinusIR (IR.Reg _ r0) (IR.ConstInt 
     { r' <- allocReg8
     ; pure [ MovRA () r' (AddrRCPlus (toAbsReg r1) j), MovAR () (AddrRCMinus (toAbsReg r0) i) r' ]
     }
+irEmit (IR.MovMem _ (IR.ExprIntBinOp _ IR.IntMinusIR (IR.Reg _ r0) (IR.ConstInt _ i)) _ (IR.Mem _ 8 (IR.ExprIntBinOp _ IR.IntMinusIR (IR.Reg _ r1) (IR.ConstInt _ j)))) = do
+    { r' <- allocReg64
+    ; pure [ MovRA () r' (AddrRCMinus (toAbsReg r1) j), MovAR () (AddrRCMinus (toAbsReg r0) i) r' ]
+    }
+irEmit (IR.MovMem _ (IR.ExprIntBinOp _ IR.IntMinusIR (IR.Reg _ r0) (IR.ConstInt _ i)) _ (IR.Mem _ 8 (IR.ExprIntBinOp _ IR.IntPlusIR (IR.Reg _ r1) (IR.ConstInt _ j)))) = do
+    { r' <- allocReg64
+    ; pure [ MovRA () r' (AddrRCPlus (toAbsReg r1) j), MovAR () (AddrRCMinus (toAbsReg r0) i) r' ]
+    }
 irEmit (IR.MovMem _ (IR.ExprIntBinOp _ IR.IntPlusIR (IR.Reg _ r0) (IR.ConstInt _ i)) _ (IR.Mem _ 8 (IR.ExprIntBinOp _ IR.IntPlusIR (IR.Reg _ r1) (IR.ConstInt _ j)))) = do
     { r' <- allocReg64
     ; pure [ MovRA () r' (AddrRCPlus (toAbsReg r1) j), MovAR () (AddrRCPlus (toAbsReg r0) i) r' ]
@@ -212,6 +220,7 @@ evalE (IR.ConstInt8 _ i) (IR.Temp8 t)         = pure [MovRCi8 () (AllocReg8 t) i
 evalE (IR.ConstWord _ w) (IR.Temp64 t)        = pure [MovRWord () (AllocReg64 t) w]
 evalE (IR.Reg _ (IR.Temp64 t)) (IR.Temp64 t') = pure [MovRR () (AllocReg64 t) (AllocReg64 t')]
 evalE (IR.Reg _ (IR.Temp8 t)) (IR.Temp8 t')   = pure [MovRR () (AllocReg8 t) (AllocReg8 t')]
+-- TODO: ShiftExponent and QuotRes and RemRes
 evalE IR.Reg{} _                              = error "Internal error: nonsensical reg"
 
 toByte :: Bool -> Word8

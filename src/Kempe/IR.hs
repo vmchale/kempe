@@ -359,8 +359,12 @@ copyBytes :: Int64 -- ^ dest offset
           -> Int64 -- ^ src offset
           -> Int64 -- ^ Number of bytes to copy
           -> [Stmt ()]
-copyBytes off1 off2 b =
-    [ MovMem () (dataPointerPlus (i + off1)) 1 (Mem () 1 $ dataPointerPlus (i + off2)) | i <- [0..(b-1)] ]
+copyBytes off1 off2 b
+    | b `mod` 8 == 0 =
+        let is = fmap (8*) [0..(b `div` 8 - 1)] in
+            [ MovMem () (dataPointerPlus (i + off1)) 8 (Mem () 8 $ dataPointerPlus (i + off2)) | i <- is ]
+    | otherwise =
+        [ MovMem () (dataPointerPlus (i + off1)) 1 (Mem () 1 $ dataPointerPlus (i + off2)) | i <- [0..(b-1)] ]
 
 dataPointerDec :: Int64 -> Stmt ()
 dataPointerDec i = MovTemp () DataPointer (ExprIntBinOp () IntMinusIR (Reg () DataPointer) (ConstInt () i))
