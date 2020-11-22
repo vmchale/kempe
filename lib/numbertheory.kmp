@@ -4,6 +4,9 @@ gcd : Int Int -- Int
            , dup dip(%) swap gcd )
        ]
 
+divides : Int Int -- Bool
+        =: [ % 0 = ]
+
 k_gcd : Int Int -- Int
       =: [ gcd ]
 
