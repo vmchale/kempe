@@ -281,7 +281,7 @@ writeAtom (AtBuiltin (is, _) Drop)  =
 writeAtom (AtBuiltin (is, _) Dup)   =
     let sz = size (last is) in
         pure $
-             [ MovMem () (dataPointerOffset i) 1 (Mem () 1 $ dataPointerAt (sz-i)) | i <- [0..(sz-1)] ]
+             copyBytes 0 (-sz) sz
                 ++ [ dataPointerInc sz ] -- move data pointer over sz bytes
 writeAtom (If _ as as') = do
     l0 <- newLabel
@@ -299,9 +299,9 @@ writeAtom (AtBuiltin ([i0, i1], _) Swap) =
         sz1 = size i1
     in
         pure $
-             [ MovMem () (dataPointerOffset i) 1 (Mem () 1 $ dataPointerAt (sz0-i)) | i <- [0..(sz0-1)] ] -- copy i0 to end of the stack
+            copyBytes 0 (-sz0) sz0
                 ++ [ MovMem () (dataPointerAt (sz0 + sz1 - i)) 1 (Mem () 1 $ dataPointerAt (sz0 + i)) | i <- [0..(sz1-1)] ] -- copy i1 to where i0 used to be
-                ++ [ MovMem () (dataPointerAt (sz0 - i)) 1 (Mem () 1 $ dataPointerOffset i) | i <- [0..(sz0-1)] ] -- copy i0 at end of stack to its new place
+                ++ copyBytes (-sz0) 0 sz0 -- copy i0 at end of stack to its new place
 writeAtom (AtBuiltin _ Swap) = error "Ill-typed swap!"
 
 -- TODO: need consistent ABI for constructors
@@ -312,16 +312,16 @@ dipify sz (AtBuiltin (is, _) Drop) =
     let sz' = size (last is)
         shift = dataPointerDec sz' -- shift data pointer over by sz' bytes
         -- copy sz bytes over (-sz') bytes from the data pointer
-        copyBytes = [ MovMem () (dataPointerAt (sz + sz' - i)) 1 (Mem () 1 $ dataPointerAt (sz - i)) | i <- [0..(sz-1)] ]
-        in pure $ copyBytes ++ [shift]
+        copyBytes' = copyBytes (-sz - sz') (-sz) sz
+        in pure $ copyBytes' ++ [shift]
 dipify sz (AtBuiltin ([i0, i1], _) Swap) =
     let sz0 = size i0
         sz1 = size i1
     in
         pure $
-             [ MovMem () (dataPointerOffset i) 1 (Mem () 1 $ dataPointerAt (sz+sz0-i)) | i <- [0..(sz0-1)] ] -- copy i0 to end of the stack
+            copyBytes 0 (-sz - sz0) sz0
                 ++ [ MovMem () (dataPointerAt (sz + sz0 + sz1 - i)) 1 (Mem () 1 $ dataPointerAt (sz + sz0 + i)) | i <- [0..(sz1-1)] ] -- copy i1 to where i0 used to be
-                ++ [ MovMem () (dataPointerAt (sz + sz0 - i)) 1 (Mem () 1 $ dataPointerPlus (i - sz)) | i <- [0..(sz0-1)] ] -- copy i0 at end of stack to its new place
+                ++ copyBytes (-sz - sz0) (-sz) sz0 -- copy i0 at end of stack to its new place
 dipify _ (Dip ([], _) _) = error "Internal error: Ill-typed dip()!"
 dipify sz (Dip (is, _) as) =
     let sz' = size (last is)
@@ -337,11 +337,15 @@ dipOp sz op =
     let shiftNext = dataPointerDec sz
         shiftBack = dataPointerInc sz
         -- copy sz bytes over
-        copyBytes = [ MovMem () (dataPointerOffset i) 1 (Mem () 1 $ dataPointerOffset (sz + i)) | i <- [0..(sz-1)] ]
+        copyBytes' = copyBytes 0 sz sz
     in
         do
             aStmt <- intOp op
-            pure (shiftNext : aStmt ++ copyBytes ++ [shiftBack])
+            pure (shiftNext : aStmt ++ copyBytes' ++ [shiftBack])
+
+copyBytes :: Int64 -> Int64 -> Int64 -> [Stmt ()]
+copyBytes off1 off2 b =
+    [ MovMem () (dataPointerPlus (i + off1)) 1 (Mem () 1 $ dataPointerPlus (i + off2)) | i <- [0..(b-1)] ]
 
 dataPointerDec :: Int64 -> Stmt ()
 dataPointerDec i = MovTemp () DataPointer (ExprIntBinOp () IntMinusIR (Reg () DataPointer) (ConstInt () i))
@@ -357,9 +361,6 @@ dataPointerPlus off =
 
 dataPointerAt :: Int64 -> Exp ()
 dataPointerAt off = ExprIntBinOp () IntMinusIR (Reg () DataPointer) (ConstInt () off)
-
-dataPointerOffset :: Int64 -> Exp ()
-dataPointerOffset off = ExprIntBinOp () IntPlusIR (Reg () DataPointer) (ConstInt () off)
 
 -- need env with size for constructors
 size :: KempeTy a -> Int64
