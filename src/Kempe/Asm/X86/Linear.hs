@@ -245,3 +245,4 @@ allocReg (ImulRR l r0 r1)                      = (ImulRR () <$> useReg l r0 <*> 
 allocReg (MovRWord l r w)                      = (MovRWord () <$> useReg l r <*> pure w) <* freeDone l
 allocReg (IdivR l r)                           = (IdivR () <$> useReg l r) <* freeDone l
 allocReg Cqo{}                                 = pure $ Cqo ()
+allocReg (PopReg l r)                          = (PopReg () <$> useReg l r) <* freeDone l
