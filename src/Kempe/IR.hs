@@ -299,7 +299,7 @@ writeAtom (AtBuiltin ([i0, i1], _) Swap) =
         sz1 = size i1
     in
         pure $
-            copyBytes 0 (-sz0) sz0 -- copy i0 to end of the stack
+            copyBytes 0 (-sz0 - sz1) sz0 -- copy i0 to end of the stack
                 ++ copyBytes (-sz0 - sz1) (-sz1) sz1 -- copy i1 to where i0 used to be
                 ++ copyBytes (-sz0) 0 sz0 -- copy i0 at end of stack to its new place
 writeAtom (AtBuiltin _ Swap) = error "Ill-typed swap!"
@@ -319,7 +319,7 @@ dipify sz (AtBuiltin ([i0, i1], _) Swap) =
         sz1 = size i1
     in
         pure $
-            copyBytes 0 (-sz - sz0) sz0 -- copy i0 to end of the stack
+            copyBytes 0 (-sz - sz0 - sz1) sz0 -- copy i0 to end of the stack
                 ++ copyBytes (-sz - sz0 - sz1) (-sz - sz1) sz1 -- copy i1 to where i0 used to be
                 ++ copyBytes (-sz - sz0) 0 sz0 -- copy i0 at end of stack to its new place
 dipify _ (Dip ([], _) _) = error "Internal error: Ill-typed dip()!"
