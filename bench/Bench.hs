@@ -15,6 +15,7 @@ import           Kempe.IR.Opt
 import           Kempe.Lexer
 import           Kempe.Monomorphize
 import           Kempe.Parser
+import           Kempe.Pipeline
 import           Kempe.Shuttle
 import           Kempe.TyAssign
 import           Prettyprinter             (defaultLayoutOptions, layoutPretty)
@@ -58,10 +59,11 @@ main =
                         [ bench "X86 (examples/factorial.kmp)" $ nf mkControlFlow f
                         , bench "X86 (examples/splitmix.kmp)" $ nf mkControlFlow s
                         ]
-                  , env cfEnv $ \ ~(s, f) ->
+                  , env cfEnv $ \ ~(s, f, n) ->
                       bgroup "Liveness analysis"
                         [ bench "X86 (examples/factorial.kmp)" $ nf reconstruct f
                         , bench "X86 (examples/splitmix.kmp)" $ nf reconstruct s
+                        , bench "X86 (lib/numbertheory.kmp)" $ nf reconstruct n
                         ]
                   , env absX86 $ \ ~(s, f) ->
                       bgroup "Register allocation"
@@ -79,6 +81,7 @@ main =
     where parsedM = yeetIO . parseWithMax =<< BSL.readFile "test/data/ty.kmp"
           splitmix = yeetIO . parseWithMax =<< BSL.readFile "examples/splitmix.kmp"
           fac = yeetIO . parseWithMax =<< BSL.readFile "examples/factorial.kmp"
+          num = yeetIO . parseWithMax =<< BSL.readFile "lib/numbertheory.kmp"
           prelude = yeetIO . parseWithMax =<< BSL.readFile "prelude/fn.kmp"
           forTyEnv = (,,) <$> parsedM <*> splitmix <*> prelude
           runCheck (maxU, m) = runTypeM maxU (checkModule m)
@@ -97,9 +100,11 @@ main =
           facX86 = genX86 <$> facMono
           splitmixX86 = genX86 <$> splitmixMono
           x86Env = (,) <$> splitmixX86 <*> facX86
+          numX86 = uncurry x86Parsed <$> num
           facX86Cf = mkControlFlow <$> facX86
           splitmixX86Cf = mkControlFlow <$> splitmixX86
-          cfEnv = (,) <$> splitmixX86Cf <*> facX86Cf
+          numX86Cf = mkControlFlow <$> numX86
+          cfEnv = (,,) <$> splitmixX86Cf <*> facX86Cf <*> numX86Cf
           facAbsX86 = reconstruct <$> facX86Cf
           splitmixAbsX86 = reconstruct <$> splitmixX86Cf
           absX86 = (,) <$> splitmixAbsX86 <*> facAbsX86
