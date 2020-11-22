@@ -340,7 +340,7 @@ dipify sz (AtBuiltin (is, _) Dup) = do
         pure $
              copyBytes 0 (-sz) sz -- copy sz bytes over to the end of the stack
                 ++ copyBytes (-sz) (-sz - sz') sz' -- copy sz' bytes over (duplicate)
-                ++ copyBytes (-sz') 0 sz -- copy sz bytes back
+                ++ undefined -- copy sz bytes back
                 ++ [ dataPointerInc sz' ] -- move data pointer over sz' bytes
 
 
