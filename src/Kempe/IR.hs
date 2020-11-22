@@ -300,7 +300,7 @@ writeAtom (AtBuiltin ([i0, i1], _) Swap) =
     in
         pure $
             copyBytes 0 (-sz0) sz0 -- copy i0 to end of the stack
-                ++ [ MovMem () (dataPointerAt (sz0 + sz1 - i)) 1 (Mem () 1 $ dataPointerAt (sz0 + i)) | i <- [0..(sz1-1)] ] -- copy i1 to where i0 used to be
+                ++ copyBytes (-sz0 - sz1) (-sz1) sz1 -- copy i1 to where i0 used to be
                 ++ copyBytes (-sz0) 0 sz0 -- copy i0 at end of stack to its new place
 writeAtom (AtBuiltin _ Swap) = error "Ill-typed swap!"
 
@@ -320,8 +320,8 @@ dipify sz (AtBuiltin ([i0, i1], _) Swap) =
     in
         pure $
             copyBytes 0 (-sz - sz0) sz0 -- copy i0 to end of the stack
-                ++ [ MovMem () (dataPointerAt (sz + sz0 + sz1 - i)) 1 (Mem () 1 $ dataPointerAt (sz + sz0 + i)) | i <- [0..(sz1-1)] ] -- copy i1 to where i0 used to be
-                ++ copyBytes (-sz - sz0) (-sz) sz0 -- copy i0 at end of stack to its new place
+                ++ copyBytes (-sz - sz0 - sz1) (-sz - sz1) sz1 -- copy i1 to where i0 used to be
+                ++ copyBytes (-sz - sz0) 0 sz0 -- copy i0 at end of stack to its new place
 dipify _ (Dip ([], _) _) = error "Internal error: Ill-typed dip()!"
 dipify sz (Dip (is, _) as) =
     let sz' = size (last is)
