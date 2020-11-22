@@ -332,6 +332,17 @@ dipify sz (AtBuiltin _ IntPlus)  = dipOp sz IntPlusIR
 dipify sz (AtBuiltin _ IntMinus) = dipOp sz IntMinusIR
 dipify sz (AtBuiltin _ IntDiv)   = dipOp sz IntDivIR
 dipify sz (AtBuiltin _ IntMod)   = dipOp sz IntModIR
+dipify sz (AtBuiltin _ IntXor)   = dipOp sz IntXorIR
+dipify sz (AtBuiltin _ WordPlus) = dipOp sz IntPlusIR
+dipify sz (AtBuiltin ([], _) Dup) = error "Internal error: Ill-typed dup!"
+dipify sz (AtBuiltin (is, _) Dup) = do
+    let sz' = size (last is) in
+        pure $
+             copyBytes 0 (-sz) sz -- copy sz bytes over to the end of the stack
+                ++ copyBytes (-sz) (-sz - sz') sz' -- copy sz' bytes over (duplicate)
+                ++ copyBytes (-sz') 0 sz -- copy sz bytes back
+                ++ [ dataPointerInc sz' ] -- move data pointer over sz' bytes
+
 
 dipOp :: Int64 -> IntBinOp -> TempM [Stmt ()]
 dipOp sz op =
