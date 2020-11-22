@@ -195,6 +195,9 @@ irEmit (IR.MovMem _ (IR.Reg _ r) _ (IR.ExprIntBinOp _ IR.WordShiftLIR (IR.Reg _ 
     { r' <- allocReg64
     ; pure [ MovRR () ShiftExponent (toAbsReg r2), MovRR () r' (toAbsReg r1), ShiftLRR () r' ShiftExponent, MovAR () (Reg $ toAbsReg r) r' ]
     }
+irEmit (IR.MovMem _ (IR.Reg _ r) _ (IR.ExprIntBinOp _ IR.IntModIR (IR.Reg _ r1) (IR.Reg _ r2))) =
+    -- QuotRes is rax, so move r1 to rax first
+    pure [ MovRR () QuotRes (toAbsReg r1), Cqo (), IdivR () (toAbsReg r2), MovAR () (Reg $ toAbsReg r) RemRes ]
 -- total failure; try recursive back-up function at this point
 irEmit (IR.MovTemp _ r e) = let e' = expCost e in evalE e' r
 

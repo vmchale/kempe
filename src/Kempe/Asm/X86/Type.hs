@@ -187,6 +187,7 @@ data X86 reg a = PushReg { ann :: a, rSrc :: reg }
                | CmpRegReg { ann :: a, rCmp :: reg, rCmp' :: reg } -- for simplicity
                | CmpAddrBool { ann :: a, addrCmp :: Addr reg, bCmp :: Word8 }
                | IdivR { ann :: a, rDiv :: reg }
+               | Cqo { ann :: a }
                deriving (Generic, NFData, Functor)
 
 i4 :: Doc ann -> Doc ann
@@ -242,6 +243,7 @@ instance Pretty reg => Pretty (X86 reg a) where
     pretty (ShiftRRR _ r0 r1)  = i4 ("shr" <+> pretty r0 <> "," <+> pretty r1)
     pretty (ShiftLRR _ r0 r1)  = i4 ("shl" <+> pretty r0 <> "," <+> pretty r1)
     pretty (IdivR _ r)         = i4 ("idiv" <+> pretty r)
+    pretty Cqo{}               = i4 "cqo"
 
 prettyAsm :: Pretty reg => [X86 reg a] -> Doc ann
 prettyAsm = ((prolegomena <> hardline <> "section .text" <> hardline) <>) . concatWith (\x y -> x <> hardline <> y) . fmap pretty

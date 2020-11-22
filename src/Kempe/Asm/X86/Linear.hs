@@ -242,3 +242,5 @@ allocReg (ShiftLRR l r0 r1)                    = (ShiftLRR () <$> useReg l r0 <*
 allocReg (ShiftRRR l r0 r1)                    = (ShiftRRR () <$> useReg l r0 <*> useReg l r1) <* freeDone l
 allocReg (ImulRR l r0 r1)                      = (ImulRR () <$> useReg l r0 <*> useReg l r1) <* freeDone l
 allocReg (MovRWord l r w)                      = (MovRWord () <$> useReg l r <*> pure w) <* freeDone l
+allocReg (IdivR l r)                           = (IdivR () <$> useReg l r) <* freeDone l
+allocReg Cqo{}                                 = pure $ Cqo ()

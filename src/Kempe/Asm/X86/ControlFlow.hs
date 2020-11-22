@@ -74,7 +74,7 @@ addControlFlow (asm:asms) = do
     ; pure ((asm $> ControlAnn i (f []) (uses asm) (defs asm)) : asms')
     }
 
-uses :: X86 AbsReg ann -> S.Set AbsReg
+uses :: Ord reg => X86 reg ann -> S.Set reg
 uses (PushReg _ r)       = S.singleton r
 uses (PushMem _ a)       = addrRegs a
 uses (PopMem _ a)        = addrRegs a
@@ -96,9 +96,10 @@ uses (ShiftLRR _ r r')   = S.fromList [r, r']
 uses (ShiftRRR _ r r')   = S.fromList [r, r']
 uses (MovRCi8 _ r _)     = S.singleton r
 uses (MovACi8 _ a _)     = addrRegs a
+uses (IdivR _ r)         = S.singleton r
 uses _                   = S.empty
 
-defs :: X86 AbsReg ann -> S.Set AbsReg
+defs :: X86 reg ann -> S.Set reg
 defs (MovRA _ r _)     = S.singleton r
 defs (MovRR _ r _)     = S.singleton r
 defs (MovRC _ r _)     = S.singleton r
