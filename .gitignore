@@ -28,4 +28,5 @@ cabal.sandbox.config
 factorial.S
 factorial
 splitmix.S
-splitmix
+numbertheory
+numbertheory.S

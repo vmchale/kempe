@@ -9,6 +9,15 @@ HS_SRC := $(shell find src -type f) kempe.cabal
 moddeps.svg: $(HS_SRC)
 	graphmod src | dot -Tsvg -o$@
 
+numbertheory.S: lib/numbertheory.kmp
+	kc $< --dump-asm > $@
+
+numbertheory.o: numbertheory.S
+	nasm -g -f elf64 $< -o $@
+
+numbertheory: numbertheory.o test/harness/numbertheory.c
+	gcc -g $^ -o $@
+
 factorial.o: examples/factorial.kmp
 	kc -g $< $@
 
@@ -22,4 +31,4 @@ install:
 	cabal install exe:kc --overwrite-policy=always
 
 clean:
-	rm -rf dist-newstyle *.rlib *.d *.rmeta *.o stack.yaml.lock moddeps.svg factorial.S factorial splitmix.S splitmix
+	rm -rf dist-newstyle *.rlib *.d *.rmeta *.o stack.yaml.lock moddeps.svg factorial.S factorial splitmix.S numbertheory.S numbertheory
