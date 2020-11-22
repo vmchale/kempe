@@ -16,5 +16,6 @@ eval "$(kc --bash-completion-script kc)"
 
 ## Defects
 
-  * Rather than an instruction selection phase, the compiler simply translates
+  * Rather than an instruction selection phase, the compiler translates
     to assembly directly.
+  * Unification takes too long
