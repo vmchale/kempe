@@ -188,7 +188,8 @@ illTyped = error "Internal error: ill-typed assembly!"
 questionable :: a
 questionable = error "Internal error in register allocator: questionable instruction."
 
--- FIXME: generate spill code
+-- There's no spill code buuut that's probably not necessary since the whole
+-- kempe model is basically to start with everything pre-spilled
 allocReg :: X86 AbsReg Liveness -> AllocM (X86 X86Reg ())
 allocReg (PushReg l r)                         = PushReg () <$> useReg l r <* freeDone l
 allocReg Ret{}                                 = pure $ Ret ()
