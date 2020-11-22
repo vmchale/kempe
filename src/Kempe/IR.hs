@@ -331,6 +331,7 @@ dipify sz (AtBuiltin _ IntTimes) = dipOp sz IntTimesIR
 dipify sz (AtBuiltin _ IntPlus)  = dipOp sz IntPlusIR
 dipify sz (AtBuiltin _ IntMinus) = dipOp sz IntMinusIR
 dipify sz (AtBuiltin _ IntDiv)   = dipOp sz IntDivIR
+dipify sz (AtBuiltin _ IntMod)   = dipOp sz IntModIR
 
 dipOp :: Int64 -> IntBinOp -> TempM [Stmt ()]
 dipOp sz op =

@@ -40,9 +40,7 @@ data ControlAnn = ControlAnn { node     :: !Int
                              } deriving (Generic, NFData)
 
 -- currently just has 64-bit and 8-bit registers
-data X86Reg = Rax
-            | Rdx
-            | R8
+data X86Reg = R8
             | R9
             | R10
             | R11
@@ -50,12 +48,8 @@ data X86Reg = Rax
             | R13
             | R14
             | R15
-            | AH
-            | AL
             -- -- | BH
             -- -- | BL
-            | DH
-            | DL
             | R8b
             | R9b
             | R10b
@@ -74,6 +68,14 @@ data X86Reg = Rax
             | Rcx
             | CH
             | CL
+            -- Rax, Rdx and friends are reserved for integer division (and
+            -- unsigned multiplication lol)
+            | Rax
+            | Rdx
+            | AH
+            | AL
+            | DH
+            | DL
             deriving (Eq, Ord, Enum, Bounded, Generic, NFData)
 
 instance Pretty X86Reg where
@@ -119,6 +121,8 @@ data AbsReg = DataPointer
             | CArg6
             | CRet -- x0 on aarch64
             | ShiftExponent
+            | QuotRes -- quotient register for idiv, rax
+            | RemRes -- remainder register for idiv, rdx
             deriving (Eq, Ord, Generic, NFData)
 
 instance Pretty AbsReg where
@@ -133,6 +137,8 @@ instance Pretty AbsReg where
     pretty CArg5          = "r8"
     pretty CArg6          = "r9"
     pretty ShiftExponent  = "cl"
+    pretty QuotRes        = "rax"
+    pretty RemRes         = "rdx"
 
 -- [ebx+ecx*4h-20h]
 data Addr reg = Reg reg
@@ -180,6 +186,7 @@ data X86 reg a = PushReg { ann :: a, rSrc :: reg }
                | CmpAddrReg { ann :: a, addrCmp :: Addr reg, rCmp :: reg }
                | CmpRegReg { ann :: a, rCmp :: reg, rCmp' :: reg } -- for simplicity
                | CmpAddrBool { ann :: a, addrCmp :: Addr reg, bCmp :: Word8 }
+               | IdivR { ann :: a, rDiv :: reg }
                deriving (Generic, NFData, Functor)
 
 i4 :: Doc ann -> Doc ann
@@ -234,6 +241,7 @@ instance Pretty reg => Pretty (X86 reg a) where
     pretty (CmpAddrBool _ a b) = i4 ("cmp byte" <+> pretty a <> "," <+> pretty b)
     pretty (ShiftRRR _ r0 r1)  = i4 ("shr" <+> pretty r0 <> "," <+> pretty r1)
     pretty (ShiftLRR _ r0 r1)  = i4 ("shl" <+> pretty r0 <> "," <+> pretty r1)
+    pretty (IdivR _ r)         = i4 ("idiv" <+> pretty r)
 
 prettyAsm :: Pretty reg => [X86 reg a] -> Doc ann
 prettyAsm = ((prolegomena <> hardline <> "section .text" <> hardline) <>) . concatWith (\x y -> x <> hardline <> y) . fmap pretty

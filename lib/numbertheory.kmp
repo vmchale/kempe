@@ -1,0 +1,10 @@
+gcd : Int Int -- Int
+    =: [ dup 0 =
+         if( drop
+           , dup dip(%) gcd )
+       ]
+
+k_gcd : Int Int -- Int
+      =: [ gcd ]
+
+%foreign cabi k_gcd
