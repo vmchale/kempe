@@ -19,3 +19,4 @@ eval "$(kc --bash-completion-script kc)"
   * Rather than an instruction selection phase, the compiler translates
     to assembly directly.
   * Unification takes too long
+  * Doesn't actually save callee-save registers
