@@ -363,9 +363,6 @@ dataPointerPlus off =
         then ExprIntBinOp () IntPlusIR (Reg () DataPointer) (ConstInt () off)
         else ExprIntBinOp () IntMinusIR (Reg () DataPointer) (ConstInt () (negate off))
 
-dataPointerAt :: Int64 -> Exp ()
-dataPointerAt off = ExprIntBinOp () IntMinusIR (Reg () DataPointer) (ConstInt () off)
-
 -- need env with size for constructors
 size :: KempeTy a -> Int64
 size (TyBuiltin _ TyInt)  = 8 -- since we're only targeting x86_64 and aarch64 we have 64-bit 'Int's
