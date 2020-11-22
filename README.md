@@ -13,3 +13,8 @@ For shell completions but the following in your `~/.bashrc` or
 ```
 eval "$(kc --bash-completion-script kc)"
 ```
+
+## Defects
+
+  * Rather than an instruction selection phase, the compiler simply translates
+    to assembly directly.
