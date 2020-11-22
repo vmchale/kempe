@@ -1,7 +1,7 @@
 gcd : Int Int -- Int
     =: [ dup 0 =
          if( drop
-           , dup dip(%) gcd )
+           , dup dip(%) swap gcd )
        ]
 
 k_gcd : Int Int -- Int
