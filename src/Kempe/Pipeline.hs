@@ -16,7 +16,7 @@ import           Kempe.IR.Opt
 import           Kempe.Shuttle
 
 irGen :: Int -- ^ Thread uniques through
-      -> Module a b -> ([Stmt ()], WriteSt)
+      -> Module a b -> ([Stmt], WriteSt)
 irGen i m = first optimize $ runTempM (writeModule tAnnMod)
     where tAnnMod = either throw id $ monomorphize i m
 
