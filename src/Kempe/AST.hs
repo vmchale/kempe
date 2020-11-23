@@ -19,6 +19,7 @@ module Kempe.AST ( BuiltinTy (..)
                  , freeVars
                  , MonoStackType
                  , size
+                 , sizeStack
                  , prettyMonoStackType
                  , prettyTyped
                  , prettyTypedModule
@@ -35,6 +36,7 @@ import qualified Data.ByteString.Lazy    as BSL
 import           Data.Functor            (void)
 import           Data.Int                (Int64, Int8)
 import           Data.List.NonEmpty      (NonEmpty)
+import           Data.Monoid             (Sum (..))
 import qualified Data.Set                as S
 import           Data.Text.Lazy.Encoding (decodeUtf8)
 import           Data.Word               (Word8)
@@ -278,3 +280,6 @@ size (TyApp _ ty@TyApp{} ty') = size ty + size ty'
 size (TyApp _ TyBuiltin{} _)  = error "Internal error: ill-kinded type!"
 size (TyApp _ TyVar{} _)      = error "Internal error: type variables should not be present at this stage."
 size (TyApp _ TyTuple{} _)    = error "Internal error: ill-kinded type!"
+
+sizeStack :: [KempeTy a] -> Int64
+sizeStack = getSum . foldMap (Sum . size)

@@ -14,7 +14,6 @@ import           Data.Foldable.Ext
 import           Data.Functor               (($>))
 import           Data.Int                   (Int64)
 import           Data.List                  (scanl')
-import           Data.Monoid                (Sum (..))
 import           Data.Word                  (Word8)
 import           Kempe.AST
 import           Kempe.Asm.X86.Type
@@ -167,8 +166,5 @@ evalE IR.Reg{} _                            = error "Internal error: nonsensical
 toByte :: Bool -> Word8
 toByte False = 0
 toByte True  = 1
-
-sizeStack :: [KempeTy a] -> Int64
-sizeStack = getSum . foldMap (Sum . size)
 
 -- I wonder if I could use a hylo.?

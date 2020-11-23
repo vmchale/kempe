@@ -286,6 +286,10 @@ writeAtom (AtBuiltin ([i0, i1], _) Swap) =
                 ++ copyBytes (-sz0) 0 sz0 -- copy i0 at end of stack to its new place
 writeAtom (AtBuiltin _ Swap) = error "Ill-typed swap!"
 
+-- | Constructors may need to be padded, this computes the number of bytes
+padBytes :: ConsAnn MonoStackType -> Int64
+padBytes (ConsAnn sz _ (is, _)) = sz - sizeStack is
+
 -- TODO: need consistent ABI for constructors
 
 dipify :: Int64 -> Atom MonoStackType -> TempM [Stmt]
