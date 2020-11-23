@@ -195,7 +195,7 @@ writeDecl (ExtFnDecl ty (Name _ u _) _ _ cName) = do
     pure [Labeled bl, CCall ty cName, Ret]
 writeDecl (Export sTy abi n) = pure . WrapKCall abi sTy (encodeUtf8 $ name n) <$> lookupName n
 
-writeAtoms :: [Atom MonoStackType] -> TempM [Stmt]
+writeAtoms :: [Atom (ConsAnn MonoStackType) MonoStackType] -> TempM [Stmt]
 writeAtoms = foldMapA writeAtom
 
 intShift :: IntBinOp -> TempM [Stmt]
@@ -234,7 +234,7 @@ intRel cons = do
         pop 8 t0 ++ pop 8 t1 ++ push 1 (ExprIntRel cons (Reg t1) (Reg t0))
 
 -- | This throws exceptions on nonsensical input.
-writeAtom :: Atom MonoStackType -> TempM [Stmt]
+writeAtom :: Atom (ConsAnn MonoStackType) MonoStackType -> TempM [Stmt]
 writeAtom (IntLit _ i)              = pure $ push 8 (ConstInt $ fromInteger i)
 writeAtom (Int8Lit _ i)             = pure $ push 1 (ConstInt8 i)
 writeAtom (WordLit _ w)             = pure $ push 8 (ConstWord $ fromIntegral w)
@@ -293,7 +293,7 @@ padBytes (ConsAnn sz _ (is, _)) = sz - sizeStack is - 1
 
 -- TODO: need consistent ABI for constructors
 
-dipify :: Int64 -> Atom MonoStackType -> TempM [Stmt]
+dipify :: Int64 -> Atom (ConsAnn MonoStackType) MonoStackType -> TempM [Stmt]
 dipify _ (AtBuiltin ([], _) Drop) = error "Internal error: Ill-typed drop!"
 dipify sz (AtBuiltin (is, _) Drop) =
     let sz' = size (last is)

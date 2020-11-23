@@ -147,10 +147,10 @@ FunDecl :: { KempeDecl AlexPosn AlexPosn AlexPosn }
 FunSig :: { (AlexPosn, Name AlexPosn, [KempeTy AlexPosn], [KempeTy AlexPosn]) }
        : name colon many(Type) arrow many(Type) { ($2, $1, reverse $3, reverse $5) }
 
-FunBody :: { [Atom AlexPosn] }
+FunBody :: { [Atom AlexPosn AlexPosn] }
         : defEq brackets(many(Atom)) { reverse $2 }
 
-Atom :: { Atom AlexPosn }
+Atom :: { Atom AlexPosn AlexPosn }
      : name { AtName (Name.loc $1) $1 }
      | tyName { AtCons (Name.loc $1) $1 }
      | lbrace case some(CaseLeaf) rbrace { Case $2 (NE.reverse $3) }
@@ -178,10 +178,10 @@ Atom :: { Atom AlexPosn }
      | intXor { AtBuiltin $1 IntXor }
      | wordXor { AtBuiltin $1 WordXor }
 
-CaseLeaf :: { (Pattern AlexPosn, [Atom AlexPosn]) }
+CaseLeaf :: { (Pattern AlexPosn AlexPosn, [Atom AlexPosn AlexPosn]) }
          : vbar Pattern caseArr many(Atom) { ($2, reverse $4) }
 
-Pattern :: { Pattern AlexPosn }
+Pattern :: { Pattern AlexPosn AlexPosn }
         : tyName { PatternCons (Name.loc $1) $1 }
         | underscore { PatternWildcard $1 }
         | intLit { PatternInt (loc $1) (int $1) }

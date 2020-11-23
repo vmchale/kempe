@@ -109,20 +109,20 @@ instance Pretty (KempeTy a) where
     pretty (TyApp _ ty ty') = parens (pretty ty <+> pretty ty')
     pretty (TyTuple _ tys)  = tupled (pretty <$> tys)
 
-data Pattern b = PatternInt b Integer
-               | PatternCons b (TyName b) -- a constructed pattern
-               | PatternWildcard b
-               | PatternBool b Bool
-               -- -- | PatternTuple
-               deriving (Eq, Generic, NFData, Functor, Foldable, Traversable)
+data Pattern c b = PatternInt b Integer
+                 | PatternCons c (TyName c) -- a constructed pattern
+                 | PatternWildcard b
+                 | PatternBool b Bool
+                 -- -- | PatternTuple
+                 deriving (Eq, Generic, NFData, Functor, Foldable, Traversable)
 
-instance Pretty (Pattern a) where
+instance Pretty (Pattern c a) where
     pretty (PatternInt _ i)   = pretty i
     pretty (PatternBool _ b)  = pretty b
     pretty PatternWildcard{}  = "_"
     pretty (PatternCons _ tn) = pretty tn
 
-instance Pretty (Atom a) where
+instance Pretty (Atom c a) where
     pretty (AtName _ n)    = pretty n
     pretty (Dip _ as)      = "dip(" <> fillSep (fmap pretty as) <> ")"
     pretty (AtBuiltin _ b) = pretty b
@@ -133,7 +133,7 @@ instance Pretty (Atom a) where
     pretty (WordLit _ w)   = pretty w <> "u"
     pretty (Int8Lit _ i)   = pretty i <> "i8"
 
-prettyTyped :: Atom (StackType ()) -> Doc ann
+prettyTyped :: Atom (StackType ()) (StackType ()) -> Doc ann
 prettyTyped (AtName ty n)    = parens (pretty n <+> ":" <+> pretty ty)
 prettyTyped (Dip _ as)       = "dip(" <> fillSep (prettyTyped <$> as) <> ")"
 prettyTyped (AtBuiltin ty b) = parens (pretty b <+> ":" <+> pretty ty)
@@ -144,17 +144,27 @@ prettyTyped (BoolLit _ b)    = pretty b
 prettyTyped (Int8Lit _ i)    = pretty i <> "i8"
 prettyTyped (WordLit _ n)    = pretty n <> "u"
 
-data Atom b = AtName b (Name b)
-            | Case b (NonEmpty (Pattern b, [Atom b]))
-            | If b [Atom b] [Atom b]
-            | Dip b [Atom b]
-            | IntLit b Integer
-            | WordLit b Natural
-            | Int8Lit b Int8
-            | BoolLit b Bool
-            | AtBuiltin b BuiltinFn
-            | AtCons b (TyName b)
-            deriving (Eq, Generic, NFData, Functor, Foldable, Traversable)
+data Atom c b = AtName b (Name b)
+              | Case b (NonEmpty (Pattern c b, [Atom c b]))
+              | If b [Atom c b] [Atom c b]
+              | Dip b [Atom c b]
+              | IntLit b Integer
+              | WordLit b Natural
+              | Int8Lit b Int8
+              | BoolLit b Bool
+              | AtBuiltin b BuiltinFn
+              | AtCons c (TyName c)
+              deriving (Eq, Generic, NFData, Functor, Foldable, Traversable)
+
+instance Bifunctor Atom where
+    second = fmap
+    first f (AtCons l n) = AtCons (f l) (fmap f n)
+
+instance Bifoldable Atom where
+    bifoldMap _ g (AtName x n) = foldMap g (AtName x n)
+
+instance Bitraversable Atom where
+    bitraverse _ g (AtName x n) = traverse g (AtName x n)
 
 data BuiltinFn = Drop
                | Swap
@@ -203,7 +213,7 @@ instance Pretty ABI where
     pretty Cabi = "cabi"
     pretty Kabi = "kabi"
 
-prettyKempeDecl :: (Atom b -> Doc ann) -> KempeDecl a c b -> Doc ann
+prettyKempeDecl :: (Atom c b -> Doc ann) -> KempeDecl a c b -> Doc ann
 prettyKempeDecl atomizer (FunDecl _ n is os as) = pretty n <+> ":" <+> sep (fmap pretty is) <+> "--" <+> sep (fmap pretty os) <+> "=:" <+> brackets (align (fillSep (atomizer <$> as)))
 prettyKempeDecl _ (Export _ abi n)              = "%foreign" <+> pretty abi <+> pretty n
 prettyKempeDecl _ (ExtFnDecl _ n is os b)       = pretty n <+> ":" <+> sep (fmap pretty is) <+> "--" <+> sep (fmap pretty os) <+> "=:" <+> "$cfun" <> pretty (decodeUtf8 b)
@@ -217,14 +227,14 @@ prettyTyLeaf cn vars = pretty cn <+> hsep (fmap pretty vars)
 
 -- TODO: separate annotations for TyName in TyDecl
 data KempeDecl a c b = TyDecl a (TyName a) [Name a] [(TyName c, [KempeTy a])]
-                     | FunDecl b (Name b) [KempeTy a] [KempeTy a] [Atom b]
+                     | FunDecl b (Name b) [KempeTy a] [KempeTy a] [Atom c b]
                      | ExtFnDecl b (Name b) [KempeTy a] [KempeTy a] BSL.ByteString -- ShortByteString?
                      | Export b ABI (Name b)
                      deriving (Eq, Generic, NFData, Functor, Foldable, Traversable)
 
 instance Bifunctor (KempeDecl a) where
     first f (TyDecl x tn ns ls)        = TyDecl x tn ns (fmap (first (fmap f)) ls)
-    first _ (FunDecl l n tys tys' as)  = FunDecl l n tys tys' as
+    first f (FunDecl l n tys tys' as)  = FunDecl l n tys tys' (fmap (first f) as)
     first _ (ExtFnDecl l n tys tys' b) = ExtFnDecl l n tys tys' b
     first _ (Export l abi n)           = Export l abi n
     second = fmap
@@ -240,11 +250,11 @@ instance Bitraversable (KempeDecl a) where
         let as = snd <$> ls
             constrs = fst <$> ls
             in TyDecl l tn ns . flip zip as <$> traverse (traverse f) constrs
-    bitraverse _ g (FunDecl x n tys tys' a)   = traverse g (FunDecl x n tys tys' a)
+    bitraverse f g (FunDecl x n tys tys' a)   = FunDecl <$> g x <*> traverse g n <*> pure tys <*> pure tys' <*> traverse (bitraverse f g) a
     bitraverse _ g (ExtFnDecl l n tys tys' b) = traverse g (ExtFnDecl l n tys tys' b)
     bitraverse _ g (Export l abi n)           = traverse g (Export l abi n)
 
-prettyModuleGeneral :: (Atom b -> Doc ann) -> Module a c b -> Doc ann
+prettyModuleGeneral :: (Atom c b -> Doc ann) -> Module a c b -> Doc ann
 prettyModuleGeneral atomizer = sep . fmap (prettyKempeDecl atomizer)
 
 prettyTypedModule :: Module () (StackType ()) (StackType ()) -> Doc ann

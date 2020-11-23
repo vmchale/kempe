@@ -208,19 +208,19 @@ dipify (StackType fvrs is os) = do
     n <- dummyName "a"
     pure $ StackType (S.insert n fvrs) (TyVar () n:is) (TyVar () n:os)
 
-tyLeaf :: (Pattern a, [Atom a]) -> TypeM () (StackType ())
+tyLeaf :: (Pattern b a, [Atom b a]) -> TypeM () (StackType ())
 tyLeaf (p, as) = do
     tyP <- tyPattern p
     tyA <- tyAtoms as
     catTypes tyP tyA
 
-assignCase :: (Pattern a, [Atom a]) -> TypeM () (StackType (), Pattern (StackType ()), [Atom (StackType ())])
+assignCase :: (Pattern b a, [Atom b a]) -> TypeM () (StackType (), Pattern (StackType ()) (StackType ()), [Atom (StackType ()) (StackType ())])
 assignCase (p, as) = do
     (tyP, p') <- assignPattern p
     (as', tyA) <- assignAtoms as
     (,,) <$> catTypes tyP tyA <*> pure p' <*> pure as'
 
-tyAtom :: Atom a -> TypeM () (StackType ())
+tyAtom :: Atom b a -> TypeM () (StackType ())
 tyAtom (AtBuiltin _ b) = typeOfBuiltin b
 tyAtom BoolLit{}       = pure $ StackType mempty [] [TyBuiltin () TyBool]
 tyAtom IntLit{}        = pure $ StackType mempty [] [TyBuiltin () TyInt]
@@ -239,7 +239,7 @@ tyAtom (Case _ ls) = do
     -- TODO: one-pass fold?
     mergeMany tyLs
 
-assignAtom :: Atom a -> TypeM () (StackType (), Atom (StackType ()))
+assignAtom :: Atom b a -> TypeM () (StackType (), Atom (StackType ()) (StackType ()))
 assignAtom (AtBuiltin _ b) = do { ty <- typeOfBuiltin b ; pure (ty, AtBuiltin ty b) }
 assignAtom (BoolLit _ b)   =
     let sTy = StackType mempty [] [TyBuiltin () TyBool]
@@ -274,12 +274,12 @@ assignAtom (Case _ ls) = do
     where dropFst (_, y, z) = (y, z)
           fst3 ~(x, _, _) = x
 
-assignAtoms :: [Atom a] -> TypeM () ([Atom (StackType ())], StackType ())
+assignAtoms :: [Atom b a] -> TypeM () ([Atom (StackType ()) (StackType ())], StackType ())
 assignAtoms = foldM
     (\seed a -> do { (ty, r) <- assignAtom a ; (fst seed ++ [r] ,) <$> catTypes (snd seed) ty })
     ([], emptyStackType)
 
-tyAtoms :: [Atom a] -> TypeM () (StackType ())
+tyAtoms :: [Atom b a] -> TypeM () (StackType ())
 tyAtoms = foldM
     (\seed a -> do { tys' <- tyAtom a ; catTypes seed tys' })
     emptyStackType
@@ -484,7 +484,7 @@ mergeStackTypes st0@(StackType _ i0 o0) st1@(StackType _ i1 o1) = do
 
     pure $ StackType (q <> q') ins os
 
-tyPattern :: Pattern a -> TypeM () (StackType ())
+tyPattern :: Pattern b a -> TypeM () (StackType ())
 tyPattern PatternWildcard{} = do
     aN <- dummyName "a"
     pure $ StackType (S.singleton aN) [TyVar () aN] []
@@ -492,7 +492,7 @@ tyPattern PatternInt{} = pure $ StackType S.empty [TyBuiltin () TyInt] []
 tyPattern PatternBool{} = pure $ StackType S.empty [TyBuiltin () TyBool] []
 tyPattern (PatternCons _ tn) = renameStack =<< (flipStackType <$> consLookup (void tn))
 
-assignPattern :: Pattern a -> TypeM () (StackType (), Pattern (StackType ()))
+assignPattern :: Pattern b a -> TypeM () (StackType (), Pattern (StackType ()) (StackType ()))
 assignPattern (PatternInt _ i) =
     let sTy = StackType S.empty [TyBuiltin () TyInt] []
         in pure (sTy, PatternInt sTy i)

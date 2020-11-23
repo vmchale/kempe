@@ -1,7 +1,7 @@
 module Kempe.Shuttle ( monomorphize
                      ) where
 
-import           Data.Bifunctor           (Bifunctor (..))
+import           Data.Bifunctor.Ext
 import           Data.Bitraversable       (bitraverse)
 import           Data.List                (partition)
 import           Kempe.AST
@@ -9,8 +9,6 @@ import           Kempe.Error
 import           Kempe.Monomorphize
 import           Kempe.Monomorphize.Error
 import           Kempe.TyAssign
-
-infixl 4 ~<$
 
 monomorphize :: Int
              -> Module a c b
@@ -25,9 +23,6 @@ monomorphize ctx m = do
     -- save tydecls from flatten round (since they're annotated with types there
     -- already)
     traverse (bitraverse tryMonoConsAnn tryMono) (flatTy ++ fmap (undefined ~<$) flatFn')
-
-(~<$) :: Bifunctor p => a -> p b c -> p a c
-(~<$) x = first (const x)
 
 isTyDecl :: KempeDecl a c b -> Bool
 isTyDecl TyDecl{} = True
