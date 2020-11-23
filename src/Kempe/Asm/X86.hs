@@ -69,18 +69,14 @@ expCost = cata a where
     a (IR.ConstInt8F _ i)          = IR.ConstInt8 0 i
     a (IR.ConstWordF _ w)          = IR.ConstWord 1 w -- b/c nasm lol
     a (IR.ConstBoolF _ b)          = IR.ConstBool 0 b
-    a (IR.RegF _ r)                = IR.Reg cr r
+    a (IR.RegF _ r)                = IR.Reg 1 r
     a (IR.MemF _ sz m)             = IR.Mem (cm + IR.expCost m) sz m
     a (IR.ExprIntBinOpF _ op e e') = IR.ExprIntBinOp (2 + IR.expCost e + IR.expCost e') op e e'
     a (IR.ExprIntRelF _ op e e')   = IR.ExprIntRel (3 + IR.expCost e + IR.expCost e') op e e'
 
 -- | Cost of a memory fetch
 cm :: Int64
-cm = 10
-
--- | Cost of register read
-cr :: Int64
-cr = 3
+cm = 2
 
 -- see costs here: http://www.cs.cmu.edu/afs/cs/academic/class/15745-s07/www/lectures/lect9-instruction_selection_745.pdf
 -- TODO: match multiple statements
