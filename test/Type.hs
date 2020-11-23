@@ -34,7 +34,7 @@ typeTests =
 yeetIO :: Exception e => Either e a -> IO a
 yeetIO = either throwIO pure
 
-assignTypes :: FilePath -> IO (Module () (StackType ()), Int)
+assignTypes :: FilePath -> IO (Module () (StackType ()) (StackType ()), Int)
 assignTypes fp = do
     contents <- BSL.readFile fp
     (maxU, m) <- yeetIO $ parseWithMax contents

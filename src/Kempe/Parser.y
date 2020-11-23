@@ -113,19 +113,19 @@ brackets(p)
 parens(p)
     : lparen p rparen { $2 }
 
-Module :: { Module AlexPosn AlexPosn }
+Module :: { Module AlexPosn AlexPosn AlexPosn }
        : many(Decl) { (reverse $1) }
 
 ABI :: { ABI }
     : cabi { Cabi }
     | kabi { Kabi }
 
-Decl :: { KempeDecl AlexPosn AlexPosn }
+Decl :: { KempeDecl AlexPosn AlexPosn AlexPosn }
      : TyDecl { $1 }
      | FunDecl { $1 }
      | foreign ABI name { Export $1 $2 $3 }
 
-TyDecl :: { KempeDecl AlexPosn AlexPosn }
+TyDecl :: { KempeDecl AlexPosn AlexPosn AlexPosn }
        : type tyName many(name) braces(sepBy(TyLeaf, vbar)) { TyDecl $1 $2 (reverse $3) (reverse $4) }
        | type tyName many(name) lbrace rbrace { TyDecl $1 $2 (reverse $3) [] } -- necessary since sepBy always has some "flesh"
 
@@ -139,7 +139,7 @@ Type :: { KempeTy AlexPosn }
      | word { TyBuiltin $1 TyWord }
      | lparen Type Type rparen { TyApp $1 $2 $3 }
 
-FunDecl :: { KempeDecl AlexPosn AlexPosn }
+FunDecl :: { KempeDecl AlexPosn AlexPosn AlexPosn }
         : FunSig FunBody { uncurry4 FunDecl $1 $2 }
         | FunSig defEq cfun foreignName { uncurry4 ExtFnDecl $1 $4 }
 
@@ -187,7 +187,6 @@ Pattern :: { Pattern AlexPosn }
         | intLit { PatternInt (loc $1) (int $1) }
         | boolLit { PatternBool (loc $1) (bool $ builtin $1) }
 
--- FIXME: tyName is uppercase, need "free" variables as well...
 TyLeaf :: { (Name AlexPosn, [KempeTy AlexPosn]) }
        : tyName many(Type) { ($1, reverse $2) }
 
@@ -213,10 +212,10 @@ instance (Pretty a, Typeable a) => Exception (ParseError a)
 
 type Parse = ExceptT (ParseError AlexPosn) Alex
 
-parse :: BSL.ByteString -> Either (ParseError AlexPosn) (Module AlexPosn AlexPosn)
+parse :: BSL.ByteString -> Either (ParseError AlexPosn) (Module AlexPosn AlexPosn AlexPosn)
 parse = fmap snd . parseWithMax
 
-parseWithMax :: BSL.ByteString -> Either (ParseError AlexPosn) (Int, Module AlexPosn AlexPosn)
+parseWithMax :: BSL.ByteString -> Either (ParseError AlexPosn) (Int, Module AlexPosn AlexPosn AlexPosn)
 parseWithMax = fmap (first fst3) . runParse parseModule
 
 runParse :: Parse a -> BSL.ByteString -> Either (ParseError AlexPosn) (AlexUserState, a)

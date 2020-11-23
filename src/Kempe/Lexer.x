@@ -73,6 +73,8 @@ tokens :-
         ","                      { mkSym Comma }
         \_                       { mkSym Underscore }
 
+        -- ¬ ∧ ∨ ⇨
+
         -- symbols/operators
         "%"                      { mkSym Percent }
         "*"                      { mkSym Times }

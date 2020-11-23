@@ -26,6 +26,9 @@ module Kempe.AST ( BuiltinTy (..)
                  ) where
 
 import           Control.DeepSeq         (NFData)
+import           Data.Bifoldable         (Bifoldable (bifoldMap))
+import           Data.Bifunctor          (Bifunctor (..))
+import           Data.Bitraversable      (Bitraversable (..))
 import qualified Data.ByteString.Lazy    as BSL
 import           Data.Functor            (void)
 import           Data.Int                (Int8)
@@ -190,35 +193,57 @@ instance Pretty ABI where
     pretty Cabi = "cabi"
     pretty Kabi = "kabi"
 
-prettyKempeDecl :: (Atom b -> Doc ann) -> KempeDecl a b -> Doc ann
+prettyKempeDecl :: (Atom b -> Doc ann) -> KempeDecl a c b -> Doc ann
 prettyKempeDecl atomizer (FunDecl _ n is os as) = pretty n <+> ":" <+> sep (fmap pretty is) <+> "--" <+> sep (fmap pretty os) <+> "=:" <+> brackets (align (fillSep (atomizer <$> as)))
 prettyKempeDecl _ (Export _ abi n)              = "%foreign" <+> pretty abi <+> pretty n
 prettyKempeDecl _ (ExtFnDecl _ n is os b)       = pretty n <+> ":" <+> sep (fmap pretty is) <+> "--" <+> sep (fmap pretty os) <+> "=:" <+> "$cfun" <> pretty (decodeUtf8 b)
 prettyKempeDecl _ (TyDecl _ tn ns ls)           = "type" <+> pretty tn <+> hsep (fmap pretty ns) <+> braces (concatWith (\x y -> x <+> pipe <+> y) $ fmap (uncurry prettyTyLeaf) ls)
 
-instance Pretty (KempeDecl a b) where
+instance Pretty (KempeDecl a b c) where
     pretty = prettyKempeDecl pretty
 
 prettyTyLeaf :: TyName a -> [KempeTy b] -> Doc ann
 prettyTyLeaf cn vars = pretty cn <+> hsep (fmap pretty vars)
 
 -- TODO: separate annotations for TyName in TyDecl
-data KempeDecl a b = TyDecl a (TyName a) [Name a] [(TyName b, [KempeTy a])]
-                   | FunDecl b (Name b) [KempeTy a] [KempeTy a] [Atom b]
-                   | ExtFnDecl b (Name b) [KempeTy a] [KempeTy a] BSL.ByteString -- ShortByteString?
-                   | Export b ABI (Name b)
-                   deriving (Eq, Generic, NFData, Functor, Foldable, Traversable)
+data KempeDecl a c b = TyDecl a (TyName a) [Name a] [(TyName c, [KempeTy a])]
+                     | FunDecl b (Name b) [KempeTy a] [KempeTy a] [Atom b]
+                     | ExtFnDecl b (Name b) [KempeTy a] [KempeTy a] BSL.ByteString -- ShortByteString?
+                     | Export b ABI (Name b)
+                     deriving (Eq, Generic, NFData, Functor, Foldable, Traversable)
 
-prettyModuleGeneral :: (Atom b -> Doc ann) -> Module a b -> Doc ann
+instance Bifunctor (KempeDecl a) where
+    first f (TyDecl x tn ns ls)        = TyDecl x tn ns (fmap (first (fmap f)) ls)
+    first _ (FunDecl l n tys tys' as)  = FunDecl l n tys tys' as
+    first _ (ExtFnDecl l n tys tys' b) = ExtFnDecl l n tys tys' b
+    first _ (Export l abi n)           = Export l abi n
+    second = fmap
+
+instance Bifoldable (KempeDecl a) where
+    bifoldMap f _ (TyDecl _ _ _ ls)          = foldMap (foldMap f) (fst <$> ls)
+    bifoldMap _ g (FunDecl x n tys tys' a)   = foldMap g (FunDecl x n tys tys' a)
+    bifoldMap _ g (ExtFnDecl l n tys tys' b) = foldMap g (ExtFnDecl l n tys tys' b)
+    bifoldMap _ g (Export l abi n)           = foldMap g (Export l abi n)
+
+instance Bitraversable (KempeDecl a) where
+    bitraverse f _ (TyDecl l tn ns ls)        =
+        let as = snd <$> ls
+            constrs = fst <$> ls
+            in TyDecl l tn ns . flip zip as <$> traverse (traverse f) constrs
+    bitraverse _ g (FunDecl x n tys tys' a)   = traverse g (FunDecl x n tys tys' a)
+    bitraverse _ g (ExtFnDecl l n tys tys' b) = traverse g (ExtFnDecl l n tys tys' b)
+    bitraverse _ g (Export l abi n)           = traverse g (Export l abi n)
+
+prettyModuleGeneral :: (Atom b -> Doc ann) -> Module a c b -> Doc ann
 prettyModuleGeneral atomizer = sep . fmap (prettyKempeDecl atomizer)
 
-prettyTypedModule :: Module () (StackType ()) -> Doc ann
+prettyTypedModule :: Module () (StackType ()) (StackType ()) -> Doc ann
 prettyTypedModule = prettyModuleGeneral prettyTyped
 
-prettyModule :: Module a b -> Doc ann
+prettyModule :: Module a c b -> Doc ann
 prettyModule = prettyModuleGeneral pretty
 
-type Module a b = [KempeDecl a b]
+type Module a c b = [KempeDecl a c b]
 
 extrVars :: KempeTy a -> [Name a]
 extrVars TyBuiltin{}      = []

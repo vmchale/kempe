@@ -9,6 +9,7 @@ module Kempe.File ( tcFile
 -- common b/w test suite and exec, repl utils
 import           Control.Composition       ((.*))
 import           Control.Exception         (Exception, throwIO)
+import           Data.Bifunctor            (bimap)
 import qualified Data.ByteString.Lazy      as BSL
 import qualified Data.Set                  as S
 import           Kempe.AST
@@ -37,13 +38,13 @@ dumpMono fp = do
     contents <- BSL.readFile fp
     (i, m) <- yeetIO $ parseWithMax contents
     mMono <- yeetIO $ monomorphize i m
-    putDoc $ prettyTypedModule (fmap (fmap fromMono) mMono)
+    putDoc $ prettyTypedModule (fmap (bimap fromMono fromMono) mMono)
     where fromMono (is, os) = StackType S.empty is os
 
-dumpIR :: Int -> Module a b -> Doc ann
+dumpIR :: Int -> Module a c b -> Doc ann
 dumpIR = prettyIR . fst .* irGen
 
-dumpX86 :: Int -> Module a b -> Doc ann
+dumpX86 :: Int -> Module a c b -> Doc ann
 dumpX86 = prettyAsm .* x86Alloc
 
 irFile :: FilePath -> IO ()

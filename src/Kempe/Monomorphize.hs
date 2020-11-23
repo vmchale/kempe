@@ -51,9 +51,9 @@ freshName n ty = do
 
 -- | A 'ModuleMap' is a map which retrives the 'KempeDecl' associated with
 -- a given 'Name'
-type ModuleMap a b = IM.IntMap (KempeDecl a b)
+type ModuleMap a c b = IM.IntMap (KempeDecl a c b)
 
-mkModuleMap :: Module a b -> ModuleMap a b
+mkModuleMap :: Module a c b -> ModuleMap a c b
 mkModuleMap = IM.fromList . concatMap toInt where
     toInt d@(FunDecl _ (Name _ (Unique i) _) _ _ _)   = [(i, d)]
     toInt d@(ExtFnDecl _ (Name _ (Unique i) _) _ _ _) = [(i, d)]
@@ -104,7 +104,7 @@ renameAtom (AtCons ty (Name t u l)) = do
     let u' = M.findWithDefault u (u, ty) mSt
     pure $ AtCons ty (Name t u' l)
 
-renameDecl :: KempeDecl () (StackType ()) -> MonoM (KempeDecl () (StackType ()))
+renameDecl :: KempeDecl () (StackType ()) (StackType ()) -> MonoM (KempeDecl () (StackType ()) (StackType ()))
 renameDecl (FunDecl l n is os as) = FunDecl l n is os <$> traverse renameAtom as
 renameDecl (Export ty abi (Name t u l)) = do
     mSt <- gets snd
@@ -114,11 +114,11 @@ renameDecl d@ExtFnDecl{} = pure d
 renameDecl d@TyDecl{}    = pure d -- don't need to
 
 -- | Call 'closedModule' and perform any necessary renamings
-flattenModule :: Module () (StackType ()) -> MonoM (Module () (StackType ()))
+flattenModule :: Module () (StackType ()) (StackType ()) -> MonoM (Module () (StackType ()) (StackType ()))
 flattenModule = renameMonoM <=< closedModule
 
 -- | To be called after 'closedModule'
-renameMonoM :: Module () (StackType ()) -> MonoM (Module () (StackType ()))
+renameMonoM :: Module () (StackType ()) (StackType ()) -> MonoM (Module () (StackType ()) (StackType ()))
 renameMonoM = traverse renameDecl
 
 -- | Filter so that only the 'KempeDecl's necessary for exports are there, and
@@ -127,7 +127,7 @@ renameMonoM = traverse renameDecl
 -- This will throw an exception on ill-typed programs.
 --
 -- The 'Module' returned will have to be renamed.
-closedModule :: Module () (StackType ()) -> MonoM (Module () (StackType ()))
+closedModule :: Module () (StackType ()) (StackType ()) -> MonoM (Module () (StackType ()) (StackType ()))
 closedModule m = addExports <$> do
     { fn' <- traverse (uncurry specializeDecl . drop1) fnDecls
     ; ty' <- specializeTyDecls tyDecls
@@ -147,7 +147,7 @@ closedModule m = addExports <$> do
           isTyDecl _        = False
 
 -- group specializations by type name?
-specializeTyDecls :: [(TyName (StackType ()), KempeDecl () (StackType ()), StackType ())] -> MonoM [KempeDecl () (StackType ())]
+specializeTyDecls :: [(TyName (StackType ()), KempeDecl () (StackType ()) (StackType ()), StackType ())] -> MonoM [KempeDecl () (StackType ()) (StackType ())]
 specializeTyDecls ds = traverse (uncurry mkTyDecl) processed
     where toMerge = groupBy ((==) `on` snd3) ds
           processed = fmap process toMerge
@@ -155,13 +155,13 @@ specializeTyDecls ds = traverse (uncurry mkTyDecl) processed
           process []                 = error "Empty group!"
 
 -- TODO: annotate with size (for IR) + tag number (for ABI)
-mkTyDecl :: KempeDecl () (StackType ()) -> [(TyName (StackType ()), StackType ())] -> MonoM (KempeDecl () (StackType ()))
+mkTyDecl :: KempeDecl () (StackType ()) (StackType ()) -> [(TyName (StackType ()), StackType ())] -> MonoM (KempeDecl () (StackType ()) (StackType ()))
 mkTyDecl (TyDecl _ tn ns _) constrs = do
     renCons <- traverse (\(tn', ty) -> do { ty'@(is, _) <- tryMono ty ; (, is) <$> renamed (tn' $> ty') ty' }) constrs
     pure $ TyDecl () tn ns renCons
 mkTyDecl _ _ = error "Shouldn't happen."
 
-specializeDecl :: KempeDecl () (StackType ()) -> StackType () -> MonoM (KempeDecl () (StackType ()))
+specializeDecl :: KempeDecl () (StackType ()) (StackType ()) -> StackType () -> MonoM (KempeDecl () (StackType ()) (StackType ()))
 specializeDecl (FunDecl _ n _ _ as) sty = do
     (Name t u newStackType@(StackType _ is os)) <- renamed n =<< tryMono sty
     pure $ FunDecl newStackType (Name t u newStackType) is os as
@@ -179,7 +179,7 @@ renamed (Name t i _) sty@(is, os) = do
     modifying _2 (M.insert (i, newStackType) j)
     pure (Name t' j newStackType)
 
-closure :: Ord b => (Module a b, ModuleMap a b) -> S.Set (Name b, b)
+closure :: Ord b => (Module a c b, ModuleMap a c b) -> S.Set (Name b, b)
 closure (m, key) = loop roots S.empty
     where roots = S.fromList (exports m)
           loop ns avoid =
@@ -192,7 +192,7 @@ closure (m, key) = loop roots S.empty
                 Just decl -> namesInDecl decl
                 Nothing   -> error "Internal error! module map should contain all names."
 
-namesInDecl :: Ord b => KempeDecl a b -> S.Set (Name b, b)
+namesInDecl :: Ord b => KempeDecl a c b -> S.Set (Name b, b)
 namesInDecl TyDecl{}             = S.empty
 namesInDecl ExtFnDecl{}          = S.empty
 namesInDecl Export{}             = S.empty
@@ -210,14 +210,14 @@ namesInAtom Int8Lit{}                  = S.empty
 namesInAtom WordLit{}                  = S.empty
 namesInAtom (Case _ as)                = foldMap namesInAtom (foldMap snd as) -- don't need patterns since we're destructing them here?
 
-exports :: Module a b -> [(Name b, b)]
+exports :: Module a c b -> [(Name b, b)]
 exports = mapMaybe exportsDecl
 
-exportsOnly :: Module a b -> Module a b
+exportsOnly :: Module a c b -> Module a c b
 exportsOnly = mapMaybe getExport where
     getExport d@Export{} = Just d
     getExport _          = Nothing
 
-exportsDecl :: KempeDecl a b -> Maybe (Name b, b)
+exportsDecl :: KempeDecl a c b -> Maybe (Name b, b)
 exportsDecl (Export _ _ n@(Name _ _ l)) = Just (n, l)
 exportsDecl _                           = Nothing

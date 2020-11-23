@@ -342,7 +342,7 @@ kindOf tyErr@(TyApp l ty ty') = do
         TyCons k'' k''' -> unless (k' == k''') (throwError (IllKinded l tyErr)) $> k''
         _               -> throwError (IllKinded l tyErr)
 
-assignDecl :: KempeDecl a b -> TypeM () (KempeDecl () (StackType ()))
+assignDecl :: KempeDecl a c b -> TypeM () (KempeDecl () (StackType ()) (StackType ()))
 assignDecl (TyDecl _ tn ns ls) = TyDecl () (void tn) (void <$> ns) <$> traverse (assignTyLeaf tn (S.fromList ns)) ls
 assignDecl (FunDecl _ n ins os a) = do
     traverse_ kindOf (void <$> ins ++ os)
@@ -368,7 +368,7 @@ assignDecl (Export _ abi n) = do
 assignName :: Name a -> TypeM () (Name (StackType ()))
 assignName n = do { ty <- tyLookup (void n) ; pure (n $> ty) }
 
-tyHeader :: KempeDecl a b -> TypeM () ()
+tyHeader :: KempeDecl a c b -> TypeM () ()
 tyHeader Export{} = pure ()
 tyHeader (FunDecl _ (Name _ (Unique i) _) ins out _) = do
     let sig = voidStackType $ StackType (freeVars (ins ++ out)) ins out
@@ -397,7 +397,7 @@ lessGeneral (StackType _ is os) (StackType _ is' os') = lessGenerals (is ++ os) 
           lessGenerals _ []                = False -- shouldn't happen; will be caught later
           lessGenerals [] _                = False
 
-tyInsert :: KempeDecl a b -> TypeM () ()
+tyInsert :: KempeDecl a c b -> TypeM () ()
 tyInsert (TyDecl _ tn ns ls) = traverse_ (tyInsertLeaf tn (S.fromList ns)) ls
 tyInsert (FunDecl _ _ ins out as) = do
     traverse_ kindOf (void <$> ins ++ out) -- FIXME: this gives sketchy results?
@@ -409,13 +409,13 @@ tyInsert (FunDecl _ _ ins out as) = do
 tyInsert ExtFnDecl{} = pure () -- TODO: kind-check
 tyInsert Export{} = pure ()
 
-tyModule :: Module a b -> TypeM () ()
+tyModule :: Module a c b -> TypeM () ()
 tyModule m = traverse_ tyHeader m *> traverse_ tyInsert m
 
-checkModule :: Module a b -> TypeM () ()
+checkModule :: Module a c b -> TypeM () ()
 checkModule m = tyModule m <* (unifyM =<< gets constraints)
 
-assignModule :: Module a b -> TypeM () (Module () (StackType ()))
+assignModule :: Module a c b -> TypeM () (Module () (StackType ()) (StackType ()))
 assignModule m = {-# SCC "assignModule" #-} do
     traverse_ tyHeader m
     m' <- traverse assignDecl m
