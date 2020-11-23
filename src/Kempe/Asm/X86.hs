@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
+-- just kinda wing it
 module Kempe.Asm.X86 ( X86 (..)
                      , Addr (..)
                      , irToX86
@@ -123,7 +124,9 @@ irEmit (IR.MovMem (IR.Reg r) _ (IR.ConstInt8 i)) =
     pure [ MovACi8 () (Reg $ toAbsReg r) i ]
 irEmit (IR.MovMem (IR.Reg r) _ (IR.ConstWord w)) = do
     { r' <- allocReg64
-    ; pure [ MovRWord () r' w, MovAR () (Reg $ toAbsReg r) r' ] -- see: https://github.com/cirosantilli/x86-assembly-cheat/blob/master/x86-64/movabs.asm
+    ; pure [ MovRWord () r' w, MovAR () (Reg $ toAbsReg r) r' ]
+    -- see: https://github.com/cirosantilli/x86-assembly-cheat/blob/master/x86-64/movabs.asm
+    -- this is a limitation of nasm that must be worked around
     }
 irEmit (IR.MovMem (IR.Reg r) _ (IR.ExprIntBinOp IR.IntXorIR (IR.Reg r1) (IR.Reg r2))) = do
     { r' <- allocReg64

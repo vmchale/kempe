@@ -13,7 +13,6 @@ module Kempe.IR ( writeModule
                 , runTempM
                 , TempM
                 , prettyIR
-                -- , foldStmt
                 , WriteSt (..)
                 , size
                 ) where
