@@ -50,3 +50,4 @@
 # Test Cases
 - [ ] Unit tests for type merge?
 - [ ] Unit tests for catTypes?
+- [ ] Test foreign calls (e.g. `random`)
