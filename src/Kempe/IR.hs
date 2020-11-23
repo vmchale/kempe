@@ -182,11 +182,11 @@ instance Pretty IntBinOp where
     pretty WordShiftLIR = "<<"
     pretty WordTimesIR  = "*~"
 
-writeModule :: Module () MonoStackType MonoStackType -> TempM [Stmt]
+writeModule :: Module () (ConsAnn MonoStackType) MonoStackType -> TempM [Stmt]
 writeModule = foldMapA writeDecl
 
 -- FIXME: Current broadcast + write approach fails mutually recursive functions
-writeDecl :: KempeDecl () MonoStackType MonoStackType -> TempM [Stmt]
+writeDecl :: KempeDecl () (ConsAnn MonoStackType) MonoStackType -> TempM [Stmt]
 writeDecl (FunDecl _ (Name _ u _) _ _ as) = do
     bl <- broadcastName u
     (++ [Ret]) . (Labeled bl:) <$> writeAtoms as

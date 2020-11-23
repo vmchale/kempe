@@ -8,6 +8,8 @@ module Kempe.Monomorphize ( closedModule
                           , runMonoM
                           , flattenModule
                           , tryMono
+                          , tryMonoConsAnn
+                          , ConsAnn (..)
                           -- * Benchmark
                           , closure
                           , mkModuleMap
@@ -16,7 +18,7 @@ module Kempe.Monomorphize ( closedModule
 import           Control.Monad              ((<=<))
 import           Control.Monad.Except       (MonadError, throwError)
 import           Control.Monad.State.Strict (StateT, gets, runStateT)
-import           Data.Bifunctor             (second)
+import           Data.Bifunctor             (first, second)
 import           Data.Function              (on)
 import           Data.Functor               (($>))
 import qualified Data.IntMap                as IM
@@ -83,6 +85,9 @@ tryMono :: MonadError (Error ()) m => StackType () -> m MonoStackType
 tryMono (StackType _ is os) | S.null (freeVars (is ++ os)) = pure (is, os)
                             | otherwise = throwError $ MonoFailed ()
 
+tryMonoConsAnn :: MonadError (Error ()) m => ConsAnn (StackType ()) -> m (ConsAnn MonoStackType)
+tryMonoConsAnn = traverse tryMono
+
 renameCase :: (Pattern (StackType ()), [Atom (StackType ())]) -> MonoM (Pattern (StackType ()), [Atom (StackType ())])
 renameCase (p, as) = (p,) <$> traverse renameAtom as
 
@@ -104,7 +109,7 @@ renameAtom (AtCons ty (Name t u l)) = do
     let u' = M.findWithDefault u (u, ty) mSt
     pure $ AtCons ty (Name t u' l)
 
-renameDecl :: KempeDecl () (StackType ()) (StackType ()) -> MonoM (KempeDecl () (StackType ()) (StackType ()))
+renameDecl :: KempeDecl () (ConsAnn (StackType ())) (StackType ()) -> MonoM (KempeDecl () (ConsAnn (StackType ())) (StackType ()))
 renameDecl (FunDecl l n is os as) = FunDecl l n is os <$> traverse renameAtom as
 renameDecl (Export ty abi (Name t u l)) = do
     mSt <- gets snd
@@ -114,11 +119,11 @@ renameDecl d@ExtFnDecl{} = pure d
 renameDecl d@TyDecl{}    = pure d -- don't need to
 
 -- | Call 'closedModule' and perform any necessary renamings
-flattenModule :: Module () (StackType ()) (StackType ()) -> MonoM (Module () (StackType ()) (StackType ()))
+flattenModule :: Module () (StackType ()) (StackType ()) -> MonoM (Module () (ConsAnn (StackType ())) (StackType ()))
 flattenModule = renameMonoM <=< closedModule
 
 -- | To be called after 'closedModule'
-renameMonoM :: Module () (StackType ()) (StackType ()) -> MonoM (Module () (StackType ()) (StackType ()))
+renameMonoM :: Module () (ConsAnn (StackType ())) (StackType ()) -> MonoM (Module () (ConsAnn (StackType ())) (StackType ()))
 renameMonoM = traverse renameDecl
 
 -- | Filter so that only the 'KempeDecl's necessary for exports are there, and
@@ -127,7 +132,7 @@ renameMonoM = traverse renameDecl
 -- This will throw an exception on ill-typed programs.
 --
 -- The 'Module' returned will have to be renamed.
-closedModule :: Module () (StackType ()) (StackType ()) -> MonoM (Module () (StackType ()) (StackType ()))
+closedModule :: Module () (StackType ()) (StackType ()) -> MonoM (Module () (ConsAnn (StackType ())) (StackType ()))
 closedModule m = addExports <$> do
     { fn' <- traverse (uncurry specializeDecl . drop1) fnDecls
     ; ty' <- specializeTyDecls tyDecls
@@ -147,7 +152,7 @@ closedModule m = addExports <$> do
           isTyDecl _        = False
 
 -- group specializations by type name?
-specializeTyDecls :: [(TyName (StackType ()), KempeDecl () (StackType ()) (StackType ()), StackType ())] -> MonoM [KempeDecl () (StackType ()) (StackType ())]
+specializeTyDecls :: [(TyName (StackType ()), KempeDecl () (StackType ()) (StackType ()), StackType ())] -> MonoM [KempeDecl () (ConsAnn (StackType ())) (StackType ())]
 specializeTyDecls ds = traverse (uncurry mkTyDecl) processed
     where toMerge = groupBy ((==) `on` snd3) ds
           processed = fmap process toMerge
@@ -155,19 +160,19 @@ specializeTyDecls ds = traverse (uncurry mkTyDecl) processed
           process []                 = error "Empty group!"
 
 -- TODO: annotate with size (for IR) + tag number (for ABI)
-mkTyDecl :: KempeDecl () (StackType ()) (StackType ()) -> [(TyName (StackType ()), StackType ())] -> MonoM (KempeDecl () (StackType ()) (StackType ()))
+mkTyDecl :: KempeDecl () (StackType ()) (StackType ()) -> [(TyName (StackType ()), StackType ())] -> MonoM (KempeDecl () (ConsAnn (StackType ())) (StackType ()))
 mkTyDecl (TyDecl _ tn ns _) constrs = do
     renCons <- traverse (\(tn', ty) -> do { ty'@(is, _) <- tryMono ty ; (, is) <$> renamed (tn' $> ty') ty' }) constrs
-    pure $ TyDecl () tn ns renCons
+    pure $ first (ConsAnn undefined undefined) $ TyDecl () tn ns renCons
 mkTyDecl _ _ = error "Shouldn't happen."
 
-specializeDecl :: KempeDecl () (StackType ()) (StackType ()) -> StackType () -> MonoM (KempeDecl () (StackType ()) (StackType ()))
+specializeDecl :: KempeDecl () (StackType ()) (StackType ()) -> StackType () -> MonoM (KempeDecl () (ConsAnn (StackType ())) (StackType ()))
 specializeDecl (FunDecl _ n _ _ as) sty = do
     (Name t u newStackType@(StackType _ is os)) <- renamed n =<< tryMono sty
     pure $ FunDecl newStackType (Name t u newStackType) is os as
-specializeDecl d@ExtFnDecl{} _ = pure d
-specializeDecl d@Export{} _    = pure d
-specializeDecl TyDecl{} _      = error "Shouldn't happen."
+specializeDecl (ExtFnDecl l n tys tys' b) _ = pure $ ExtFnDecl l n tys tys' b
+specializeDecl (Export l abi n) _           = pure $ Export l abi n
+specializeDecl TyDecl{} _                   = error "Shouldn't happen."
 -- leave exports and foreign imports alone (have to be monomorphic)
 
 -- | Insert a specialized rename.
@@ -213,10 +218,10 @@ namesInAtom (Case _ as)                = foldMap namesInAtom (foldMap snd as) --
 exports :: Module a c b -> [(Name b, b)]
 exports = mapMaybe exportsDecl
 
-exportsOnly :: Module a c b -> Module a c b
+exportsOnly :: Module a c b -> Module a (ConsAnn c) b
 exportsOnly = mapMaybe getExport where
-    getExport d@Export{} = Just d
-    getExport _          = Nothing
+    getExport (Export l abi n) = Just (Export l abi n)
+    getExport _                = Nothing
 
 exportsDecl :: KempeDecl a c b -> Maybe (Name b, b)
 exportsDecl (Export _ _ n@(Name _ _ l)) = Just (n, l)

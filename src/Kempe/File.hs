@@ -38,8 +38,9 @@ dumpMono fp = do
     contents <- BSL.readFile fp
     (i, m) <- yeetIO $ parseWithMax contents
     mMono <- yeetIO $ monomorphize i m
-    putDoc $ prettyTypedModule (fmap (bimap fromMono fromMono) mMono)
+    putDoc $ prettyTypedModule (fmap (bimap fromMonoConsAnn fromMono) mMono)
     where fromMono (is, os) = StackType S.empty is os
+          fromMonoConsAnn (ConsAnn _ _ ty) = fromMono ty
 
 dumpIR :: Int -> Module a c b -> Doc ann
 dumpIR = prettyIR . fst .* irGen

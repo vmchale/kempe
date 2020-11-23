@@ -9,6 +9,7 @@
 module Kempe.AST ( BuiltinTy (..)
                  , KempeTy (..)
                  , StackType (..)
+                 , ConsAnn (..)
                  , Atom (..)
                  , BuiltinFn (..)
                  , KempeDecl (..)
@@ -31,10 +32,11 @@ import           Data.Bifunctor          (Bifunctor (..))
 import           Data.Bitraversable      (Bitraversable (..))
 import qualified Data.ByteString.Lazy    as BSL
 import           Data.Functor            (void)
-import           Data.Int                (Int8)
+import           Data.Int                (Int64, Int8)
 import           Data.List.NonEmpty      (NonEmpty)
 import qualified Data.Set                as S
 import           Data.Text.Lazy.Encoding (decodeUtf8)
+import           Data.Word               (Word8)
 import           GHC.Generics            (Generic)
 import           Kempe.Name
 import           Numeric.Natural
@@ -82,6 +84,9 @@ data StackType b = StackType { quantify :: S.Set (Name b)
                              } deriving (Generic, NFData, Eq, Ord)
 
 type MonoStackType = ([KempeTy ()], [KempeTy ()])
+
+data ConsAnn a = ConsAnn { tySz :: Int64, tag :: Word8, consTy :: a }
+    deriving (Functor, Foldable, Traversable, Generic, NFData)
 
 prettyMonoStackType :: MonoStackType -> Doc a
 prettyMonoStackType (is, os) = sep (fmap pretty is) <+> "--" <+> sep (fmap pretty os)
