@@ -2,8 +2,8 @@ module Main (main) where
 
 import           Control.Exception         (Exception, throw, throwIO)
 import           Criterion.Main
+import           Data.Bifunctor            (Bifunctor, bimap)
 import qualified Data.ByteString.Lazy      as BSL
-import           Data.Functor              (void)
 import qualified Data.Text                 as T
 import           Kempe.Asm.X86
 import           Kempe.Asm.X86.ControlFlow
@@ -21,6 +21,9 @@ import           Kempe.TyAssign
 import           Prettyprinter             (defaultLayoutOptions, layoutPretty)
 import           Prettyprinter.Render.Text (renderStrict)
 
+bivoid :: Bifunctor p => p a b -> p () ()
+bivoid = bimap (const ()) (const ())
+
 main :: IO ()
 main =
     defaultMain [ env (BSL.readFile "test/data/lex.kmp") $ \contents ->
@@ -37,7 +40,7 @@ main =
                       , bench "shuttle (test/data/ty.kmp)" $ nf (uncurry monomorphize) p
                       , bench "shuttle (examples/splitmix.kmp)" $ nf (uncurry monomorphize) s
                       , bench "closedModule" $ nf (runSpecialize =<<) (runAssign p)
-                      , bench "closure" $ nf (\m -> closure (m, mkModuleMap m)) (void <$> snd p)
+                      , bench "closure" $ nf (\m -> closure (m, mkModuleMap m)) (bivoid <$> snd p)
                       ]
                   , env irEnv $ \ ~(s, f) ->
                       bgroup "IR"
