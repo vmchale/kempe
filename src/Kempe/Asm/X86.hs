@@ -82,6 +82,7 @@ cm = 10
 cr :: Int64
 cr = 3
 
+-- see costs here: http://www.cs.cmu.edu/afs/cs/academic/class/15745-s07/www/lectures/lect9-instruction_selection_745.pdf
 -- TODO: match multiple statements
 -- this isn't even recursive lmao
 irCosts :: IR.Stmt () -> IR.Stmt Int64
@@ -109,7 +110,9 @@ irCosts (IR.CCall _ (is, []) b) = IR.CCall undefined (is, []) b
 irCosts (IR.CCall _ (is, [o]) b) = IR.CCall undefined (is, [o]) b
 irCosts IR.CCall{} = error "C functions can have at most one return value!"
 
--- does this need a monad for labels/intermediaries?
+-- https://www.cs.princeton.edu/courses/archive/spring03/cs320/notes/instr-selection.pdf
+--
+-- Same approach; pattern matching on trees uses ML-style pattern matching
 irEmit :: IR.Stmt Int64 -> WriteM [X86 AbsReg ()]
 irEmit (IR.Jump _ l) = pure [Jump () l]
 irEmit (IR.Labeled _ l) = pure [Label () l]
