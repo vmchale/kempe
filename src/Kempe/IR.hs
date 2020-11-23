@@ -126,26 +126,26 @@ instance Pretty Exp where
     pretty (ExprIntBinOp op e e') = parens (pretty op <+> pretty e <+> pretty e')
     pretty (ExprIntRel op e e')   = parens (pretty op <+> pretty e <+> pretty e')
 
-data Stmt = Labeled { stmtLabel :: Label }
-          | Jump { stmtJmp :: Label }
+data Stmt = Labeled Label
+          | Jump Label
           -- conditional jump for ifs
-          | CJump { stmtSwitch :: Exp, stmtJmp0 :: Label, stmtJmp1 :: Label }
-          | CCall { stmtExtTy :: MonoStackType, stmtCCall :: BSL.ByteString }
-          | KCall { stmtCall :: Label } -- KCall is a jump to a Kempe procedure
-          | WrapKCall { wrapAbi :: ABI, stmtiFnTy :: MonoStackType, stmtABI :: BS.ByteString, stmtCall :: Label }
-          | MovTemp { stmtTemp :: Temp, stmtExp :: Exp } -- put e in temp
-          | MovMem { stmtExp0 :: Exp, szStore :: Int64, stmtExp1 :: Exp } -- store e2 at address given by e1
+          | CJump Exp Label Label
+          | CCall MonoStackType BSL.ByteString
+          | KCall Label -- KCall is a jump to a Kempe procedure
+          | WrapKCall ABI MonoStackType BS.ByteString Label
+          | MovTemp Temp Exp -- put e in temp
+          | MovMem Exp Int64 Exp -- store e2 at address given by e1
           | Ret
           deriving (Generic, NFData)
 
-data Exp = ConstInt { expI :: Int64 }
-         | ConstInt8 { expI8 :: Int8 }
-         | ConstWord { expW :: Word }
-         | ConstBool { expB :: Bool }
-         | Reg { expReg :: Temp }  -- TODO: size?
-         | Mem { memSize :: Int64, memGet :: Exp } -- fetch from address
-         | ExprIntBinOp { expOp :: IntBinOp, exp0 :: Exp, exp1 :: Exp }
-         | ExprIntRel { expRel :: RelBinOp, exp0 :: Exp, exp1 :: Exp }
+data Exp = ConstInt Int64
+         | ConstInt8 Int8
+         | ConstWord Word
+         | ConstBool Bool
+         | Reg Temp -- TODO: size?
+         | Mem Int64 Exp -- fetch from address
+         | ExprIntBinOp IntBinOp Exp Exp
+         | ExprIntRel RelBinOp Exp Exp
          deriving (Generic, NFData)
            -- TODO: one for data, one for C ABI
 
