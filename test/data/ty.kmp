@@ -27,10 +27,10 @@ even : Int -- Bool
      =: [ 2 % 0 = ]
 
 randBool : -- Bool
-         =: [ rand odd ]
+         =: [ rand even ]
 
 maybeEven : -- (Maybe Int)
-          =: [ rand dup odd
+          =: [ rand dup even
                 if( drop Nothing
                   , Just
                   )
