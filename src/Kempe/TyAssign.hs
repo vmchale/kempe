@@ -461,8 +461,7 @@ withName (Name t (Unique i) l) = do
 renameStack :: StackType a -> TypeM a (StackType a)
 renameStack (StackType qs ins outs) = do
     newQs <- traverse withName (S.toList qs)
-    let localRenames = snd <$> newQs
-        newNames = fst <$> newQs
+    let (newNames, localRenames) = unzip newQs
         newBinds = thread localRenames
     withTyState newBinds $
         StackType (S.fromList newNames) <$> traverse renameIn ins <*> traverse renameIn outs

@@ -92,7 +92,13 @@ squishMonoStackType :: MonoStackType -> T.Text
 squishMonoStackType (is, os) = foldMap squishType is <> "TT" <> foldMap squishType os
 
 renamePattern :: Pattern (StackType ()) (StackType ()) -> MonoM (Pattern (ConsAnn (StackType ())) (StackType ()))
-renamePattern = undefined
+renamePattern (PatternInt ty i)    = pure $ PatternInt ty i
+renamePattern (PatternWildcard ty) = pure $ PatternWildcard ty
+renamePattern (PatternBool ty b)   = pure $ PatternBool ty b
+renamePattern (PatternCons ty (Name t u _)) = do
+    cSt <- gets consEnv
+    let (u', ann) = M.findWithDefault (error "Internal error? unfound constructor") (u, ty) cSt
+    pure $ PatternCons ann (Name t u' ann)
 
 renameCase :: (Pattern (StackType ()) (StackType ()), [Atom (StackType ()) (StackType ())]) -> MonoM (Pattern (ConsAnn (StackType ())) (StackType ()), [Atom (ConsAnn (StackType ())) (StackType ())])
 renameCase (p, as) = (,) <$> renamePattern p <*> traverse renameAtom as

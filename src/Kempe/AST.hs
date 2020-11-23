@@ -36,6 +36,7 @@ import qualified Data.ByteString.Lazy    as BSL
 import           Data.Functor            (void)
 import           Data.Int                (Int64, Int8)
 import           Data.List.NonEmpty      (NonEmpty)
+import qualified Data.List.NonEmpty      as NE
 import           Data.Monoid             (Sum (..))
 import qualified Data.Set                as S
 import           Data.Text.Lazy.Encoding (decodeUtf8)
@@ -116,6 +117,10 @@ data Pattern c b = PatternInt b Integer
                  -- -- | PatternTuple
                  deriving (Eq, Generic, NFData, Functor, Foldable, Traversable)
 
+instance Bifunctor Pattern where
+    second = fmap
+    first f (PatternCons l tn) = PatternCons (f l) (fmap f tn)
+
 instance Pretty (Pattern c a) where
     pretty (PatternInt _ i)   = pretty i
     pretty (PatternBool _ b)  = pretty b
@@ -158,13 +163,31 @@ data Atom c b = AtName b (Name b)
 
 instance Bifunctor Atom where
     second = fmap
-    first f (AtCons l n) = AtCons (f l) (fmap f n)
+    first f (AtCons l n)    = AtCons (f l) (fmap f n)
+    first _ (AtName l n)    = AtName l n
+    first _ (IntLit l i)    = IntLit l i
+    first _ (WordLit l w)   = WordLit l w
+    first _ (Int8Lit l i)   = Int8Lit l i
+    first _ (BoolLit l b)   = BoolLit l b
+    first _ (AtBuiltin l b) = AtBuiltin l b
+    first f (Dip l as)      = Dip l (fmap (first f) as)
+    first f (If l as as')   = If l (fmap (first f) as) (fmap (first f) as')
+    first f (Case l ls)     =
+        let (ps, aLs) = NE.unzip ls
+            in Case l $ NE.zip (fmap (first f) ps) (fmap (fmap (first f)) aLs)
 
 instance Bifoldable Atom where
     bifoldMap _ g (AtName x n) = foldMap g (AtName x n)
 
 instance Bitraversable Atom where
-    bitraverse _ g (AtName x n) = traverse g (AtName x n)
+    bitraverse _ g (AtName x n)    = traverse g (AtName x n)
+    bitraverse _ g (IntLit l i)    = traverse g (IntLit l i)
+    bitraverse _ g (Int8Lit l i)   = traverse g (Int8Lit l i)
+    bitraverse _ g (WordLit l w)   = traverse g (WordLit l w)
+    bitraverse _ g (BoolLit l b)   = traverse g (BoolLit l b)
+    bitraverse _ g (AtBuiltin l b) = traverse g (AtBuiltin l b)
+    bitraverse f g (Dip l as)      = Dip <$> g l <*> traverse (bitraverse f g) as
+    bitraverse f g (If l as as')   = If <$> g l <*> traverse (bitraverse f g) as <*> traverse (bitraverse f g) as'
 
 data BuiltinFn = Drop
                | Swap
@@ -247,8 +270,7 @@ instance Bifoldable (KempeDecl a) where
 
 instance Bitraversable (KempeDecl a) where
     bitraverse f _ (TyDecl l tn ns ls)        =
-        let as = snd <$> ls
-            constrs = fst <$> ls
+        let (constrs, as) = unzip ls
             in TyDecl l tn ns . flip zip as <$> traverse (traverse f) constrs
     bitraverse f g (FunDecl x n tys tys' a)   = FunDecl <$> g x <*> traverse g n <*> pure tys <*> pure tys' <*> traverse (bitraverse f g) a
     bitraverse _ g (ExtFnDecl l n tys tys' b) = traverse g (ExtFnDecl l n tys tys' b)
