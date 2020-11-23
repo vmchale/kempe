@@ -1,12 +1,13 @@
 module Kempe.Shuttle ( monomorphize
                      ) where
 
-import           Data.Bifunctor     (Bifunctor (..))
-import           Data.Bitraversable (bitraverse)
-import           Data.List          (partition)
+import           Data.Bifunctor           (Bifunctor (..))
+import           Data.Bitraversable       (bitraverse)
+import           Data.List                (partition)
 import           Kempe.AST
 import           Kempe.Error
 import           Kempe.Monomorphize
+import           Kempe.Monomorphize.Error
 import           Kempe.TyAssign
 
 infixl 4 ~<$

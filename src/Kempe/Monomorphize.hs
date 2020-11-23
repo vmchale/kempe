@@ -1,4 +1,3 @@
-{-# LANGUAGE FlexibleContexts  #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TupleSections     #-}
 
@@ -7,8 +6,6 @@ module Kempe.Monomorphize ( closedModule
                           , MonoM
                           , runMonoM
                           , flattenModule
-                          , tryMono
-                          , tryMonoConsAnn
                           , ConsAnn (..)
                           -- * Benchmark
                           , closure
@@ -16,7 +13,6 @@ module Kempe.Monomorphize ( closedModule
                           ) where
 
 import           Control.Monad              ((<=<))
-import           Control.Monad.Except       (MonadError, throwError)
 import           Control.Monad.State.Strict (StateT, gets, runStateT)
 import           Data.Bifunctor             (second)
 import           Data.Function              (on)
@@ -30,6 +26,7 @@ import qualified Data.Text                  as T
 import           Data.Tuple.Extra           (fst3, snd3, thd3)
 import           Kempe.AST
 import           Kempe.Error
+import           Kempe.Monomorphize.Error   (tryMono)
 import           Kempe.Name
 import           Kempe.Unique
 import           Lens.Micro                 (Lens')
@@ -47,6 +44,9 @@ type MonoM = StateT RenameEnv (Either (Error ()))
 
 maxStateLens :: Lens' RenameEnv Int
 maxStateLens f s = fmap (\x -> s { maxState = x }) (f (maxState s))
+
+consEnvLens :: Lens' RenameEnv (M.Map (Unique, StackType ()) (Unique, ConsAnn (StackType ())))
+consEnvLens f s = fmap (\x -> s { consEnv = x }) (f (consEnv s))
 
 fnEnvLens :: Lens' RenameEnv (M.Map (Unique, StackType ()) Unique)
 fnEnvLens f s = fmap (\x -> s { fnEnv = x }) (f (fnEnv s))
@@ -89,14 +89,6 @@ squishType (TyApp _ ty ty')         = squishType ty <> squishType ty'
 
 squishMonoStackType :: MonoStackType -> T.Text
 squishMonoStackType (is, os) = foldMap squishType is <> "TT" <> foldMap squishType os
-
-tryMono :: MonadError (Error ()) m => StackType () -> m MonoStackType
-tryMono (StackType _ is os) | S.null (freeVars (is ++ os)) = pure (is, os)
-                            | otherwise = throwError $ MonoFailed ()
-
--- TODO: possible to get rid of this?
-tryMonoConsAnn :: MonadError (Error ()) m => ConsAnn (StackType ()) -> m (ConsAnn MonoStackType)
-tryMonoConsAnn = traverse tryMono
 
 renameCase :: (Pattern (StackType ()), [Atom (StackType ())]) -> MonoM (Pattern (StackType ()), [Atom (StackType ())])
 renameCase (p, as) = (p,) <$> traverse renameAtom as
@@ -169,10 +161,9 @@ specializeTyDecls ds = traverse (uncurry mkTyDecl) processed
           process tyDs@((_, x, _):_) = (x, zip (fst3 <$> tyDs) (thd3 <$> tyDs))
           process []                 = error "Empty group!"
 
--- TODO: annotate with size (for IR) + tag number (for ABI)
 mkTyDecl :: KempeDecl () (StackType ()) (StackType ()) -> [(TyName (StackType ()), StackType ())] -> MonoM (KempeDecl () (ConsAnn (StackType ())) (StackType ()))
 mkTyDecl (TyDecl _ tn ns preConstrs) constrs = do
-    renCons <- traverse (\(tn', ty) -> do { ty'@(is, _) <- tryMono ty ; (, is) . fmap (ConsAnn (szType ty') (getTag tn')) <$> renamed (tn' $> ty') ty' }) constrs
+    renCons <- traverse (\(tn', ty) -> do { ty'@(is, _) <- tryMono ty ; (, is) <$> renamedCons (tn' $> ty') ty' (ConsAnn (szType ty') (getTag tn')) }) constrs
     pure $ TyDecl () tn ns renCons
     where indexAt p xs = fst $ fromMaybe (error "Internal error.") $ find (\(_, x) -> p x) (zip [0..] xs)
           getTag (Name _ u _) = indexAt (== u) preIxes
@@ -189,6 +180,15 @@ specializeDecl (ExtFnDecl l n tys tys' b) _ = pure $ ExtFnDecl l n tys tys' b
 specializeDecl (Export l abi n) _           = pure $ Export l abi n
 specializeDecl TyDecl{} _                   = error "Shouldn't happen."
 -- leave exports and foreign imports alone (have to be monomorphic)
+
+renamedCons :: TyName a -> MonoStackType -> (StackType () -> ConsAnn (StackType ())) -> MonoM (TyName (ConsAnn (StackType ())))
+renamedCons (Name t i _) sty@(is, os) fAnn = do
+    let t' = t <> squishMonoStackType sty
+    (Name _ j _) <- freshName t' sty
+    let newStackType = StackType S.empty is os
+        ann = fAnn newStackType
+    modifying consEnvLens (M.insert (i, newStackType) (j, ann))
+    pure (Name t' j ann)
 
 -- | Insert a specialized rename.
 renamed :: Name a -> MonoStackType -> MonoM (Name (StackType ()))
