@@ -275,3 +275,6 @@ size (TyTuple _ tys)          = sum (fmap size tys)
 size TyNamed{}                = 1
 size (TyApp _ TyNamed{} ty)   = 1 + size ty
 size (TyApp _ ty@TyApp{} ty') = size ty + size ty'
+size (TyApp _ TyBuiltin{} _)  = error "Internal error: ill-kinded type!"
+size (TyApp _ TyVar{} _)      = error "Internal error: type variables should not be present at this stage."
+size (TyApp _ TyTuple{} _)    = error "Internal error: ill-kinded type!"
