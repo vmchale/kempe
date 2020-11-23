@@ -32,24 +32,33 @@ import           Kempe.AST
 import           Kempe.Error
 import           Kempe.Name
 import           Kempe.Unique
-import           Lens.Micro                 (_1, _2)
+import           Lens.Micro                 (Lens')
 import           Lens.Micro.Mtl             (modifying)
 
 -- | New function names, keyed by name + specialized type
 --
 -- also max state threaded through.
-type RenameEnv = (Int, M.Map (Unique, StackType ()) Unique)
+data RenameEnv = RenameEnv { maxState :: Int
+                           , fnEnv    :: M.Map (Unique, StackType ()) Unique
+                           , consEnv  :: M.Map (Unique, StackType ()) (Unique, ConsAnn (StackType ()))
+                           }
 
 type MonoM = StateT RenameEnv (Either (Error ()))
 
+maxStateLens :: Lens' RenameEnv Int
+maxStateLens f s = fmap (\x -> s { maxState = x }) (f (maxState s))
+
+fnEnvLens :: Lens' RenameEnv (M.Map (Unique, StackType ()) Unique)
+fnEnvLens f s = fmap (\x -> s { fnEnv = x }) (f (fnEnv s))
+
 runMonoM :: Int -> MonoM a -> Either (Error ()) (a, Int)
-runMonoM maxI = fmap (second fst) . flip runStateT (maxI, mempty)
+runMonoM maxI = fmap (second maxState) . flip runStateT (RenameEnv maxI mempty mempty)
 
 freshName :: T.Text -> a -> MonoM (Name a)
 freshName n ty = do
-    pSt <- gets fst
+    pSt <- gets maxState
     Name n (Unique $ pSt + 1) ty
-        <$ modifying _1 (+1)
+        <$ modifying maxStateLens (+1)
 
 -- | A 'ModuleMap' is a map which retrives the 'KempeDecl' associated with
 -- a given 'Name'
@@ -100,19 +109,19 @@ renameAtom a@WordLit{}              = pure a
 renameAtom a@BoolLit{}              = pure a
 renameAtom (Dip ty as)              = Dip ty <$> traverse renameAtom as
 renameAtom (AtName ty (Name t u l)) = do
-    mSt <- gets snd
+    mSt <- gets fnEnv
     let u' = M.findWithDefault u (u, ty) mSt
     pure $ AtName ty (Name t u' l)
 renameAtom (Case ty ls)             = Case ty <$> traverse renameCase ls
 renameAtom (AtCons ty (Name t u l)) = do
-    mSt <- gets snd
+    mSt <- gets fnEnv
     let u' = M.findWithDefault u (u, ty) mSt
     pure $ AtCons ty (Name t u' l)
 
 renameDecl :: KempeDecl () (ConsAnn (StackType ())) (StackType ()) -> MonoM (KempeDecl () (ConsAnn (StackType ())) (StackType ()))
 renameDecl (FunDecl l n is os as) = FunDecl l n is os <$> traverse renameAtom as
 renameDecl (Export ty abi (Name t u l)) = do
-    mSt <- gets snd
+    mSt <- gets fnEnv
     let u' = M.findWithDefault (error "Shouldn't happen; might be user error or internal error") (u, ty) mSt
     pure $ Export ty abi (Name t u' l)
 renameDecl d@ExtFnDecl{} = pure d
@@ -186,7 +195,7 @@ renamed (Name t i _) sty@(is, os) = do
     let t' = t <> squishMonoStackType sty
     (Name _ j _) <- freshName t' sty
     let newStackType = StackType S.empty is os
-    modifying _2 (M.insert (i, newStackType) j)
+    modifying fnEnvLens (M.insert (i, newStackType) j)
     pure (Name t' j newStackType)
 
 closure :: Ord b => (Module a c b, ModuleMap a c b) -> S.Set (Name b, b)
