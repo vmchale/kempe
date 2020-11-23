@@ -21,7 +21,6 @@ import           Control.Monad.State.Strict (StateT, gets, runStateT)
 import           Data.Bifunctor             (second)
 import           Data.Function              (on)
 import           Data.Functor               (($>))
-import           Data.Int                   (Int64)
 import qualified Data.IntMap                as IM
 import           Data.List                  (find, groupBy, partition)
 import qualified Data.Map                   as M

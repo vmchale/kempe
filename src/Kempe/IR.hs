@@ -320,7 +320,7 @@ dipify sz (AtBuiltin _ IntDiv)   = dipOp sz IntDivIR
 dipify sz (AtBuiltin _ IntMod)   = dipOp sz IntModIR
 dipify sz (AtBuiltin _ IntXor)   = dipOp sz IntXorIR
 dipify sz (AtBuiltin _ WordPlus) = dipOp sz IntPlusIR
-dipify sz (AtBuiltin ([], _) Dup) = error "Internal error: Ill-typed dup!"
+dipify _ (AtBuiltin ([], _) Dup) = error "Internal error: Ill-typed dup!"
 dipify sz (AtBuiltin (is, _) Dup) = do
     let sz' = size (last is) in
         pure $
