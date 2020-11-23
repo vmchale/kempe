@@ -263,15 +263,15 @@ extrVars (TyTuple _ tys)  = concatMap extrVars tys
 freeVars :: [KempeTy a] -> S.Set (Name a)
 freeVars tys = S.fromList (concatMap extrVars tys)
 
--- need env with size for constructors
+-- | Don't call this on ill-kinded types; it won't throw any error.
 size :: KempeTy a -> Int64
-size (TyBuiltin _ TyInt)    = 8 -- since we're only targeting x86_64 and aarch64 we have 64-bit 'Int's
-size (TyBuiltin _ TyPtr)    = 8
-size (TyBuiltin _ TyBool)   = 1
-size (TyBuiltin _ TyInt8)   = 1
-size (TyBuiltin _ TyWord)   = 8
-size TyVar{}                = error "Internal error: type variables should not be present at this stage."
-size (TyTuple _ tys)        = sum (fmap size tys)
-size TyNamed{}              = 1
-size (TyApp _ TyNamed{} ty) = 1 + size ty
--- FIXME: doesn't work with e.g. (Either a) b
+size (TyBuiltin _ TyInt)      = 8 -- since we're only targeting x86_64 and aarch64 we have 64-bit 'Int's
+size (TyBuiltin _ TyPtr)      = 8
+size (TyBuiltin _ TyBool)     = 1
+size (TyBuiltin _ TyInt8)     = 1
+size (TyBuiltin _ TyWord)     = 8
+size TyVar{}                  = error "Internal error: type variables should not be present at this stage."
+size (TyTuple _ tys)          = sum (fmap size tys)
+size TyNamed{}                = 1
+size (TyApp _ TyNamed{} ty)   = 1 + size ty
+size (TyApp _ ty@TyApp{} ty') = size ty + size ty'
