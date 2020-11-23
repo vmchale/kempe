@@ -20,4 +20,4 @@ eval "$(kc --bash-completion-script kc)"
     to assembly directly.
   * Unification takes too long
   * Doesn't actually save callee-save registers
-  * Sum types can't be translated to assembly
+  * Sum types aren't translated in the IR phase
