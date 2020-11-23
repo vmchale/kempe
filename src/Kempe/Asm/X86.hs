@@ -112,11 +112,11 @@ irEmit (IR.MovMem (IR.Reg r) _ (IR.ExprIntRel IR.IntEqIR (IR.Reg r1) (IR.Reg r2)
     ; pure [ CmpRegReg () (toAbsReg r1) (toAbsReg r2), Je () l0, Jump () l1, Label () l0, MovABool () (Reg $ toAbsReg r) 1, Jump () l2, Label () l1, MovABool () (Reg $ toAbsReg r) 0, Label () l2 ]
     }
 -- For 128-bit returns we'd have to use rax and rdx
-irEmit (IR.WrapKCall Cabi (is, [o]) n l) | all (\i -> IR.size i <= 8) is && IR.size o <= 8 && length is <= 6 = do
-    { let offs = scanl' (+) 0 (fmap IR.size is)
+irEmit (IR.WrapKCall Cabi (is, [o]) n l) | all (\i -> size i <= 8) is && size o <= 8 && length is <= 6 = do
+    { let offs = scanl' (+) 0 (fmap size is)
     ; let totalSize = sizeStack is
     ; let argRegs = [CArg1, CArg2, CArg3, CArg4, CArg5, CArg6]
-    ; pure $ [BSLabel () n, MovRL () DataPointer "kempe_data"] ++ zipWith (\r i-> MovAR () (AddrRCPlus DataPointer i) r) argRegs offs ++ [AddRC () DataPointer totalSize, Call () l, MovRA () CRet (AddrRCMinus DataPointer (IR.size o)), Ret ()] -- TODO: bytes on the stack eh
+    ; pure $ [BSLabel () n, MovRL () DataPointer "kempe_data"] ++ zipWith (\r i-> MovAR () (AddrRCPlus DataPointer i) r) argRegs offs ++ [AddRC () DataPointer totalSize, Call () l, MovRA () CRet (AddrRCMinus DataPointer (size o)), Ret ()] -- TODO: bytes on the stack eh
     }
 irEmit (IR.WrapKCall Kabi (_, _) n l) =
     pure [BSLabel () n, Call () l, Ret ()]
@@ -169,6 +169,6 @@ toByte False = 0
 toByte True  = 1
 
 sizeStack :: [KempeTy a] -> Int64
-sizeStack = getSum . foldMap (Sum . IR.size)
+sizeStack = getSum . foldMap (Sum . size)
 
 -- I wonder if I could use a hylo.?

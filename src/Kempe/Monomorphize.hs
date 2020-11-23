@@ -21,6 +21,7 @@ import           Control.Monad.State.Strict (StateT, gets, runStateT)
 import           Data.Bifunctor             (second)
 import           Data.Function              (on)
 import           Data.Functor               (($>))
+import           Data.Int                   (Int64)
 import qualified Data.IntMap                as IM
 import           Data.List                  (find, groupBy, partition)
 import qualified Data.Map                   as M
@@ -162,11 +163,13 @@ specializeTyDecls ds = traverse (uncurry mkTyDecl) processed
 -- TODO: annotate with size (for IR) + tag number (for ABI)
 mkTyDecl :: KempeDecl () (StackType ()) (StackType ()) -> [(TyName (StackType ()), StackType ())] -> MonoM (KempeDecl () (ConsAnn (StackType ())) (StackType ()))
 mkTyDecl (TyDecl _ tn ns preConstrs) constrs = do
-    renCons <- traverse (\(tn', ty) -> do { ty'@(is, _) <- tryMono ty ; (, is) . fmap (ConsAnn undefined (getTag tn')) <$> renamed (tn' $> ty') ty' }) constrs
+    renCons <- traverse (\(tn', ty) -> do { ty'@(is, _) <- tryMono ty ; (, is) . fmap (ConsAnn (szType ty') (getTag tn')) <$> renamed (tn' $> ty') ty' }) constrs
     pure $ TyDecl () tn ns renCons
     where indexAt p xs = fst $ fromMaybe (error "Internal error.") $ find (\(_, x) -> p x) (zip [0..] xs)
           getTag (Name _ u _) = indexAt (== u) preIxes
           preIxes = fmap (unique . fst) preConstrs
+          szType (_, [o]) = 1 + size o
+          szType _        = error "Internal error: ill-typed constructor."
 mkTyDecl _ _ = error "Shouldn't happen."
 
 specializeDecl :: KempeDecl () (StackType ()) (StackType ()) -> StackType () -> MonoM (KempeDecl () (ConsAnn (StackType ())) (StackType ()))

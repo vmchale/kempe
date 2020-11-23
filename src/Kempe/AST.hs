@@ -18,6 +18,7 @@ module Kempe.AST ( BuiltinTy (..)
                  , Module
                  , freeVars
                  , MonoStackType
+                 , size
                  , prettyMonoStackType
                  , prettyTyped
                  , prettyTypedModule
@@ -85,6 +86,8 @@ data StackType b = StackType { quantify :: S.Set (Name b)
 
 type MonoStackType = ([KempeTy ()], [KempeTy ()])
 
+-- | Annotation carried on constructors to keep size information through the IR
+-- generation phase.
 data ConsAnn a = ConsAnn { tySz :: Int64, tag :: Word8, consTy :: a }
     deriving (Functor, Foldable, Traversable, Generic, NFData)
 
@@ -259,3 +262,16 @@ extrVars (TyTuple _ tys)  = concatMap extrVars tys
 
 freeVars :: [KempeTy a] -> S.Set (Name a)
 freeVars tys = S.fromList (concatMap extrVars tys)
+
+-- need env with size for constructors
+size :: KempeTy a -> Int64
+size (TyBuiltin _ TyInt)    = 8 -- since we're only targeting x86_64 and aarch64 we have 64-bit 'Int's
+size (TyBuiltin _ TyPtr)    = 8
+size (TyBuiltin _ TyBool)   = 1
+size (TyBuiltin _ TyInt8)   = 1
+size (TyBuiltin _ TyWord)   = 8
+size TyVar{}                = error "Internal error: type variables should not be present at this stage."
+size (TyTuple _ tys)        = sum (fmap size tys)
+size TyNamed{}              = 1
+size (TyApp _ TyNamed{} ty) = 1 + size ty
+-- FIXME: doesn't work with e.g. (Either a) b

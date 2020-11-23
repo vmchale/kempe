@@ -358,13 +358,3 @@ dataPointerPlus off =
     if off > 0
         then ExprIntBinOp IntPlusIR (Reg DataPointer) (ConstInt off)
         else ExprIntBinOp IntMinusIR (Reg DataPointer) (ConstInt (negate off))
-
--- need env with size for constructors
-size :: KempeTy a -> Int64
-size (TyBuiltin _ TyInt)  = 8 -- since we're only targeting x86_64 and aarch64 we have 64-bit 'Int's
-size (TyBuiltin _ TyPtr)  = 8
-size (TyBuiltin _ TyBool) = 1
-size (TyBuiltin _ TyInt8) = 1
-size (TyBuiltin _ TyWord) = 8
-size TyVar{}              = error "Internal error: type variables should not be present at this stage."
-size (TyTuple _ tys)      = sum (fmap size tys)
