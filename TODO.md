@@ -24,8 +24,9 @@
 - [x] The current setup ignores extern imports -> no it doesn't
 - [x] Exported functions w/ C ABI should be there (so it can link)
 - [ ] Throw error when return value in C ABI is too big
-- [ ] Constructors aren't monomorphized
+- [x] Constructors aren't monomorphized
 - [ ] Correctly restore registers (C ABI)
+- [ ] Warn on >256 constructors
 # Pipeline
 - [ ] Inliner (all non-recursive?)
 - [ ] https://www.cs.princeton.edu/courses/archive/spr19/cos217/lectures/13_Assembly1.pdf (von neumann -> c where int ptrs, ATS & such are useful...)
