@@ -9,3 +9,5 @@ cradle:
       component: "bench:kempe-bench"
     - path: "./run/Main.hs"
       component: "exe:kc"
+    - path: "./test/Golden.hs"
+      component: "test:kempe-golden"
