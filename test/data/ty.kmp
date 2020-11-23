@@ -23,8 +23,8 @@ trip : a -- a a a
 trint : -- Int Int Int
       =: [ 0 trip ]
 
-odd : Int -- Bool
-    =: [ 2 % 0 = ]
+even : Int -- Bool
+     =: [ 2 % 0 = ]
 
 randBool : -- Bool
          =: [ rand odd ]
