@@ -119,7 +119,19 @@ data Pattern c b = PatternInt b Integer
 
 instance Bifunctor Pattern where
     second = fmap
-    first f (PatternCons l tn) = PatternCons (f l) (fmap f tn)
+    first f (PatternCons l tn)  = PatternCons (f l) (fmap f tn)
+    first _ (PatternInt l i)    = PatternInt l i
+    first _ (PatternWildcard l) = PatternWildcard l
+    first _ (PatternBool l b)   = PatternBool l b
+
+instance Bifoldable Pattern where
+    bifoldMap _ g (PatternInt l i) = foldMap g (PatternInt l i)
+
+instance Bitraversable Pattern where
+    bitraverse _ g (PatternInt l i)    = traverse g (PatternInt l i)
+    bitraverse _ g (PatternWildcard l) = traverse g (PatternWildcard l)
+    bitraverse _ g (PatternBool l b)   = traverse g (PatternBool l b)
+    bitraverse f _ (PatternCons l cn)  = PatternCons <$> f l <*> traverse f cn
 
 instance Pretty (Pattern c a) where
     pretty (PatternInt _ i)   = pretty i
@@ -186,8 +198,12 @@ instance Bitraversable Atom where
     bitraverse _ g (WordLit l w)   = traverse g (WordLit l w)
     bitraverse _ g (BoolLit l b)   = traverse g (BoolLit l b)
     bitraverse _ g (AtBuiltin l b) = traverse g (AtBuiltin l b)
+    bitraverse f _ (AtCons l c)    = AtCons <$> f l <*> traverse f c
     bitraverse f g (Dip l as)      = Dip <$> g l <*> traverse (bitraverse f g) as
     bitraverse f g (If l as as')   = If <$> g l <*> traverse (bitraverse f g) as <*> traverse (bitraverse f g) as'
+    bitraverse f g (Case l ls)     =
+        let (ps, as) = NE.unzip ls
+            in Case <$> g l <*> (NE.zip <$> traverse (bitraverse f g) ps <*> traverse (traverse (bitraverse f g)) as)
 
 data BuiltinFn = Drop
                | Swap
