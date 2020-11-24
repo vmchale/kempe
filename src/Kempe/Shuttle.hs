@@ -15,7 +15,6 @@ monomorphize :: Int
              -> Either (Error ()) (Module () (ConsAnn MonoStackType) MonoStackType)
 monomorphize ctx m = do
     (mTy, i) <- runTypeM ctx (assignModule m)
-
     (flat, j) <- runMonoM i (flattenModule mTy)
     let (flatTy, _) = partition isTyDecl flat
     -- assign types again
