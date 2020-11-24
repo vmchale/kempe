@@ -14,6 +14,8 @@ monomorphize :: Int
 monomorphize ctx m = do
     (mTy, i) <- runTypeM ctx (assignModule m)
     (flat, _) <- runMonoM i (flattenModule mTy)
+    -- TODO: re-assign types, but don't drop ConsAnn? I think the ordering is
+    -- screwed.
     let flatFn' = filter (not . isTyDecl) flat
     traverse (bitraverse tryMonoConsAnn tryMono) flatFn'
 
