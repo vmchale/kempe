@@ -238,7 +238,7 @@ namesInAtom IntLit{}                   = S.empty
 namesInAtom BoolLit{}                  = S.empty
 namesInAtom Int8Lit{}                  = S.empty
 namesInAtom WordLit{}                  = S.empty
-namesInAtom (Case _ as)                = foldMap namesInAtom (foldMap snd as) -- don't need patterns since we're destructing them here?
+namesInAtom (Case _ as)                = foldMap namesInAtom (foldMap snd as) -- FIXME: patterns too
 
 exports :: Module a c b -> [(Name b, b)]
 exports = mapMaybe exportsDecl
