@@ -22,7 +22,7 @@ import           Prettyprinter             (defaultLayoutOptions, layoutPretty)
 import           Prettyprinter.Render.Text (renderStrict)
 
 bivoid :: Bifunctor p => p a b -> p () ()
-bivoid = bimap (const ()) (cons ())
+bivoid = bimap (const ()) (const ())
 
 main :: IO ()
 main =
