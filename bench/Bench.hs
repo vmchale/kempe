@@ -76,6 +76,7 @@ main =
                   , bgroup "Pipeline"
                         [ bench "Validate (examples/factorial.kmp)" $ nfIO (tcFile "examples/factorial.kmp")
                         , bench "Validate (examples/splitmix.kmp)" $ nfIO (tcFile "examples/splitmix.kmp")
+                        , bench "Validate (lib/numbertheory.kmp)" $ nfIO (tcFile "lib/numbertheory.kmp")
                         , bench "Generate assembly (examples/factorial.kmp)" $ nfIO (writeAsm "examples/factorial.kmp")
                         , bench "Generate assembly (examples/splitmix.kmp)" $ nfIO (writeAsm "examples/splitmix.kmp")
                         , bench "Generate assembly (lib/numbertheory.kmp)" $ nfIO (writeAsm "lib/numbertheory.kmp")
