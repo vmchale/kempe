@@ -4,6 +4,28 @@ gcd : Int Int -- Int
            , dup dip(%) swap gcd )
        ]
 
+over : a b -- a b a
+     =: [ dip(dup) swap ]
+
+dup2 : a b -- a b a b
+     =: [ over over ]
+
+square : Int -- Int
+       =: [ dup * ]
+
+is_prime_step : Int Int -- Bool
+              =: [ dup2 divides
+                   if( drop drop False
+                     , dup2 square ≤
+                        if( 1 + is_prime_step
+                          , drop drop True
+                          )
+                     )
+                 ]
+
+is_prime : Int -- Bool
+         =: [ 2 is_prime_step ]
+
 divides : Int Int -- Bool
         =: [ % 0 = ]
 
@@ -11,3 +33,4 @@ k_gcd : Int Int -- Int
       =: [ gcd ]
 
 %foreign cabi k_gcd
+%foreign cabi is_prime

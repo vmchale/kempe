@@ -161,7 +161,8 @@ typeOfBuiltin Swap = do
 typeOfBuiltin Dup = do
     aN <- dummyName "a"
     pure $ StackType (S.singleton aN) [TyVar () aN] [TyVar () aN, TyVar () aN]
-typeOfBuiltin IntEq      = pure $ StackType S.empty [TyBuiltin () TyInt, TyBuiltin () TyInt] [TyBuiltin () TyBool]
+typeOfBuiltin IntEq      = pure intRel
+typeOfBuiltin IntLeq     = pure intRel
 typeOfBuiltin IntMod     = pure intBinOp
 typeOfBuiltin IntDiv     = pure intBinOp
 typeOfBuiltin IntPlus    = pure intBinOp
@@ -175,6 +176,9 @@ typeOfBuiltin WordPlus   = pure wordBinOp
 typeOfBuiltin WordTimes  = pure wordBinOp
 typeOfBuiltin WordShiftR = pure wordShift
 typeOfBuiltin WordShiftL = pure wordShift
+
+intRel :: StackType ()
+intRel = StackType S.empty [TyBuiltin () TyInt, TyBuiltin () TyInt] [TyBuiltin () TyBool]
 
 intBinOp :: StackType ()
 intBinOp = StackType S.empty [TyBuiltin () TyInt, TyBuiltin () TyInt] [TyBuiltin () TyInt]

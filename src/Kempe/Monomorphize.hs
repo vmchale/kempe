@@ -156,7 +156,7 @@ closedModule m = addExports <$> do
             case IM.lookup i key of
                 Just decl -> (n, decl, ty)
                 Nothing   -> error "Internal error! module map should contain all names."
-          rootDecl = gatherDecl <$> roots
+          rootDecl = gatherDecl <$> roots -- FIXME: two-steps away, the roots are not monomorphized!
           drop1 ~(_, y, z) = (y, z)
           (tyDecls, fnDecls) = partition (isTyDecl . snd3) rootDecl
           isTyDecl TyDecl{} = True

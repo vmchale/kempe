@@ -1,5 +1,6 @@
 module Kempe.File ( tcFile
                   , dumpMono
+                  , dumpTyped
                   , irFile
                   , x86File
                   , dumpX86
@@ -16,6 +17,7 @@ import           Kempe.AST
 import           Kempe.Asm.X86.Type
 import           Kempe.Error
 import           Kempe.IR
+import           Kempe.Lexer
 import           Kempe.Parser
 import           Kempe.Pipeline
 import           Kempe.Proc.Nasm
@@ -33,10 +35,15 @@ tcFile fp = do
 yeetIO :: Exception e => Either e a -> IO a
 yeetIO = either throwIO pure
 
+dumpTyped :: FilePath -> IO ()
+dumpTyped fp = do
+    (i, m) <- parsedFp fp
+    (mTyped, _) <- yeetIO $ runTypeM i (assignModule m)
+    putDoc $ prettyTypedModule mTyped
+
 dumpMono :: FilePath -> IO ()
 dumpMono fp = do
-    contents <- BSL.readFile fp
-    (i, m) <- yeetIO $ parseWithMax contents
+    (i, m) <- parsedFp fp
     mMono <- yeetIO $ monomorphize i m
     putDoc $ prettyTypedModule (fmap (bimap fromMonoConsAnn fromMono) mMono)
     where fromMono (is, os) = StackType S.empty is os
@@ -50,14 +57,17 @@ dumpX86 = prettyAsm .* x86Alloc
 
 irFile :: FilePath -> IO ()
 irFile fp = do
-    contents <- BSL.readFile fp
-    res <- yeetIO $ parseWithMax contents
+    res <- parsedFp fp
     putDoc $ uncurry dumpIR res <> hardline
+
+parsedFp :: FilePath -> IO (Int, Module AlexPosn AlexPosn AlexPosn)
+parsedFp fp = do
+    contents <- BSL.readFile fp
+    yeetIO $ parseWithMax contents
 
 x86File :: FilePath -> IO ()
 x86File fp = do
-    contents <- BSL.readFile fp
-    res <- yeetIO $ parseWithMax contents
+    res <- parsedFp fp
     putDoc $ uncurry dumpX86 res <> hardline
 
 compile :: FilePath

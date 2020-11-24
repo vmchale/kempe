@@ -34,6 +34,7 @@ backendTests =
         , liveness "examples/splitmix.kmp"
         , codegen "examples/factorial.kmp"
         , codegen "examples/splitmix.kmp"
+        , codegen "lib/numbertheory.kmp"
         ]
 
 codegen :: FilePath -> TestTree
