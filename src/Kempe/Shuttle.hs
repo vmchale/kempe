@@ -1,9 +1,7 @@
 module Kempe.Shuttle ( monomorphize
                      ) where
 
-import           Data.Bifunctor.Ext
 import           Data.Bitraversable       (bitraverse)
-import           Data.List                (partition)
 import           Kempe.AST
 import           Kempe.Error
 import           Kempe.Monomorphize
@@ -15,13 +13,9 @@ monomorphize :: Int
              -> Either (Error ()) (Module () (ConsAnn MonoStackType) MonoStackType)
 monomorphize ctx m = do
     (mTy, i) <- runTypeM ctx (assignModule m)
-    (flat, j) <- runMonoM i (flattenModule mTy)
-    -- assign types again
-    (flat', _) <- runTypeM j (assignModule flat)
-    let (_, flatFn') = partition isTyDecl flat'
-    -- save tydecls from flatten round (since they're annotated with types there
-    -- already)
-    traverse (bitraverse tryMonoConsAnn tryMono) (fmap (undefined ~<$) flatFn')
+    (flat, _) <- runMonoM i (flattenModule mTy)
+    let flatFn' = filter (not . isTyDecl) flat
+    traverse (bitraverse tryMonoConsAnn tryMono) flatFn'
 
 isTyDecl :: KempeDecl a c b -> Bool
 isTyDecl TyDecl{} = True
