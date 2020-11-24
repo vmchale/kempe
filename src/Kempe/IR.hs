@@ -27,6 +27,7 @@ import           Data.Foldable.Ext
 import           Data.Int                   (Int64, Int8)
 import qualified Data.IntMap                as IM
 import           Data.Text.Encoding         (decodeUtf8, encodeUtf8)
+import           Data.Word                  (Word8)
 import           GHC.Generics               (Generic)
 import           Kempe.AST
 import           Kempe.Name
@@ -139,6 +140,7 @@ data Stmt = Labeled Label
 
 data Exp = ConstInt Int64
          | ConstInt8 Int8
+         | ConstTag Word8
          | ConstWord Word
          | ConstBool Bool
          | Reg Temp -- TODO: size?
@@ -285,6 +287,8 @@ writeAtom (AtBuiltin ([i0, i1], _) Swap) =
                 ++ copyBytes (-sz0 - sz1) (-sz1) sz1 -- copy i1 to where i0 used to be
                 ++ copyBytes (-sz0) 0 sz0 -- copy i0 at end of stack to its new place
 writeAtom (AtBuiltin _ Swap) = error "Ill-typed swap!"
+writeAtom (AtCons ann@(ConsAnn _ tag _) _) =
+    pure $ dataPointerInc (padBytes ann) : push 1 (ConstTag tag)
 
 -- | Constructors may need to be padded, this computes the number of bytes of
 -- padding

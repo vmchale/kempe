@@ -125,7 +125,9 @@ instance Bifunctor Pattern where
     first _ (PatternBool l b)   = PatternBool l b
 
 instance Bifoldable Pattern where
-    bifoldMap _ g (PatternInt l i) = foldMap g (PatternInt l i)
+    bifoldMap _ g (PatternInt l i)    = foldMap g (PatternInt l i)
+    bifoldMap _ g (PatternWildcard l) = foldMap g (PatternWildcard l)
+    bifoldMap _ g (PatternBool l b)   = foldMap g (PatternBool l b)
 
 instance Bitraversable Pattern where
     bitraverse _ g (PatternInt l i)    = traverse g (PatternInt l i)
