@@ -13,7 +13,6 @@ module Kempe.Monomorphize ( closedModule
                           ) where
 
 import           Control.Monad              ((<=<))
-import           Control.Monad.Extra        (mapMaybeM)
 import           Control.Monad.State.Strict (StateT, gets, runStateT)
 import           Data.Bifunctor             (second)
 import           Data.Function              (on)
