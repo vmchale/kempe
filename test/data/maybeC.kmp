@@ -1,0 +1,6 @@
+type Maybe a { Just a | Nothing }
+
+noInt : -- (Maybe Int)
+      =: [ Nothing ]
+
+%foreign cabi noInt

@@ -25,6 +25,7 @@ backendTests =
         , irNoYeet "test/data/export.kmp"
         , irNoYeet "examples/splitmix.kmp"
         , irNoYeet "examples/factorial.kmp"
+        , irNoYeet "test/data/maybeC.kmp"
         , x86NoYeet "examples/factorial.kmp"
         , x86NoYeet "examples/splitmix.kmp"
         , controlFlowGraph "examples/factorial.kmp"
