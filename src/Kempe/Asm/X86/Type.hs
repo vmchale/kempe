@@ -184,6 +184,7 @@ data X86 reg a = PushReg { ann :: a, rSrc :: reg }
                | Label { ann :: a, label :: Label }
                | BSLabel { ann :: a, bsLabel :: BS.ByteString }
                | Je { ann :: a, jLabel :: Label }
+               | Jl { ann :: a, jLabel :: Label }
                | CmpAddrReg { ann :: a, addrCmp :: Addr reg, rCmp :: reg }
                | CmpRegReg { ann :: a, rCmp :: reg, rCmp' :: reg } -- for simplicity
                | CmpAddrBool { ann :: a, addrCmp :: Addr reg, bCmp :: Word8 }
@@ -238,6 +239,7 @@ instance Pretty reg => Pretty (X86 reg a) where
     pretty (Label _ l)         = prettyLabel l <> colon
     pretty (BSLabel _ b)       = let pl = pretty (decodeUtf8 b) in "global" <+> pl <> hardline <> pl <> colon
     pretty (Je _ l)            = i4 ("je" <+> prettyLabel l)
+    pretty (Jl _ l)            = i4 ("jl" <+> prettyLabel l)
     pretty (CmpAddrReg _ a r)  = i4 ("cmp" <+> pretty a <> "," <+> pretty r)
     pretty (CmpRegReg _ r0 r1) = i4 ("cmp" <+> pretty r0 <> "," <+> pretty r1)
     pretty (CmpAddrBool _ a b) = i4 ("cmp byte" <+> pretty a <> "," <+> pretty b)

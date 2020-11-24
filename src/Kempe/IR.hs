@@ -158,7 +158,7 @@ data RelBinOp = IntEqIR
 
 instance Pretty RelBinOp where
     pretty IntEqIR  = "="
-    pretty IntNeqIR = "!="
+    pretty IntNeqIR = "≠"
     pretty IntLtIR  = "<"
     pretty IntGtIR  = ">"
 
@@ -255,6 +255,7 @@ writeAtom (AtBuiltin _ IntXor)      = intOp IntXorIR
 writeAtom (AtBuiltin _ IntShiftR)   = intShift WordShiftRIR -- TODO: shr or sar?
 writeAtom (AtBuiltin _ IntShiftL)   = intShift WordShiftLIR
 writeAtom (AtBuiltin _ IntEq)       = intRel IntEqIR
+writeAtom (AtBuiltin _ IntLt)       = intRel IntLtIR
 writeAtom (AtBuiltin _ WordPlus)    = intOp IntPlusIR
 writeAtom (AtBuiltin _ WordTimes)   = intOp IntTimesIR
 writeAtom (AtBuiltin _ WordXor)     = intOp IntXorIR
@@ -332,7 +333,7 @@ dipify sz (AtBuiltin (is, _) Dup) = do
         pure $
              copyBytes 0 (-sz) sz -- copy sz bytes over to the end of the stack
                 ++ copyBytes (-sz) (-sz - sz') sz' -- copy sz' bytes over (duplicate)
-                ++ undefined -- copy sz bytes back
+                ++ copyBytes (-sz + sz') 0 sz -- copy sz bytes back
                 ++ [ dataPointerInc sz' ] -- move data pointer over sz' bytes
 
 dipOp :: Int64 -> IntBinOp -> TempM [Stmt]

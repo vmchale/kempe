@@ -72,6 +72,8 @@ irEmit (IR.MovMem (IR.Reg r) _ (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r1) (IR.Re
     }
 irEmit (IR.MovMem (IR.Reg r) _ (IR.ConstInt i)) =
     pure [ MovAC () (Reg $ toAbsReg r) i ]
+irEmit (IR.MovMem (IR.Reg r) _ (IR.ConstBool b)) =
+    pure [ MovABool () (Reg $ toAbsReg r) (toByte b) ]
 irEmit (IR.MovMem (IR.Reg r) _ (IR.ExprIntBinOp IR.IntTimesIR (IR.Reg r1) (IR.Reg r2))) = do
     { r' <- allocReg64
     ; pure [ MovRR () r' (toAbsReg r1), ImulRR () r' (toAbsReg r2), MovAR () (Reg $ toAbsReg r) r' ]
@@ -109,6 +111,12 @@ irEmit (IR.MovMem (IR.Reg r) _ (IR.ExprIntRel IR.IntEqIR (IR.Reg r1) (IR.Reg r2)
     ; l1 <- getLabel
     ; l2 <- getLabel
     ; pure [ CmpRegReg () (toAbsReg r1) (toAbsReg r2), Je () l0, Jump () l1, Label () l0, MovABool () (Reg $ toAbsReg r) 1, Jump () l2, Label () l1, MovABool () (Reg $ toAbsReg r) 0, Label () l2 ]
+    }
+irEmit (IR.MovMem (IR.Reg r) _ (IR.ExprIntRel IR.IntLtIR (IR.Reg r1) (IR.Reg r2))) = do
+    { l0 <- getLabel
+    ; l1 <- getLabel
+    ; l2 <- getLabel
+    ; pure [ CmpRegReg () (toAbsReg r1) (toAbsReg r2), Jl () l0, Jump () l1, Label () l0, MovABool () (Reg $ toAbsReg r) 1, Jump () l2, Label () l1, MovABool () (Reg $ toAbsReg r) 0, Label () l2 ]
     }
 -- For 128-bit returns we'd have to use rax and rdx
 irEmit (IR.WrapKCall Cabi (is, [o]) n l) | all (\i -> size i <= 8) is && size o <= 8 && length is <= 6 = do
