@@ -168,6 +168,7 @@ data X86 reg a = PushReg { ann :: a, rSrc :: reg }
                | MovRL { ann :: a, rDest :: reg, bsLabel :: BS.ByteString }
                | MovAC { ann :: a, addrDest :: Addr reg, iSrc :: Int64 }
                | MovACi8 { ann :: a, addrDest :: Addr reg, i8Src :: Int8 }
+               | MovACTag { ann :: a, addrDest :: Addr reg, tagSrc :: Word8 }
                | MovRCBool { ann :: a, rDest :: reg, boolSrc :: Word8 }
                | MovRCi8 { ann :: a, rDest :: reg, i8Src :: Int8 }
                | MovRWord { ann :: a, rDest :: reg, wSrc :: Word }
@@ -244,6 +245,7 @@ instance Pretty reg => Pretty (X86 reg a) where
     pretty (ShiftLRR _ r0 r1)  = i4 ("shl" <+> pretty r0 <> "," <+> pretty r1)
     pretty (IdivR _ r)         = i4 ("idiv" <+> pretty r)
     pretty Cqo{}               = i4 "cqo"
+    pretty (MovACTag _ a t)    = i4 ("mov" <+> pretty a <> "," <+> pretty t)
 
 prettyAsm :: Pretty reg => [X86 reg a] -> Doc ann
 prettyAsm = ((prolegomena <> hardline <> "section .text" <> hardline) <>) . concatWith (\x y -> x <> hardline <> y) . fmap pretty

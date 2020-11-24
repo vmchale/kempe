@@ -196,6 +196,7 @@ writeDecl (ExtFnDecl ty (Name _ u _) _ _ cName) = do
     bl <- broadcastName u
     pure [Labeled bl, CCall ty cName, Ret]
 writeDecl (Export sTy abi n) = pure . WrapKCall abi sTy (encodeUtf8 $ name n) <$> lookupName n
+writeDecl TyDecl{} = error "Internal error: type declarations should not exist at this stage"
 
 writeAtoms :: [Atom (ConsAnn MonoStackType) MonoStackType] -> TempM [Stmt]
 writeAtoms = foldMapA writeAtom
