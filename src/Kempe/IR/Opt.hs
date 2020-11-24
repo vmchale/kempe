@@ -29,4 +29,9 @@ successiveBumps
         :(MovTemp DataPointer (ExprIntBinOp IntPlusIR (Reg DataPointer) (ConstInt i')))
         :ss) =
             MovTemp DataPointer (ExprIntBinOp IntPlusIR (Reg DataPointer) (ConstInt $ i+i')) : successiveBumps ss
+successiveBumps
+    ((MovTemp DataPointer (ExprIntBinOp IntMinusIR (Reg DataPointer) (ConstInt i)))
+        :(MovTemp DataPointer (ExprIntBinOp IntMinusIR (Reg DataPointer) (ConstInt i')))
+        :ss) =
+            MovTemp DataPointer (ExprIntBinOp IntMinusIR (Reg DataPointer) (ConstInt $ i+i')) : successiveBumps ss
 successiveBumps (s:ss) = s : successiveBumps ss
