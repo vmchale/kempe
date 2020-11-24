@@ -13,10 +13,13 @@ dup2 : a b -- a b a b
 square : Int -- Int
        =: [ dup * ]
 
+divides : Int Int -- Bool
+        =: [ % 0 = ]
+
 is_prime_step : Int Int -- Bool
-              =: [ dup2 divides
+              =: [ dip(dup) swap dip(dup) swap divides
                    if( drop drop False
-                     , dup2 square <
+                     , dip(dup) swap dip(dup) swap square <
                         if( 1 + is_prime_step
                           , drop drop True
                           )
@@ -25,9 +28,6 @@ is_prime_step : Int Int -- Bool
 
 is_prime : Int -- Bool
          =: [ 2 is_prime_step ]
-
-divides : Int Int -- Bool
-        =: [ % 0 = ]
 
 k_gcd : Int Int -- Int
       =: [ gcd ]
