@@ -23,6 +23,7 @@ module Kempe.AST ( BuiltinTy (..)
                  , prettyMonoStackType
                  , prettyTyped
                  , prettyTypedModule
+                 , prettyFancyModule
                  , prettyModule
                  -- * I resent this...
                  , voidStackType
@@ -310,6 +311,9 @@ instance Bitraversable (KempeDecl a) where
 
 prettyModuleGeneral :: (Atom c b -> Doc ann) -> Module a c b -> Doc ann
 prettyModuleGeneral atomizer = sep . fmap (prettyKempeDecl atomizer)
+
+prettyFancyModule :: Module () (ConsAnn (StackType ())) (StackType ()) -> Doc ann
+prettyFancyModule = prettyTypedModule . fmap (first consTy)
 
 prettyTypedModule :: Module () (StackType ()) (StackType ()) -> Doc ann
 prettyTypedModule = prettyModuleGeneral prettyTyped

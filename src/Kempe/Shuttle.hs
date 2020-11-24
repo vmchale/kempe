@@ -8,14 +8,18 @@ import           Kempe.Monomorphize
 import           Kempe.Monomorphize.Error
 import           Kempe.TyAssign
 
+assignFlatten :: Int
+              -> Module a c b
+              -> Either (Error ()) (Module () (ConsAnn (StackType ())) (StackType ()), Int)
+assignFlatten ctx m = do
+    (mTy, i) <- runTypeM ctx (assignModule m)
+    runMonoM i (flattenModule mTy)
+
 monomorphize :: Int
              -> Module a c b
              -> Either (Error ()) (Module () (ConsAnn MonoStackType) MonoStackType)
 monomorphize ctx m = do
-    (mTy, i) <- runTypeM ctx (assignModule m)
-    (flat, _) <- runMonoM i (flattenModule mTy)
-    -- TODO: re-assign types, but don't drop ConsAnn? I think the ordering is
-    -- screwed.
+    (flat, _) <- assignFlatten ctx m
     let flatFn' = filter (not . isTyDecl) flat
     traverse (bitraverse tryMonoConsAnn tryMono) flatFn'
 
