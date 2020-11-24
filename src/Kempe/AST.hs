@@ -128,6 +128,7 @@ instance Bifoldable Pattern where
     bifoldMap _ g (PatternInt l i)    = foldMap g (PatternInt l i)
     bifoldMap _ g (PatternWildcard l) = foldMap g (PatternWildcard l)
     bifoldMap _ g (PatternBool l b)   = foldMap g (PatternBool l b)
+    bifoldMap f _ (PatternCons l tn)  = f l <> foldMap f tn
 
 instance Bitraversable Pattern where
     bitraverse _ g (PatternInt l i)    = traverse g (PatternInt l i)
@@ -191,7 +192,18 @@ instance Bifunctor Atom where
             in Case l $ NE.zip (fmap (first f) ps) (fmap (fmap (first f)) aLs)
 
 instance Bifoldable Atom where
-    bifoldMap _ g (AtName x n) = foldMap g (AtName x n)
+    bifoldMap _ g (AtName x n)    = foldMap g (AtName x n)
+    bifoldMap _ g (IntLit l i)    = foldMap g (IntLit l i)
+    bifoldMap _ g (Int8Lit l i)   = foldMap g (Int8Lit l i)
+    bifoldMap _ g (WordLit l w)   = foldMap g (WordLit l w)
+    bifoldMap _ g (BoolLit l b)   = foldMap g (BoolLit l b)
+    bifoldMap _ g (AtBuiltin l b) = foldMap g (AtBuiltin l b)
+    bifoldMap f _ (AtCons l c)    = f l <> foldMap f c
+    bifoldMap f g (Dip l as)      = g l <> foldMap (bifoldMap f g) as
+    bifoldMap f g (If l as as')   = g l <> foldMap (bifoldMap f g) as <> foldMap (bifoldMap f g) as'
+    bifoldMap f g (Case l ls)     =
+        let (ps, as) = NE.unzip ls
+            in g l <> foldMap (bifoldMap f g) ps <> foldMap (foldMap (bifoldMap f g)) as
 
 instance Bitraversable Atom where
     bitraverse _ g (AtName x n)    = traverse g (AtName x n)
@@ -284,6 +296,7 @@ instance Bifoldable (KempeDecl a) where
     bifoldMap _ g (TyDecl x tn ns ls)        = foldMap g (TyDecl x tn ns ls)
     bifoldMap _ g (ExtFnDecl l n tys tys' b) = foldMap g (ExtFnDecl l n tys tys' b)
     bifoldMap _ g (Export l abi n)           = foldMap g (Export l abi n)
+    bifoldMap f g (FunDecl x n _ _ a)        = g x <> foldMap g n <> foldMap (bifoldMap f g) a
 
 instance Bitraversable (KempeDecl a) where
     bitraverse _ g (TyDecl l tn ns ls)        = traverse g (TyDecl l tn ns ls)
