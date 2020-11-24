@@ -17,9 +17,9 @@ divides : Int Int -- Bool
         =: [ % 0 = ]
 
 is_prime_step : Int Int -- Bool
-              =: [ dip(dup) swap dip(dup) swap divides
+              =: [ dup2 divides
                    if( drop drop False
-                     , dip(dup) swap dip(dup) swap square <
+                     , dup2 square <
                         if( 1 + is_prime_step
                           , drop drop True
                           )
