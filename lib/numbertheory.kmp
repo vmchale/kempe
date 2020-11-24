@@ -1,3 +1,4 @@
+; tail recursive!
 gcd : Int Int -- Int
     =: [ dup 0 =
          if( drop
@@ -16,6 +17,7 @@ square : Int -- Int
 divides : Int Int -- Bool
         =: [ % 0 = ]
 
+; also tail recursive!
 is_prime_step : Int Int -- Bool
               =: [ dup2 divides
                    if( drop drop False
