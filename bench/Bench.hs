@@ -1,6 +1,5 @@
 module Main (main) where
 
-import           Control.Composition       ((.$))
 import           Control.Exception         (Exception, throw, throwIO)
 import           Criterion.Main
 import           Data.Bifunctor            (Bifunctor, bimap)
@@ -23,7 +22,7 @@ import           Prettyprinter             (defaultLayoutOptions, layoutPretty)
 import           Prettyprinter.Render.Text (renderStrict)
 
 bivoid :: Bifunctor p => p a b -> p () ()
-bivoid = bimap .$ (const ())
+bivoid = bimap (const ()) (cons ())
 
 main :: IO ()
 main =

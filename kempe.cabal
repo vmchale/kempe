@@ -202,8 +202,7 @@ benchmark kempe-bench
         bytestring -any,
         criterion -any,
         prettyprinter -any,
-        text -any,
-        composition-prelude >=2.0.2.0
+        text -any
 
     if impl(ghc >=8.0)
         ghc-options:
