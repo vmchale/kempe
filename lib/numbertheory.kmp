@@ -16,7 +16,7 @@ square : Int -- Int
 is_prime_step : Int Int -- Bool
               =: [ dup2 divides
                    if( drop drop False
-                     , dup2 square ≤
+                     , dup2 square <
                         if( 1 + is_prime_step
                           , drop drop True
                           )
@@ -33,4 +33,4 @@ k_gcd : Int Int -- Int
       =: [ gcd ]
 
 %foreign cabi k_gcd
-; %foreign cabi is_prime
+%foreign cabi is_prime

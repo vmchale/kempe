@@ -163,6 +163,7 @@ typeOfBuiltin Dup = do
     pure $ StackType (S.singleton aN) [TyVar () aN] [TyVar () aN, TyVar () aN]
 typeOfBuiltin IntEq      = pure intRel
 typeOfBuiltin IntLeq     = pure intRel
+typeOfBuiltin IntLt      = pure intRel
 typeOfBuiltin IntMod     = pure intBinOp
 typeOfBuiltin IntDiv     = pure intBinOp
 typeOfBuiltin IntPlus    = pure intBinOp

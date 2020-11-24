@@ -229,6 +229,7 @@ data BuiltinFn = Drop
                | IntMod
                | IntEq
                | IntLeq
+               | IntLt
                | IntShiftR
                | IntShiftL
                | IntXor
@@ -251,6 +252,7 @@ instance Pretty BuiltinFn where
     pretty IntMod     = "%"
     pretty IntEq      = "="
     pretty IntLeq     = "≤"
+    pretty IntLt      = "<"
     pretty IntShiftR  = ">>"
     pretty IntShiftL  = "<<"
     pretty WordPlus   = "+~"

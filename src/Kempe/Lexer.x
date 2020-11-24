@@ -89,6 +89,7 @@ tokens :-
         ">>~"                    { mkSym ShiftRU }
         "<<~"                    { mkSym ShiftLU }
         "≤"                      { mkSym Leq }
+        "<"                      { mkSym Lt }
 
         type                     { mkKw KwType }
         import                   { mkKw KwImport }
@@ -204,6 +205,7 @@ data Sym = Arrow
          | Comma
          | Underscore
          | Leq
+         | Lt
          deriving (Generic, NFData)
 
 instance Pretty Sym where
@@ -234,6 +236,7 @@ instance Pretty Sym where
     pretty ShiftRU    = ">>~"
     pretty ShiftLU    = "<<~"
     pretty Leq        = "≤"
+    pretty Lt         = "<"
 
 data Keyword = KwType
              | KwImport

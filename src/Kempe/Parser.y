@@ -58,6 +58,7 @@ import Prettyprinter (Pretty (pretty), (<+>))
     percent { TokSym $$ Percent }
     eq { TokSym $$ Eq }
     leq { TokSym $$ Leq }
+    lt { TokSym $$ Lt }
     shiftrU { TokSym $$ ShiftRU }
     shiftlU { TokSym $$ ShiftLU }
     shiftr { TokSym $$ ShiftR }
@@ -173,6 +174,7 @@ Atom :: { Atom AlexPosn AlexPosn }
      | percent { AtBuiltin $1 IntMod }
      | eq { AtBuiltin $1 IntEq }
      | leq { AtBuiltin $1 IntLeq }
+     | lt { AtBuiltin $1 IntLt }
      | shiftl { AtBuiltin $1 IntShiftL }
      | shiftr { AtBuiltin $1 IntShiftR }
      | shiftlU { AtBuiltin $1 WordShiftL }
