@@ -16,13 +16,12 @@ monomorphize :: Int
 monomorphize ctx m = do
     (mTy, i) <- runTypeM ctx (assignModule m)
     (flat, j) <- runMonoM i (flattenModule mTy)
-    let (flatTy, _) = partition isTyDecl flat
     -- assign types again
     (flat', _) <- runTypeM j (assignModule flat)
     let (_, flatFn') = partition isTyDecl flat'
     -- save tydecls from flatten round (since they're annotated with types there
     -- already)
-    traverse (bitraverse tryMonoConsAnn tryMono) (flatTy ++ fmap (undefined ~<$) flatFn')
+    traverse (bitraverse tryMonoConsAnn tryMono) (fmap (undefined ~<$) flatFn')
 
 isTyDecl :: KempeDecl a c b -> Bool
 isTyDecl TyDecl{} = True

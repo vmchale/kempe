@@ -265,29 +265,26 @@ prettyTyLeaf :: TyName a -> [KempeTy b] -> Doc ann
 prettyTyLeaf cn vars = pretty cn <+> hsep (fmap pretty vars)
 
 -- TODO: separate annotations for TyName in TyDecl
-data KempeDecl a c b = TyDecl a (TyName a) [Name a] [(TyName c, [KempeTy a])]
+data KempeDecl a c b = TyDecl a (TyName a) [Name a] [(TyName b, [KempeTy a])]
                      | FunDecl b (Name b) [KempeTy a] [KempeTy a] [Atom c b]
                      | ExtFnDecl b (Name b) [KempeTy a] [KempeTy a] BSL.ByteString -- ShortByteString?
                      | Export b ABI (Name b)
                      deriving (Eq, Generic, NFData, Functor, Foldable, Traversable)
 
 instance Bifunctor (KempeDecl a) where
-    first f (TyDecl x tn ns ls)        = TyDecl x tn ns (fmap (first (fmap f)) ls)
+    first _ (TyDecl x tn ns ls)        = TyDecl x tn ns ls
     first f (FunDecl l n tys tys' as)  = FunDecl l n tys tys' (fmap (first f) as)
     first _ (ExtFnDecl l n tys tys' b) = ExtFnDecl l n tys tys' b
     first _ (Export l abi n)           = Export l abi n
     second = fmap
 
 instance Bifoldable (KempeDecl a) where
-    bifoldMap f _ (TyDecl _ _ _ ls)          = foldMap (foldMap f) (fst <$> ls)
-    bifoldMap _ g (FunDecl x n tys tys' a)   = foldMap g (FunDecl x n tys tys' a)
+    bifoldMap _ g (TyDecl x tn ns ls)        = foldMap g (TyDecl x tn ns ls)
     bifoldMap _ g (ExtFnDecl l n tys tys' b) = foldMap g (ExtFnDecl l n tys tys' b)
     bifoldMap _ g (Export l abi n)           = foldMap g (Export l abi n)
 
 instance Bitraversable (KempeDecl a) where
-    bitraverse f _ (TyDecl l tn ns ls)        =
-        let (constrs, as) = unzip ls
-            in TyDecl l tn ns . flip zip as <$> traverse (traverse f) constrs
+    bitraverse _ g (TyDecl l tn ns ls)        = traverse g (TyDecl l tn ns ls)
     bitraverse f g (FunDecl x n tys tys' a)   = FunDecl <$> g x <*> traverse g n <*> pure tys <*> pure tys' <*> traverse (bitraverse f g) a
     bitraverse _ g (ExtFnDecl l n tys tys' b) = traverse g (ExtFnDecl l n tys tys' b)
     bitraverse _ g (Export l abi n)           = traverse g (Export l abi n)

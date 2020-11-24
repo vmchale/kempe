@@ -121,14 +121,14 @@ renameAtom (AtCons ty (Name t u _)) = do
     let (u', ann) = M.findWithDefault (error "Internal error? unfound constructor") (u, ty) cSt
     pure $ AtCons ann (Name t u' ann)
 
-renameDecl :: KempeDecl () (StackType ()) (StackType ()) -> MonoM (Maybe (KempeDecl () (ConsAnn (StackType ())) (StackType ())))
-renameDecl (FunDecl l n is os as) = Just . FunDecl l n is os <$> traverse renameAtom as
+renameDecl :: KempeDecl () (StackType ()) (StackType ()) -> MonoM (KempeDecl () (ConsAnn (StackType ())) (StackType ()))
+renameDecl (FunDecl l n is os as) = FunDecl l n is os <$> traverse renameAtom as
 renameDecl (Export ty abi (Name t u l)) = do
     mSt <- gets fnEnv
     let u' = M.findWithDefault (error "Shouldn't happen; might be user error or internal error") (u, ty) mSt
-    pure $ Just $ Export ty abi (Name t u' l)
-renameDecl (ExtFnDecl l n tys tys' b) = pure $ Just $ ExtFnDecl l n tys tys' b
-renameDecl TyDecl{} = pure Nothing -- don't need to
+    pure $ Export ty abi (Name t u' l)
+renameDecl (ExtFnDecl l n tys tys' b) = pure $ ExtFnDecl l n tys tys' b
+renameDecl (TyDecl l n vars ls)       = pure $ TyDecl l n vars ls
 
 -- | Call 'closedModule' and perform any necessary renamings
 flattenModule :: Module () (StackType ()) (StackType ()) -> MonoM (Module () (ConsAnn (StackType ())) (StackType ()))
@@ -136,7 +136,7 @@ flattenModule = renameMonoM <=< closedModule
 
 -- | To be called after 'closedModule'
 renameMonoM :: Module () (StackType ()) (StackType ()) -> MonoM (Module () (ConsAnn (StackType ())) (StackType ()))
-renameMonoM = mapMaybeM renameDecl
+renameMonoM = traverse renameDecl
 
 -- | Filter so that only the 'KempeDecl's necessary for exports are there, and
 -- fan out top-level functions into all necessary specializations.
