@@ -8,11 +8,11 @@ module Kempe.TyAssign ( TypeM
                       , assignModule
                       ) where
 
-import           Control.Composition        (thread)
+import           Control.Composition        (thread, (.$))
 import           Control.Monad              (foldM, replicateM, unless, when, zipWithM_)
 import           Control.Monad.Except       (throwError)
 import           Control.Monad.State.Strict (StateT, get, gets, modify, put, runStateT)
-import           Data.Bifunctor             (second)
+import           Data.Bifunctor             (bimap, second)
 import           Data.Foldable              (traverse_)
 import           Data.Foldable.Extra        (allM)
 import           Data.Functor               (void, ($>))
@@ -420,7 +420,7 @@ assignModule m = {-# SCC "assignModule" #-} do
     traverse_ tyHeader m
     m' <- traverse assignDecl m
     backNames <- unifyM =<< gets constraints
-    pure (fmap (substConstraintsStack backNames) <$> m')
+    pure (fmap (bimap .$ substConstraintsStack backNames) m')
 
 -- Make sure you don't have cycles in the renames map!
 replaceUnique :: Unique -> TypeM a Unique
