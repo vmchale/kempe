@@ -3,4 +3,5 @@ type Maybe a { Just a | Nothing }
 noInt : -- (Maybe Int)
       =: [ Nothing ]
 
+; FIXME: maybe this doesn't work because (Maybe Int) is too big?
 %foreign cabi noInt

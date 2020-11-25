@@ -11,8 +11,6 @@ module Kempe.Asm.X86 ( X86 (..)
 
 import           Control.Monad.State.Strict (State, evalState, gets, modify)
 import           Data.Foldable.Ext
-import           Data.Functor               (($>))
-import           Data.Int                   (Int64)
 import           Data.List                  (scanl')
 import           Data.Word                  (Word8)
 import           Kempe.AST
@@ -74,6 +72,8 @@ irEmit (IR.MovMem (IR.Reg r) _ (IR.ConstInt i)) =
     pure [ MovAC () (Reg $ toAbsReg r) i ]
 irEmit (IR.MovMem (IR.Reg r) _ (IR.ConstBool b)) =
     pure [ MovABool () (Reg $ toAbsReg r) (toByte b) ]
+irEmit (IR.MovMem (IR.Reg r) _ (IR.ConstTag b)) =
+    pure [ MovACTag () (Reg $ toAbsReg r) b ]
 irEmit (IR.MovMem (IR.Reg r) _ (IR.ExprIntBinOp IR.IntTimesIR (IR.Reg r1) (IR.Reg r2))) = do
     { r' <- allocReg64
     ; pure [ MovRR () r' (toAbsReg r1), ImulRR () r' (toAbsReg r2), MovAR () (Reg $ toAbsReg r) r' ]
