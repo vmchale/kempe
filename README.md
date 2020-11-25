@@ -23,3 +23,4 @@ eval "$(kc --bash-completion-script kc)"
   * Sum types aren't translated in the IR phase
   * Errors don't have position information
   * Monomorphization fails on recursive polymorphic functions.
+  * Order of declarations matters past the IR phase
