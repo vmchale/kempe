@@ -260,6 +260,7 @@ writeAtom (AtBuiltin _ IntShiftR)   = intShift WordShiftRIR -- TODO: shr or sar?
 writeAtom (AtBuiltin _ IntShiftL)   = intShift WordShiftLIR
 writeAtom (AtBuiltin _ IntEq)       = intRel IntEqIR
 writeAtom (AtBuiltin _ IntLt)       = intRel IntLtIR
+writeAtom (AtBuiltin _ IntLeq)      = intRel IntLeqIR
 writeAtom (AtBuiltin _ WordPlus)    = intOp IntPlusIR
 writeAtom (AtBuiltin _ WordTimes)   = intOp IntTimesIR
 writeAtom (AtBuiltin _ WordXor)     = intOp IntXorIR
