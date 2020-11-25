@@ -12,6 +12,7 @@ import           Kempe.Asm.X86.Liveness
 import           Kempe.File
 import           Kempe.IR
 import           Kempe.IR.Opt
+import           Kempe.Inline
 import           Kempe.Lexer
 import           Kempe.Monomorphize
 import           Kempe.Parser
@@ -42,6 +43,11 @@ main =
                       , bench "closedModule" $ nf (runSpecialize =<<) (runAssign p)
                       , bench "closure" $ nf (\m -> closure (m, mkModuleMap m)) (bivoid <$> snd p)
                       ]
+                  , env parsedInteresting $ \ ~(f, n) ->
+                      bgroup "Inliner"
+                        [ bench "examples/factorial.kmp" $ nf inline (snd f)
+                        , bench "lib/numbertheory.kmp" $ nf inline (snd n)
+                        ]
                   , env irEnv $ \ ~(s, f) ->
                       bgroup "IR"
                         [ bench "IR pipeline (examples/splitmix.kmp)" $ nf (fst . runIR) s -- IR benchmarks are a bit silly; I will use them to decide if I should use difference lists
@@ -81,12 +87,14 @@ main =
                         , bench "Generate assembly (examples/splitmix.kmp)" $ nfIO (writeAsm "examples/splitmix.kmp")
                         , bench "Generate assembly (lib/numbertheory.kmp)" $ nfIO (writeAsm "lib/numbertheory.kmp")
                         , bench "Object file (examples/factorial.kmp)" $ nfIO (compile "examples/factorial.kmp" "/tmp/factorial.o" False)
+                        , bench "Object file (lib/numbertheory.kmp)" $ nfIO (compile "lib/numbertheory.kmp" "/tmp/numbertheory.o" False)
                         ]
                 ]
     where parsedM = yeetIO . parseWithMax =<< BSL.readFile "test/data/ty.kmp"
           splitmix = yeetIO . parseWithMax =<< BSL.readFile "examples/splitmix.kmp"
           fac = yeetIO . parseWithMax =<< BSL.readFile "examples/factorial.kmp"
           num = yeetIO . parseWithMax =<< BSL.readFile "lib/numbertheory.kmp"
+          parsedInteresting = (,) <$> fac <*> num
           prelude = yeetIO . parseWithMax =<< BSL.readFile "prelude/fn.kmp"
           forTyEnv = (,,) <$> parsedM <*> splitmix <*> prelude
           runCheck (maxU, m) = runTypeM maxU (checkModule m)
