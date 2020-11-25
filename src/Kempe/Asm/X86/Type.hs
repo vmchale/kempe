@@ -26,7 +26,7 @@ import           Prettyprinter.Ext
 
 type Label = Word
 
-data Liveness = Liveness { ins :: S.Set AbsReg, out :: S.Set AbsReg }
+data Liveness = Liveness { ins :: !(S.Set AbsReg), out :: !(S.Set AbsReg) } -- strictness annotations make it perform better
     deriving (Eq, Generic, NFData)
 
 instance Pretty Liveness where
