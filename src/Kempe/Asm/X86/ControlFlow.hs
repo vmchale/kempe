@@ -90,6 +90,7 @@ uses (MovABool _ a _)    = addrRegs a
 uses (XorRR _ r r')      = S.fromList [r, r']
 uses (CmpAddrReg _ a r)  = S.singleton r <> addrRegs a
 uses (CmpRegReg _ r r')  = S.fromList [r, r']
+uses (CmpRegBool _ r _)  = S.fromList [r]
 uses (CmpAddrBool _ a _) = addrRegs a
 uses (ShiftLRR _ r r')   = S.fromList [r, r']
 uses (ShiftRRR _ r r')   = S.fromList [r, r']

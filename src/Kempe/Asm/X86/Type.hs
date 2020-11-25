@@ -188,6 +188,7 @@ data X86 reg a = PushReg { ann :: a, rSrc :: reg }
                | CmpAddrReg { ann :: a, addrCmp :: Addr reg, rCmp :: reg }
                | CmpRegReg { ann :: a, rCmp :: reg, rCmp' :: reg } -- for simplicity
                | CmpAddrBool { ann :: a, addrCmp :: Addr reg, bCmp :: Word8 }
+               | CmpRegBool { ann :: a, rCmp :: reg, bCmp :: Word8 }
                | IdivR { ann :: a, rDiv :: reg }
                | Cqo { ann :: a }
                deriving (Generic, NFData, Functor)
@@ -240,6 +241,7 @@ instance Pretty reg => Pretty (X86 reg a) where
     pretty (CmpAddrReg _ a r)  = i4 ("cmp" <+> pretty a <> "," <+> pretty r)
     pretty (CmpRegReg _ r0 r1) = i4 ("cmp" <+> pretty r0 <> "," <+> pretty r1)
     pretty (CmpAddrBool _ a b) = i4 ("cmp byte" <+> pretty a <> "," <+> pretty b)
+    pretty (CmpRegBool _ r b)  = i4 ("cmp" <+> pretty r <> "," <+> pretty b)
     pretty (ShiftRRR _ r0 r1)  = i4 ("shr" <+> pretty r0 <> "," <+> pretty r1)
     pretty (ShiftLRR _ r0 r1)  = i4 ("shl" <+> pretty r0 <> "," <+> pretty r1)
     pretty (IdivR _ r)         = i4 ("idiv" <+> pretty r)

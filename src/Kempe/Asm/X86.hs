@@ -156,6 +156,7 @@ irEmit (IR.MovMem (IR.Reg r) _ (IR.ExprIntBinOp IR.IntModIR (IR.Reg r1) (IR.Reg 
     -- QuotRes is rax, so move r1 to rax first
     pure [ MovRR () QuotRes (toAbsReg r1), Cqo (), IdivR () (toAbsReg r2), MovAR () (Reg $ toAbsReg r) RemRes ]
 irEmit (IR.MovTemp r e) = evalE e r
+-- give up; use recursive formulation
 irEmit (IR.MovMem e 8 e') = do
     { r <- allocTemp64
     ; r' <- allocTemp64
@@ -169,6 +170,11 @@ irEmit (IR.MovMem e 1 e') = do
     ; eEval <- evalE e r
     ; e'Eval <- evalE e' r'
     ; pure (eEval ++ e'Eval ++ [MovAR () (Reg $ toAbsReg r) (toAbsReg r')])
+    }
+irEmit (IR.CJump e l l') = do
+    { r <- allocTemp8
+    ; bEval <- evalE e r
+    ; pure (bEval ++ [CmpRegBool () (toAbsReg r) 1, Je () l, Jump () l'])
     }
 
 -- rbx, rbp, r12-r15 callee-saved (non-volatile)
