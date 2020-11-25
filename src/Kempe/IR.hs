@@ -349,6 +349,21 @@ dipify sz (AtBuiltin (is, _) Dup) = do
                 ++ copyBytes (-sz) (-sz - sz') sz' -- copy sz' bytes over (duplicate)
                 ++ copyBytes (-sz + sz') 0 sz -- copy sz bytes back
                 ++ [ dataPointerInc sz' ] -- move data pointer over sz' bytes
+dipify sz (IntLit _ i) = pure $ dipPush sz 8 (ConstInt $ fromInteger i)
+dipify sz (WordLit _ w) = pure $ dipPush sz 8 (ConstWord $ fromIntegral w)
+dipify sz (Int8Lit _ i) = pure $ dipPush sz 1 (ConstInt8 i)
+dipify sz (BoolLit _ b) = pure $ dipPush sz 1 (ConstBool b)
+dipify sz (AtCons ann@(ConsAnn _ tag' _) _) =
+    pure $
+        copyBytes 0 (-sz) sz
+            ++ dataPointerInc (padBytes ann) : push 1 (ConstTag tag')
+            ++ copyBytes (-sz) 0 sz
+
+dipPush :: Int64 -> Int64 -> Exp -> [Stmt]
+dipPush sz sz' e =
+    copyBytes 0 (-sz) sz
+        ++ push sz' e
+        ++ copyBytes (-sz) 0 sz -- copy bytes back (data pointer has been incremented already by push)
 
 -- works in general because relations, shifts, operations shrink the size of the
 -- stack.
