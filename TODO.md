@@ -43,8 +43,7 @@
 - [ ] Pattern match exhaustiveness checker
 - [ ] Tuples (?)
 - [ ] Error messages should have line numbers
-- [ ] Or-patterns?
-- [ ] Tail-call optimization (easier than I thought?)
+- [x] Tail-call optimization (easier than I thought?)
   - [ ]  Mutually recursive function optimization
 - [ ] tail recursion modulo cons ?
 - [ ] `.intel_syntax noprefix` for arm
