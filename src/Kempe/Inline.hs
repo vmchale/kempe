@@ -19,10 +19,10 @@ inline m = fmap inlineDecl m
           inlineDecl d                       = d
           inlineAtoms n = concatMap (inlineAtom n)
           inlineAtom declName a@(AtName _ n) =
-            if path graph (nLookup n) (nLookup declName) -- -- || path graph (nLookup n) (nLookup n)-- FIXME: criterion allows things which are recursive (i.e. inline isPrimeStep more than once in isPrime)
+            if path graph (nLookup n) (nLookup declName) || isRec n -- FIXME: criterion allows things which are recursive (i.e. inline isPrimeStep more than once in isPrime)
                 -- need to mark things which are recursive?
                 then [a] -- no inline
-                else findDecl a n
+                else foldMap (inlineAtom declName) $ findDecl a n
           inlineAtom declName (If l as as') =
             [If l (inlineAtoms declName as) (inlineAtoms declName as')]
           inlineAtom _ Case{} = undefined
@@ -34,6 +34,20 @@ inline m = fmap inlineDecl m
                 Just as -> as
                 Nothing -> pure at -- tried to inline an extern function
           findPreDecl = IM.findWithDefault (error "Internal error: FnModuleMap does not contain name/declaration!")
+          recMap = graphRecursiveMap m (graph, nLookup)
+          isRec (Name _ (Unique i) _) = IM.findWithDefault (error "Internal error! recursive map missing key!") i recMap
+
+-- | Given a module, make a map telling which top-level names are recursive.
+graphRecursiveMap :: Module a c b -> (Graph, Name b -> Vertex) -> IM.IntMap Bool
+graphRecursiveMap m (graph, nLookup) = IM.fromList $ mapMaybe fnRecursive m
+    where fnRecursive (FunDecl _ n@(Name _ (Unique i) _) _ _ as) | n `elem` namesInAtoms as = Just (i, True) -- if it calls iteself
+                                                                 | anyReachable n as = Just (i, True)
+                                                                 | otherwise = Just (i, False)
+          fnRecursive (ExtFnDecl _ (Name _ (Unique i) _) _ _ _) = Just (i, False)
+          fnRecursive _ = Nothing
+          anyReachable n as =
+            any (\nA -> path graph (nLookup nA) (nLookup n)) (namesInAtoms as) -- TODO: lift let-binding (nLookup?)
+
 
 kempeGraph :: Module a c b -> (Graph, Vertex -> (KempeDecl a c b, Name b, [Name b]), Name b -> Vertex)
 kempeGraph = third3 (findVtx .) . graphFromEdges . kempePreGraph
@@ -51,6 +65,9 @@ mkFnModuleMap = IM.fromList . mapMaybe toInt where
     toInt (FunDecl _ (Name _ (Unique i) _) _ _ as)  = Just (i, Just as)
     toInt (ExtFnDecl _ (Name _ (Unique i) _) _ _ _) = Just (i, Nothing)
     toInt _                                         = Nothing
+
+namesInAtoms :: [Atom c a] -> [Name a]
+namesInAtoms = foldMap namesInAtom
 
 namesInAtom :: Atom c a -> [Name a]
 namesInAtom AtBuiltin{}   = []
