@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+set -e pipefail
+
+cabal build exe:kc --enable-profiling
+bin="$(fd -t x '^kc$' -I | tail -n1)"
+cp "$bin" "$HOME"/.local/bin/kc-prof
