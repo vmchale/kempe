@@ -5,14 +5,15 @@
 - [ ] Fortran?
 # Examples
 - [ ] delink?
-- [ ] Primality test (and link to C...)
+- [x] Primality test (and link to C...)
   - [ ] Totient function
   - [ ] Needs sensible float support!
 - [x] splitmix random number generator? (or rather any pseudorandom number
   generator...)
   - [ ] http://prng.di.unimi.it/xoroshiro128plus.c
+- [ ] Exponentiation (O (log n))
 # Backends
-- [ ] Linear scan register allocator
+- [x] Linear scan register allocator
 - [ ] Graph (?) register allocator
 # Performance
 - [ ] Liveness analysis on a per-decl basis?
