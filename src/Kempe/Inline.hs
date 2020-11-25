@@ -5,9 +5,11 @@ import           Data.Graph       (Graph, Vertex, graphFromEdges, path)
 import qualified Data.IntMap      as IM
 import           Data.Maybe       (fromMaybe, mapMaybe)
 import           Data.Tuple.Extra (third3)
+import           Debug.Trace
 import           Kempe.AST
 import           Kempe.Name
 import           Kempe.Unique
+import           Prettyprinter
 
 -- | A 'FnModuleMap' is a map which retrives the 'Atoms's defining
 -- a given 'Name'
@@ -19,10 +21,10 @@ inline m = fmap inlineDecl m
           inlineDecl d                       = d
           inlineAtoms n = concatMap (inlineAtom n)
           inlineAtom declName a@(AtName _ n) =
-            if path graph (nLookup n) (nLookup declName) -- FIXME: criterion allows things which are recursive (i.e. inline isPrimeStep more than once in isPrime)
+            if path graph (nLookup n) (nLookup declName) -- -- || path graph (nLookup n) (nLookup n)-- FIXME: criterion allows things which are recursive (i.e. inline isPrimeStep more than once in isPrime)
                 -- need to mark things which are recursive?
                 then [a] -- no inline
-                else findDecl a n
+                else traceShow (pretty (n, declName)) $ findDecl a n
           inlineAtom declName (If l as as') =
             [If l (inlineAtoms declName as) (inlineAtoms declName as')]
           inlineAtom _ Case{} = undefined
