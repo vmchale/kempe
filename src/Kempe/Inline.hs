@@ -15,12 +15,17 @@ type FnModuleMap c b = IM.IntMap [Atom c b]
 
 inline :: Module a c b -> Module a c b
 inline m = fmap inlineDecl m
-    where inlineDecl (FunDecl l n ty ty' as) = FunDecl l n ty ty' (concatMap (inlineAtom n) as)
+    where inlineDecl (FunDecl l n ty ty' as) = FunDecl l n ty ty' (inlineAtoms n as)
           inlineDecl d                       = d
+          inlineAtoms n = concatMap (inlineAtom n)
           inlineAtom declName a@(AtName _ n) =
-            if path graph (nLookup n) (nLookup declName)
+            if path graph (nLookup n) (nLookup declName) -- FIXME: criterion allows things which are recursive (i.e. inline isPrimeStep more than once in isPrime)
+                -- need to mark things which are recursive?
                 then [a] -- no inline
                 else findDecl (unUnique (unique n)) fnMap
+          inlineAtom declName (If l as as') =
+            [If l (inlineAtoms declName as) (inlineAtoms declName as')]
+          inlineAtom _ Case{} = undefined
           inlineAtom _ a = [a]
           fnMap = mkFnModuleMap m
           (graph, _, nLookup) = kempeGraph m
