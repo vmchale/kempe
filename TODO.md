@@ -27,6 +27,8 @@
 - [x] Constructors aren't monomorphized
 - [ ] Correctly restore registers (C ABI)
 - [ ] Warn on >256 constructors
+- [ ] Constructors not inlined; need type specializations when one calls
+  a constructor on a constructor!
 # Pipeline
 - [ ] Inliner (all non-recursive?)
 - [ ] https://www.cs.princeton.edu/courses/archive/spr19/cos217/lectures/13_Assembly1.pdf (von neumann -> c where int ptrs, ATS & such are useful...)
