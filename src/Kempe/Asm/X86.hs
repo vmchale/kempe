@@ -59,11 +59,6 @@ irEmit (IR.CJump (IR.Mem 1 (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r) (IR.ConstIn
     pure [CmpAddrBool () (AddrRCMinus (toAbsReg r) i) 1, Je () l, Jump () l']
 irEmit (IR.CJump (IR.Mem 1 (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r) (IR.ConstInt i))) l l') =
     pure [CmpAddrBool () (AddrRCPlus (toAbsReg r) i) 1, Je () l, Jump () l']
-irEmit (IR.MovTemp r (IR.Mem _ (IR.Reg r1))) = pure [MovRA () (toAbsReg r) (Reg $ toAbsReg r1)] -- TODO: sanity check reg/mem access size?
-irEmit (IR.MovTemp r (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r1) (IR.ConstInt i))) | r == r1 =
-    pure [SubRC () (toAbsReg r) i]
-irEmit (IR.MovTemp r (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r1) (IR.ConstInt i))) | r == r1 =
-    pure [AddRC () (toAbsReg r) i]
 irEmit (IR.MovMem (IR.Reg r) _ (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r1) (IR.Reg r2))) = do
     { r' <- allocReg64
     ; pure [ MovRR () r' (toAbsReg r1), SubRR () r' (toAbsReg r2), MovAR () (Reg $ toAbsReg r) r' ]
@@ -162,14 +157,16 @@ irEmit (IR.MovTemp r e) = evalE e r
 
 -- | Code to evaluate and put some expression in a chosen 'Temp'
 evalE :: IR.Exp -> IR.Temp -> WriteM [X86 AbsReg ()]
-evalE (IR.ConstInt i) (IR.Temp64 t)         = pure [MovRC () (AllocReg64 t) i]
-evalE (IR.ConstBool b) (IR.Temp8 t)         = pure [MovRCBool () (AllocReg8 t) (toByte b)]
-evalE (IR.ConstInt8 i) (IR.Temp8 t)         = pure [MovRCi8 () (AllocReg8 t) i]
-evalE (IR.ConstWord w) (IR.Temp64 t)        = pure [MovRWord () (AllocReg64 t) w]
-evalE (IR.Reg (IR.Temp64 t)) (IR.Temp64 t') = pure [MovRR () (AllocReg64 t) (AllocReg64 t')]
-evalE (IR.Reg (IR.Temp8 t)) (IR.Temp8 t')   = pure [MovRR () (AllocReg8 t) (AllocReg8 t')]
+evalE (IR.ConstInt i) (IR.Temp64 t)                                 = pure [MovRC () (AllocReg64 t) i]
+evalE (IR.ConstBool b) (IR.Temp8 t)                                 = pure [MovRCBool () (AllocReg8 t) (toByte b)]
+evalE (IR.ConstInt8 i) (IR.Temp8 t)                                 = pure [MovRCi8 () (AllocReg8 t) i]
+evalE (IR.ConstWord w) (IR.Temp64 t)                                = pure [MovRWord () (AllocReg64 t) w]
+evalE (IR.Reg (IR.Temp64 t)) (IR.Temp64 t')                         = pure [MovRR () (AllocReg64 t) (AllocReg64 t')]
+evalE (IR.Reg (IR.Temp8 t)) (IR.Temp8 t')                           = pure [MovRR () (AllocReg8 t) (AllocReg8 t')]
+evalE (IR.Mem _ (IR.Reg r1)) r                                      = pure [MovRA () (toAbsReg r) (Reg $ toAbsReg r1) ] -- TODO: sanity check reg/mem access size?
+evalE (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r1) (IR.ConstInt i)) r | r == r1 = pure [SubRC () (toAbsReg r) i]
+evalE (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r1) (IR.ConstInt i)) r  | r == r1 = pure [AddRC () (toAbsReg r) i]
 -- TODO: ShiftExponent and QuotRes and RemRes
-evalE IR.Reg{} _                            = error "Internal error: nonsensical reg"
 
 toByte :: Bool -> Word8
 toByte False = 0
