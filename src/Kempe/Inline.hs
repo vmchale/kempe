@@ -1,3 +1,6 @@
+-- | A simple inliner. Inlines all non-recursive functions.
+--
+-- This should all work.
 module Kempe.Inline ( inline
                     ) where
 
