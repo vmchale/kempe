@@ -3,14 +3,12 @@ module Type ( typeTests
             , yeetIO
             ) where
 
-import           Control.DeepSeq      (deepseq)
-import           Control.Exception    (Exception, throwIO)
-import qualified Data.ByteString.Lazy as BSL
+import           Control.DeepSeq   (deepseq)
+import           Control.Exception (Exception, throwIO)
 import           Kempe.AST
 import           Kempe.File
-import           Kempe.Parser
 import           Kempe.TyAssign
-import           Prettyprinter        (pretty)
+import           Prettyprinter     (pretty)
 import           Test.Tasty
 import           Test.Tasty.HUnit
 

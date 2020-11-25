@@ -2,13 +2,11 @@ module Backend ( backendTests
                ) where
 
 import           Control.DeepSeq           (deepseq)
-import qualified Data.ByteString.Lazy      as BSL
 import           Kempe.Asm.X86.ControlFlow
 import           Kempe.Asm.X86.Liveness
 import           Kempe.File
 import           Kempe.Inline
 import           Kempe.Monomorphize
-import           Kempe.Parser
 import           Kempe.Pipeline
 import           Kempe.Shuttle
 import           Prettyprinter             (pretty)
