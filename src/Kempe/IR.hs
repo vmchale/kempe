@@ -35,6 +35,7 @@ import           Kempe.Unique
 import           Lens.Micro                 (Lens')
 import           Lens.Micro.Mtl             (modifying)
 import           Prettyprinter              (Doc, Pretty (pretty), braces, colon, concatWith, hardline, parens, (<+>))
+import           Prettyprinter.Ext
 
 type Label = Word
 
@@ -125,6 +126,7 @@ instance Pretty Exp where
     pretty (Mem _ e)              = parens ("mem" <+> pretty e)
     pretty (ExprIntBinOp op e e') = parens (pretty op <+> pretty e <+> pretty e')
     pretty (ExprIntRel op e e')   = parens (pretty op <+> pretty e <+> pretty e')
+    pretty (ConstTag b)           = parens ("tag" <+> prettyHex b)
 
 data Stmt = Labeled Label
           | Jump Label
@@ -154,6 +156,7 @@ data RelBinOp = IntEqIR
               | IntNeqIR
               | IntLtIR
               | IntGtIR
+              | IntLeqIR
               deriving (Generic, NFData)
 
 instance Pretty RelBinOp where
@@ -161,6 +164,7 @@ instance Pretty RelBinOp where
     pretty IntNeqIR = "≠"
     pretty IntLtIR  = "<"
     pretty IntGtIR  = ">"
+    pretty IntLeqIR = "≤"
 
 data IntBinOp = IntPlusIR
               | IntTimesIR
@@ -289,8 +293,8 @@ writeAtom (AtBuiltin ([i0, i1], _) Swap) =
                 ++ copyBytes (-sz0 - sz1) (-sz1) sz1 -- copy i1 to where i0 used to be
                 ++ copyBytes (-sz0) 0 sz0 -- copy i0 at end of stack to its new place
 writeAtom (AtBuiltin _ Swap) = error "Ill-typed swap!"
-writeAtom (AtCons ann@(ConsAnn _ tag _) _) =
-    pure $ dataPointerInc (padBytes ann) : push 1 (ConstTag tag)
+writeAtom (AtCons ann@(ConsAnn _ tag' _) _) =
+    pure $ dataPointerInc (padBytes ann) : push 1 (ConstTag tag')
 
 -- | Constructors may need to be padded, this computes the number of bytes of
 -- padding
@@ -319,14 +323,23 @@ dipify _ (Dip ([], _) _) = error "Internal error: Ill-typed dip()!"
 dipify sz (Dip (is, _) as) =
     let sz' = size (last is)
         in foldMapA (dipify (sz + sz')) as
-dipify _ (AtBuiltin _ Swap) = error "Internal error: Ill-typed swap!"
-dipify sz (AtBuiltin _ IntTimes) = dipOp sz IntTimesIR
-dipify sz (AtBuiltin _ IntPlus)  = dipOp sz IntPlusIR
-dipify sz (AtBuiltin _ IntMinus) = dipOp sz IntMinusIR
-dipify sz (AtBuiltin _ IntDiv)   = dipOp sz IntDivIR
-dipify sz (AtBuiltin _ IntMod)   = dipOp sz IntModIR
-dipify sz (AtBuiltin _ IntXor)   = dipOp sz IntXorIR
-dipify sz (AtBuiltin _ WordPlus) = dipOp sz IntPlusIR
+dipify _ (AtBuiltin _ Swap)        = error "Internal error: Ill-typed swap!"
+dipify sz (AtBuiltin _ IntTimes)   = dipOp sz IntTimesIR
+dipify sz (AtBuiltin _ IntPlus)    = dipOp sz IntPlusIR
+dipify sz (AtBuiltin _ IntMinus)   = dipOp sz IntMinusIR
+dipify sz (AtBuiltin _ IntDiv)     = dipOp sz IntDivIR
+dipify sz (AtBuiltin _ IntMod)     = dipOp sz IntModIR
+dipify sz (AtBuiltin _ IntXor)     = dipOp sz IntXorIR
+dipify sz (AtBuiltin _ IntEq)      = dipRel sz IntEqIR
+dipify sz (AtBuiltin _ IntLt)      = dipRel sz IntLtIR
+dipify sz (AtBuiltin _ IntLeq)     = dipRel sz IntLeqIR
+dipify sz (AtBuiltin _ IntShiftL)  = dipShift sz WordShiftLIR
+dipify sz (AtBuiltin _ IntShiftR)  = dipShift sz WordShiftRIR
+dipify sz (AtBuiltin _ WordXor)    = dipOp sz IntXorIR
+dipify sz (AtBuiltin _ WordShiftL) = dipShift sz WordShiftLIR
+dipify sz (AtBuiltin _ WordShiftR) = dipShift sz WordShiftRIR
+dipify sz (AtBuiltin _ WordPlus)   = dipOp sz IntPlusIR
+dipify sz (AtBuiltin _ WordTimes)  = dipOp sz IntTimesIR
 dipify _ (AtBuiltin ([], _) Dup) = error "Internal error: Ill-typed dup!"
 dipify sz (AtBuiltin (is, _) Dup) = do
     let sz' = size (last is) in
@@ -336,16 +349,22 @@ dipify sz (AtBuiltin (is, _) Dup) = do
                 ++ copyBytes (-sz + sz') 0 sz -- copy sz bytes back
                 ++ [ dataPointerInc sz' ] -- move data pointer over sz' bytes
 
-dipOp :: Int64 -> IntBinOp -> TempM [Stmt]
-dipOp sz op =
+dipDo :: Int64 -> [Stmt] -> [Stmt]
+dipDo sz stmt =
     let shiftNext = dataPointerDec sz
         shiftBack = dataPointerInc sz
-        -- copy sz bytes over
         copyBytes' = copyBytes 0 sz sz
     in
-        do
-            aStmt <- intOp op
-            pure (shiftNext : aStmt ++ copyBytes' ++ [shiftBack])
+        (shiftNext : stmt ++ copyBytes' ++ [shiftBack])
+
+dipShift :: Int64 -> IntBinOp -> TempM [Stmt]
+dipShift sz op = dipDo sz <$> intShift op
+
+dipRel :: Int64 -> RelBinOp -> TempM [Stmt]
+dipRel sz rel = dipDo sz <$> intRel rel
+
+dipOp :: Int64 -> IntBinOp -> TempM [Stmt]
+dipOp sz op = dipDo sz <$> intOp op
 
 copyBytes :: Int64 -- ^ dest offset
           -> Int64 -- ^ src offset

@@ -21,8 +21,8 @@ import qualified Data.Set           as S
 import           Data.Text.Encoding (decodeUtf8)
 import           Data.Word          (Word8)
 import           GHC.Generics       (Generic)
-import           Numeric            (showHex)
 import           Prettyprinter      (Doc, Pretty (pretty), braces, brackets, colon, concatWith, hardline, indent, punctuate, (<+>))
+import           Prettyprinter.Ext
 
 type Label = Word
 
@@ -204,9 +204,6 @@ instance Pretty reg => Pretty (Addr reg) where
 
 prettyLabel :: Label -> Doc ann
 prettyLabel l = "kmp_" <> pretty l
-
-prettyHex :: (Integral a, Show a) => a -> Doc ann
-prettyHex x = "0x" <> pretty (showHex x mempty)
 
 -- intel syntax
 instance Pretty reg => Pretty (X86 reg a) where
