@@ -22,4 +22,4 @@ eval "$(kc --bash-completion-script kc)"
   * Doesn't actually save callee-save registers
   * Sum types aren't translated in the IR phase
   * Errors don't have position information
-  * Monomorphization fails on triply-mutually-recursive polymorphic functions.
+  * Monomorphization fails on recursive polymorphic functions.
