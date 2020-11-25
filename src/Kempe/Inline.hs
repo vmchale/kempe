@@ -32,7 +32,7 @@ inline m = fmap inlineDecl m
           findDecl at (Name _ (Unique k) _) =
             case findPreDecl k fnMap of
                 Just as -> as
-                Nothing -> pure at
+                Nothing -> pure at -- tried to inline an extern function
           findPreDecl = IM.findWithDefault (error "Internal error: FnModuleMap does not contain name/declaration!")
 
 kempeGraph :: Module a c b -> (Graph, Vertex -> (KempeDecl a c b, Name b, [Name b]), Name b -> Vertex)
