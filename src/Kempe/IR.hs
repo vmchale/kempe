@@ -349,6 +349,8 @@ dipify sz (AtBuiltin (is, _) Dup) = do
                 ++ copyBytes (-sz + sz') 0 sz -- copy sz bytes back
                 ++ [ dataPointerInc sz' ] -- move data pointer over sz' bytes
 
+-- works in general because relations, shifts, operations shrink the size of the
+-- stack.
 dipDo :: Int64 -> [Stmt] -> [Stmt]
 dipDo sz stmt =
     let shiftNext = dataPointerDec sz
