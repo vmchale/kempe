@@ -1,7 +1,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 
--- I have this in a separate module because FlexibleContexts pollutes
--- "Kempe.Monomorphize"
+-- TODO: move this to Kempe.Monomorphize
 module Kempe.Monomorphize.Error ( tryMono
                                 , tryMonoConsAnn
                                 ) where
