@@ -48,17 +48,18 @@ main =
                         [ bench "examples/factorial.kmp" $ nf inline (snd f)
                         , bench "lib/numbertheory.kmp" $ nf inline (snd n)
                         ]
-                  , env irEnv $ \ ~(s, f) ->
+                  , env irEnv $ \ ~(s, f, n) ->
                       bgroup "IR"
                         [ bench "IR pipeline (examples/splitmix.kmp)" $ nf (fst . runIR) s -- IR benchmarks are a bit silly; I will use them to decide if I should use difference lists
                         , bench "IR pipeline (examples/factorial.kmp)" $ nf (fst . runIR) f
+                        , bench "IR pipeline (lib/numbertheory.kmp)" $ nf (fst . runIR) n
                         ]
                   , env envIR $ \ ~(s, f) ->
                       bgroup "opt"
                         [ bench "IR optimization (examples/splitmix.kmp)" $ nf optimize s
                         , bench "IR optimization (examples/factorial.kmp)" $ nf optimize f
                         ]
-                  , env irEnv $ \ ~(s, f) ->
+                  , env irEnv $ \ ~(s, f, _) ->
                       bgroup "Instruction selection"
                         [ bench "X86 (examples/factorial.kmp)" $ nf genX86 f
                         , bench "X86 (examples/splitmix.kmp)" $ nf genX86 s
@@ -102,7 +103,8 @@ main =
           runSpecialize (m, i) = runMonoM i (closedModule m)
           splitmixMono = either throw id . uncurry monomorphize <$> splitmix
           facMono = either throw id . uncurry monomorphize <$> fac
-          irEnv = (,) <$> splitmixMono <*> facMono
+          numMono = either throw id . uncurry monomorphize <$> num
+          irEnv = (,,) <$> splitmixMono <*> facMono <*> numMono
           -- TODO: bench optimization
           runIR = runTempM . writeModule
           genIR = fst . runTempM . writeModule

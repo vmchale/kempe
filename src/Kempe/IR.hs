@@ -191,19 +191,29 @@ instance Pretty IntBinOp where
 writeModule :: Module () (ConsAnn MonoStackType) MonoStackType -> TempM [Stmt]
 writeModule = foldMapA writeDecl
 
+-- optimize tail-recursion, if possible
+-- This is a little slow
+tryTCO :: Label -> [Stmt] -> [Stmt]
+tryTCO l stmts =
+    let end = last stmts
+        in
+            case end of
+                KCall l' | l == l' -> init stmts ++ [Jump l]
+                _                  -> stmts
+
 -- FIXME: Current broadcast + write approach fails mutually recursive functions
 writeDecl :: KempeDecl () (ConsAnn MonoStackType) MonoStackType -> TempM [Stmt]
 writeDecl (FunDecl _ (Name _ u _) _ _ as) = do
     bl <- broadcastName u
-    (++ [Ret]) . (Labeled bl:) <$> writeAtoms as
+    (++ [Ret]) . (Labeled bl:) . tryTCO bl <$> writeAtoms bl as
 writeDecl (ExtFnDecl ty (Name _ u _) _ _ cName) = do
     bl <- broadcastName u
     pure [Labeled bl, CCall ty cName, Ret]
 writeDecl (Export sTy abi n) = pure . WrapKCall abi sTy (encodeUtf8 $ name n) <$> lookupName n
 writeDecl TyDecl{} = error "Internal error: type declarations should not exist at this stage"
 
-writeAtoms :: [Atom (ConsAnn MonoStackType) MonoStackType] -> TempM [Stmt]
-writeAtoms = foldMapA writeAtom
+writeAtoms :: Label -> [Atom (ConsAnn MonoStackType) MonoStackType] -> TempM [Stmt]
+writeAtoms l = foldMapA (writeAtom l)
 
 intShift :: IntBinOp -> TempM [Stmt]
 intShift cons = do
@@ -241,51 +251,53 @@ intRel cons = do
         pop 8 t0 ++ pop 8 t1 ++ push 1 (ExprIntRel cons (Reg t1) (Reg t0))
 
 -- | This throws exceptions on nonsensical input.
-writeAtom :: Atom (ConsAnn MonoStackType) MonoStackType -> TempM [Stmt]
-writeAtom (IntLit _ i)              = pure $ push 8 (ConstInt $ fromInteger i)
-writeAtom (Int8Lit _ i)             = pure $ push 1 (ConstInt8 i)
-writeAtom (WordLit _ w)             = pure $ push 8 (ConstWord $ fromIntegral w)
-writeAtom (BoolLit _ b)             = pure $ push 1 (ConstBool b)
-writeAtom (AtName _ n)              = pure . KCall <$> lookupName n -- TODO: when to do tco?
-writeAtom (AtBuiltin ([], _) Drop)  = error "Internal error: Ill-typed drop!"
-writeAtom (AtBuiltin ([], _) Dup)   = error "Internal error: Ill-typed dup!"
-writeAtom (Dip ([], _) _)           = error "Internal error: Ill-typed dip()!"
-writeAtom (AtBuiltin _ IntPlus)     = intOp IntPlusIR
-writeAtom (AtBuiltin _ IntMinus)    = intOp IntMinusIR
-writeAtom (AtBuiltin _ IntTimes)    = intOp IntTimesIR
-writeAtom (AtBuiltin _ IntDiv)      = intOp IntDivIR -- what to do on failure?
-writeAtom (AtBuiltin _ IntMod)      = intOp IntModIR
-writeAtom (AtBuiltin _ IntXor)      = intOp IntXorIR
-writeAtom (AtBuiltin _ IntShiftR)   = intShift WordShiftRIR -- TODO: shr or sar?
-writeAtom (AtBuiltin _ IntShiftL)   = intShift WordShiftLIR
-writeAtom (AtBuiltin _ IntEq)       = intRel IntEqIR
-writeAtom (AtBuiltin _ IntLt)       = intRel IntLtIR
-writeAtom (AtBuiltin _ IntLeq)      = intRel IntLeqIR
-writeAtom (AtBuiltin _ WordPlus)    = intOp IntPlusIR
-writeAtom (AtBuiltin _ WordTimes)   = intOp IntTimesIR
-writeAtom (AtBuiltin _ WordXor)     = intOp IntXorIR
-writeAtom (AtBuiltin _ WordShiftL)  = intShift WordShiftLIR
-writeAtom (AtBuiltin _ WordShiftR)  = intShift WordShiftRIR
-writeAtom (AtBuiltin (is, _) Drop)  =
+writeAtom :: Label -- ^ Context for possible TCO
+          -> Atom (ConsAnn MonoStackType) MonoStackType
+          -> TempM [Stmt]
+writeAtom _ (IntLit _ i)              = pure $ push 8 (ConstInt $ fromInteger i)
+writeAtom _ (Int8Lit _ i)             = pure $ push 1 (ConstInt8 i)
+writeAtom _ (WordLit _ w)             = pure $ push 8 (ConstWord $ fromIntegral w)
+writeAtom _ (BoolLit _ b)             = pure $ push 1 (ConstBool b)
+writeAtom _ (AtName _ n)              = pure . KCall <$> lookupName n -- TODO: when to do tco?
+writeAtom _ (AtBuiltin ([], _) Drop)  = error "Internal error: Ill-typed drop!"
+writeAtom _ (AtBuiltin ([], _) Dup)   = error "Internal error: Ill-typed dup!"
+writeAtom _ (Dip ([], _) _)           = error "Internal error: Ill-typed dip()!"
+writeAtom _ (AtBuiltin _ IntPlus)     = intOp IntPlusIR
+writeAtom _ (AtBuiltin _ IntMinus)    = intOp IntMinusIR
+writeAtom _ (AtBuiltin _ IntTimes)    = intOp IntTimesIR
+writeAtom _ (AtBuiltin _ IntDiv)      = intOp IntDivIR -- what to do on failure?
+writeAtom _ (AtBuiltin _ IntMod)      = intOp IntModIR
+writeAtom _ (AtBuiltin _ IntXor)      = intOp IntXorIR
+writeAtom _ (AtBuiltin _ IntShiftR)   = intShift WordShiftRIR -- TODO: shr or sar?
+writeAtom _ (AtBuiltin _ IntShiftL)   = intShift WordShiftLIR
+writeAtom _ (AtBuiltin _ IntEq)       = intRel IntEqIR
+writeAtom _ (AtBuiltin _ IntLt)       = intRel IntLtIR
+writeAtom _ (AtBuiltin _ IntLeq)      = intRel IntLeqIR
+writeAtom _ (AtBuiltin _ WordPlus)    = intOp IntPlusIR
+writeAtom _ (AtBuiltin _ WordTimes)   = intOp IntTimesIR
+writeAtom _ (AtBuiltin _ WordXor)     = intOp IntXorIR
+writeAtom _ (AtBuiltin _ WordShiftL)  = intShift WordShiftLIR
+writeAtom _ (AtBuiltin _ WordShiftR)  = intShift WordShiftRIR
+writeAtom _ (AtBuiltin (is, _) Drop)  =
     let sz = size (last is) in
         pure [ dataPointerDec sz ]
-writeAtom (AtBuiltin (is, _) Dup)   =
+writeAtom _ (AtBuiltin (is, _) Dup)   =
     let sz = size (last is) in
         pure $
              copyBytes 0 (-sz) sz
                 ++ [ dataPointerInc sz ] -- move data pointer over sz bytes
-writeAtom (If _ as as') = do
+writeAtom l (If _ as as') = do
     l0 <- newLabel
     l1 <- newLabel
     let ifIR = CJump (Mem 1 (Reg DataPointer)) l0 l1
-    asIR <- writeAtoms as
-    asIR' <- writeAtoms as'
+    asIR <- tryTCO l <$> writeAtoms l as
+    asIR' <- tryTCO l <$> writeAtoms l as'
     l2 <- newLabel
     pure $ dataPointerDec 1 : ifIR : (Labeled l0 : asIR ++ [Jump l2]) ++ (Labeled l1 : asIR') ++ [Labeled l2]
-writeAtom (Dip (is, _) as) =
+writeAtom _ (Dip (is, _) as) =
     let sz = size (last is)
     in foldMapA (dipify sz) as
-writeAtom (AtBuiltin ([i0, i1], _) Swap) =
+writeAtom _ (AtBuiltin ([i0, i1], _) Swap) =
     let sz0 = size i0
         sz1 = size i1
     in
@@ -293,16 +305,14 @@ writeAtom (AtBuiltin ([i0, i1], _) Swap) =
             copyBytes 0 (-sz0 - sz1) sz0 -- copy i0 to end of the stack
                 ++ copyBytes (-sz0 - sz1) (-sz1) sz1 -- copy i1 to where i0 used to be
                 ++ copyBytes (-sz0) 0 sz0 -- copy i0 at end of stack to its new place
-writeAtom (AtBuiltin _ Swap) = error "Ill-typed swap!"
-writeAtom (AtCons ann@(ConsAnn _ tag' _) _) =
+writeAtom _ (AtBuiltin _ Swap) = error "Ill-typed swap!"
+writeAtom _ (AtCons ann@(ConsAnn _ tag' _) _) =
     pure $ dataPointerInc (padBytes ann) : push 1 (ConstTag tag')
 
 -- | Constructors may need to be padded, this computes the number of bytes of
 -- padding
 padBytes :: ConsAnn MonoStackType -> Int64
 padBytes (ConsAnn sz _ (is, _)) = sz - sizeStack is - 1
-
--- TODO: need consistent ABI for constructors
 
 dipify :: Int64 -> Atom (ConsAnn MonoStackType) MonoStackType -> TempM [Stmt]
 dipify _ (AtBuiltin ([], _) Drop) = error "Internal error: Ill-typed drop!"
