@@ -39,6 +39,12 @@ getInt = gets (head . IR.temps) <* modify nextInt
 getLabel :: WriteM IR.Label
 getLabel = gets (head . IR.wlabels) <* modify nextLabels
 
+allocTemp64 :: WriteM IR.Temp
+allocTemp64 = IR.Temp64 <$> getInt
+
+allocTemp8 :: WriteM IR.Temp
+allocTemp8 = IR.Temp8 <$> getInt
+
 allocReg64 :: WriteM AbsReg
 allocReg64 = AllocReg64 <$> getInt
 
@@ -149,8 +155,21 @@ irEmit (IR.MovMem (IR.Reg r) _ (IR.ExprIntBinOp IR.WordShiftLIR (IR.Reg r1) (IR.
 irEmit (IR.MovMem (IR.Reg r) _ (IR.ExprIntBinOp IR.IntModIR (IR.Reg r1) (IR.Reg r2))) =
     -- QuotRes is rax, so move r1 to rax first
     pure [ MovRR () QuotRes (toAbsReg r1), Cqo (), IdivR () (toAbsReg r2), MovAR () (Reg $ toAbsReg r) RemRes ]
--- total failure; try recursive back-up function at this point
 irEmit (IR.MovTemp r e) = evalE e r
+irEmit (IR.MovMem e 8 e') = do
+    { r <- allocTemp64
+    ; r' <- allocTemp64
+    ; eEval <- evalE e r
+    ; e'Eval <- evalE e' r'
+    ; pure (eEval ++ e'Eval ++ [MovAR () (Reg $ toAbsReg r) (toAbsReg r')])
+    }
+irEmit (IR.MovMem e 1 e') = do
+    { r <- allocTemp8
+    ; r' <- allocTemp8
+    ; eEval <- evalE e r
+    ; e'Eval <- evalE e' r'
+    ; pure (eEval ++ e'Eval ++ [MovAR () (Reg $ toAbsReg r) (toAbsReg r')])
+    }
 
 -- rbx, rbp, r12-r15 callee-saved (non-volatile)
 -- rest caller-saved (volatile)
