@@ -1,7 +1,7 @@
 module Main (main) where
 
-import Test.Tasty
-import Harness
+import           Harness
+import           Test.Tasty
 
 main :: IO ()
 main = defaultMain $

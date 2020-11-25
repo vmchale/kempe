@@ -36,8 +36,7 @@ yeetIO = either throwIO pure
 
 assignTypes :: FilePath -> IO (Module () (StackType ()) (StackType ()), Int)
 assignTypes fp = do
-    contents <- BSL.readFile fp
-    (maxU, m) <- yeetIO $ parseWithMax contents
+    (maxU, m) <- parsedFp fp
     yeetIO $ runTypeM maxU (assignModule m)
 
 testAssignment :: FilePath -> TestTree

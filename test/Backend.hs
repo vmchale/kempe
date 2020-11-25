@@ -43,37 +43,32 @@ backendTests =
 
 codegen :: FilePath -> TestTree
 codegen fp = testCase ("Generates code without throwing an exception (" ++ fp ++ ")") $ do
-    contents <- BSL.readFile fp
-    parsed <- yeetIO $ parseWithMax contents
+    parsed <- parsedFp fp
     let code = uncurry x86Alloc parsed
     assertBool "Doesn't fail" (code `deepseq` True)
 
 liveness :: FilePath -> TestTree
 liveness fp = testCase ("Liveness analysis terminates (" ++ fp ++ ")") $ do
-    contents <- BSL.readFile fp
-    parsed <- yeetIO $ parseWithMax contents
+    parsed <- parsedFp fp
     let x86 = uncurry x86Parsed parsed
         cf = mkControlFlow x86
     assertBool "Doesn't bottom" (reconstruct cf `deepseq` True)
 
 controlFlowGraph :: FilePath -> TestTree
 controlFlowGraph fp = testCase ("Doesn't crash while creating control flow graph for " ++ fp) $ do
-    contents <- BSL.readFile fp
-    parsed <- yeetIO $ parseWithMax contents
+    parsed <- parsedFp fp
     let x86 = uncurry x86Parsed parsed
     assertBool "Worked without exception" (mkControlFlow x86 `deepseq` True)
 
 x86NoYeet :: FilePath -> TestTree
 x86NoYeet fp = testCase ("Selects instructions for " ++ fp) $ do
-    contents <- BSL.readFile fp
-    parsed <- yeetIO $ parseWithMax contents
+    parsed <- parsedFp fp
     let x86 = uncurry x86Parsed parsed
     assertBool "Worked without exception" (x86 `deepseq` True)
 
 irNoYeet :: FilePath -> TestTree
 irNoYeet fp = testCase ("Generates IR without throwing an exception (" ++ fp ++ ")") $ do
-    contents <- BSL.readFile fp
-    (i, m) <- yeetIO $ parseWithMax contents
+    (i, m) <- parsedFp fp
     let res = fst $ irGen i m
     assertBool "Worked without failure" (res `deepseq` True)
 
@@ -97,8 +92,7 @@ monoFile fp = do
 
 pipelineWorks :: FilePath -> TestTree
 pipelineWorks fp = testCase ("Functions in " ++ fp ++ " can be specialized") $ do
-    contents <- BSL.readFile fp
-    (maxU, m) <- yeetIO $ parseWithMax contents
+    (maxU, m) <- parsedFp fp
     let res = monomorphize maxU m
     case res of
         Left err -> assertFailure (show $ pretty err)
