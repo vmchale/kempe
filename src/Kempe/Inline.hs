@@ -43,7 +43,7 @@ kempePreGraph = mapMaybe kempeDeclToGraph
 
 mkFnModuleMap :: Module a c b -> FnModuleMap c b
 mkFnModuleMap = IM.fromList . mapMaybe toInt where
-    toInt (FunDecl _ (Name _ (Unique i) _) _ _ as) = Just (i, as)
+    toInt (FunDecl _ (Name _ (Unique i) _) _ _ as) = Just (i, as) -- FIXME: this gets rid of external function decls, when it should mark them
     toInt _                                        = Nothing
 
 namesInAtom :: Atom c a -> [Name a]
