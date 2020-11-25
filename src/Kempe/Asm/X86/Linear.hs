@@ -182,12 +182,6 @@ useReg _ QuotRes        = pure Rax
 useReg _ RemRes         = pure Rdx
 -- TODO: ig we should have a sanity check here?
 
-illTyped :: a
-illTyped = error "Internal error: ill-typed assembly!"
-
-questionable :: a
-questionable = error "Internal error in register allocator: questionable instruction."
-
 -- There's no spill code buuut that's probably not necessary since the whole
 -- kempe model is basically to start with everything pre-spilled
 allocReg :: X86 AbsReg Liveness -> AllocM (X86 X86Reg ())
@@ -198,7 +192,7 @@ allocReg (PushConst _ i)                       = pure $ PushConst () i
 allocReg (Je _ l)                              = pure $ Je () l
 allocReg (Jump _ l)                            = pure $ Jump () l
 allocReg (Label _ l)                           = pure $ Label () l
-allocReg (MovRCBool l (AllocReg8 i) b)         = (MovRCBool () <$> useReg8 l i <*> pure b) <* freeDone l
+allocReg (MovRCBool l r b)                     = (MovRCBool () <$> useReg l r <*> pure b) <* freeDone l
 allocReg (CmpAddrReg l a r)                    = (CmpAddrReg () <$> useAddr l a <*> useReg l r) <* freeDone l
 allocReg (CmpAddrBool l a b)                   = (CmpAddrBool () <$> useAddr l a <*> pure b) <* freeDone l
 allocReg (AddRC _ DataPointer c)               = pure $ AddRC () Rbx c
@@ -215,21 +209,8 @@ allocReg (BSLabel _ b)                         = pure $ BSLabel () b
 allocReg (MovRC l r c)                         = (MovRC () <$> useReg l r <*> pure c) <* freeDone l
 allocReg (PopMem _ (AddrRCPlus DataPointer c)) = pure $ PopMem () (AddrRCPlus Rbx c)
 allocReg (AddAC _ (Reg DataPointer) c)         = pure $ AddAC () (Reg Rbx) c
-allocReg (MovRCBool _ DataPointer _)           = illTyped
-allocReg (MovRCBool _ AllocReg64{} _)          = illTyped
-allocReg (MovRCBool _ CRet _)                  = illTyped
-allocReg (MovRCBool _ CArg1 _)                 = illTyped
-allocReg (MovRCBool _ CArg2 _)                 = illTyped
-allocReg (MovRCBool _ CArg3 _)                 = illTyped
-allocReg (MovRCBool _ CArg4 _)                 = illTyped
-allocReg (MovRCBool _ CArg5 _)                 = illTyped
-allocReg (MovRCBool _ CArg6 _)                 = illTyped
-allocReg (AddRC l (AllocReg64 i) c)            = (AddRC () <$> useReg64 l i <*> pure c) <* freeDone l
-allocReg (SubRC l (AllocReg64 i) c)            = (SubRC () <$> useReg64 l i <*> pure c) <* freeDone l
-allocReg (AddRC _ AllocReg8{} _)               = illTyped
-allocReg (AddRC _ CRet _)                      = questionable
-allocReg (SubRC _ AllocReg8{} _)               = illTyped
-allocReg (SubRC _ CRet _)                      = questionable
+allocReg (AddRC l r c)                         = (AddRC () <$> useReg l r <*> pure c) <* freeDone l
+allocReg (SubRC l r c)                         = (SubRC () <$> useReg l r <*> pure c) <* freeDone l
 allocReg (MovAC l a c)                         = (MovAC () <$> useAddr l a <*> pure c) <* freeDone l
 allocReg (MovACi8 l a c)                       = (MovACi8 () <$> useAddr l a <*> pure c) <* freeDone l
 allocReg (MovABool l a b)                      = (MovABool () <$> useAddr l a <*> pure b) <* freeDone l
@@ -248,20 +229,4 @@ allocReg Cqo{}                                 = pure $ Cqo ()
 allocReg (PopReg l r)                          = (PopReg () <$> useReg l r) <* freeDone l
 allocReg (MovRCi8 l r c)                       = (MovRCi8 () <$> useReg l r <*> pure c) <* freeDone l
 allocReg (Jl _ l)                              = pure $ Jl () l
-allocReg (MovRCBool _ ShiftExponent _)         = illTyped
-allocReg (MovRCBool _ QuotRes _)               = illTyped
-allocReg (MovRCBool _ RemRes _)                = illTyped
-allocReg (AddRC _ CArg1 _)                     = questionable
-allocReg (AddRC _ CArg2 _)                     = questionable
-allocReg (AddRC _ CArg3 _)                     = questionable
-allocReg (AddRC _ CArg4 _)                     = questionable
-allocReg (AddRC _ CArg5 _)                     = questionable
-allocReg (AddRC _ CArg6 _)                     = questionable
-allocReg (AddRC _ ShiftExponent _)             = illTyped
-allocReg (SubRC _ CArg1 _)                     = questionable
-allocReg (SubRC _ CArg2 _)                     = questionable
-allocReg (SubRC _ CArg3 _)                     = questionable
-allocReg (SubRC _ CArg4 _)                     = questionable
-allocReg (SubRC _ CArg5 _)                     = questionable
-allocReg (SubRC _ CArg6 _)                     = questionable
-allocReg (SubRC _ ShiftExponent _)             = illTyped
+allocReg (MovACTag l a t)                      = (MovACTag () <$> useAddr l a <*> pure t) <* freeDone l
