@@ -1,10 +1,11 @@
 module Kempe.Inline ( inline
                     ) where
 
-import           Data.Graph       (Graph, Vertex, graphFromEdges, path)
-import qualified Data.IntMap      as IM
-import           Data.Maybe       (fromMaybe, mapMaybe)
-import           Data.Tuple.Extra (third3)
+import           Data.Graph         (Graph, Vertex, graphFromEdges, path)
+import qualified Data.IntMap        as IM
+import qualified Data.List.NonEmpty as NE
+import           Data.Maybe         (fromMaybe, mapMaybe)
+import           Data.Tuple.Extra   (third3)
 import           Kempe.AST
 import           Kempe.Name
 import           Kempe.Unique
@@ -19,13 +20,14 @@ inline m = fmap inlineDecl m
           inlineDecl d                       = d
           inlineAtoms n = concatMap (inlineAtom n)
           inlineAtom declName a@(AtName _ n) =
-            if path graph (nLookup n) (nLookup declName) || isRec n -- FIXME: criterion allows things which are recursive (i.e. inline isPrimeStep more than once in isPrime)
-                -- need to mark things which are recursive?
+            if path graph (nLookup n) (nLookup declName) || don'tInline n
                 then [a] -- no inline
                 else foldMap (inlineAtom declName) $ findDecl a n
           inlineAtom declName (If l as as') =
             [If l (inlineAtoms declName as) (inlineAtoms declName as')]
-          inlineAtom _ Case{} = undefined
+          inlineAtom declName (Case l ls) =
+            let (ps, ass) = NE.unzip ls
+                in [Case l (NE.zip ps $ fmap (inlineAtoms declName) ass)]
           inlineAtom _ a = [a]
           fnMap = mkFnModuleMap m
           (graph, _, nLookup) = kempeGraph m
@@ -35,15 +37,16 @@ inline m = fmap inlineDecl m
                 Nothing -> pure at -- tried to inline an extern function
           findPreDecl = IM.findWithDefault (error "Internal error: FnModuleMap does not contain name/declaration!")
           recMap = graphRecursiveMap m (graph, nLookup)
-          isRec (Name _ (Unique i) _) = IM.findWithDefault (error "Internal error! recursive map missing key!") i recMap
+          don'tInline (Name _ (Unique i) _) = IM.findWithDefault (error "Internal error! recursive map missing key!") i recMap
 
--- | Given a module, make a map telling which top-level names are recursive.
+-- | Given a module, make a map telling which top-level names are recursive or
+-- cannot be inlined
 graphRecursiveMap :: Module a c b -> (Graph, Name b -> Vertex) -> IM.IntMap Bool
 graphRecursiveMap m (graph, nLookup) = IM.fromList $ mapMaybe fnRecursive m
     where fnRecursive (FunDecl _ n@(Name _ (Unique i) _) _ _ as) | n `elem` namesInAtoms as = Just (i, True) -- if it calls iteself
                                                                  | anyReachable n as = Just (i, True)
                                                                  | otherwise = Just (i, False)
-          fnRecursive (ExtFnDecl _ (Name _ (Unique i) _) _ _ _) = Just (i, False)
+          fnRecursive (ExtFnDecl _ (Name _ (Unique i) _) _ _ _) = Just (i, True) -- not recursive but don't try to inline this
           fnRecursive _ = Nothing
           anyReachable n as =
             any (\nA -> path graph (nLookup nA) (nLookup n)) (namesInAtoms as) -- TODO: lift let-binding (nLookup?)
