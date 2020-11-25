@@ -39,6 +39,7 @@ library
         Kempe.Monomorphize
         Kempe.Pipeline
         Kempe.Shuttle
+        Kempe.Inline
         Kempe.IR
         Kempe.IR.Opt
         Kempe.Asm.X86
@@ -51,7 +52,6 @@ library
         Kempe.Unique
         Kempe.Name
         Kempe.Error
-        Kempe.Inline
         Kempe.Monomorphize.Error
         Kempe.Asm.X86.Type
         Kempe.Proc.Nasm

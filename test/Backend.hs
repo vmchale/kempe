@@ -5,6 +5,8 @@ import           Control.DeepSeq           (deepseq)
 import qualified Data.ByteString.Lazy      as BSL
 import           Kempe.Asm.X86.ControlFlow
 import           Kempe.Asm.X86.Liveness
+import           Kempe.File
+import           Kempe.Inline
 import           Kempe.Monomorphize
 import           Kempe.Parser
 import           Kempe.Pipeline
@@ -18,6 +20,8 @@ backendTests :: TestTree
 backendTests =
     testGroup "Backend-ish"
         [ monoTest "test/data/ty.kmp"
+        , inlineTest "lib/numbertheory.kmp"
+        , inlineTest "examples/factorial.kmp"
         , pipelineWorks "test/data/ty.kmp"
         , pipelineWorks "examples/splitmix.kmp"
         , pipelineWorks "examples/factorial.kmp"
@@ -72,6 +76,15 @@ irNoYeet fp = testCase ("Generates IR without throwing an exception (" ++ fp ++ 
     (i, m) <- yeetIO $ parseWithMax contents
     let res = fst $ irGen i m
     assertBool "Worked without failure" (res `deepseq` True)
+
+inlineTest :: FilePath -> TestTree
+inlineTest fp = testCase ("Inlines " ++ fp ++ " without error") $ inlineFile fp
+
+inlineFile :: FilePath -> Assertion
+inlineFile fp = do
+    (_, m) <- parsedFp fp
+    let res = inline m
+    assertBool "Doesn't bottom when inlining" (res `deepseq` True)
 
 monoTest :: FilePath -> TestTree
 monoTest fp = testCase ("Monomorphizes " ++ fp ++ " without error") $ monoFile fp

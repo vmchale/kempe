@@ -1,7 +1,7 @@
-module Kempe.Inline ( kempeGraph
+module Kempe.Inline ( inline
                     ) where
 
-import           Data.Graph       (Graph, Vertex, graphFromEdges, path, reachable)
+import           Data.Graph       (Graph, Vertex, graphFromEdges, path)
 import qualified Data.IntMap      as IM
 import           Data.Maybe       (fromMaybe, mapMaybe)
 import           Data.Tuple.Extra (third3)
@@ -14,9 +14,17 @@ import           Kempe.Unique
 type FnModuleMap c b = IM.IntMap [Atom c b]
 
 inline :: Module a c b -> Module a c b
-inline m = let fnMap = mkFnModuleMap m in fmap (inlineDecl fnMap) m
-    where inlineDecl :: FnModuleMap c b -> KempeDecl a c b -> KempeDecl a c b
-          inlineDecl = undefined
+inline m = fmap inlineDecl m
+    where inlineDecl (FunDecl l n ty ty' as) = FunDecl l n ty ty' (concatMap (inlineAtom n) as)
+          inlineDecl d                       = d
+          inlineAtom declName a@(AtName _ n) =
+            if path graph (nLookup n) (nLookup declName)
+                then [a] -- no inline
+                else findDecl (unUnique (unique n)) fnMap
+          inlineAtom _ a = [a]
+          fnMap = mkFnModuleMap m
+          (graph, _, nLookup) = kempeGraph m
+          findDecl = IM.findWithDefault (error "Internal error: FnModuleMap does not contain name/declaration!")
 
 kempeGraph :: Module a c b -> (Graph, Vertex -> (KempeDecl a c b, Name b, [Name b]), Name b -> Vertex)
 kempeGraph = third3 (findVtx .) . graphFromEdges . kempePreGraph

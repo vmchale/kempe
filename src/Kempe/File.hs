@@ -5,6 +5,7 @@ module Kempe.File ( tcFile
                   , x86File
                   , dumpX86
                   , compile
+                  , parsedFp
                   ) where
 
 -- common b/w test suite and exec, repl utils
