@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
--- just kinda wing it
+-- vaguely maximal munch
 module Kempe.Asm.X86 ( X86 (..)
                      , Addr (..)
                      , irToX86
