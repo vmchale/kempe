@@ -1,13 +1,12 @@
 module Kempe.Shuttle ( monomorphize
                      ) where
 
-import           Data.Bitraversable       (bitraverse)
-import           Data.Functor             (void)
+import           Data.Bitraversable (bitraverse)
+import           Data.Functor       (void)
 import           Kempe.AST
 import           Kempe.Error
 import           Kempe.Inline
 import           Kempe.Monomorphize
-import           Kempe.Monomorphize.Error
 import           Kempe.TyAssign
 
 inlineAssignFlatten :: Int
