@@ -7,8 +7,6 @@ Kempe is a stack-based language, and `kc` is a toy compiler for x86_64.
 
 # Installing kc
 
-## Source
-
 First, install [cabal](https://www.haskell.org/cabal/download.html) and
 [GHC](https://www.haskell.org/ghc/download.html). Then:
 
@@ -60,11 +58,18 @@ programmers:
   * `dup : a -- a a`
   * `swap : a b -- b a`
 
+There is one higher-order construct, `dip` - consider an example:
+
+```
+rotr : a b c -- c a b
+     =: [ swap dip(swap) ]
+```
+
 # Programming in Kempe
 
 ## Invoking the Compiler
 
-`kc` cannot be used to produce executables, rather, the Kempe compiler will
+`kc` cannot be used to produce executables. Rather, the Kempe compiler will
 produce `.o` files which contain functions.
 
 # Examples

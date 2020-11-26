@@ -221,7 +221,6 @@
 <li><a href="#introduction">Introduction</a></li>
 <li><a href="#installing-kc">Installing kc</a>
 <ul>
-<li><a href="#source">Source</a></li>
 <li><a href="#editor-integration">Editor Integration</a></li>
 </ul></li>
 <li><a href="#kempe-language">Kempe Language</a>
@@ -245,7 +244,6 @@
 <h1 id="introduction">Introduction</h1>
 <p>Kempe is a stack-based language, and <code>kc</code> is a toy compiler for x86_64.</p>
 <h1 id="installing-kc">Installing kc</h1>
-<h2 id="source">Source</h2>
 <p>First, install <a href="https://www.haskell.org/cabal/download.html">cabal</a> and <a href="https://www.haskell.org/ghc/download.html">GHC</a>. Then:</p>
 <pre><code>cabal install kempe</code></pre>
 <p>This provides <code>kc</code>, the Kempe compiler.</p>
@@ -268,9 +266,12 @@
 <li><code>dup : a -- a a</code></li>
 <li><code>swap : a b -- b a</code></li>
 </ul>
+<p>There is one higher-order construct, <code>dip</code> - consider an example:</p>
+<pre><code>rotr : a b c -- c a b
+     =: [ swap dip(swap) ]</code></pre>
 <h1 id="programming-in-kempe">Programming in Kempe</h1>
 <h2 id="invoking-the-compiler">Invoking the Compiler</h2>
-<p><code>kc</code> cannot be used to produce executables, rather, the Kempe compiler will produce <code>.o</code> files which contain functions.</p>
+<p><code>kc</code> cannot be used to produce executables. Rather, the Kempe compiler will produce <code>.o</code> files which contain functions.</p>
 <h1 id="examples">Examples</h1>
 <h2 id="splitmix-pseudorandom-number-generator">Splitmix Pseudorandom Number Generator</h2>
 <p>The generator in question comes from a <a href="https://dl.acm.org/doi/10.1145/2714064.2660195">recent paper</a>.</p>
@@ -285,15 +286,15 @@ next : Word -- Word Word
 
 %foreign kabi next</code></pre>
 <p>Compare the <a href="http://prng.di.unimi.it/splitmix64.c">C implementation</a>:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;stdint.h&gt;</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="co">// modified to have &quot;&quot;multiple return&quot;&quot; since C doesn&#39;t really have that</span></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="dt">uint64_t</span> next(<span class="dt">uint64_t</span> x, <span class="dt">uint64_t</span>* y) {</span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint64_t</span> z = (x += <span class="bn">0x9e3779b97f4a7c15</span>);</span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    z = (z ^ (z &gt;&gt; <span class="dv">30</span>)) * <span class="bn">0xbf58476d1ce4e5b9</span>;</span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    z = (z ^ (z &gt;&gt; <span class="dv">27</span>)) * <span class="bn">0x94d049bb133111eb</span>;</span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    *y = x;</span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> z ^ (z &gt;&gt; <span class="dv">31</span>);</span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;stdint.h&gt;</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="co">// modified to have &quot;&quot;multiple return&quot;&quot; since C doesn&#39;t really have that</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="dt">uint64_t</span> next(<span class="dt">uint64_t</span> x, <span class="dt">uint64_t</span>* y) {</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint64_t</span> z = (x += <span class="bn">0x9e3779b97f4a7c15</span>);</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    z = (z ^ (z &gt;&gt; <span class="dv">30</span>)) * <span class="bn">0xbf58476d1ce4e5b9</span>;</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    z = (z ^ (z &gt;&gt; <span class="dv">27</span>)) * <span class="bn">0x94d049bb133111eb</span>;</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    *y = x;</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> z ^ (z &gt;&gt; <span class="dv">31</span>);</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 </body>
 </html>
