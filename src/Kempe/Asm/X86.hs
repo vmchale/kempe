@@ -59,12 +59,6 @@ irEmit (IR.Jump l) = pure [Jump () l]
 irEmit (IR.Labeled l) = pure [Label () l]
 irEmit (IR.KCall l) = pure [Call () l]
 irEmit IR.Ret = pure [Ret ()]
-irEmit (IR.CJump (IR.Mem 1 (IR.Reg r)) l l') =
-    pure [CmpAddrBool () (Reg (toAbsReg r)) 1, Je () l, Jump () l']
-irEmit (IR.CJump (IR.Mem 1 (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r) (IR.ConstInt i))) l l') =
-    pure [CmpAddrBool () (AddrRCMinus (toAbsReg r) i) 1, Je () l, Jump () l']
-irEmit (IR.CJump (IR.Mem 1 (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r) (IR.ConstInt i))) l l') =
-    pure [CmpAddrBool () (AddrRCPlus (toAbsReg r) i) 1, Je () l, Jump () l']
 irEmit (IR.MovMem (IR.Reg r) _ (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r1) (IR.Reg r2))) = do
     { r' <- allocReg64
     ; pure [ MovRR () r' (toAbsReg r1), SubRR () r' (toAbsReg r2), MovAR () (Reg $ toAbsReg r) r' ]
@@ -171,6 +165,12 @@ irEmit (IR.MovMem e 1 e') = do
     ; e'Eval <- evalE e' r'
     ; pure (eEval ++ e'Eval ++ [MovAR () (Reg $ toAbsReg r) (toAbsReg r')])
     }
+irEmit (IR.CJump (IR.Mem 1 (IR.Reg r)) l l') =
+    pure [CmpAddrBool () (Reg (toAbsReg r)) 1, Je () l, Jump () l']
+irEmit (IR.CJump (IR.Mem 1 (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r) (IR.ConstInt i))) l l') =
+    pure [CmpAddrBool () (AddrRCMinus (toAbsReg r) i) 1, Je () l, Jump () l']
+irEmit (IR.CJump (IR.Mem 1 (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r) (IR.ConstInt i))) l l') =
+    pure [CmpAddrBool () (AddrRCPlus (toAbsReg r) i) 1, Je () l, Jump () l']
 irEmit (IR.CJump e l l') = do
     { r <- allocTemp8
     ; bEval <- evalE e r
@@ -181,6 +181,8 @@ irEmit (IR.CJump e l l') = do
 -- rest caller-saved (volatile)
 
 -- | Code to evaluate and put some expression in a chosen 'Temp'
+--
+-- This more or less conforms to maximal munch.
 evalE :: IR.Exp -> IR.Temp -> WriteM [X86 AbsReg ()]
 evalE (IR.ConstInt i) (IR.Temp64 t)                                 = pure [MovRC () (AllocReg64 t) i]
 evalE (IR.ConstBool b) (IR.Temp8 t)                                 = pure [MovRCBool () (AllocReg8 t) (toByte b)]
