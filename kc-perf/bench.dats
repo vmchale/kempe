@@ -123,24 +123,9 @@ fn get_slope {n:nat}(n : int(n), d : io) : double =
     pairs.slope
   end
 
-(*
-fn get_slope_t {a:t@ype}{n:nat}(n : int(n), f : a -<cloref1> void, x : a) : double =
-  let
-    val io_ = lam () => f(x)
-  in
-    get_slope(n, io_)
-  end
-*)
 fn print_slope {n:nat}(s : string, n : int(n), d : io) : void =
   {
     val sl = get_slope(n, d)
     val _ = print("\33[32m" + s + "\33[0m\n    estimate: ")
     val _ = display_time(sl)
   }
-
-(*
-fn print_slope_t {n:nat}{a:t@ype}(s : string, n : int(n), f : a -<cloref1> void, x : a) : void =
-  {
-    val io_ = lam () => f(x)
-    val _ = print_slope(s, n, io_)
-  }*)
