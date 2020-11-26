@@ -51,6 +51,11 @@ nip : a b -- b
     =: [ dip(drop) ]
 ```
 
+## Builtins
+
+The Kempe compiler has a few builtin functions that you can use for arithmetic
+and for shuffling data around.
+
 # Programming in Kempe
 
 ## Invoking the Compiler
