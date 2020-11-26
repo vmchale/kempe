@@ -14,12 +14,11 @@ data-files:
     test/data/*.kmp
     prelude/*.kmp
     lib/*.kmp
-    rts.S
+    docs/manual.pdf
 
 extra-doc-files:
     README.md
     CHANGELOG.md
-    docs/manual.pdf
 
 source-repository head
     type:     git
