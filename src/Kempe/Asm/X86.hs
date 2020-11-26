@@ -136,8 +136,22 @@ evalE (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r1) (IR.Reg r2)) r = do
     { r' <- allocReg64
     ; pure [ MovRR () r' (toAbsReg r1), SubRR () r' (toAbsReg r2), MovRR () r' (toAbsReg r) ]
     }
+evalE (IR.ExprIntBinOp IR.IntTimesIR (IR.Reg r1) (IR.Reg r2)) r = do
+    { r' <- allocReg64
+    ; pure [ MovRR () r' (toAbsReg r1), ImulRR () r' (toAbsReg r2), MovRR () r' (toAbsReg r) ]
+    }
 evalE (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r1) (IR.ConstInt i)) r = do
     pure [ MovRR () (toAbsReg r) (toAbsReg r1), SubRC () (toAbsReg r) i ]
+evalE (IR.ExprIntRel IR.IntEqIR e e') r = do
+    { l0 <- getLabel
+    ; l1 <- getLabel
+    ; l2 <- getLabel
+    ; r0 <- allocTemp64
+    ; r1 <- allocTemp64
+    ; placeE <- evalE e r0
+    ; placeE' <- evalE e' r1
+    ; pure $ placeE ++ placeE' ++ [CmpRegReg () (toAbsReg r0) (toAbsReg r1), Jl () l0, Jump () l1, Label () l0, MovRCBool () (toAbsReg r) 1, Jump () l2, Label () l1, MovRCBool () (toAbsReg r) 0, Label () l2 ]
+    }
 evalE e _ = error (show $ pretty e)
 -- TODO: ShiftExponent and QuotRes and RemRes
 
