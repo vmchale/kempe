@@ -54,7 +54,11 @@ nip : a b -- b
 ## Builtins
 
 The Kempe compiler has a few builtin functions that you can use for arithmetic
-and for shuffling data around.
+and for shuffling data around. Many of them are familiar to stack-based
+programmers:
+
+  * `dup : a -- a a`
+  * `swap : a b -- b a`
 
 # Programming in Kempe
 

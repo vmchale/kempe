@@ -9,6 +9,9 @@ HS_SRC := $(shell find src -type f) kempe.cabal
 docs/manual.pdf: docs/manual.md
 	pandoc $< -o $@ --toc
 
+docs/manual.html: docs/manual.md
+	pandoc -s $< -o $@ --toc
+
 moddeps.svg: $(HS_SRC)
 	graphmod src | dot -Tsvg -o$@
 
