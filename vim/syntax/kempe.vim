@@ -21,8 +21,9 @@ syntax match kempeKeyword "type"
 syntax match kempeKeyword "case"
 
 syntax match kempeType "Int"
+syntax match kempeType "Word"
+syntax match kempeType "Int8"
 syntax match kempeType "Ptr"
-syntax match kempeType "Bool"
 
 syntax match kempeComment "\v;.*$" contains=@Spell
 

@@ -6,6 +6,12 @@ MAKEFLAGS += --warn-undefined-variables --no-builtin-rules
 
 HS_SRC := $(shell find src -type f) kempe.cabal
 
+docs/manual.pdf: docs/manual.md
+	pandoc $< -o $@ --toc
+
+docs/manual.html: docs/manual.md
+	pandoc -s $< -o $@ --toc
+
 moddeps.svg: $(HS_SRC)
 	graphmod src | dot -Tsvg -o$@
 
@@ -31,4 +37,4 @@ install:
 	cabal install exe:kc --overwrite-policy=always
 
 clean:
-	rm -rf dist-newstyle *.rlib *.d *.rmeta *.o stack.yaml.lock moddeps.svg factorial.S factorial splitmix.S numbertheory.S numbertheory
+	rm -rf dist-newstyle *.rlib *.d *.rmeta *.o stack.yaml.lock moddeps.svg factorial.S factorial splitmix.S numbertheory.S numbertheory *.so
