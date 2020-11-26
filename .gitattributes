@@ -1,4 +1,4 @@
 *.cpphs linguist-language=Haskell
 *.y linguist-language=Happy
 *.x linguist-language=Alex
-benchmarks/*.c linguist-generated
+benchmarks/bench.dats linguist-vendored
