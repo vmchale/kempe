@@ -52,7 +52,6 @@ library
         Kempe.Unique
         Kempe.Name
         Kempe.Error
-        Kempe.Monomorphize.Error
         Kempe.Asm.X86.Type
         Kempe.Proc.Nasm
         Prettyprinter.Ext

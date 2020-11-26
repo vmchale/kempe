@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts  #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TupleSections     #-}
 
@@ -6,6 +7,8 @@ module Kempe.Monomorphize ( closedModule
                           , MonoM
                           , runMonoM
                           , flattenModule
+                          , tryMono
+                          , tryMonoConsAnn
                           , ConsAnn (..)
                           -- * Benchmark
                           , closure
@@ -13,6 +16,7 @@ module Kempe.Monomorphize ( closedModule
                           ) where
 
 import           Control.Monad              ((<=<))
+import           Control.Monad.Except       (MonadError, throwError)
 import           Control.Monad.State.Strict (StateT, gets, runStateT)
 import           Data.Bifunctor             (second)
 import           Data.Function              (on)
@@ -26,7 +30,6 @@ import qualified Data.Text                  as T
 import           Data.Tuple.Extra           (fst3, snd3, thd3)
 import           Kempe.AST
 import           Kempe.Error
-import           Kempe.Monomorphize.Error   (tryMono)
 import           Kempe.Name
 import           Kempe.Unique
 import           Lens.Micro                 (Lens')
@@ -59,6 +62,14 @@ freshName n ty = do
     pSt <- gets maxState
     Name n (Unique $ pSt + 1) ty
         <$ modifying maxStateLens (+1)
+
+tryMono :: MonadError (Error ()) m => StackType () -> m MonoStackType
+tryMono (StackType _ is os) | S.null (freeVars (is ++ os)) = pure (is, os)
+                            | otherwise = throwError $ MonoFailed ()
+
+-- TODO: possible to get rid of this?
+tryMonoConsAnn :: MonadError (Error ()) m => ConsAnn (StackType ()) -> m (ConsAnn MonoStackType)
+tryMonoConsAnn = traverse tryMono
 
 -- | A 'ModuleMap' is a map which retrives the 'KempeDecl' associated with
 -- a given 'Name'
