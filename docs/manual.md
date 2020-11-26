@@ -58,12 +58,16 @@ programmers:
   * `dup : a -- a a`
   * `swap : a b -- b a`
 
-There is one higher-order construct, `dip` - consider an example:
+There is one higher-order construct, `dip`, which we illustrate by example:
 
 ```
 nip : a b -- b
     =: [ dip(drop) ]
 ```
+
+## Recursion
+
+`kc` optimizes tail recursion.
 
 # Programming in Kempe
 
@@ -71,6 +75,10 @@ nip : a b -- b
 
 `kc` cannot be used to produce executables. Rather, the Kempe compiler will
 produce `.o` files which contain functions.
+
+## Internals
+
+Kempe maintains its own stack and stores the pointer in `rbp`.
 
 # Examples
 
@@ -107,4 +115,14 @@ uint64_t next(uint64_t x, uint64_t* y) {
 	*y = x;
 	return z ^ (z >> 31);
 }
+```
+
+## GCD
+
+```
+gcd : Int Int -- Int
+    =: [ dup 0 =
+         if( drop
+           , dup dip(%) swap gcd )
+       ]
 ```

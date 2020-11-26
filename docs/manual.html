@@ -230,14 +230,17 @@
 <li><a href="#polymorphism">Polymorphism</a></li>
 </ul></li>
 <li><a href="#builtins">Builtins</a></li>
+<li><a href="#recursion">Recursion</a></li>
 </ul></li>
 <li><a href="#programming-in-kempe">Programming in Kempe</a>
 <ul>
 <li><a href="#invoking-the-compiler">Invoking the Compiler</a></li>
+<li><a href="#internals">Internals</a></li>
 </ul></li>
 <li><a href="#examples">Examples</a>
 <ul>
 <li><a href="#splitmix-pseudorandom-number-generator">Splitmix Pseudorandom Number Generator</a></li>
+<li><a href="#gcd">GCD</a></li>
 </ul></li>
 </ul>
 </nav>
@@ -266,12 +269,16 @@
 <li><code>dup : a -- a a</code></li>
 <li><code>swap : a b -- b a</code></li>
 </ul>
-<p>There is one higher-order construct, <code>dip</code> - consider an example:</p>
+<p>There is one higher-order construct, <code>dip</code>, which we illustrate by example:</p>
 <pre><code>nip : a b -- b
     =: [ dip(drop) ]</code></pre>
+<h2 id="recursion">Recursion</h2>
+<p><code>kc</code> optimizes tail recursion.</p>
 <h1 id="programming-in-kempe">Programming in Kempe</h1>
 <h2 id="invoking-the-compiler">Invoking the Compiler</h2>
 <p><code>kc</code> cannot be used to produce executables. Rather, the Kempe compiler will produce <code>.o</code> files which contain functions.</p>
+<h2 id="internals">Internals</h2>
+<p>Kempe maintains its own stack and stores the pointer in <code>rbp</code>.</p>
 <h1 id="examples">Examples</h1>
 <h2 id="splitmix-pseudorandom-number-generator">Splitmix Pseudorandom Number Generator</h2>
 <p>The generator in question comes from a <a href="https://dl.acm.org/doi/10.1145/2714064.2660195">recent paper</a>.</p>
@@ -296,5 +303,11 @@ next : Word -- Word Word
 <span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    *y = x;</span>
 <span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> z ^ (z &gt;&gt; <span class="dv">31</span>);</span>
 <span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<h2 id="gcd">GCD</h2>
+<pre><code>gcd : Int Int -- Int
+    =: [ dup 0 =
+         if( drop
+           , dup dip(%) swap gcd )
+       ]</code></pre>
 </body>
 </html>
