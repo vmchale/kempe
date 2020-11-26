@@ -34,7 +34,7 @@ import           Kempe.Name
 import           Kempe.Unique
 import           Lens.Micro                 (Lens')
 import           Lens.Micro.Mtl             (modifying)
-import           Prettyprinter              (Doc, Pretty (pretty), braces, colon, concatWith, hardline, parens, (<+>))
+import           Prettyprinter              (Doc, Pretty (pretty), braces, brackets, colon, concatWith, hardline, parens, (<+>))
 import           Prettyprinter.Ext
 
 type Label = Word
@@ -123,7 +123,7 @@ instance Pretty Exp where
     pretty (ConstBool False)      = parens "bool false"
     pretty (ConstBool True)       = parens "bool true"
     pretty (Reg t)                = parens ("reg" <+> pretty t)
-    pretty (Mem _ e)              = parens ("mem" <+> pretty e)
+    pretty (Mem sz e)             = parens ("mem" <+> brackets (pretty sz) <+> pretty e)
     pretty (ExprIntBinOp op e e') = parens (pretty op <+> pretty e <+> pretty e')
     pretty (ExprIntRel op e e')   = parens (pretty op <+> pretty e <+> pretty e')
     pretty (ConstTag b)           = parens ("tag" <+> prettyHex b)
