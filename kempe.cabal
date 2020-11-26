@@ -19,6 +19,7 @@ data-files:
 extra-doc-files:
     README.md
     CHANGELOG.md
+    docs/manual.pdf
 
 source-repository head
     type:     git

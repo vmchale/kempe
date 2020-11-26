@@ -258,8 +258,8 @@
 <p>that means that the stack must have a <code>Word</code> on it for <code>next</code> to be invoked, and that it will have two <code>Word</code>s on the stack after it is invoked.</p>
 <h3 id="polymorphism">Polymorphism</h3>
 <p>Kempe allows polymorphic functions. So we can define:</p>
-<pre><code>nip : a b -- b
-    =: [ dip(drop) ]</code></pre>
+<pre><code>id : a -- a
+   =: [ ]</code></pre>
 <h2 id="builtins">Builtins</h2>
 <p>The Kempe compiler has a few builtin functions that you can use for arithmetic and for shuffling data around. Many of them are familiar to stack-based programmers:</p>
 <ul>
@@ -267,8 +267,8 @@
 <li><code>swap : a b -- b a</code></li>
 </ul>
 <p>There is one higher-order construct, <code>dip</code> - consider an example:</p>
-<pre><code>rotr : a b c -- c a b
-     =: [ swap dip(swap) ]</code></pre>
+<pre><code>nip : a b -- b
+    =: [ dip(drop) ]</code></pre>
 <h1 id="programming-in-kempe">Programming in Kempe</h1>
 <h2 id="invoking-the-compiler">Invoking the Compiler</h2>
 <p><code>kc</code> cannot be used to produce executables. Rather, the Kempe compiler will produce <code>.o</code> files which contain functions.</p>

@@ -45,8 +45,8 @@ that it will have two `Word`s on the stack after it is invoked.
 Kempe allows polymorphic functions. So we can define:
 
 ```
-nip : a b -- b
-    =: [ dip(drop) ]
+id : a -- a
+   =: [ ]
 ```
 
 ## Builtins
@@ -61,8 +61,8 @@ programmers:
 There is one higher-order construct, `dip` - consider an example:
 
 ```
-rotr : a b c -- c a b
-     =: [ swap dip(swap) ]
+nip : a b -- b
+    =: [ dip(drop) ]
 ```
 
 # Programming in Kempe
