@@ -179,9 +179,14 @@ evalE (IR.ExprIntBinOp IR.WordShiftRIR (IR.Reg r1) (IR.Reg r2)) r = do -- FIXME:
     { r' <- allocReg64
     ; pure [ MovRR () ShiftExponent (toAbsReg r2), MovRR () r' (toAbsReg r1), ShiftRRR () r' ShiftExponent, MovRR () (toAbsReg r) r']
     }
-evalE (IR.ExprIntBinOp IR.IntModIR (IR.Reg r1) (IR.Reg r2)) r =
+evalE (IR.ExprIntBinOp IR.IntModIR e0 e1) r = do
+    { r0 <- allocTemp64
+    ; r1 <- allocTemp64
+    ; placeE <- evalE e0 r0
+    ; placeE' <- evalE e1 r1
     -- QuotRes is rax, so move r1 to rax first
-    pure [ MovRR () QuotRes (toAbsReg r1), Cqo (), IdivR () (toAbsReg r2), MovRR () (toAbsReg r) RemRes ]
+    ; pure [ MovRR () QuotRes (toAbsReg r0), Cqo (), IdivR () (toAbsReg r1), MovRR () (toAbsReg r) RemRes ]
+    }
 
 toByte :: Bool -> Word8
 toByte False = 0
