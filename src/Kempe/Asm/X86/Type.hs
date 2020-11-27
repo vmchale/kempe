@@ -11,6 +11,7 @@ module Kempe.Asm.X86.Type ( X86 (..)
                           , Liveness (..)
                           , Label
                           , prettyAsm
+                          , prettyDebugAsm
                           ) where
 
 import           Control.DeepSeq    (NFData)
@@ -218,6 +219,9 @@ instance Pretty reg => Pretty (Addr reg) where
 prettyLabel :: Label -> Doc ann
 prettyLabel l = "kmp_" <> pretty l
 
+prettyLive :: Pretty reg => X86 reg Liveness -> Doc ann
+prettyLive r = pretty r <+> pretty (ann r)
+
 -- intel syntax
 instance Pretty reg => Pretty (X86 reg a) where
     pretty (PushReg _ r)       = i4 ("push" <+> pretty r)
@@ -262,6 +266,9 @@ instance Pretty reg => Pretty (X86 reg a) where
 
 prettyAsm :: Pretty reg => [X86 reg a] -> Doc ann
 prettyAsm = ((prolegomena <> hardline <> "section .text" <> hardline) <>) . concatWith (\x y -> x <> hardline <> y) . fmap pretty
+
+prettyDebugAsm :: Pretty reg => [X86 reg Liveness] -> Doc ann
+prettyDebugAsm = concatWith (\x y -> x <> hardline <> y) . fmap prettyLive
 
 prolegomena :: Doc ann
 prolegomena = "section .bss" <> hardline <> "kempe_data: resb 0x800000"
