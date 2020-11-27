@@ -89,7 +89,7 @@ irEmit (IR.MovMem e 8 e') = do
     ; pure (eEval ++ e'Eval ++ [MovAR () (Reg $ toAbsReg r) (toAbsReg r')])
     }
 irEmit (IR.MovMem e 1 e') = do
-    { r <- allocTemp8
+    { r <- allocTemp64
     ; r' <- allocTemp8
     ; eEval <- evalE e r
     ; e'Eval <- evalE e' r'
