@@ -1,7 +1,7 @@
-cabal-version:   1.18
+cabal-version:   3.0
 name:            kempe
 version:         0.1.0.0
-license:         BSD3
+license:         BSD-3-Clause
 license-file:    LICENSE
 copyright:       Copyright: (c) 2020 Vanessa McHale
 maintainer:      vamchale@gmail.com
@@ -29,7 +29,7 @@ flag cross
     default:     False
     manual:      True
 
-library
+library kempe-modules
     exposed-modules:
         Kempe.Lexer
         Kempe.Parser
@@ -109,7 +109,7 @@ executable kc
     build-depends:
         base -any,
         optparse-applicative -any,
-        kempe -any
+        kempe-modules -any
 
     if impl(ghc >=8.0)
         ghc-options:
@@ -138,7 +138,7 @@ test-suite kempe-test
     ghc-options:      -threaded -rtsopts "-with-rtsopts=-N -K1K" -Wall
     build-depends:
         base -any,
-        kempe -any,
+        kempe-modules -any,
         tasty -any,
         tasty-hunit -any,
         bytestring -any,
@@ -168,7 +168,7 @@ test-suite kempe-golden
     ghc-options:      -threaded -rtsopts "-with-rtsopts=-N -K1K" -Wall
     build-depends:
         base -any,
-        kempe -any,
+        kempe-modules -any,
         tasty -any,
         bytestring -any,
         process -any,
@@ -198,7 +198,7 @@ benchmark kempe-bench
     ghc-options:      -O3 -Wall
     build-depends:
         base -any,
-        kempe -any,
+        kempe-modules -any,
         bytestring -any,
         criterion -any,
         prettyprinter -any,
