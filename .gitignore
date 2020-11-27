@@ -30,3 +30,5 @@ factorial
 splitmix.S
 numbertheory
 numbertheory.S
+*_dats.c
+kc-perf/bench

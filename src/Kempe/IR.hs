@@ -194,6 +194,7 @@ writeModule = foldMapA writeDecl
 -- optimize tail-recursion, if possible
 -- This is a little slow
 tryTCO :: Label -> [Stmt] -> [Stmt]
+tryTCO _ [] = []
 tryTCO l stmts =
     let end = last stmts
         in
