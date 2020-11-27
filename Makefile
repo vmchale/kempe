@@ -1,10 +1,12 @@
-.PHONY: install clean
+.PHONY: install clean docs
 SHELL = bash
 
 MAKEFLAGS += --warn-undefined-variables --no-builtin-rules
 .DELETE_ON_ERROR:
 
 HS_SRC := $(shell find src -type f) kempe.cabal
+
+docs: docs/manual.pdf docs/manual.html
 
 docs/manual.pdf: docs/manual.md
 	pandoc $< -o $@ --toc

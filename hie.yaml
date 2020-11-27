@@ -2,7 +2,7 @@
 cradle:
   cabal:
     - path: "./src"
-      component: "lib:kempe"
+      component: "lib:kempe-modules"
     - path: "./test/Spec.hs"
       component: "test:kempe-test"
     - path: "./bench/Bench.hs"

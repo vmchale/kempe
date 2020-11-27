@@ -123,6 +123,12 @@ data AbsReg = DataPointer
             | ShiftExponent
             | QuotRes -- quotient register for idiv, rax
             | RemRes -- remainder register for idiv, rdx
+            | CalleeSave1
+            | CalleeSave2
+            | CalleeSave3
+            | CalleeSave4
+            | CalleeSave5
+            | CalleeSave6
             deriving (Eq, Ord, Generic, NFData)
 
 instance Pretty AbsReg where
@@ -139,6 +145,12 @@ instance Pretty AbsReg where
     pretty ShiftExponent  = "cl"
     pretty QuotRes        = "rax"
     pretty RemRes         = "rdx"
+    pretty CalleeSave1    = "rbx"
+    pretty CalleeSave2    = "rbp"
+    pretty CalleeSave3    = "r12"
+    pretty CalleeSave4    = "r13"
+    pretty CalleeSave5    = "r14"
+    pretty CalleeSave6    = "r15"
 
 -- [ebx+ecx*4h-20h]
 data Addr reg = Reg reg

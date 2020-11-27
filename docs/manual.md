@@ -7,8 +7,6 @@ Kempe is a stack-based language, and `kc` is a toy compiler for x86_64.
 
 # Installing kc
 
-## Source
-
 First, install [cabal](https://www.haskell.org/cabal/download.html) and
 [GHC](https://www.haskell.org/ghc/download.html). Then:
 
@@ -47,8 +45,8 @@ that it will have two `Word`s on the stack after it is invoked.
 Kempe allows polymorphic functions. So we can define:
 
 ```
-nip : a b -- b
-    =: [ dip(drop) ]
+id : a -- a
+   =: [ ]
 ```
 
 ## Builtins
@@ -60,12 +58,27 @@ programmers:
   * `dup : a -- a a`
   * `swap : a b -- b a`
 
+There is one higher-order construct, `dip`, which we illustrate by example:
+
+```
+nip : a b -- b
+    =: [ dip(drop) ]
+```
+
+## Recursion
+
+`kc` optimizes tail recursion.
+
 # Programming in Kempe
 
 ## Invoking the Compiler
 
-`kc` cannot be used to produce executables, rather, the Kempe compiler will
+`kc` cannot be used to produce executables. Rather, the Kempe compiler will
 produce `.o` files which contain functions.
+
+## Internals
+
+Kempe maintains its own stack and stores the pointer in `rbp`.
 
 # Examples
 
@@ -102,4 +115,14 @@ uint64_t next(uint64_t x, uint64_t* y) {
 	*y = x;
 	return z ^ (z >> 31);
 }
+```
+
+## GCD
+
+```
+gcd : Int Int -- Int
+    =: [ dup 0 =
+         if( drop
+           , dup dip(%) swap gcd )
+       ]
 ```
