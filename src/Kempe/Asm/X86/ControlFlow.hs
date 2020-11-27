@@ -50,6 +50,12 @@ addControlFlow ((Je _ l):asms) = do
     ; l_i <- lookupLabel l -- TODO: is this what's wanted?
     ; pure (Je (ControlAnn i (f [l_i]) S.empty S.empty) l : asms')
     }
+addControlFlow ((Jl _ l):asms) = do
+    { i <- getFresh
+    ; (f, asms') <- next asms
+    ; l_i <- lookupLabel l -- TODO: is this what's wanted?
+    ; pure (Jl (ControlAnn i (f [l_i]) S.empty S.empty) l : asms')
+    }
 addControlFlow ((Jump _ l):asms) = do
     { i <- getFresh
     ; nextAsms <- addControlFlow asms
