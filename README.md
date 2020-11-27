@@ -5,6 +5,9 @@ Kempe is a stack-based language and toy compiler for x86_64. It requires the
 
 Inspiration is primarily from [Mirth](https://github.com/mirth-lang/mirth).
 
+See manual
+[here](http://hackage.haskell.org/package/language-dickinson/src/doc/user-guide.pdf).
+
 ## Installation
 
 For shell completions but the following in your `~/.bashrc` or
