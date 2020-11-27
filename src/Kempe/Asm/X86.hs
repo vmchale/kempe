@@ -118,7 +118,7 @@ irEmit (IR.WrapKCall Cabi (is, [o]) n l) | all (\i -> size i <= 8) is && size o 
     { let offs = scanl' (+) 0 (fmap size is)
     ; let totalSize = sizeStack is
     ; let argRegs = [CArg1, CArg2, CArg3, CArg4, CArg5, CArg6]
-    ; pure $ [BSLabel () n, MovRL () DataPointer "kempe_data"] ++ zipWith (\r i-> MovAR () (AddrRCPlus DataPointer i) r) argRegs offs ++ [AddRC () DataPointer totalSize, Call () l, MovRA () CRet (AddrRCMinus DataPointer (size o)), Ret ()] -- TODO: bytes on the stack eh
+    ; pure $ [BSLabel () n, MovRL () DataPointer "kempe_data"] ++ save ++ zipWith (\r i-> MovAR () (AddrRCPlus DataPointer i) r) argRegs offs ++ [AddRC () DataPointer totalSize, Call () l, MovRA () CRet (AddrRCMinus DataPointer (size o))] ++ restore ++ [Ret ()] -- TODO: bytes on the stack eh
     }
 irEmit (IR.WrapKCall Kabi (_, _) n l) =
     pure [BSLabel () n, Call () l, Ret ()]
@@ -176,6 +176,12 @@ irEmit (IR.CJump e l l') = do
     ; bEval <- evalE e r
     ; pure (bEval ++ [CmpRegBool () (toAbsReg r) 1, Je () l, Jump () l'])
     }
+
+save :: [X86 AbsReg ()]
+save = PushReg () <$> [CalleeSave1, CalleeSave2, CalleeSave3, CalleeSave4, CalleeSave5, CalleeSave6]
+
+restore :: [X86 AbsReg ()]
+restore = PopReg () <$> [CalleeSave6, CalleeSave5, CalleeSave4, CalleeSave3, CalleeSave2, CalleeSave1]
 
 -- rbx, rbp, r12-r15 callee-saved (non-volatile)
 -- rest caller-saved (volatile)

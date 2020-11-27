@@ -180,6 +180,12 @@ useReg _ ShiftExponent  = pure CL
 useReg _ CRet           = pure Rax -- shouldn't clobber anything because this is used at end of function calls/wrappers anyway
 useReg _ QuotRes        = pure Rax
 useReg _ RemRes         = pure Rdx
+useReg _ CalleeSave1    = pure Rbx
+useReg _ CalleeSave2    = pure Rbp
+useReg _ CalleeSave3    = pure R12
+useReg _ CalleeSave4    = pure R13
+useReg _ CalleeSave5    = pure R14
+useReg _ CalleeSave6    = pure R15
 -- TODO: ig we should have a sanity check here?
 
 -- There's no spill code buuut that's probably not necessary since the whole
