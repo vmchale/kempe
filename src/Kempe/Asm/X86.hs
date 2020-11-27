@@ -16,7 +16,6 @@ import           Data.Word                  (Word8)
 import           Kempe.AST
 import           Kempe.Asm.X86.Type
 import qualified Kempe.IR                   as IR
-import           Prettyprinter
 
 toAbsReg :: IR.Temp -> AbsReg
 toAbsReg (IR.Temp8 i)   = AllocReg8 i
@@ -146,6 +145,10 @@ evalE (IR.ExprIntBinOp IR.IntTimesIR (IR.Reg r1) (IR.Reg r2)) r = do
     { r' <- allocReg64
     ; pure [ MovRR () r' (toAbsReg r1), ImulRR () r' (toAbsReg r2), MovRR () r' (toAbsReg r) ]
     }
+evalE (IR.ExprIntBinOp IR.IntXorIR (IR.Reg r1) (IR.Reg r2)) r = do
+    { r' <- allocReg64
+    ; pure [ MovRR () r' (toAbsReg r1), XorRR () r' (toAbsReg r2), MovRR () r' (toAbsReg r) ]
+    }
 evalE (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r1) (IR.ConstInt i)) r = do
     pure [ MovRR () (toAbsReg r) (toAbsReg r1), SubRC () (toAbsReg r) i ]
 evalE (IR.ExprIntRel IR.IntEqIR e e') r = do
@@ -156,10 +159,29 @@ evalE (IR.ExprIntRel IR.IntEqIR e e') r = do
     ; r1 <- allocTemp64
     ; placeE <- evalE e r0
     ; placeE' <- evalE e' r1
+    ; pure $ placeE ++ placeE' ++ [CmpRegReg () (toAbsReg r0) (toAbsReg r1), Je () l0, Jump () l1, Label () l0, MovRCBool () (toAbsReg r) 1, Jump () l2, Label () l1, MovRCBool () (toAbsReg r) 0, Label () l2 ]
+    }
+evalE (IR.ExprIntRel IR.IntLtIR e e') r = do
+    { l0 <- getLabel
+    ; l1 <- getLabel
+    ; l2 <- getLabel
+    ; r0 <- allocTemp64
+    ; r1 <- allocTemp64
+    ; placeE <- evalE e r0
+    ; placeE' <- evalE e' r1
     ; pure $ placeE ++ placeE' ++ [CmpRegReg () (toAbsReg r0) (toAbsReg r1), Jl () l0, Jump () l1, Label () l0, MovRCBool () (toAbsReg r) 1, Jump () l2, Label () l1, MovRCBool () (toAbsReg r) 0, Label () l2 ]
     }
-evalE e _ = error (show $ pretty e)
--- TODO: ShiftExponent and QuotRes and RemRes
+evalE (IR.ExprIntBinOp IR.WordShiftLIR (IR.Reg r1) (IR.Reg r2)) r = do -- FIXME: maximal munch use evalE recursively
+    { r' <- allocReg64
+    ; pure [ MovRR () ShiftExponent (toAbsReg r2), MovRR () r' (toAbsReg r1), ShiftLRR () r' ShiftExponent, MovRR () (toAbsReg r) r']
+    }
+evalE (IR.ExprIntBinOp IR.WordShiftRIR (IR.Reg r1) (IR.Reg r2)) r = do -- FIXME: maximal munch use evalE recursively
+    { r' <- allocReg64
+    ; pure [ MovRR () ShiftExponent (toAbsReg r2), MovRR () r' (toAbsReg r1), ShiftRRR () r' ShiftExponent, MovRR () (toAbsReg r) r']
+    }
+evalE (IR.ExprIntBinOp IR.IntModIR (IR.Reg r1) (IR.Reg r2)) r =
+    -- QuotRes is rax, so move r1 to rax first
+    pure [ MovRR () QuotRes (toAbsReg r1), Cqo (), IdivR () (toAbsReg r2), MovRR () (toAbsReg r) RemRes ]
 
 toByte :: Bool -> Word8
 toByte False = 0
