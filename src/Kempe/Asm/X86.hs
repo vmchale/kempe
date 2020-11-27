@@ -59,12 +59,54 @@ irEmit (IR.Jump l) = pure [Jump () l]
 irEmit (IR.Labeled l) = pure [Label () l]
 irEmit (IR.KCall l) = pure [Call () l]
 irEmit IR.Ret = pure [Ret ()]
+irEmit (IR.MovMem (IR.Reg r) _ (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r1) (IR.Reg r2))) = do
+    { r' <- allocReg64
+    ; pure [ MovRR () r' (toAbsReg r1), SubRR () r' (toAbsReg r2), MovAR () (Reg $ toAbsReg r) r' ]
+    }
 irEmit (IR.MovMem (IR.Reg r) _ (IR.ConstInt i)) =
     pure [ MovAC () (Reg $ toAbsReg r) i ]
 irEmit (IR.MovMem (IR.Reg r) _ (IR.ConstBool b)) =
     pure [ MovABool () (Reg $ toAbsReg r) (toByte b) ]
 irEmit (IR.MovMem (IR.Reg r) _ (IR.ConstTag b)) =
     pure [ MovACTag () (Reg $ toAbsReg r) b ]
+irEmit (IR.MovMem (IR.Reg r) _ (IR.ExprIntBinOp IR.IntTimesIR (IR.Reg r1) (IR.Reg r2))) = do
+    { r' <- allocReg64
+    ; pure [ MovRR () r' (toAbsReg r1), ImulRR () r' (toAbsReg r2), MovAR () (Reg $ toAbsReg r) r' ]
+    }
+irEmit (IR.MovMem (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r0) (IR.ConstInt i)) _ (IR.Mem 1 (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r1) (IR.ConstInt j)))) = do
+    { r' <- allocReg8
+    ; pure [ MovRA () r' (AddrRCPlus (toAbsReg r1) j), MovAR () (AddrRCPlus (toAbsReg r0) i) r' ]
+    }
+irEmit (IR.MovMem (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r0) (IR.ConstInt i)) _ (IR.Mem 1 (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r1) (IR.ConstInt j)))) = do
+    { r' <- allocReg8
+    ; pure [ MovRA () r' (AddrRCMinus (toAbsReg r1) j), MovAR () (AddrRCPlus (toAbsReg r0) i) r' ]
+    }
+irEmit (IR.MovMem (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r0) (IR.ConstInt i)) _ (IR.Mem 1 (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r1) (IR.ConstInt j)))) = do
+    { r' <- allocReg8
+    ; pure [ MovRA () r' (AddrRCMinus (toAbsReg r1) j), MovAR () (AddrRCMinus (toAbsReg r0) i) r' ]
+    }
+irEmit (IR.MovMem (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r0) (IR.ConstInt i)) _ (IR.Mem 1 (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r1) (IR.ConstInt j)))) = do
+    { r' <- allocReg8
+    ; pure [ MovRA () r' (AddrRCPlus (toAbsReg r1) j), MovAR () (AddrRCMinus (toAbsReg r0) i) r' ]
+    }
+irEmit (IR.MovMem (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r0) (IR.ConstInt i)) _ (IR.Mem 8 (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r1) (IR.ConstInt j)))) = do
+    { r' <- allocReg64
+    ; pure [ MovRA () r' (AddrRCMinus (toAbsReg r1) j), MovAR () (AddrRCMinus (toAbsReg r0) i) r' ]
+    }
+irEmit (IR.MovMem (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r0) (IR.ConstInt i)) _ (IR.Mem 8 (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r1) (IR.ConstInt j)))) = do
+    { r' <- allocReg64
+    ; pure [ MovRA () r' (AddrRCPlus (toAbsReg r1) j), MovAR () (AddrRCMinus (toAbsReg r0) i) r' ]
+    }
+irEmit (IR.MovMem (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r0) (IR.ConstInt i)) _ (IR.Mem 8 (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r1) (IR.ConstInt j)))) = do
+    { r' <- allocReg64
+    ; pure [ MovRA () r' (AddrRCPlus (toAbsReg r1) j), MovAR () (AddrRCPlus (toAbsReg r0) i) r' ]
+    }
+-- irEmit (IR.MovMem (IR.Reg r) _ (IR.ExprIntRel IR.IntEqIR (IR.Reg r1) (IR.Reg r2))) = do
+    -- { l0 <- getLabel
+    -- ; l1 <- getLabel
+    -- ; l2 <- getLabel
+    -- ; pure [ CmpRegReg () (toAbsReg r1) (toAbsReg r2), Je () l0, Jump () l1, Label () l0, MovABool () (Reg $ toAbsReg r) 1, Jump () l2, Label () l1, MovABool () (Reg $ toAbsReg r) 0, Label () l2 ]
+    -- }
 irEmit (IR.MovTemp r1 (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r2) (IR.ConstInt i))) | r1 == r2 = do
     pure [ SubRC () (toAbsReg r1) i ]
 irEmit (IR.MovTemp r1 (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r2) (IR.ConstInt i))) | r1 == r2 = do
@@ -80,6 +122,9 @@ irEmit (IR.WrapKCall Kabi (_, _) n l) =
     pure [BSLabel () n, Call () l, Ret ()]
 irEmit (IR.MovMem (IR.Reg r) _ (IR.ConstInt8 i)) =
     pure [ MovACi8 () (Reg $ toAbsReg r) i ]
+irEmit (IR.MovMem (IR.Reg r) _ (IR.ExprIntBinOp IR.IntModIR (IR.Reg r1) (IR.Reg r2))) =
+    -- QuotRes is rax, so move r1 to rax first
+    pure [ MovRR () QuotRes (toAbsReg r1), Cqo (), IdivR () (toAbsReg r2), MovAR () (Reg $ toAbsReg r) RemRes ]
 irEmit (IR.MovTemp r e) = evalE e r
 irEmit (IR.MovMem e 8 e') = do
     { r <- allocTemp64
