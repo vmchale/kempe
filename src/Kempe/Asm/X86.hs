@@ -124,7 +124,7 @@ evalE (IR.ConstInt i) r                                             = pure [MovR
 evalE (IR.ConstBool b) r                                            = pure [MovRCBool () (toAbsReg r) (toByte b)]
 evalE (IR.ConstInt8 i) r                                            = pure [MovRCi8 () (toAbsReg r) i]
 evalE (IR.ConstWord w) r                                            = pure [MovRWord () (toAbsReg r) w]
-evalE (IR.Reg r') r                                                 = pure [MovRR () (toAbsReg r') (toAbsReg r)]
+evalE (IR.Reg r') r                                                 = pure [MovRR () (toAbsReg r) (toAbsReg r')]
 evalE (IR.Mem _ (IR.Reg r1)) r                                      = pure [MovRA () (toAbsReg r) (Reg $ toAbsReg r1) ] -- TODO: sanity check reg/mem access size?
 evalE (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r1) (IR.ConstInt i)) r | r == r1 = pure [SubRC () (toAbsReg r) i]
 evalE (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r1) (IR.ConstInt i)) r  | r == r1 = pure [AddRC () (toAbsReg r) i]
@@ -133,22 +133,12 @@ evalE (IR.Mem 8 (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r1) (IR.ConstInt i))) r =
     pure [ MovRA () (toAbsReg r) (AddrRCMinus (toAbsReg r1) i) ]
 evalE (IR.Mem 8 (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r1) (IR.ConstInt i))) r =
     pure [ MovRA () (toAbsReg r) (AddrRCPlus (toAbsReg r1) i) ]
-evalE (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r1) (IR.Reg r2)) r = do
-    { r' <- allocReg64
-    ; pure [ MovRR () r' (toAbsReg r1), AddRR () r' (toAbsReg r2), MovRR () r' (toAbsReg r) ]
-    }
-evalE (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r1) (IR.Reg r2)) r = do
-    { r' <- allocReg64
-    ; pure [ MovRR () r' (toAbsReg r1), SubRR () r' (toAbsReg r2), MovRR () r' (toAbsReg r) ]
-    }
+evalE (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r1) (IR.Reg r2)) r =
+    pure [ MovRR () (toAbsReg r) (toAbsReg r1), AddRR () (toAbsReg r) (toAbsReg r2) ]
 evalE (IR.ExprIntBinOp IR.IntTimesIR (IR.Reg r1) (IR.Reg r2)) r = do
-    { r' <- allocReg64
-    ; pure [ MovRR () r' (toAbsReg r1), ImulRR () r' (toAbsReg r2), MovRR () r' (toAbsReg r) ]
-    }
+    pure [ MovRR () (toAbsReg r) (toAbsReg r1), ImulRR () (toAbsReg r) (toAbsReg r2) ]
 evalE (IR.ExprIntBinOp IR.IntXorIR (IR.Reg r1) (IR.Reg r2)) r = do
-    { r' <- allocReg64
-    ; pure [ MovRR () r' (toAbsReg r1), XorRR () r' (toAbsReg r2), MovRR () r' (toAbsReg r) ]
-    }
+    pure [ MovRR () (toAbsReg r) (toAbsReg r1), XorRR () (toAbsReg r) (toAbsReg r2) ]
 evalE (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r1) (IR.ConstInt i)) r = do
     pure [ MovRR () (toAbsReg r) (toAbsReg r1), SubRC () (toAbsReg r) i ]
 evalE (IR.ExprIntRel IR.IntEqIR e e') r = do
@@ -171,21 +161,26 @@ evalE (IR.ExprIntRel IR.IntLtIR e e') r = do
     ; placeE' <- evalE e' r1
     ; pure $ placeE ++ placeE' ++ [CmpRegReg () (toAbsReg r0) (toAbsReg r1), Jl () l0, Jump () l1, Label () l0, MovRCBool () (toAbsReg r) 1, Jump () l2, Label () l1, MovRCBool () (toAbsReg r) 0, Label () l2 ]
     }
-evalE (IR.ExprIntBinOp IR.WordShiftLIR (IR.Reg r1) (IR.Reg r2)) r = do -- FIXME: maximal munch use evalE recursively
-    { r' <- allocReg64
-    ; pure [ MovRR () ShiftExponent (toAbsReg r2), MovRR () r' (toAbsReg r1), ShiftLRR () r' ShiftExponent, MovRR () (toAbsReg r) r']
-    }
-evalE (IR.ExprIntBinOp IR.WordShiftRIR (IR.Reg r1) (IR.Reg r2)) r = do -- FIXME: maximal munch use evalE recursively
-    { r' <- allocReg64
-    ; pure [ MovRR () ShiftExponent (toAbsReg r2), MovRR () r' (toAbsReg r1), ShiftRRR () r' ShiftExponent, MovRR () (toAbsReg r) r']
-    }
+evalE (IR.ExprIntBinOp IR.WordShiftLIR (IR.Reg r1) (IR.Reg r2)) r = -- FIXME: maximal munch use evalE recursively
+    pure [ MovRR () ShiftExponent (toAbsReg r2), MovRR () (toAbsReg r) (toAbsReg r1), ShiftLRR () (toAbsReg r) ShiftExponent ]
+evalE (IR.ExprIntBinOp IR.WordShiftRIR (IR.Reg r1) (IR.Reg r2)) r = -- FIXME: maximal munch use evalE recursively
+    pure [ MovRR () ShiftExponent (toAbsReg r2), MovRR () (toAbsReg r) (toAbsReg r1), ShiftRRR () (toAbsReg r) ShiftExponent]
 evalE (IR.ExprIntBinOp IR.IntModIR e0 e1) r = do
     { r0 <- allocTemp64
     ; r1 <- allocTemp64
     ; placeE <- evalE e0 r0
     ; placeE' <- evalE e1 r1
     -- QuotRes is rax, so move r1 to rax first
-    ; pure [ MovRR () QuotRes (toAbsReg r0), Cqo (), IdivR () (toAbsReg r1), MovRR () (toAbsReg r) RemRes ]
+    ; pure $ placeE ++ placeE' ++ [ MovRR () QuotRes (toAbsReg r0), Cqo (), IdivR () (toAbsReg r1), MovRR () (toAbsReg r) RemRes ]
+    }
+evalE (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r1) (IR.Reg r2)) r = do
+    pure [ MovRR () (toAbsReg r) (toAbsReg r1), SubRR () (toAbsReg r) (toAbsReg r2) ]
+evalE (IR.ExprIntBinOp IR.IntMinusIR e0 e1) r = do
+    { r0 <- allocTemp64
+    ; r1 <- allocTemp64
+    ; placeE <- evalE e0 r0
+    ; placeE' <- evalE e1 r1
+    ; pure $ placeE ++ placeE' ++ [ MovRR () (toAbsReg r0) (toAbsReg r), SubRR () (toAbsReg r) (toAbsReg r1) ]
     }
 
 toByte :: Bool -> Word8
