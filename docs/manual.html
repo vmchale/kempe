@@ -235,7 +235,11 @@
 <li><a href="#programming-in-kempe">Programming in Kempe</a>
 <ul>
 <li><a href="#invoking-the-compiler">Invoking the Compiler</a></li>
-<li><a href="#internals">Internals</a></li>
+<li><a href="#internals">Internals</a>
+<ul>
+<li><a href="#c-calls">C Calls</a></li>
+<li><a href="#kempe-abi">Kempe ABI</a></li>
+</ul></li>
 </ul></li>
 <li><a href="#examples">Examples</a>
 <ul>
@@ -279,6 +283,10 @@
 <p><code>kc</code> cannot be used to produce executables. Rather, the Kempe compiler will produce <code>.o</code> files which contain functions.</p>
 <h2 id="internals">Internals</h2>
 <p>Kempe maintains its own stack and stores the pointer in <code>rbp</code>.</p>
+<p>Kempe procedures do not require any registers to be preserved across function calls.</p>
+<h3 id="c-calls">C Calls</h3>
+<p>When exporting to C, <code>kc</code> generates code that initializes the Kempe data pointer (<code>rbp</code>). Thus, one should avoid calling into Kempe code too often!</p>
+<h3 id="kempe-abi">Kempe ABI</h3>
 <h1 id="examples">Examples</h1>
 <h2 id="splitmix-pseudorandom-number-generator">Splitmix Pseudorandom Number Generator</h2>
 <p>The generator in question comes from a <a href="https://dl.acm.org/doi/10.1145/2714064.2660195">recent paper</a>.</p>
