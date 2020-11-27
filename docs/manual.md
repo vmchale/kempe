@@ -80,6 +80,16 @@ produce `.o` files which contain functions.
 
 Kempe maintains its own stack and stores the pointer in `rbp`.
 
+Kempe procedures
+do not require any registers to be preserved across function calls.
+
+### C Calls
+
+When exporting to C, `kc` generates code that initializes the Kempe data pointer
+(`rbp`). Thus, one should avoid calling into Kempe code too often!
+
+### Kempe ABI
+
 # Examples
 
 ## Splitmix Pseudorandom Number Generator
