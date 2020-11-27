@@ -101,6 +101,11 @@ irEmit (IR.MovMem (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r0) (IR.ConstInt i)) _ (
     { r' <- allocReg64
     ; pure [ MovRA () r' (AddrRCPlus (toAbsReg r1) j), MovAR () (AddrRCPlus (toAbsReg r0) i) r' ]
     }
+irEmit (IR.MovMem (IR.Reg r) 1 e) = do
+    { r' <- allocTemp8
+    ; put <- evalE e r'
+    ; pure $ put ++ [MovAR () (Reg $ toAbsReg r) (toAbsReg r')]
+    }
 -- irEmit (IR.MovMem (IR.Reg r) _ (IR.ExprIntRel IR.IntEqIR (IR.Reg r1) (IR.Reg r2))) = do
     -- { l0 <- getLabel
     -- ; l1 <- getLabel
