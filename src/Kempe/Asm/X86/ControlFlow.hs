@@ -93,6 +93,7 @@ uses (AddRC _ r _)       = S.singleton r
 uses (SubRC _ r _)       = S.singleton r
 uses (AddAC _ a _)       = addrRegs a
 uses (MovABool _ a _)    = addrRegs a
+uses (MovAC  _ a _)      = addrRegs a
 uses (MovACi8 _ a _)     = addrRegs a
 uses (XorRR _ r r')      = S.fromList [r, r']
 uses (CmpAddrReg _ a r)  = S.singleton r <> addrRegs a
@@ -104,6 +105,7 @@ uses (ShiftRRR _ r r')   = S.fromList [r, r']
 uses (MovRCi8 _ r _)     = S.singleton r
 uses (MovACTag _ a _)    = addrRegs a
 uses (IdivR _ r)         = S.singleton r
+uses Cqo{}               = S.empty -- TODO?
 uses _                   = S.empty
 
 defs :: X86 reg ann -> S.Set reg
