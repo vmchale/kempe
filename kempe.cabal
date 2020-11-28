@@ -74,6 +74,7 @@ library kempe-modules
         text -any,
         mtl -any,
         microlens -any,
+        dlist -any,
         transformers -any,
         extra -any,
         prettyprinter >=1.7.0,

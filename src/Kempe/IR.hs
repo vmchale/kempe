@@ -1,5 +1,6 @@
 {-# LANGUAGE DeriveAnyClass    #-}
 {-# LANGUAGE DeriveGeneric     #-}
+{-# LANGUAGE OverloadedLists   #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 -- | IR loosely based on Appel book.
@@ -24,6 +25,7 @@ import           Control.Monad.State.Strict (State, gets, modify, runState)
 import           Data.Bifunctor             (second)
 import qualified Data.ByteString            as BS
 import qualified Data.ByteString.Lazy       as BSL
+import qualified Data.DList                 as DL
 import           Data.Foldable.Ext
 import           Data.Int                   (Int64, Int8)
 import qualified Data.IntMap                as IM
@@ -100,7 +102,7 @@ lookupName (Name _ (Unique i) _) =
     gets
         (IM.findWithDefault (error "Internal error in IR phase: could not look find label for name") i . atLabels)
 
-prettyIR :: [Stmt] -> Doc ann
+prettyIR :: (Functor t, Foldable t) => t Stmt -> Doc ann
 prettyIR = concatWith (\x y -> x <> hardline <> y) . fmap pretty
 
 prettyLabel :: Label -> Doc ann
@@ -209,85 +211,85 @@ instance Pretty IntBinOp where
     pretty WordDivIR    = "/~"
 
 writeModule :: Module () (ConsAnn MonoStackType) MonoStackType -> TempM [Stmt]
-writeModule = foldMapA writeDecl
+writeModule = fmap DL.toList . foldMapA writeDecl
 
 -- optimize tail-recursion, if possible
 -- This is a little slow
-tryTCO :: Label -> [Stmt] -> [Stmt]
+tryTCO :: Label -> (DL.DList Stmt) -> (DL.DList Stmt)
 tryTCO _ []    = []
-tryTCO l stmts =
-    let end = last stmts
-        in
-            case end of
-                KCall l' | l == l' -> init stmts ++ [Jump l]
-                _                  -> stmts
+tryTCO l stmts = stmts
+    -- let end = last stmts
+        -- in
+            -- case end of
+                -- KCall l' | l == l' -> init stmts <> [Jump l]
+                -- _                  -> stmts
 
 -- FIXME: Current broadcast + write approach fails mutually recursive functions
-writeDecl :: KempeDecl () (ConsAnn MonoStackType) MonoStackType -> TempM [Stmt]
+writeDecl :: KempeDecl () (ConsAnn MonoStackType) MonoStackType -> TempM (DL.DList Stmt)
 writeDecl (FunDecl _ (Name _ u _) _ _ as) = do
     bl <- broadcastName u
-    (++ [Ret]) . (Labeled bl:) . tryTCO bl <$> writeAtoms bl as
+    (<> [Ret]) . (Labeled bl `DL.cons`) . tryTCO bl <$> writeAtoms bl as
 writeDecl (ExtFnDecl ty (Name _ u _) _ _ cName) = do
     bl <- broadcastName u
     pure [Labeled bl, CCall ty cName, Ret]
 writeDecl (Export sTy abi n) = pure . WrapKCall abi sTy (encodeUtf8 $ name n) <$> lookupName n
 writeDecl TyDecl{} = error "Internal error: type declarations should not exist at this stage"
 
-writeAtoms :: Label -> [Atom (ConsAnn MonoStackType) MonoStackType] -> TempM [Stmt]
+writeAtoms :: Label -> [Atom (ConsAnn MonoStackType) MonoStackType] -> TempM (DL.DList Stmt)
 writeAtoms l = foldMapA (writeAtom l)
 
-intShift :: IntBinOp -> TempM [Stmt]
+intShift :: IntBinOp -> TempM (DL.DList Stmt)
 intShift cons = do
     t0 <- getTemp8
     t1 <- getTemp64
     pure $
-        pop 1 t0 ++ pop 8 t1 ++ push 8 (ExprIntBinOp cons (Reg t1) (Reg t0))
+        pop 1 t0 <> pop 8 t1 <> push 8 (ExprIntBinOp cons (Reg t1) (Reg t0))
 
-boolOp :: BoolBinOp -> TempM [Stmt]
+boolOp :: BoolBinOp -> TempM (DL.DList Stmt)
 boolOp op = do
     t0 <- getTemp8
     t1 <- getTemp8
     pure $
-        pop 1 t0 ++ pop 1 t1 ++ push 8 (BoolBinOp op (Reg t1) (Reg t0))
+        pop 1 t0 <> pop 1 t1 <> push 8 (BoolBinOp op (Reg t1) (Reg t0))
 
-intOp :: IntBinOp -> TempM [Stmt]
+intOp :: IntBinOp -> TempM (DL.DList Stmt)
 intOp cons = do
     t0 <- getTemp64 -- registers are 64 bits for integers
     t1 <- getTemp64
     pure $
-        pop 8 t0 ++ pop 8 t1 ++ push 8 (ExprIntBinOp cons (Reg t1) (Reg t0))
+        pop 8 t0 <> pop 8 t1 <> push 8 (ExprIntBinOp cons (Reg t1) (Reg t0))
 
 -- | Push bytes onto the Kempe data pointer
-push :: Int64 -> Exp -> [Stmt]
+push :: Int64 -> Exp -> (DL.DList Stmt)
 push off e =
     [ MovMem (Reg DataPointer) off e
     , dataPointerInc off -- increment instead of decrement b/c this is the Kempe ABI
     ]
 
-pop :: Int64 -> Temp -> [Stmt]
+pop :: Int64 -> Temp -> (DL.DList Stmt)
 pop sz t =
     [ dataPointerDec sz
     , MovTemp t (Mem sz (Reg DataPointer))
     ]
 
 -- FIXME: just use expressions from memory accesses
-intRel :: RelBinOp -> TempM [Stmt]
+intRel :: RelBinOp -> TempM (DL.DList Stmt)
 intRel cons = do
     t0 <- getTemp64
     t1 <- getTemp64
     pure $
-        pop 8 t0 ++ pop 8 t1 ++ push 1 (ExprIntRel cons (Reg t1) (Reg t0))
+        pop 8 t0 <> pop 8 t1 <> push 1 (ExprIntRel cons (Reg t1) (Reg t0))
 
-intNeg :: TempM [Stmt]
+intNeg :: TempM (DL.DList Stmt)
 intNeg = do
     t0 <- getTemp64
     pure $
-        pop 8 t0 ++ push 8 (IntNegIR (Reg t0))
+        pop 8 t0 <> push 8 (IntNegIR (Reg t0))
 
 -- | This throws exceptions on nonsensical input.
 writeAtom :: Label -- ^ Context for possible TCO
           -> Atom (ConsAnn MonoStackType) MonoStackType
-          -> TempM [Stmt]
+          -> TempM (DL.DList Stmt)
 writeAtom _ (IntLit _ i)              = pure $ push 8 (ConstInt $ fromInteger i)
 writeAtom _ (Int8Lit _ i)             = pure $ push 1 (ConstInt8 i)
 writeAtom _ (WordLit _ w)             = pure $ push 8 (ConstWord $ fromIntegral w)
@@ -329,7 +331,7 @@ writeAtom _ (AtBuiltin (is, _) Dup)   =
     let sz = size (last is) in
         pure $
              copyBytes 0 (-sz) sz
-                ++ [ dataPointerInc sz ] -- move data pointer over sz bytes
+                <> [ dataPointerInc sz ] -- move data pointer over sz bytes
 writeAtom l (If _ as as') = do
     l0 <- newLabel
     l1 <- newLabel
@@ -337,7 +339,7 @@ writeAtom l (If _ as as') = do
     asIR <- tryTCO l <$> writeAtoms l as
     asIR' <- tryTCO l <$> writeAtoms l as'
     l2 <- newLabel
-    pure $ dataPointerDec 1 : ifIR : (Labeled l0 : asIR ++ [Jump l2]) ++ (Labeled l1 : asIR') ++ [Labeled l2]
+    pure $ dataPointerDec 1 `DL.cons` ifIR `DL.cons` (Labeled l0 `DL.cons` asIR <> [Jump l2]) <> (Labeled l1 `DL.cons` asIR') <> [Labeled l2]
 writeAtom _ (Dip (is, _) as) =
     let sz = size (last is)
     in foldMapA (dipify sz) as
@@ -347,33 +349,33 @@ writeAtom _ (AtBuiltin ([i0, i1], _) Swap) =
     in
         pure $
             copyBytes 0 (-sz0 - sz1) sz0 -- copy i0 to end of the stack
-                ++ copyBytes (-sz0 - sz1) (-sz1) sz1 -- copy i1 to where i0 used to be
-                ++ copyBytes (-sz0) 0 sz0 -- copy i0 at end of stack to its new place
+                <> copyBytes (-sz0 - sz1) (-sz1) sz1 -- copy i1 to where i0 used to be
+                <> copyBytes (-sz0) 0 sz0 -- copy i0 at end of stack to its new place
 writeAtom _ (AtBuiltin _ Swap) = error "Ill-typed swap!"
 writeAtom _ (AtCons ann@(ConsAnn _ tag' _) _) =
-    pure $ dataPointerInc (padBytes ann) : push 1 (ConstTag tag')
+    pure $ dataPointerInc (padBytes ann) `DL.cons` push 1 (ConstTag tag')
 
 -- | Constructors may need to be padded, this computes the number of bytes of
 -- padding
 padBytes :: ConsAnn MonoStackType -> Int64
 padBytes (ConsAnn sz _ (is, _)) = sz - sizeStack is - 1
 
-dipify :: Int64 -> Atom (ConsAnn MonoStackType) MonoStackType -> TempM [Stmt]
+dipify :: Int64 -> Atom (ConsAnn MonoStackType) MonoStackType -> TempM (DL.DList Stmt)
 dipify _ (AtBuiltin ([], _) Drop) = error "Internal error: Ill-typed drop!"
 dipify sz (AtBuiltin (is, _) Drop) =
     let sz' = size (last is)
         shift = dataPointerDec sz' -- shift data pointer over by sz' bytes
         -- copy sz bytes over (-sz') bytes from the data pointer
         copyBytes' = copyBytes (-sz - sz') (-sz) sz
-        in pure $ copyBytes' ++ [shift]
+        in pure $ copyBytes' <> [shift]
 dipify sz (AtBuiltin ([i0, i1], _) Swap) =
     let sz0 = size i0
         sz1 = size i1
     in
         pure $
             copyBytes 0 (-sz - sz0 - sz1) sz0 -- copy i0 to end of the stack
-                ++ copyBytes (-sz - sz0 - sz1) (-sz - sz1) sz1 -- copy i1 to where i0 used to be
-                ++ copyBytes (-sz - sz0) 0 sz0 -- copy i0 at end of stack to its new place
+                <> copyBytes (-sz - sz0 - sz1) (-sz - sz1) sz1 -- copy i1 to where i0 used to be
+                <> copyBytes (-sz - sz0) 0 sz0 -- copy i0 at end of stack to its new place
 dipify _ (Dip ([], _) _) = error "Internal error: Ill-typed dip()!"
 dipify sz (Dip (is, _) as) =
     let sz' = size (last is)
@@ -410,9 +412,9 @@ dipify sz (AtBuiltin (is, _) Dup) = do
     let sz' = size (last is) in
         pure $
              copyBytes 0 (-sz) sz -- copy sz bytes over to the end of the stack
-                ++ copyBytes (-sz) (-sz - sz') sz' -- copy sz' bytes over (duplicate)
-                ++ copyBytes (-sz + sz') 0 sz -- copy sz bytes back
-                ++ [ dataPointerInc sz' ] -- move data pointer over sz' bytes
+                <> copyBytes (-sz) (-sz - sz') sz' -- copy sz' bytes over (duplicate)
+                <> copyBytes (-sz + sz') 0 sz -- copy sz bytes back
+                <> [ dataPointerInc sz' ] -- move data pointer over sz' bytes
 dipify sz (IntLit _ i) = pure $ dipPush sz 8 (ConstInt $ fromInteger i)
 dipify sz (WordLit _ w) = pure $ dipPush sz 8 (ConstWord $ fromIntegral w)
 dipify sz (Int8Lit _ i) = pure $ dipPush sz 1 (ConstInt8 i)
@@ -420,46 +422,47 @@ dipify sz (BoolLit _ b) = pure $ dipPush sz 1 (ConstBool b)
 dipify sz (AtCons ann@(ConsAnn _ tag' _) _) =
     pure $
         copyBytes 0 (-sz) sz
-            ++ dataPointerInc (padBytes ann) : push 1 (ConstTag tag')
-            ++ copyBytes (-sz) 0 sz
+            <> (dataPointerInc (padBytes ann) `DL.cons` push 1 (ConstTag tag'))
+            <> copyBytes (-sz) 0 sz
 
-dipPush :: Int64 -> Int64 -> Exp -> [Stmt]
+dipPush :: Int64 -> Int64 -> Exp -> (DL.DList Stmt)
 dipPush sz sz' e =
     copyBytes 0 (-sz) sz
-        ++ push sz' e
-        ++ copyBytes (-sz) 0 sz -- copy bytes back (data pointer has been incremented already by push)
+        <> push sz' e
+        <> copyBytes (-sz) 0 sz -- copy bytes back (data pointer has been incremented already by push)
 
 -- works in general because relations, shifts, operations shrink the size of the
 -- stack.
-dipDo :: Int64 -> [Stmt] -> [Stmt]
+dipDo :: Int64 -> (DL.DList Stmt) -> (DL.DList Stmt)
 dipDo sz stmt =
     let shiftNext = dataPointerDec sz
         shiftBack = dataPointerInc sz
         copyBytes' = copyBytes 0 sz sz
     in
-        (shiftNext : stmt ++ copyBytes' ++ [shiftBack])
+        ((shiftNext `DL.cons` stmt) <> copyBytes' <> [shiftBack])
 
-dipShift :: Int64 -> IntBinOp -> TempM [Stmt]
+dipShift :: Int64 -> IntBinOp -> TempM (DL.DList Stmt)
 dipShift sz op = dipDo sz <$> intShift op
 
-dipRel :: Int64 -> RelBinOp -> TempM [Stmt]
+dipRel :: Int64 -> RelBinOp -> TempM (DL.DList Stmt)
 dipRel sz rel = dipDo sz <$> intRel rel
 
-dipOp :: Int64 -> IntBinOp -> TempM [Stmt]
+dipOp :: Int64 -> IntBinOp -> TempM (DL.DList Stmt)
 dipOp sz op = dipDo sz <$> intOp op
 
-dipBoolOp :: Int64 -> BoolBinOp -> TempM [Stmt]
+dipBoolOp :: Int64 -> BoolBinOp -> TempM (DL.DList Stmt)
 dipBoolOp sz op = dipDo sz <$> boolOp op
 
 copyBytes :: Int64 -- ^ dest offset
           -> Int64 -- ^ src offset
           -> Int64 -- ^ Number of bytes to copy
-          -> [Stmt]
+          -> (DL.DList Stmt)
 copyBytes off1 off2 b
     | b `mod` 8 == 0 =
         let is = fmap (8*) [0..(b `div` 8 - 1)] in
-            [ MovMem (dataPointerPlus (i + off1)) 8 (Mem 8 $ dataPointerPlus (i + off2)) | i <- is ]
-    | otherwise =
+            DL.fromList
+                [ MovMem (dataPointerPlus (i + off1)) 8 (Mem 8 $ dataPointerPlus (i + off2)) | i <- is ]
+    | otherwise = DL.fromList
         [ MovMem (dataPointerPlus (i + off1)) 1 (Mem 1 $ dataPointerPlus (i + off2)) | i <- [0..(b-1)] ]
 
 dataPointerDec :: Int64 -> Stmt
