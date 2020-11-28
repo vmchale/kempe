@@ -251,3 +251,4 @@ allocReg (Jl _ l)                              = pure $ Jl () l
 allocReg (MovACTag l a t)                      = (MovACTag () <$> useAddr l a <*> pure t) <* freeDone l
 allocReg (AndRR l r0 r1)                       = (AndRR () <$> useReg l r0 <*> useReg l r1) <* freeDone l
 allocReg (OrRR l r0 r1)                        = (OrRR () <$> useReg l r0 <*> useReg l r1) <* freeDone l
+allocReg (PopcountRR l r0 r1)                  = (PopcountRR () <$> useReg l r0 <*> useReg l r1) <* freeDone l

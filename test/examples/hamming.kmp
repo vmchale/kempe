@@ -1,0 +1,4 @@
+hamming : Word Word -- Int
+        =: [ xoru popcount ]
+
+%foreign cabi hamming

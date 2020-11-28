@@ -130,6 +130,7 @@ instance Pretty Exp where
     pretty (ConstTag b)           = parens ("tag" <+> prettyHex b)
     pretty (BoolBinOp op e e')    = parens (pretty op <+> pretty e <+> pretty e')
     pretty (IntNegIR e)           = parens ("~" <+> pretty e)
+    pretty (PopcountIR e)         = parens ("popcount" <+> pretty e)
 
 data Stmt = Labeled Label
           | Jump Label
@@ -154,6 +155,7 @@ data Exp = ConstInt Int64
          | ExprIntRel RelBinOp Exp Exp
          | BoolBinOp BoolBinOp Exp Exp
          | IntNegIR Exp
+         | PopcountIR Exp
          deriving (Generic, NFData)
            -- TODO: one for data, one for C ABI
 
@@ -284,6 +286,12 @@ intNeg = do
     pure $
         pop 8 t0 ++ push 8 (IntNegIR (Reg t0))
 
+wordCount :: TempM [Stmt]
+wordCount = do
+    t0 <- getTemp64
+    pure $
+        pop 8 t0 ++ push 8 (PopcountIR (Reg t0))
+
 -- | This throws exceptions on nonsensical input.
 writeAtom :: Label -- ^ Context for possible TCO
           -> Atom (ConsAnn MonoStackType) MonoStackType
@@ -322,6 +330,7 @@ writeAtom _ (AtBuiltin _ And)         = boolOp BoolAnd
 writeAtom _ (AtBuiltin _ Or)          = boolOp BoolOr
 writeAtom _ (AtBuiltin _ Xor)         = boolOp BoolXor
 writeAtom _ (AtBuiltin _ IntNeg)      = intNeg
+writeAtom _ (AtBuiltin _ Popcount)    = wordCount
 writeAtom _ (AtBuiltin (is, _) Drop)  =
     let sz = size (last is) in
         pure [ dataPointerDec sz ]
@@ -399,6 +408,7 @@ dipify sz (AtBuiltin _ IntGeq)     = dipRel sz IntGeqIR
 dipify sz (AtBuiltin _ IntGt)      = dipRel sz IntGtIR
 dipify sz (AtBuiltin _ IntNeq)     = dipRel sz IntNeqIR
 dipify sz (AtBuiltin _ IntNeg)     = dipDo sz <$> intNeg -- works b/c doesn't grow stack
+dipify sz (AtBuiltin _ Popcount)   = dipDo sz <$> wordCount
 dipify sz (AtBuiltin _ And)        = dipBoolOp sz BoolAnd
 dipify sz (AtBuiltin _ Or)         = dipBoolOp sz BoolOr
 dipify sz (AtBuiltin _ Xor)        = dipBoolOp sz BoolXor

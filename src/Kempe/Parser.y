@@ -98,6 +98,7 @@ import Prettyprinter (Pretty (pretty), (<+>))
     intXor { TokBuiltin $$ BuiltinIntXor }
     wordXor { TokBuiltin $$ BuiltinWordXor }
     boolXor { TokBuiltin $$ BuiltinBoolXor }
+    popcount { TokBuiltin $$ BuiltinPopcount }
 
 %%
 
@@ -193,6 +194,7 @@ Atom :: { Atom AlexPosn AlexPosn }
      | intXor { AtBuiltin $1 IntXor }
      | wordXor { AtBuiltin $1 WordXor }
      | boolXor { AtBuiltin $1 Xor }
+     | popcount { AtBuiltin $1 Popcount }
 
 CaseLeaf :: { (Pattern AlexPosn AlexPosn, [Atom AlexPosn AlexPosn]) }
          : vbar Pattern caseArr many(Atom) { ($2, reverse $4) }

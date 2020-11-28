@@ -231,6 +231,7 @@ data BuiltinFn = Drop
                | Or
                | Xor
                | IntNeg
+               | Popcount
                deriving (Eq, Generic, NFData)
 
 instance Pretty BuiltinFn where
@@ -263,6 +264,7 @@ instance Pretty BuiltinFn where
     pretty Or         = "||"
     pretty Xor        = "xor"
     pretty IntNeg     = "~"
+    pretty Popcount   = "popcount"
 
 data ABI = Cabi
          | Kabi

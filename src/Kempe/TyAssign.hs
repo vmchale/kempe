@@ -176,6 +176,7 @@ typeOfBuiltin And        = pure boolOp
 typeOfBuiltin Or         = pure boolOp
 typeOfBuiltin Xor        = pure boolOp
 typeOfBuiltin IntNeg     = pure $ StackType S.empty [TyBuiltin () TyInt] [TyBuiltin () TyInt]
+typeOfBuiltin Popcount   = pure $ StackType S.empty [TyBuiltin () TyWord] [TyBuiltin () TyInt]
 
 boolOp :: StackType ()
 boolOp = StackType S.empty [TyBuiltin () TyBool, TyBuiltin () TyBool] [TyBuiltin () TyBool]

@@ -94,7 +94,7 @@ tokens :-
         "!="                     { mkSym Neq }
         "<="                     { mkSym Leq }
         "<"                      { mkSym Lt }
-        ">=                      { mkSym Geq }
+        ">="                     { mkSym Geq }
         ">"                      { mkSym Gt }
         "&"                      { mkSym AndTok }
         "||"                     { mkSym OrTok }
@@ -122,7 +122,9 @@ tokens :-
         swap                     { mkBuiltin BuiltinSwap }
         xori                     { mkBuiltin BuiltinIntXor }
         xoru                     { mkBuiltin BuiltinWordXor }
-        "xor"                    { mkBuiltin BuiltinBoolXor }
+        xor                      { mkBuiltin BuiltinBoolXor }
+        popcount                 { mkBuiltin BuiltinPopcount }
+
 
         $digit+                  { tok (\p s -> alex $ TokInt p (read $ ASCII.unpack s)) }
         "_"$digit+               { tok (\p s -> alex $ TokInt p (negate $ read $ ASCII.unpack $ BSL.tail s)) }
@@ -299,6 +301,7 @@ data Builtin = BuiltinBool
              | BuiltinIntXor
              | BuiltinWordXor
              | BuiltinBoolXor
+             | BuiltinPopcount
              deriving (Generic, NFData)
 
 instance Pretty Builtin where
@@ -314,6 +317,7 @@ instance Pretty Builtin where
     pretty BuiltinIntXor      = "xori"
     pretty BuiltinWordXor     = "xoru"
     pretty BuiltinBoolXor     = "xor"
+    pretty BuiltinPopcount    = "popcount"
 
 data Token a = EOF { loc :: a }
              | TokSym { loc :: a, _sym :: Sym }

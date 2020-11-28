@@ -255,6 +255,11 @@ evalE (IR.ExprIntBinOp IR.IntMinusIR e0 e1) r = do
     ; placeE' <- evalE e1 r1
     ; pure $ placeE ++ placeE' ++ [ MovRR () (toAbsReg r) (toAbsReg r0), SubRR () (toAbsReg r) (toAbsReg r1) ]
     }
+evalE (IR.PopcountIR e0) r = do
+    { r' <- allocTemp64
+    ; placeE <- evalE e0 r'
+    ; pure $ placeE ++ [ PopcountRR () (toAbsReg r) (toAbsReg r') ]
+    }
 
 toByte :: Bool -> Word8
 toByte False = 0

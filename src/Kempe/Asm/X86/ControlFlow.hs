@@ -108,29 +108,31 @@ uses (IdivR _ r)         = S.singleton r
 uses Cqo{}               = S.empty -- TODO?
 uses (AndRR _ r r')      = S.fromList [r, r']
 uses (OrRR _ r r')       = S.fromList [r, r']
+uses (PopcountRR _ _ r') = S.singleton r'
 uses _                   = S.empty
 
 defs :: X86 reg ann -> S.Set reg
-defs (MovRA _ r _)     = S.singleton r
-defs (MovRR _ r _)     = S.singleton r
-defs (MovRC _ r _)     = S.singleton r
-defs (MovRCBool _ r _) = S.singleton r
-defs (MovRCi8 _ r _)   = S.singleton r
-defs (MovRWord _ r _)  = S.singleton r
-defs (AddRR _ r _)     = S.singleton r
-defs (SubRR _ r _)     = S.singleton r
-defs (ImulRR _ r _)    = S.singleton r
-defs (AddRC _ r _)     = S.singleton r
-defs (SubRC _ r _)     = S.singleton r
-defs (XorRR _ r _)     = S.singleton r
-defs (MovRL _ r _)     = S.singleton r
-defs (ShiftRRR _ r _)  = S.singleton r
-defs (PopReg _ r)      = S.singleton r
-defs (ShiftLRR _ r _)  = S.singleton r
-defs (AndRR _ r _)     = S.singleton r
-defs (OrRR _ r _)      = S.singleton r
+defs (MovRA _ r _)      = S.singleton r
+defs (MovRR _ r _)      = S.singleton r
+defs (MovRC _ r _)      = S.singleton r
+defs (MovRCBool _ r _)  = S.singleton r
+defs (MovRCi8 _ r _)    = S.singleton r
+defs (MovRWord _ r _)   = S.singleton r
+defs (AddRR _ r _)      = S.singleton r
+defs (SubRR _ r _)      = S.singleton r
+defs (ImulRR _ r _)     = S.singleton r
+defs (AddRC _ r _)      = S.singleton r
+defs (SubRC _ r _)      = S.singleton r
+defs (XorRR _ r _)      = S.singleton r
+defs (MovRL _ r _)      = S.singleton r
+defs (ShiftRRR _ r _)   = S.singleton r
+defs (PopReg _ r)       = S.singleton r
+defs (ShiftLRR _ r _)   = S.singleton r
+defs (AndRR _ r _)      = S.singleton r
+defs (OrRR _ r _)       = S.singleton r
+defs (PopcountRR _ r _) = S.singleton r
 -- defs for IdivR &c.?
-defs _                 = S.empty
+defs _                  = S.empty
 
 next :: [X86 AbsReg ()] -> FreshM ([Int] -> [Int], [X86 AbsReg ControlAnn])
 next asms = do

@@ -1,0 +1,2 @@
+hamming : Word Word -- Int
+        =: [ xoru popcount ]
