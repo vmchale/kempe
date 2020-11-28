@@ -157,6 +157,7 @@ data RelBinOp = IntEqIR
               | IntLtIR
               | IntGtIR
               | IntLeqIR
+              | IntGeqIR
               deriving (Generic, NFData)
 
 instance Pretty RelBinOp where
@@ -165,6 +166,7 @@ instance Pretty RelBinOp where
     pretty IntLtIR  = "<"
     pretty IntGtIR  = ">"
     pretty IntLeqIR = "≤"
+    pretty IntGeqIR = "≥"
 
 data IntBinOp = IntPlusIR
               | IntTimesIR
@@ -172,9 +174,11 @@ data IntBinOp = IntPlusIR
               | IntMinusIR
               | IntModIR -- rem?
               | IntXorIR
-              | WordTimesIR
               | WordShiftRIR -- compiles to shr on x86
               | WordShiftLIR
+              -- int/word mod are different, see: https://stackoverflow.com/questions/8231882/how-to-implement-the-mod-operator-in-assembly
+              | WordModIR
+              | WordDivIR
               deriving (Generic, NFData)
 
 instance Pretty IntBinOp where
@@ -186,7 +190,8 @@ instance Pretty IntBinOp where
     pretty IntXorIR     = "xor"
     pretty WordShiftRIR = ">>"
     pretty WordShiftLIR = "<<"
-    pretty WordTimesIR  = "*~"
+    pretty WordModIR    = "%~"
+    pretty WordDivIR    = "/~"
 
 writeModule :: Module () (ConsAnn MonoStackType) MonoStackType -> TempM [Stmt]
 writeModule = foldMapA writeDecl
@@ -277,8 +282,14 @@ writeAtom _ (AtBuiltin _ IntLeq)      = intRel IntLeqIR
 writeAtom _ (AtBuiltin _ WordPlus)    = intOp IntPlusIR
 writeAtom _ (AtBuiltin _ WordTimes)   = intOp IntTimesIR
 writeAtom _ (AtBuiltin _ WordXor)     = intOp IntXorIR
+writeAtom _ (AtBuiltin _ WordMinus)   = intOp IntMinusIR
+writeAtom _ (AtBuiltin _ IntNeq)      = intRel IntNeqIR
+writeAtom _ (AtBuiltin _ IntGeq)      = intRel IntGeqIR
+writeAtom _ (AtBuiltin _ IntGt)       = intRel IntGtIR
 writeAtom _ (AtBuiltin _ WordShiftL)  = intShift WordShiftLIR
 writeAtom _ (AtBuiltin _ WordShiftR)  = intShift WordShiftRIR
+writeAtom _ (AtBuiltin _ WordDiv)     = intOp WordDivIR
+writeAtom _ (AtBuiltin _ WordMod)     = intOp WordModIR
 writeAtom _ (AtBuiltin (is, _) Drop)  =
     let sz = size (last is) in
         pure [ dataPointerDec sz ]

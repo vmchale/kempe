@@ -213,11 +213,17 @@ data BuiltinFn = Drop
                | IntEq
                | IntLeq
                | IntLt
+               | IntGeq
+               | IntGt
+               | IntNeq
                | IntShiftR
                | IntShiftL
                | IntXor
                | WordPlus
                | WordTimes
+               | WordMinus
+               | WordDiv
+               | WordMod
                | WordShiftR
                | WordShiftL
                | WordXor
@@ -244,6 +250,12 @@ instance Pretty BuiltinFn where
     pretty WordShiftR = ">>~"
     pretty IntXor     = "xori"
     pretty WordXor    = "xoru"
+    pretty IntGeq     = "≥"
+    pretty IntGt      = ">"
+    pretty IntNeq     = "≠"
+    pretty WordMinus  = "-~"
+    pretty WordDiv    = "/~"
+    pretty WordMod    = "%~"
 
 data ABI = Cabi
          | Kabi

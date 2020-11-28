@@ -85,11 +85,17 @@ tokens :-
         ">>"                     { mkSym ShiftR }
         "+~"                     { mkSym PlusU }
         "*~"                     { mkSym TimesU }
+        "-~"                     { mkSym MinusU }
+        "/~"                     { mkSym DivU }
+        "%~"                     { mkSym ModU }
         ">>~"                    { mkSym ShiftRU }
         "<<~"                    { mkSym ShiftLU }
         "="                      { mkSym Eq }
+        "≠"                      { mkSym Neq }
         "≤"                      { mkSym Leq }
         "<"                      { mkSym Lt }
+        "≥"                      { mkSym Geq }
+        ">"                      { mkSym Gt }
 
         type                     { mkKw KwType }
         import                   { mkKw KwImport }
@@ -128,7 +134,7 @@ tokens :-
 {
 
 readHex' :: (Eq a, Num a) => BSL.ByteString -> Alex a
-readHex' bs = 
+readHex' bs =
     case readHex (ASCII.unpack bs) of
         []        -> alexError "Invalid hexadecimal literal"
         ((i,_):_) -> pure i
@@ -205,6 +211,12 @@ data Sym = Arrow
          | Underscore
          | Leq
          | Lt
+         | MinusU
+         | DivU
+         | ModU
+         | Neq
+         | Geq
+         | Gt
          deriving (Generic, NFData)
 
 instance Pretty Sym where
@@ -236,6 +248,12 @@ instance Pretty Sym where
     pretty ShiftLU    = "<<~"
     pretty Leq        = "≤"
     pretty Lt         = "<"
+    pretty MinusU     = "-~"
+    pretty DivU       = "/~"
+    pretty ModU       = "%~"
+    pretty Neq        = "≠"
+    pretty Geq        = "≥"
+    pretty Gt         = ">"
 
 data Keyword = KwType
              | KwImport

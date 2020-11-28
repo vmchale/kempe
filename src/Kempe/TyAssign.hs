@@ -166,6 +166,12 @@ typeOfBuiltin WordPlus   = pure wordBinOp
 typeOfBuiltin WordTimes  = pure wordBinOp
 typeOfBuiltin WordShiftR = pure wordShift
 typeOfBuiltin WordShiftL = pure wordShift
+typeOfBuiltin IntGeq     = pure intBinOp
+typeOfBuiltin IntNeq     = pure intBinOp
+typeOfBuiltin IntGt      = pure intBinOp
+typeOfBuiltin WordMinus  = pure wordBinOp
+typeOfBuiltin WordDiv    = pure wordBinOp
+typeOfBuiltin WordMod    = pure wordBinOp
 
 intRel :: StackType ()
 intRel = StackType S.empty [TyBuiltin () TyInt, TyBuiltin () TyInt] [TyBuiltin () TyBool]
