@@ -17,6 +17,8 @@
 - [ ] Graph (?) register allocator
 # Performance
 - [ ] Liveness analysis on a per-decl basis?
+- [ ] Use `cmov` for storing bools
+- [ ] `lea`, `xchg`? `test`?
 ## Data Structures
 - [ ] Difference lists when laying down atoms/IR
 - [ ] Do sets actually help?

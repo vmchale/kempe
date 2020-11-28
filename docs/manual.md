@@ -87,6 +87,8 @@ For arithmetic:
   * `%~ : Word Word -- Word`
   * `>>~ : Word Int8 -- Word`
   * `<<~ : Word Int8 -- Word`
+  * `xoru : Word Word -- Word`
+  * `popcount : Word -- Int`
   * `= : Int Int -- Bool`
   * `> : Int Int -- Bool`
   * `< : Int Int -- Bool`
