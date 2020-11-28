@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
--- vaguely maximal munch
+-- | Started out trying to implement maximal munch but ended with something
+-- "flatter" that works with Kempe IR and my shitty register allocator.
 module Kempe.Asm.X86 ( X86 (..)
                      , Addr (..)
                      , irToX86
@@ -231,12 +232,33 @@ evalE (IR.ExprIntBinOp IR.IntModIR e0 e1) r = do
     }
 evalE (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r1) (IR.Reg r2)) r = do
     pure [ MovRR () (toAbsReg r) (toAbsReg r1), SubRR () (toAbsReg r) (toAbsReg r2) ]
+evalE (IR.BoolBinOp IR.BoolAnd e0 e1) r = do
+    { r0 <- allocTemp8
+    ; r1 <- allocTemp8
+    ; placeE <- evalE e0 r0
+    ; placeE' <- evalE e1 r1
+    ; pure $ placeE ++ placeE' ++ [ MovRR () (toAbsReg r0) (toAbsReg r), AndRR () (toAbsReg r) (toAbsReg r1) ]
+    }
+evalE (IR.BoolBinOp IR.BoolOr e0 e1) r = do
+    { r0 <- allocTemp8
+    ; r1 <- allocTemp8
+    ; placeE <- evalE e0 r0
+    ; placeE' <- evalE e1 r1
+    ; pure $ placeE ++ placeE' ++ [ MovRR () (toAbsReg r0) (toAbsReg r), OrRR () (toAbsReg r) (toAbsReg r1) ]
+    }
+evalE (IR.BoolBinOp IR.BoolXor e0 e1) r = do
+    { r0 <- allocTemp8
+    ; r1 <- allocTemp8
+    ; placeE <- evalE e0 r0
+    ; placeE' <- evalE e1 r1
+    ; pure $ placeE ++ placeE' ++ [ MovRR () (toAbsReg r0) (toAbsReg r), XorRR () (toAbsReg r) (toAbsReg r1) ]
+    }
 evalE (IR.ExprIntBinOp IR.IntMinusIR e0 e1) r = do
     { r0 <- allocTemp64
     ; r1 <- allocTemp64
     ; placeE <- evalE e0 r0
     ; placeE' <- evalE e1 r1
-    ; pure $ placeE ++ placeE' ++ [ MovRR () (toAbsReg r0) (toAbsReg r), SubRR () (toAbsReg r) (toAbsReg r1) ]
+    ; pure $ placeE ++ placeE' ++ [ MovRR () (toAbsReg r) (toAbsReg r0), SubRR () (toAbsReg r) (toAbsReg r1) ]
     }
 
 toByte :: Bool -> Word8

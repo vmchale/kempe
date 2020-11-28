@@ -8,6 +8,7 @@ module Kempe.IR ( writeModule
                 , Exp (..)
                 , RelBinOp (..)
                 , IntBinOp (..)
+                , BoolBinOp (..)
                 , Label
                 , Temp (..)
                 , runTempM

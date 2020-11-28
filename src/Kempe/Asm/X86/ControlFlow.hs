@@ -106,6 +106,8 @@ uses (MovRCi8 _ r _)     = S.singleton r
 uses (MovACTag _ a _)    = addrRegs a
 uses (IdivR _ r)         = S.singleton r
 uses Cqo{}               = S.empty -- TODO?
+uses (AndRR _ r r')      = S.fromList [r, r']
+uses (OrRR _ r r')       = S.fromList [r, r']
 uses _                   = S.empty
 
 defs :: X86 reg ann -> S.Set reg
@@ -125,6 +127,8 @@ defs (MovRL _ r _)     = S.singleton r
 defs (ShiftRRR _ r _)  = S.singleton r
 defs (PopReg _ r)      = S.singleton r
 defs (ShiftLRR _ r _)  = S.singleton r
+defs (AndRR _ r _)     = S.singleton r
+defs (OrRR _ r _)      = S.singleton r
 -- defs for IdivR &c.?
 defs _                 = S.empty
 
