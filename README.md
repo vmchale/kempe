@@ -10,7 +10,7 @@ See manual
 
 ## Installation
 
-For shell completions but the following in your `~/.bashrc` or
+For shell completions put the following in your `~/.bashrc` or
 `~/.bash_profile`:
 
 ```
