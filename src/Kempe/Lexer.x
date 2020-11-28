@@ -22,6 +22,7 @@ import Data.Bifunctor (first)
 import qualified Data.ByteString.Lazy as BSL
 import qualified Data.ByteString.Lazy.Char8 as ASCII
 import Data.Functor (($>))
+import Data.Int (Int8)
 import qualified Data.IntMap as IM
 import qualified Data.Map as M
 import qualified Data.Text as T
@@ -111,7 +112,7 @@ tokens :-
         -- builtin
         dip                      { mkBuiltin BuiltinDip }
         Int                      { mkBuiltin BuiltinInt }
-        Word8                    { mkBuiltin BuiltinWord8 }
+        Int8                     { mkBuiltin BuiltinInt8 }
         Word                     { mkBuiltin BuiltinWord }
         Bool                     { mkBuiltin BuiltinBool }
         True                     { mkBuiltin (BuiltinBoolLit True) }
@@ -127,7 +128,7 @@ tokens :-
         "_"$digit+               { tok (\p s -> alex $ TokInt p (negate $ read $ ASCII.unpack $ BSL.tail s)) }
         "0x"$hexit+u             { tok (\p s -> TokWord p <$> readHex' (BSL.init $ BSL.drop 2 s)) }
         $digit+u                 { tok (\p s -> alex $ TokWord p $ (read $ ASCII.unpack (BSL.init s))) }
-        $digit+"u8"              { tok (\p s -> alex $ TokWord8 p (read $ ASCII.unpack (BSL.init $ BSL.init s))) }
+        $digit+"i8"              { tok (\p s -> alex $ TokInt8 p (read $ ASCII.unpack (BSL.init $ BSL.init s))) }
 
         @name                    { tok (\p s -> TokName p <$> newIdentAlex p (mkText s)) }
         @tyname                  { tok (\p s -> TokTyName p <$> newIdentAlex p (mkText s)) }
@@ -288,7 +289,7 @@ instance Pretty Keyword where
 data Builtin = BuiltinBool
              | BuiltinBoolLit { bool :: !Bool }
              | BuiltinInt
-             | BuiltinWord8
+             | BuiltinInt8
              | BuiltinWord
              | BuiltinDip
              | BuiltinDrop
@@ -303,7 +304,7 @@ instance Pretty Builtin where
     pretty BuiltinBool        = "Bool"
     pretty (BuiltinBoolLit b) = pretty b
     pretty BuiltinInt         = "Int"
-    pretty BuiltinWord8       = "Word8"
+    pretty BuiltinInt8        = "Int8"
     pretty BuiltinWord        = "Word"
     pretty BuiltinDip         = "dip"
     pretty BuiltinDrop        = "drop"
@@ -319,7 +320,7 @@ data Token a = EOF { loc :: a }
              | TokTyName { loc :: a, _tyName :: (TyName a) }
              | TokKeyword { loc :: a, _kw :: Keyword }
              | TokInt { loc :: a, int :: Integer }
-             | TokWord8 { loc :: a, int8 :: Word8 }
+             | TokInt8 { loc :: a, int8 :: Int8 }
              | TokWord { loc :: a, word :: Natural }
              | TokForeign { loc :: a, ident :: BSL.ByteString }
              | TokBuiltin { loc :: a, builtin :: Builtin }
@@ -333,7 +334,7 @@ instance Pretty (Token a) where
     pretty (TokKeyword _ kw) = "keyword" <+> squotes (pretty kw)
     pretty (TokInt _ i)      = pretty i
     pretty (TokWord _ n)     = pretty n <> "u"
-    pretty (TokWord8 _ i)    = pretty i <> "u8"
+    pretty (TokInt8 _ i)     = pretty i <> "i8"
     pretty (TokForeign _ fn) = dquotes (pretty $ mkText fn)
     pretty (TokBuiltin _ b)  = pretty b
 

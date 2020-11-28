@@ -63,9 +63,8 @@ irEmit (IR.MovMem (IR.Reg r) _ (IR.ConstInt i)) =
     pure [ MovAC () (Reg $ toAbsReg r) i ]
 irEmit (IR.MovMem (IR.Reg r) _ (IR.ConstBool b)) =
     pure [ MovABool () (Reg $ toAbsReg r) (toByte b) ]
-irEmit (IR.MovMem (IR.Reg r) _ (IR.ConstWord8 b)) =
-    pure [ MovACWord8 () (Reg $ toAbsReg r) b ]
-    -- see: https://github.com/cirosantilli/x86-assembly-cheat/blob/master/x86-64/movabs.asm for why we don't do this ^ for words
+irEmit (IR.MovMem (IR.Reg r) _ (IR.ConstTag b)) =
+    pure [ MovACTag () (Reg $ toAbsReg r) b ]
 irEmit (IR.MovMem (IR.Reg r) _ (IR.ExprIntBinOp IR.IntTimesIR (IR.Reg r1) (IR.Reg r2))) = do
     { r' <- allocReg64
     ; pure [ MovRR () r' (toAbsReg r1), ImulRR () r' (toAbsReg r2), MovAR () (Reg $ toAbsReg r) r' ]
@@ -123,6 +122,9 @@ irEmit (IR.WrapKCall Cabi (is, [o]) n l) | all (\i -> size i <= 8) is && size o 
     }
 irEmit (IR.WrapKCall Kabi (_, _) n l) =
     pure [BSLabel () n, Call () l, Ret ()]
+irEmit (IR.MovMem (IR.Reg r) _ (IR.ConstInt8 i)) =
+    pure [ MovACi8 () (Reg $ toAbsReg r) i ]
+    -- see: https://github.com/cirosantilli/x86-assembly-cheat/blob/master/x86-64/movabs.asm for why we don't do this ^ for words
 irEmit (IR.MovMem (IR.Reg r) _ (IR.ExprIntBinOp IR.IntXorIR (IR.Reg r1) (IR.Reg r2))) = do
     { r' <- allocReg64
     ; pure [ MovRR () r' (toAbsReg r1), XorRR () r' (toAbsReg r2), MovAR () (Reg $ toAbsReg r) r' ]
@@ -189,7 +191,7 @@ restore = PopReg () <$> [CalleeSave6, CalleeSave5, CalleeSave4, CalleeSave3, Cal
 evalE :: IR.Exp -> IR.Temp -> WriteM [X86 AbsReg ()]
 evalE (IR.ConstInt i) r                                             = pure [MovRC () (toAbsReg r) i]
 evalE (IR.ConstBool b) r                                            = pure [MovRCBool () (toAbsReg r) (toByte b)]
-evalE (IR.ConstWord8 i) r                                           = pure [MovRCWord8 () (toAbsReg r) i]
+evalE (IR.ConstInt8 i) r                                            = pure [MovRCi8 () (toAbsReg r) i]
 evalE (IR.ConstWord w) r                                            = pure [MovRWord () (toAbsReg r) w]
 evalE (IR.Reg r') r                                                 = pure [MovRR () (toAbsReg r) (toAbsReg r')]
 evalE (IR.Mem _ (IR.Reg r1)) r                                      = pure [MovRA () (toAbsReg r) (Reg $ toAbsReg r1) ] -- TODO: sanity check reg/mem access size?

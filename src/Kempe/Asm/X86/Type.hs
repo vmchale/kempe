@@ -17,7 +17,7 @@ module Kempe.Asm.X86.Type ( X86 (..)
 import           Control.DeepSeq    (NFData)
 import qualified Data.ByteString    as BS
 import           Data.Foldable      (toList)
-import           Data.Int           (Int64)
+import           Data.Int           (Int64, Int8)
 import qualified Data.Set           as S
 import           Data.Text.Encoding (decodeUtf8)
 import           Data.Word          (Word8)
@@ -180,9 +180,10 @@ data X86 reg a = PushReg { ann :: a, rSrc :: reg }
                | MovRC { ann :: a, rDest :: reg, iSrc :: Int64 }
                | MovRL { ann :: a, rDest :: reg, bsLabel :: BS.ByteString }
                | MovAC { ann :: a, addrDest :: Addr reg, iSrc :: Int64 }
-               | MovACWord8 { ann :: a, addrDest :: Addr reg, word8Src :: Word8 }
+               | MovACi8 { ann :: a, addrDest :: Addr reg, i8Src :: Int8 }
+               | MovACTag { ann :: a, addrDest :: Addr reg, tagSrc :: Word8 }
                | MovRCBool { ann :: a, rDest :: reg, boolSrc :: Word8 }
-               | MovRCWord8 { ann :: a, rDest :: reg, word8Src :: Word8 }
+               | MovRCi8 { ann :: a, rDest :: reg, i8Src :: Int8 }
                | MovRWord { ann :: a, rDest :: reg, wSrc :: Word }
                | AddRR { ann :: a, rAdd1 :: reg, rAdd2 :: reg }
                | SubRR { ann :: a, rSub1 :: reg, rSub2 :: reg }
@@ -236,8 +237,8 @@ instance Pretty reg => Pretty (X86 reg a) where
     pretty (MovRA _ r a)       = i4 ("mov" <+> pretty r <> "," <+> pretty a)
     pretty (MovAR _ a r)       = i4 ("mov" <+> pretty a <> "," <+> pretty r)
     pretty (MovABool _ a b)    = i4 ("mov byte" <+> pretty a <> "," <+> pretty b)
-    pretty (MovACWord8 _ a i)  = i4 ("mov byte" <+> pretty a <> "," <+> pretty i)
-    pretty (MovRCWord8 _ r i)  = i4 ("mov byte" <+> pretty r <> "," <+> pretty i)
+    pretty (MovACi8 _ a i)     = i4 ("mov byte" <+> pretty a <> "," <+> pretty i)
+    pretty (MovRCi8 _ r i)     = i4 ("mov byte" <+> pretty r <> "," <+> pretty i)
     pretty (MovRWord _ r w)    = i4 ("mov qword" <+> pretty r <> "," <+> prettyHex w)
     pretty (MovRR _ r0 r1)     = i4 ("mov" <+> pretty r0 <> "," <+> pretty r1)
     pretty (MovRC _ r i)       = i4 ("mov" <+> pretty r <> "," <+> pretty i)
@@ -263,6 +264,7 @@ instance Pretty reg => Pretty (X86 reg a) where
     pretty (ShiftLRR _ r0 r1)  = i4 ("shl" <+> pretty r0 <> "," <+> pretty r1)
     pretty (IdivR _ r)         = i4 ("idiv" <+> pretty r)
     pretty Cqo{}               = i4 "cqo"
+    pretty (MovACTag _ a t)    = i4 ("mov" <+> pretty a <> "," <+> pretty t)
     pretty (AndRR _ r0 r1)     = i4 ("and" <+> pretty r0 <+> pretty r1)
     pretty (OrRR _ r0 r1)      = i4 ("or" <+> pretty r0 <+> pretty r1)
 

@@ -25,7 +25,7 @@ import           Data.Bifunctor             (second)
 import qualified Data.ByteString            as BS
 import qualified Data.ByteString.Lazy       as BSL
 import           Data.Foldable.Ext
-import           Data.Int                   (Int64)
+import           Data.Int                   (Int64, Int8)
 import qualified Data.IntMap                as IM
 import           Data.Text.Encoding         (decodeUtf8, encodeUtf8)
 import           Data.Word                  (Word8)
@@ -36,6 +36,7 @@ import           Kempe.Unique
 import           Lens.Micro                 (Lens')
 import           Lens.Micro.Mtl             (modifying)
 import           Prettyprinter              (Doc, Pretty (pretty), braces, brackets, colon, concatWith, hardline, parens, (<+>))
+import           Prettyprinter.Ext
 
 type Label = Word
 
@@ -118,7 +119,7 @@ instance Pretty Stmt where
 
 instance Pretty Exp where
     pretty (ConstInt i)           = parens ("int" <+> pretty i)
-    pretty (ConstWord8 i)         = parens ("word8" <+> pretty i)
+    pretty (ConstInt8 i)          = parens ("int8" <+> pretty i)
     pretty (ConstWord n)          = parens ("word" <+> pretty n)
     pretty (ConstBool False)      = parens "bool false"
     pretty (ConstBool True)       = parens "bool true"
@@ -126,6 +127,7 @@ instance Pretty Exp where
     pretty (Mem sz e)             = parens ("mem" <+> brackets (pretty sz) <+> pretty e)
     pretty (ExprIntBinOp op e e') = parens (pretty op <+> pretty e <+> pretty e')
     pretty (ExprIntRel op e e')   = parens (pretty op <+> pretty e <+> pretty e')
+    pretty (ConstTag b)           = parens ("tag" <+> prettyHex b)
     pretty (BoolBinOp op e e')    = parens (pretty op <+> pretty e <+> pretty e')
     pretty (IntNegIR e)           = parens ("~" <+> pretty e)
 
@@ -142,7 +144,8 @@ data Stmt = Labeled Label
           deriving (Generic, NFData)
 
 data Exp = ConstInt Int64
-         | ConstWord8 Word8
+         | ConstInt8 Int8
+         | ConstTag Word8
          | ConstWord Word
          | ConstBool Bool
          | Reg Temp -- TODO: size?
@@ -286,7 +289,7 @@ writeAtom :: Label -- ^ Context for possible TCO
           -> Atom (ConsAnn MonoStackType) MonoStackType
           -> TempM [Stmt]
 writeAtom _ (IntLit _ i)              = pure $ push 8 (ConstInt $ fromInteger i)
-writeAtom _ (Word8Lit _ i)            = pure $ push 1 (ConstWord8 i)
+writeAtom _ (Int8Lit _ i)             = pure $ push 1 (ConstInt8 i)
 writeAtom _ (WordLit _ w)             = pure $ push 8 (ConstWord $ fromIntegral w)
 writeAtom _ (BoolLit _ b)             = pure $ push 1 (ConstBool b)
 writeAtom _ (AtName _ n)              = pure . KCall <$> lookupName n -- TODO: when to do tco?
@@ -348,7 +351,7 @@ writeAtom _ (AtBuiltin ([i0, i1], _) Swap) =
                 ++ copyBytes (-sz0) 0 sz0 -- copy i0 at end of stack to its new place
 writeAtom _ (AtBuiltin _ Swap) = error "Ill-typed swap!"
 writeAtom _ (AtCons ann@(ConsAnn _ tag' _) _) =
-    pure $ dataPointerInc (padBytes ann) : push 1 (ConstWord8 tag')
+    pure $ dataPointerInc (padBytes ann) : push 1 (ConstTag tag')
 
 -- | Constructors may need to be padded, this computes the number of bytes of
 -- padding
@@ -412,12 +415,12 @@ dipify sz (AtBuiltin (is, _) Dup) = do
                 ++ [ dataPointerInc sz' ] -- move data pointer over sz' bytes
 dipify sz (IntLit _ i) = pure $ dipPush sz 8 (ConstInt $ fromInteger i)
 dipify sz (WordLit _ w) = pure $ dipPush sz 8 (ConstWord $ fromIntegral w)
-dipify sz (Word8Lit _ i) = pure $ dipPush sz 1 (ConstWord8 i)
+dipify sz (Int8Lit _ i) = pure $ dipPush sz 1 (ConstInt8 i)
 dipify sz (BoolLit _ b) = pure $ dipPush sz 1 (ConstBool b)
 dipify sz (AtCons ann@(ConsAnn _ tag' _) _) =
     pure $
         copyBytes 0 (-sz) sz
-            ++ dataPointerInc (padBytes ann) : push 1 (ConstWord8 tag')
+            ++ dataPointerInc (padBytes ann) : push 1 (ConstTag tag')
             ++ copyBytes (-sz) 0 sz
 
 dipPush :: Int64 -> Int64 -> Exp -> [Stmt]

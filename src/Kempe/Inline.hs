@@ -83,6 +83,6 @@ namesInAtom (AtName _ n)  = [n]
 namesInAtom AtCons{}      = []
 namesInAtom IntLit{}      = []
 namesInAtom BoolLit{}     = []
-namesInAtom Word8Lit{}    = []
+namesInAtom Int8Lit{}     = []
 namesInAtom WordLit{}     = []
 namesInAtom (Case _ as)   = foldMap namesInAtom (foldMap snd as)
