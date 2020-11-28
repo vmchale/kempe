@@ -86,10 +86,10 @@ mkModuleMap = IM.fromList . concatMap toInt where
     toInt _                                           = []
 
 squishTypeName :: BuiltinTy -> T.Text
-squishTypeName TyInt  = "int"
-squishTypeName TyBool = "bool"
-squishTypeName TyWord = "word"
-squishTypeName TyInt8 = "int8"
+squishTypeName TyInt   = "int"
+squishTypeName TyBool  = "bool"
+squishTypeName TyWord  = "word"
+squishTypeName TyWord8 = "word8"
 
 squishType :: KempeTy a -> T.Text
 squishType (TyBuiltin _ b)          = squishTypeName b
@@ -116,7 +116,7 @@ renameAtom :: Atom (StackType ()) (StackType ()) -> MonoM (Atom (ConsAnn (StackT
 renameAtom (AtBuiltin ty b)         = pure $ AtBuiltin ty b
 renameAtom (If ty as as')           = If ty <$> traverse renameAtom as <*> traverse renameAtom as'
 renameAtom (IntLit ty i)            = pure $ IntLit ty i
-renameAtom (Int8Lit ty i)           = pure $ Int8Lit ty i
+renameAtom (Word8Lit ty i)           = pure $ Word8Lit ty i
 renameAtom (WordLit ty w)           = pure $ WordLit ty w
 renameAtom (BoolLit ty b)           = pure $ BoolLit ty b
 renameAtom (Dip ty as)              = Dip ty <$> traverse renameAtom as
@@ -245,7 +245,7 @@ namesInAtom (AtName _ n@(Name _ _ l))  = S.singleton (n, l)
 namesInAtom (AtCons _ tn@(Name _ _ l)) = S.singleton (tn, l)
 namesInAtom IntLit{}                   = S.empty
 namesInAtom BoolLit{}                  = S.empty
-namesInAtom Int8Lit{}                  = S.empty
+namesInAtom Word8Lit{}                 = S.empty
 namesInAtom WordLit{}                  = S.empty
 namesInAtom (Case _ as)                = foldMap namesInAtom (foldMap snd as) -- FIXME: patterns too
 

@@ -187,13 +187,13 @@ intBinOp :: StackType ()
 intBinOp = StackType S.empty [TyBuiltin () TyInt, TyBuiltin () TyInt] [TyBuiltin () TyInt]
 
 intShift :: StackType ()
-intShift = StackType S.empty [TyBuiltin () TyInt, TyBuiltin () TyInt8] [TyBuiltin () TyInt]
+intShift = StackType S.empty [TyBuiltin () TyInt, TyBuiltin () TyWord8] [TyBuiltin () TyInt]
 
 wordBinOp :: StackType ()
 wordBinOp = StackType S.empty [TyBuiltin () TyWord, TyBuiltin () TyWord] [TyBuiltin () TyWord]
 
 wordShift :: StackType ()
-wordShift = StackType S.empty [TyBuiltin () TyWord, TyBuiltin () TyInt8] [TyBuiltin () TyWord]
+wordShift = StackType S.empty [TyBuiltin () TyWord, TyBuiltin () TyWord8] [TyBuiltin () TyWord]
 
 tyLookup :: Name a -> TypeM a (StackType a)
 tyLookup n@(Name _ (Unique i) l) = do
@@ -231,7 +231,7 @@ tyAtom :: Atom b a -> TypeM () (StackType ())
 tyAtom (AtBuiltin _ b) = typeOfBuiltin b
 tyAtom BoolLit{}       = pure $ StackType mempty [] [TyBuiltin () TyBool]
 tyAtom IntLit{}        = pure $ StackType mempty [] [TyBuiltin () TyInt]
-tyAtom Int8Lit{}       = pure $ StackType mempty [] [TyBuiltin () TyInt8 ]
+tyAtom Word8Lit{}      = pure $ StackType mempty [] [TyBuiltin () TyWord8 ]
 tyAtom WordLit{}       = pure $ StackType mempty [] [TyBuiltin () TyWord]
 tyAtom (AtName _ n)    = renameStack =<< tyLookup (void n)
 tyAtom (Dip _ as)      = dipify =<< tyAtoms as
@@ -254,10 +254,10 @@ assignAtom (BoolLit _ b)   =
 assignAtom (IntLit _ i)    =
     let sTy = StackType mempty [] [TyBuiltin () TyInt]
         in pure (sTy, IntLit sTy i)
-assignAtom (Int8Lit _ i)    =
-    let sTy = StackType mempty [] [TyBuiltin () TyInt8]
-        in pure (sTy, Int8Lit sTy i)
-assignAtom (WordLit _ u)    =
+assignAtom (Word8Lit _ i)  =
+    let sTy = StackType mempty [] [TyBuiltin () TyWord8]
+        in pure (sTy, Word8Lit sTy i)
+assignAtom (WordLit _ u)   =
     let sTy = StackType mempty [] [TyBuiltin () TyWord]
         in pure (sTy, WordLit sTy u)
 assignAtom (AtName _ n) = do

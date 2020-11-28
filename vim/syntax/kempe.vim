@@ -15,7 +15,7 @@ syntax match kempeExternal "\".*\""
 syntax match kempeNum "\v[0-9]+"
 syntax match kempeNum "\v0x[0-9a-z]+"
 syntax match kempeNum "\v0x[0-9a-z]+u"
-syntax match kempeNum "\v[0-9]+i8"
+syntax match kempeNum "\v[0-9]+u8"
 
 syntax match kempeKeyword "type"
 syntax match kempeKeyword "case"

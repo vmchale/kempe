@@ -35,7 +35,7 @@ import           Data.Bifunctor          (Bifunctor (..))
 import           Data.Bitraversable      (Bitraversable (..))
 import qualified Data.ByteString.Lazy    as BSL
 import           Data.Functor            (void)
-import           Data.Int                (Int64, Int8)
+import           Data.Int                (Int64)
 import           Data.List.NonEmpty      (NonEmpty)
 import qualified Data.List.NonEmpty      as NE
 import           Data.Monoid             (Sum (..))
@@ -49,15 +49,15 @@ import           Prettyprinter           (Doc, Pretty (pretty), align, braces, b
 
 data BuiltinTy = TyInt
                | TyBool
-               | TyInt8
+               | TyWord8
                | TyWord
                deriving (Generic, NFData, Eq, Ord)
 
 instance Pretty BuiltinTy where
-    pretty TyInt  = "Int"
-    pretty TyBool = "Bool"
-    pretty TyInt8 = "Int8"
-    pretty TyWord = "Word"
+    pretty TyInt   = "Int"
+    pretty TyBool  = "Bool"
+    pretty TyWord8 = "Word8"
+    pretty TyWord  = "Word"
 
 -- equality for sum types &c.
 
@@ -134,7 +134,7 @@ instance Pretty (Atom c a) where
     pretty (IntLit _ i)    = pretty i
     pretty (BoolLit _ b)   = pretty b
     pretty (WordLit _ w)   = pretty w <> "u"
-    pretty (Int8Lit _ i)   = pretty i <> "i8"
+    pretty (Word8Lit _ i)  = pretty i <> "i8"
 
 prettyTyped :: Atom (StackType ()) (StackType ()) -> Doc ann
 prettyTyped (AtName ty n)    = parens (pretty n <+> ":" <+> pretty ty)
@@ -144,7 +144,7 @@ prettyTyped (AtCons ty tn)   = parens (pretty tn <+> ":" <+> pretty ty)
 prettyTyped (If _ as as')    = "if(" <> align (fillSep (prettyTyped <$> as)) <> ", " <> align (fillSep (prettyTyped <$> as')) <> ")"
 prettyTyped (IntLit _ i)     = pretty i
 prettyTyped (BoolLit _ b)    = pretty b
-prettyTyped (Int8Lit _ i)    = pretty i <> "i8"
+prettyTyped (Word8Lit _ i)   = pretty i <> "i8"
 prettyTyped (WordLit _ n)    = pretty n <> "u"
 
 data Atom c b = AtName b (Name b)
@@ -153,7 +153,7 @@ data Atom c b = AtName b (Name b)
               | Dip b [Atom c b]
               | IntLit b Integer
               | WordLit b Natural
-              | Int8Lit b Int8
+              | Word8Lit b Word8
               | BoolLit b Bool
               | AtBuiltin b BuiltinFn
               | AtCons c (TyName c)
@@ -165,7 +165,7 @@ instance Bifunctor Atom where
     first _ (AtName l n)    = AtName l n
     first _ (IntLit l i)    = IntLit l i
     first _ (WordLit l w)   = WordLit l w
-    first _ (Int8Lit l i)   = Int8Lit l i
+    first _ (Word8Lit l i)  = Word8Lit l i
     first _ (BoolLit l b)   = BoolLit l b
     first _ (AtBuiltin l b) = AtBuiltin l b
     first f (Dip l as)      = Dip l (fmap (first f) as)
@@ -177,7 +177,7 @@ instance Bifunctor Atom where
 instance Bifoldable Atom where
     bifoldMap _ g (AtName x n)    = foldMap g (AtName x n)
     bifoldMap _ g (IntLit l i)    = foldMap g (IntLit l i)
-    bifoldMap _ g (Int8Lit l i)   = foldMap g (Int8Lit l i)
+    bifoldMap _ g (Word8Lit l i)  = foldMap g (Word8Lit l i)
     bifoldMap _ g (WordLit l w)   = foldMap g (WordLit l w)
     bifoldMap _ g (BoolLit l b)   = foldMap g (BoolLit l b)
     bifoldMap _ g (AtBuiltin l b) = foldMap g (AtBuiltin l b)
@@ -191,7 +191,7 @@ instance Bifoldable Atom where
 instance Bitraversable Atom where
     bitraverse _ g (AtName x n)    = traverse g (AtName x n)
     bitraverse _ g (IntLit l i)    = traverse g (IntLit l i)
-    bitraverse _ g (Int8Lit l i)   = traverse g (Int8Lit l i)
+    bitraverse _ g (Word8Lit l i)  = traverse g (Word8Lit l i)
     bitraverse _ g (WordLit l w)   = traverse g (WordLit l w)
     bitraverse _ g (BoolLit l b)   = traverse g (BoolLit l b)
     bitraverse _ g (AtBuiltin l b) = traverse g (AtBuiltin l b)
@@ -337,7 +337,7 @@ freeVars tys = S.fromList (concatMap extrVars tys)
 size :: KempeTy a -> Int64
 size (TyBuiltin _ TyInt)      = 8 -- since we're only targeting x86_64 and aarch64 we have 64-bit 'Int's
 size (TyBuiltin _ TyBool)     = 1
-size (TyBuiltin _ TyInt8)     = 1
+size (TyBuiltin _ TyWord8)    = 1
 size (TyBuiltin _ TyWord)     = 8
 size TyVar{}                  = error "Internal error: type variables should not be present at this stage."
 size TyNamed{}                = 1
