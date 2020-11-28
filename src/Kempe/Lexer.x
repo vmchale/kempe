@@ -129,6 +129,7 @@ tokens :-
         "0x"$hexit+u             { tok (\p s -> TokWord p <$> readHex' (BSL.init $ BSL.drop 2 s)) }
         $digit+u                 { tok (\p s -> alex $ TokWord p $ (read $ ASCII.unpack (BSL.init s))) }
         $digit+"i8"              { tok (\p s -> alex $ TokInt8 p (read $ ASCII.unpack (BSL.init $ BSL.init s))) }
+        "_"$digit+"i8"           { tok (\p s -> alex $ TokInt8 p (negate $ read $ ASCII.unpack (BSL.tail $ BSL.init $ BSL.init s))) }
 
         @name                    { tok (\p s -> TokName p <$> newIdentAlex p (mkText s)) }
         @tyname                  { tok (\p s -> TokTyName p <$> newIdentAlex p (mkText s)) }
