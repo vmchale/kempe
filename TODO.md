@@ -28,7 +28,7 @@
 - [x] Constructors aren't monomorphized
   - [ ] Constructors that call constructors don't dispatch/monomorphize
     properly?
-- [ ] Correctly restore registers (C ABI)
+- [x] Correctly restore registers (C ABI)
 - [ ] Warn on >256 constructors
 - [ ] Constructors not inlined; need type specializations when one calls
   a constructor on a constructor!
