@@ -46,7 +46,7 @@
 - [ ] Tuples (?)
 - [ ] Error messages should have line numbers
 - [x] Tail-call optimization (easier than I thought?)
-  - [ ]  Mutually recursive function optimization
+  - [ ]  Mutually recursive function optimization (what ATS does?)
 - [ ] tail recursion modulo cons ?
 - [ ] `.intel_syntax noprefix` for arm
 ## Builtins
