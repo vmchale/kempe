@@ -73,7 +73,7 @@ tokens :-
         ","                      { mkSym Comma }
         \_                       { mkSym Underscore }
 
-        -- ¬ ∧ ∨ ⇨
+        -- ¬ ∧ ∨ ⇨ ⊻
 
         -- symbols/operators
         "%"                      { mkSym Percent }
@@ -91,10 +91,10 @@ tokens :-
         ">>~"                    { mkSym ShiftRU }
         "<<~"                    { mkSym ShiftLU }
         "="                      { mkSym Eq }
-        "≠"                      { mkSym Neq }
-        "≤"                      { mkSym Leq }
+        "!="                     { mkSym Neq }
+        "<="                     { mkSym Leq }
         "<"                      { mkSym Lt }
-        "≥"                      { mkSym Geq }
+        ">=                      { mkSym Geq }
         ">"                      { mkSym Gt }
 
         type                     { mkKw KwType }
@@ -246,13 +246,13 @@ instance Pretty Sym where
     pretty ShiftL     = "<<"
     pretty ShiftRU    = ">>~"
     pretty ShiftLU    = "<<~"
-    pretty Leq        = "≤"
+    pretty Leq        = "<="
     pretty Lt         = "<"
     pretty MinusU     = "-~"
     pretty DivU       = "/~"
     pretty ModU       = "%~"
-    pretty Neq        = "≠"
-    pretty Geq        = "≥"
+    pretty Neq        = "!="
+    pretty Geq        = ">="
     pretty Gt         = ">"
 
 data Keyword = KwType

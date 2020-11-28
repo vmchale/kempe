@@ -162,11 +162,11 @@ data RelBinOp = IntEqIR
 
 instance Pretty RelBinOp where
     pretty IntEqIR  = "="
-    pretty IntNeqIR = "≠"
+    pretty IntNeqIR = "!="
     pretty IntLtIR  = "<"
     pretty IntGtIR  = ">"
-    pretty IntLeqIR = "≤"
-    pretty IntGeqIR = "≥"
+    pretty IntLeqIR = "<="
+    pretty IntGeqIR = ">="
 
 data IntBinOp = IntPlusIR
               | IntTimesIR
