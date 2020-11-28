@@ -18,6 +18,8 @@ divides : Int Int -- Bool
         =: [ % 0 = ]
 
 ; also tail recursive!
+;
+; kinda sus in that squaring will be integer overflow tho
 is_prime_step : Int Int -- Bool
               =: [ dup2 divides
                    if( drop drop False
