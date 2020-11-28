@@ -27,5 +27,6 @@ eval "$(kc --bash-completion-script kc)"
 
   * Unification takes too long
   * Errors don't have position information
-  * Monomorphization fails on recursive polymorphic functions.
-  * Order of declarations matters past the IR phase
+  * Monomorphization fails on recursive polymorphic functions
+  * Order of declarations matters past the IR phase (right now mutual recursion
+    is broken)
