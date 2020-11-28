@@ -95,7 +95,6 @@ squishType :: KempeTy a -> T.Text
 squishType (TyBuiltin _ b)          = squishTypeName b
 squishType (TyNamed _ (Name t _ _)) = T.toLower t
 squishType TyVar{}                  = error "not meant to be monomorphized!"
-squishType (TyTuple _ tys)          = foldMap squishType tys
 squishType (TyApp _ ty ty')         = squishType ty <> squishType ty'
 
 squishMonoStackType :: MonoStackType -> T.Text

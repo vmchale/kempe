@@ -45,7 +45,7 @@ import           Data.Word               (Word8)
 import           GHC.Generics            (Generic)
 import           Kempe.Name
 import           Numeric.Natural
-import           Prettyprinter           (Doc, Pretty (pretty), align, braces, brackets, concatWith, fillSep, hsep, parens, pipe, sep, tupled, (<+>))
+import           Prettyprinter           (Doc, Pretty (pretty), align, braces, brackets, concatWith, fillSep, hsep, parens, pipe, sep, (<+>))
 
 data BuiltinTy = TyPtr
                | TyInt
@@ -80,7 +80,6 @@ data KempeTy a = TyBuiltin a BuiltinTy
                | TyNamed a (TyName a)
                | TyVar a (Name a)
                | TyApp a (KempeTy a) (KempeTy a) -- type applied to another, e.g. Just Int
-               | TyTuple a [KempeTy a]
                deriving (Generic, NFData, Functor, Eq, Ord) -- questionable eq instance but eh
 
 data StackType b = StackType { quantify :: S.Set (Name b)
@@ -109,13 +108,11 @@ instance Pretty (KempeTy a) where
     pretty (TyNamed _ tn)   = pretty tn
     pretty (TyVar _ n)      = pretty n
     pretty (TyApp _ ty ty') = parens (pretty ty <+> pretty ty')
-    pretty (TyTuple _ tys)  = tupled (pretty <$> tys)
 
 data Pattern c b = PatternInt b Integer
                  | PatternCons c (TyName c) -- a constructed pattern
                  | PatternWildcard b
                  | PatternBool b Bool
-                 -- -- | PatternTuple
                  deriving (Eq, Generic, NFData, Functor, Foldable, Traversable)
 
 instance Bifunctor Pattern where
@@ -328,7 +325,6 @@ extrVars TyBuiltin{}      = []
 extrVars TyNamed{}        = []
 extrVars (TyVar _ n)      = [n]
 extrVars (TyApp _ ty ty') = extrVars ty ++ extrVars ty'
-extrVars (TyTuple _ tys)  = concatMap extrVars tys
 
 freeVars :: [KempeTy a] -> S.Set (Name a)
 freeVars tys = S.fromList (concatMap extrVars tys)
@@ -341,13 +337,11 @@ size (TyBuiltin _ TyBool)     = 1
 size (TyBuiltin _ TyInt8)     = 1
 size (TyBuiltin _ TyWord)     = 8
 size TyVar{}                  = error "Internal error: type variables should not be present at this stage."
-size (TyTuple _ tys)          = sum (fmap size tys)
 size TyNamed{}                = 1
 size (TyApp _ TyNamed{} ty)   = 1 + size ty
 size (TyApp _ ty@TyApp{} ty') = size ty + size ty'
 size (TyApp _ TyBuiltin{} _)  = error "Internal error: ill-kinded type!"
 size (TyApp _ TyVar{} _)      = error "Internal error: type variables should not be present at this stage."
-size (TyApp _ TyTuple{} _)    = error "Internal error: ill-kinded type!"
 
 sizeStack :: [KempeTy a] -> Int64
 sizeStack = getSum . foldMap (Sum . size)

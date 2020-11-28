@@ -14,7 +14,6 @@ import           Control.Monad.Except       (throwError)
 import           Control.Monad.State.Strict (StateT, get, gets, modify, put, runStateT)
 import           Data.Bifunctor             (bimap, second)
 import           Data.Foldable              (traverse_)
-import           Data.Foldable.Extra        (allM)
 import           Data.Functor               (void, ($>))
 import qualified Data.IntMap                as IM
 import           Data.List.NonEmpty         (NonEmpty (..))
@@ -102,7 +101,6 @@ onType _ ty'@TyNamed{}   = ty'
 onType (k, ty) ty'@(TyVar _ (Name _ (Unique i) _)) | i == k = ty
                                                    | otherwise = ty'
 onType (k, ty) (TyApp l ty' ty'') = TyApp l (onType (k, ty) ty') (onType (k, ty) ty'') -- I think this is right
-onType (k, ty) (TyTuple l tys) = TyTuple l (onType (k, ty) <$> tys)
 
 renameForward :: (Int, KempeTy a) -> [(KempeTy a, KempeTy a)] -> [(KempeTy a, KempeTy a)]
 renameForward _ []                      = []
@@ -128,15 +126,6 @@ unify ((TyVar _ (Name _ (Unique k) _), ty@TyApp{}):tys)              = IM.insert
 unify ((ty@TyApp{}, TyVar  _ (Name _ (Unique k) _)):tys)             = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys)
 unify ((TyApp _ ty ty', TyApp _ ty'' ty'''):tys)                     = unify ((ty, ty'') : (ty', ty''') : tys) -- TODO: I think this is right?
 unify ((ty@TyApp{}, ty'@TyNamed{}):_)                                = Left (UnificationFailed () (void ty) (void ty'))
-unify ((TyTuple _ tys, TyTuple _ tys'):tys'')                        = unify (zip tys tys' ++ tys'')
-unify ((ty@(TyTuple _ _), TyVar  _ (Name _ (Unique k) _)):tys)       = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys)
-unify ((TyVar _ (Name _ (Unique k) _), ty@(TyTuple _ _)):tys)        = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys)
-unify ((ty@TyBuiltin{}, ty'@TyTuple{}):_)                            = Left (UnificationFailed () (void ty) (void ty'))
-unify ((ty@TyNamed{}, ty'@TyTuple{}):_)                              = Left (UnificationFailed () (void ty) (void ty'))
-unify ((ty@TyTuple{}, ty'@TyBuiltin{}):_)                            = Left (UnificationFailed () (void ty) (void ty'))
-unify ((ty@TyTuple{}, ty'@TyNamed{}):_)                              = Left (UnificationFailed () (void ty) (void ty'))
-unify ((ty@TyApp{}, ty'@TyTuple{}):_)                                = Left (UnificationFailed () (void ty) (void ty'))
-unify ((ty@TyTuple{}, ty'@TyApp{}):_)                                = Left (UnificationFailed () (void ty) (void ty'))
 
 unifyM :: S.Set (KempeTy a, KempeTy a) -> TypeM () (IM.IntMap (KempeTy ()))
 unifyM s =
@@ -328,18 +317,10 @@ kindLookup n@(Name _ (Unique i) l) = do
         Just k  -> pure k
         Nothing -> throwError $ PoorScope l n
 
-isStar :: Kind -> Bool
-isStar Star = True
-isStar _    = False
-
-allStar :: (Foldable f) => f (KempeTy a) -> TypeM a Bool
-allStar = allM (fmap isStar . kindOf)
-
 kindOf :: KempeTy a -> TypeM a Kind
 kindOf TyBuiltin{}        = pure Star
 kindOf (TyNamed _ tn)     = kindLookup tn
 kindOf TyVar{}            = pure Star
-kindOf ty@(TyTuple l tys) = do { good <- allStar tys ; unless good (throwError (IllKinded l ty)) $> Star }
 kindOf tyErr@(TyApp l ty ty') = do
     k <- kindOf ty
     k' <- kindOf ty'
@@ -391,9 +372,7 @@ lessGeneral :: StackType a -> StackType a -> Bool
 lessGeneral (StackType _ is os) (StackType _ is' os') = lessGenerals (is ++ os) (is' ++ os')
     where lessGeneralAtom :: KempeTy a -> KempeTy a -> Bool
           lessGeneralAtom TyBuiltin{} TyVar{}                   = True
-          lessGeneralAtom TyTuple{} TyVar{}                     = True
           lessGeneralAtom TyApp{} TyVar{}                       = True
-          lessGeneralAtom (TyTuple _ tys) (TyTuple _ tys')      = lessGenerals tys tys'
           lessGeneralAtom (TyApp _ ty ty') (TyApp _ ty'' ty''') = lessGeneralAtom ty ty'' || lessGeneralAtom ty' ty''' -- lazy pattern match?
           lessGeneralAtom _ _                                   = False
           lessGenerals :: [KempeTy a] -> [KempeTy a] -> Bool
@@ -439,7 +418,6 @@ renameIn :: KempeTy a -> TypeM a (KempeTy a)
 renameIn b@TyBuiltin{}    = pure b
 renameIn n@TyNamed{}      = pure n
 renameIn (TyApp l ty ty') = TyApp l <$> renameIn ty <*> renameIn ty'
-renameIn (TyTuple l tys)  = TyTuple l <$> traverse renameIn tys
 renameIn (TyVar l (Name t u l')) = do
     u' <- replaceUnique u
     pure $ TyVar l (Name t u' l')
@@ -536,8 +514,6 @@ substConstraints tys ty@(TyVar _ (Name _ (Unique k) _)) =
         Nothing          -> ty
 substConstraints tys (TyApp l ty ty')                   =
     TyApp l (substConstraints tys ty) (substConstraints tys ty')
-substConstraints tys (TyTuple l tys')                   =
-    TyTuple l (substConstraints tys <$> tys')
 
 substConstraintsStack :: IM.IntMap (KempeTy a) -> StackType a -> StackType a
 substConstraintsStack tys (StackType _ is os) = {-# SCC "substConstraintsStack" #-}
