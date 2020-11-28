@@ -100,6 +100,14 @@ isRight : ((Either a) b) -- Bool
 
 `kc` optimizes tail recursion.
 
+## Non-Features
+
+Kempe is missing a good many features, among them:
+
+  * Floats
+  * Strings
+  * Recursive data types
+
 # Programming in Kempe
 
 ## Invoking the Compiler
