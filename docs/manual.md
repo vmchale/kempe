@@ -66,6 +66,7 @@ programmers:
 
   * `dup : a -- a a`
   * `swap : a b -- b a`
+  * `drop : a --`
 
 There is one higher-order construct, `dip`, which we illustrate by example:
 

@@ -85,7 +85,6 @@ mkModuleMap = IM.fromList . concatMap toInt where
     toInt _                                           = []
 
 squishTypeName :: BuiltinTy -> T.Text
-squishTypeName TyPtr  = "ptr"
 squishTypeName TyInt  = "int"
 squishTypeName TyBool = "bool"
 squishTypeName TyWord = "word"

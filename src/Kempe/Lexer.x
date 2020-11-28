@@ -81,15 +81,16 @@ tokens :-
         "/"                      { mkSym Div }
         "+"                      { mkSym Plus }
         "-"                      { mkSym Minus }
-        "="                      { mkSym Eq }
         "<<"                     { mkSym ShiftL }
         ">>"                     { mkSym ShiftR }
         "+~"                     { mkSym PlusU }
         "*~"                     { mkSym TimesU }
         ">>~"                    { mkSym ShiftRU }
         "<<~"                    { mkSym ShiftLU }
+        "="                      { mkSym Eq }
         "≤"                      { mkSym Leq }
         "<"                      { mkSym Lt }
+        "¬"                      { mkSym Not }
 
         type                     { mkKw KwType }
         import                   { mkKw KwImport }
@@ -105,7 +106,6 @@ tokens :-
         Int                      { mkBuiltin BuiltinInt }
         Int8                     { mkBuiltin BuiltinInt8 }
         Word                     { mkBuiltin BuiltinWord }
-        Ptr                      { mkBuiltin BuiltinPtr }
         Bool                     { mkBuiltin BuiltinBool }
         True                     { mkBuiltin (BuiltinBoolLit True) }
         False                    { mkBuiltin (BuiltinBoolLit False) }
@@ -206,6 +206,7 @@ data Sym = Arrow
          | Underscore
          | Leq
          | Lt
+         | Not
          deriving (Generic, NFData)
 
 instance Pretty Sym where
@@ -237,6 +238,7 @@ instance Pretty Sym where
     pretty ShiftLU    = "<<~"
     pretty Leq        = "≤"
     pretty Lt         = "<"
+    pretty Not        = "¬"
 
 data Keyword = KwType
              | KwImport
@@ -263,7 +265,6 @@ data Builtin = BuiltinBool
              | BuiltinInt
              | BuiltinInt8
              | BuiltinWord
-             | BuiltinPtr
              | BuiltinDip
              | BuiltinDrop
              | BuiltinSwap
@@ -278,7 +279,6 @@ instance Pretty Builtin where
     pretty BuiltinInt         = "Int"
     pretty BuiltinInt8        = "Int8"
     pretty BuiltinWord        = "Word"
-    pretty BuiltinPtr         = "Ptr"
     pretty BuiltinDip         = "dip"
     pretty BuiltinDrop        = "drop"
     pretty BuiltinSwap        = "swap"

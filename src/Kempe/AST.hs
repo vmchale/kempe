@@ -47,21 +47,13 @@ import           Kempe.Name
 import           Numeric.Natural
 import           Prettyprinter           (Doc, Pretty (pretty), align, braces, brackets, concatWith, fillSep, hsep, parens, pipe, sep, (<+>))
 
-data BuiltinTy = TyPtr
-               | TyInt
+data BuiltinTy = TyInt
                | TyBool
                | TyInt8
                | TyWord
-               -- -- | TyFloat
-               -- -- | TyArr Word
                deriving (Generic, NFData, Eq, Ord)
-               -- tupling builtin for sake of case-matching on two+ things at
-               -- once
-               --
-               -- #1 vs ->1 (lol)
 
 instance Pretty BuiltinTy where
-    pretty TyPtr  = "Ptr"
     pretty TyInt  = "Int"
     pretty TyBool = "Bool"
     pretty TyInt8 = "Int8"
@@ -236,7 +228,8 @@ data BuiltinFn = Drop
                | WordShiftR
                | WordShiftL
                | WordXor
-               -- TODO: IntLt and such
+               | BuiltinNot
+               -- TODO: IntLte and such
                deriving (Eq, Generic, NFData)
 
 instance Pretty BuiltinFn where
@@ -259,6 +252,7 @@ instance Pretty BuiltinFn where
     pretty WordShiftR = ">>~"
     pretty IntXor     = "xori"
     pretty WordXor    = "xoru"
+    pretty BuiltinNot = "¬"
 
 data ABI = Cabi
          | Kabi
@@ -332,7 +326,6 @@ freeVars tys = S.fromList (concatMap extrVars tys)
 -- | Don't call this on ill-kinded types; it won't throw any error.
 size :: KempeTy a -> Int64
 size (TyBuiltin _ TyInt)      = 8 -- since we're only targeting x86_64 and aarch64 we have 64-bit 'Int's
-size (TyBuiltin _ TyPtr)      = 8
 size (TyBuiltin _ TyBool)     = 1
 size (TyBuiltin _ TyInt8)     = 1
 size (TyBuiltin _ TyWord)     = 8
