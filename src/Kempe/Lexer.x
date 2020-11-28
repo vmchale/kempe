@@ -125,6 +125,7 @@ tokens :-
         "xor"                    { mkBuiltin BuiltinBoolXor }
 
         $digit+                  { tok (\p s -> alex $ TokInt p (read $ ASCII.unpack s)) }
+        "_"$digit+               { tok (\p s -> alex $ TokInt p (negate $ read $ ASCII.unpack $ BSL.tail s)) }
         "0x"$hexit+u             { tok (\p s -> TokWord p <$> readHex' (BSL.init $ BSL.drop 2 s)) }
         $digit+u                 { tok (\p s -> alex $ TokWord p $ (read $ ASCII.unpack (BSL.init s))) }
         $digit+"i8"              { tok (\p s -> alex $ TokInt8 p (read $ ASCII.unpack (BSL.init $ BSL.init s))) }

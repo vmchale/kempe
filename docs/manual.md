@@ -58,6 +58,9 @@ Integer literals have type `-- Int`.
 
 Positive literals followed by a `u` have type `-- Word`, e.g. `1u`.
 
+Negative integer literals are indicated by an underscore, `_`, i.e. `_1` has
+type `-- Int`.
+
 ## Builtins
 
 The Kempe compiler has a few builtin functions that you can use for arithmetic
