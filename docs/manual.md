@@ -78,13 +78,15 @@ For arithmetic:
   * `- : Int Int -- Int`
   * `/ : Int Int -- Int`
   * `% : Int Int -- Int`
-  * `>> : Int Int -- Int`
-  * `<< : Int Int -- Int`
+  * `>> : Int Int8 -- Int`
+  * `<< : Int Int8 -- Int`
   * `xori : Int Int -- Int`
   * `+~ : Word Word -- Word`
   * `*~ : Word Word -- Word`
   * `/~ : Word Word -- Word`
   * `%~ : Word Word -- Word`
+  * `>>~ : Word Int8 -- Word`
+  * `<<~ : Word Int8 -- Word`
   * `= : Int Int -- Bool`
   * `> : Int Int -- Bool`
   * `< : Int Int -- Bool`
@@ -228,6 +230,8 @@ next : Word -- Word Word
 
 %foreign kabi next
 ```
+
+Note that `30i8` is an `Int8` literal; shifts take an `Int8` as the exponent.
 
 Compare the [C implementation](http://prng.di.unimi.it/splitmix64.c):
 
