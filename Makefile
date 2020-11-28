@@ -14,9 +14,6 @@ docs/manual.pdf: docs/manual.md
 docs/manual.html: docs/manual.md
 	pandoc -s $< -o $@ --toc
 
-moddeps.svg: $(HS_SRC)
-	graphmod src | dot -Tsvg -o$@
-
 numbertheory.S: lib/numbertheory.kmp
 	kc $< --dump-asm > $@
 
@@ -39,4 +36,4 @@ install:
 	cabal install exe:kc --overwrite-policy=always
 
 clean:
-	rm -rf dist-newstyle *.rlib *.d *.rmeta *.o stack.yaml.lock moddeps.svg factorial.S factorial splitmix.S numbertheory.S numbertheory *.so
+	rm -rf dist-newstyle *.rlib *.d *.rmeta *.o stack.yaml.lock factorial.S factorial splitmix.S numbertheory.S numbertheory *.so

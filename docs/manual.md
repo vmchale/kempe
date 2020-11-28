@@ -50,7 +50,7 @@ id : a -- a
 ```
 
 
-The Kempe typechecker basically works though it is slow.
+The Kempe typechecker basically works though unification is slow.
 
 ## Literals
 
