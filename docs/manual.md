@@ -131,6 +131,8 @@ int main(int argc, char *argv[]) {
 }
 ```
 
+Unlike the frontend and type checker, the backend is incomplete.
+
 ## Internals
 
 Kempe maintains its own stack and stores the pointer in `rbp`.
