@@ -101,17 +101,18 @@ irEmit (IR.MovMem (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r0) (IR.ConstInt i)) _ (
     { r' <- allocReg64
     ; pure [ MovRA () r' (AddrRCPlus (toAbsReg r1) j), MovAR () (AddrRCPlus (toAbsReg r0) i) r' ]
     }
-irEmit (IR.MovMem (IR.Reg r) 1 e) = do
-    { r' <- allocTemp8
-    ; put <- evalE e r'
-    ; pure $ put ++ [MovAR () (Reg $ toAbsReg r) (toAbsReg r')]
+irEmit (IR.MovMem (IR.Reg r) _ (IR.ExprIntRel IR.IntEqIR (IR.Reg r1) (IR.Reg r2))) = do
+    { l0 <- getLabel
+    ; l1 <- getLabel
+    ; l2 <- getLabel
+    ; pure [ CmpRegReg () (toAbsReg r1) (toAbsReg r2), Je () l0, Jump () l1, Label () l0, MovABool () (Reg $ toAbsReg r) 1, Jump () l2, Label () l1, MovABool () (Reg $ toAbsReg r) 0, Label () l2 ]
     }
--- irEmit (IR.MovMem (IR.Reg r) _ (IR.ExprIntRel IR.IntEqIR (IR.Reg r1) (IR.Reg r2))) = do
-    -- { l0 <- getLabel
-    -- ; l1 <- getLabel
-    -- ; l2 <- getLabel
-    -- ; pure [ CmpRegReg () (toAbsReg r1) (toAbsReg r2), Je () l0, Jump () l1, Label () l0, MovABool () (Reg $ toAbsReg r) 1, Jump () l2, Label () l1, MovABool () (Reg $ toAbsReg r) 0, Label () l2 ]
-    -- }
+irEmit (IR.MovMem (IR.Reg r) _ (IR.ExprIntRel IR.IntLtIR (IR.Reg r1) (IR.Reg r2))) = do
+    { l0 <- getLabel
+    ; l1 <- getLabel
+    ; l2 <- getLabel
+    ; pure [ CmpRegReg () (toAbsReg r1) (toAbsReg r2), Jl () l0, Jump () l1, Label () l0, MovABool () (Reg $ toAbsReg r) 1, Jump () l2, Label () l1, MovABool () (Reg $ toAbsReg r) 0, Label () l2 ]
+    }
 irEmit (IR.MovTemp r1 (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r2) (IR.ConstInt i))) | r1 == r2 = do
     pure [ SubRC () (toAbsReg r1) i ]
 irEmit (IR.MovTemp r1 (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r2) (IR.ConstInt i))) | r1 == r2 = do
@@ -127,10 +128,32 @@ irEmit (IR.WrapKCall Kabi (_, _) n l) =
     pure [BSLabel () n, Call () l, Ret ()]
 irEmit (IR.MovMem (IR.Reg r) _ (IR.ConstInt8 i)) =
     pure [ MovACi8 () (Reg $ toAbsReg r) i ]
+    -- see: https://github.com/cirosantilli/x86-assembly-cheat/blob/master/x86-64/movabs.asm for why we don't do this ^ for words
+irEmit (IR.MovMem (IR.Reg r) _ (IR.ExprIntBinOp IR.IntXorIR (IR.Reg r1) (IR.Reg r2))) = do
+    { r' <- allocReg64
+    ; pure [ MovRR () r' (toAbsReg r1), XorRR () r' (toAbsReg r2), MovAR () (Reg $ toAbsReg r) r' ]
+    }
+irEmit (IR.MovMem (IR.Reg r) _ (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r1) (IR.Reg r2))) = do
+    { r' <- allocReg64
+    ; pure [ MovRR () r' (toAbsReg r1), AddRR () r' (toAbsReg r2), MovAR () (Reg $ toAbsReg r) r' ]
+    }
+irEmit (IR.MovMem (IR.Reg r) _ (IR.ExprIntBinOp IR.WordShiftRIR (IR.Reg r1) (IR.Reg r2))) = do
+    { r' <- allocReg64
+    ; pure [ MovRR () ShiftExponent (toAbsReg r2), MovRR () r' (toAbsReg r1), ShiftRRR () r' ShiftExponent, MovAR () (Reg $ toAbsReg r) r' ]
+    }
+irEmit (IR.MovMem (IR.Reg r) _ (IR.ExprIntBinOp IR.WordShiftLIR (IR.Reg r1) (IR.Reg r2))) = do
+    { r' <- allocReg64
+    ; pure [ MovRR () ShiftExponent (toAbsReg r2), MovRR () r' (toAbsReg r1), ShiftLRR () r' ShiftExponent, MovAR () (Reg $ toAbsReg r) r' ]
+    }
 irEmit (IR.MovMem (IR.Reg r) _ (IR.ExprIntBinOp IR.IntModIR (IR.Reg r1) (IR.Reg r2))) =
     -- QuotRes is rax, so move r1 to rax first
     pure [ MovRR () QuotRes (toAbsReg r1), Cqo (), IdivR () (toAbsReg r2), MovAR () (Reg $ toAbsReg r) RemRes ]
 irEmit (IR.MovTemp r e) = evalE e r
+irEmit (IR.MovMem (IR.Reg r) 1 e) = do
+    { r' <- allocTemp8
+    ; put <- evalE e r'
+    ; pure $ put ++ [MovAR () (Reg $ toAbsReg r) (toAbsReg r')]
+    }
 irEmit (IR.MovMem e 8 e') = do
     { r <- allocTemp64
     ; r' <- allocTemp64
@@ -191,26 +214,9 @@ evalE (IR.ExprIntBinOp IR.IntXorIR (IR.Reg r1) (IR.Reg r2)) r = do
     pure [ MovRR () (toAbsReg r) (toAbsReg r1), XorRR () (toAbsReg r) (toAbsReg r2) ]
 evalE (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r1) (IR.ConstInt i)) r = do
     pure [ MovRR () (toAbsReg r) (toAbsReg r1), SubRC () (toAbsReg r) i ]
-evalE (IR.ExprIntRel IR.IntEqIR e e') r = do
-    { l0 <- getLabel
-    ; l1 <- getLabel
-    ; l2 <- getLabel
-    ; r0 <- allocTemp64
-    ; r1 <- allocTemp64
-    ; placeE <- evalE e r0
-    ; placeE' <- evalE e' r1
-    ; pure $ placeE ++ placeE' ++ [CmpRegReg () (toAbsReg r0) (toAbsReg r1), Je () l0, Jump () l1, Label () l0, MovRCBool () (toAbsReg r) 1, Jump () l2, Label () l1, MovRCBool () (toAbsReg r) 0, Label () l2 ]
-    }
-evalE (IR.ExprIntRel IR.IntLtIR e e') r = do
-    { l0 <- getLabel
-    ; l1 <- getLabel
-    ; l2 <- getLabel
-    ; r0 <- allocTemp64
-    ; r1 <- allocTemp64
-    ; placeE <- evalE e r0
-    ; placeE' <- evalE e' r1
-    ; pure $ placeE ++ placeE' ++ [CmpRegReg () (toAbsReg r0) (toAbsReg r1), Jl () l0, Jump () l1, Label () l0, MovRCBool () (toAbsReg r) 1, Jump () l2, Label () l1, MovRCBool () (toAbsReg r) 0, Label () l2 ]
-    }
+-- FIXME: because my linear register allocator is shitty, I can't keep
+-- registers across jumps... so evaluating = or < as an expression in
+-- general is hard ?
 evalE (IR.ExprIntBinOp IR.WordShiftLIR (IR.Reg r1) (IR.Reg r2)) r = -- FIXME: maximal munch use evalE recursively
     pure [ MovRR () ShiftExponent (toAbsReg r2), MovRR () (toAbsReg r) (toAbsReg r1), ShiftLRR () (toAbsReg r) ShiftExponent ]
 evalE (IR.ExprIntBinOp IR.WordShiftRIR (IR.Reg r1) (IR.Reg r2)) r = -- FIXME: maximal munch use evalE recursively
