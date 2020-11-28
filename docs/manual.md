@@ -49,6 +49,9 @@ id : a -- a
    =: [ ]
 ```
 
+
+The Kempe typechecker basically works though it is slow.
+
 ## Builtins
 
 The Kempe compiler has a few builtin functions that you can use for arithmetic
@@ -65,6 +68,28 @@ nip : a b -- b
     =: [ dip(drop) ]
 ```
 
+## Sum Types
+
+Kempe supports sum types, for instance:
+
+```
+type Either a b { Left a | Right b }
+```
+
+### Pattern Matching
+
+Sum types are taken apart with pattern matching, viz.
+
+```
+isRight : ((Either a) b) -- Bool
+        =: [
+    { case
+        | Right -> drop True
+        | Left  -> drop False
+    }
+]
+```
+
 ## Recursion
 
 `kc` optimizes tail recursion.
@@ -75,6 +100,30 @@ nip : a b -- b
 
 `kc` cannot be used to produce executables. Rather, the Kempe compiler will
 produce `.o` files which contain functions.
+
+Kempe functions can be exported with a C ABI:
+
+```
+fac : Int -- Int
+    =: [ dup 0 =
+         if( drop 1
+           , dup 1 - fac * )
+       ]
+
+%foreign cabi fac
+```
+
+This would be called with a C wrapper like so:
+
+```
+#include <stdio.h>
+
+extern int fac(int);
+
+int main(int argc, char *argv[]) {
+    printf("%d", fac(3));
+}
+```
 
 ## Internals
 
@@ -87,6 +136,9 @@ do not require any registers to be preserved across function calls.
 
 When exporting to C, `kc` generates code that initializes the Kempe data pointer
 (`rbp`). Thus, one should avoid calling into Kempe code too often!
+
+Note that the Kempe data pointer is static, so calling different Kempe functions
+in different threads will fail unpredictably.
 
 ### Kempe ABI
 
