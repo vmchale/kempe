@@ -80,6 +80,18 @@ For arithmetic:
   * `xori : Int Int -- Int`
   * `+~ : Word Word -- Word`
   * `*~ : Word Word -- Word`
+  * `/~ : Word Word -- Word`
+  * `%~ : Word Word -- Word`
+  * `= : Int Int -- Bool`
+  * `> : Int Int -- Bool`
+  * `< : Int Int -- Bool`
+  * `!= : Int Int -- Bool`
+  * `<= : Int Int -- Bool`
+  * `>= : Int Int -- Bool`
+  * `& : Bool Bool -- Bool`
+  * `|| : Bool Bool -- Bool`
+  * `xor : Bool Bool -- Bool`
+  * `~ : Int -- Int`
 
 There is one higher-order construct, `dip`, which we illustrate by example:
 

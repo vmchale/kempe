@@ -299,6 +299,18 @@
 <li><code>xori : Int Int -- Int</code></li>
 <li><code>+~ : Word Word -- Word</code></li>
 <li><code>*~ : Word Word -- Word</code></li>
+<li><code>/~ : Word Word -- Word</code></li>
+<li><code>%~ : Word Word -- Word</code></li>
+<li><code>= : Int Int -- Bool</code></li>
+<li><code>&gt; : Int Int -- Bool</code></li>
+<li><code>&lt; : Int Int -- Bool</code></li>
+<li><code>!= : Int Int -- Bool</code></li>
+<li><code>&lt;= : Int Int -- Bool</code></li>
+<li><code>&gt;= : Int Int -- Bool</code></li>
+<li><code>&amp; : Bool Bool -- Bool</code></li>
+<li><code>|| : Bool Bool -- Bool</code></li>
+<li><code>xor : Bool Bool -- Bool</code></li>
+<li><code>~ : Int -- Int</code></li>
 </ul>
 <p>There is one higher-order construct, <code>dip</code>, which we illustrate by example:</p>
 <pre><code>nip : a b -- b
@@ -362,7 +374,7 @@ fac_tailrec : Int -- Int
 <p>Kempe maintains its own stack and stores the pointer in <code>rbp</code>.</p>
 <p>Kempe procedures do not require any registers to be preserved across function calls.</p>
 <h3 id="c-calls">C Calls</h3>
-<p>When exporting to C, <code>kc</code> generates code that initializes the Kempe data pointer (<code>rbp</code>). Thus, one should avoid calling into Kempe code too often!</p>
+<p>When exporting to C, <code>kc</code> generates code that initializes the Kempe data pointer (<code>rbx</code>). Thus, one should avoid calling into Kempe code too often!</p>
 <p>Note that the Kempe data pointer is static, so calling different Kempe functions in different threads will fail unpredictably.</p>
 <h3 id="kempe-abi">Kempe ABI</h3>
 <h1 id="examples">Examples</h1>
