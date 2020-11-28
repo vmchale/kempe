@@ -102,7 +102,7 @@ isRight : ((Either a) b) -- Bool
 
 ## Non-Features
 
-Kempe is missing a good many features, among them:
+Kempe is missing a good many features, such as:
 
   * Floats
   * Strings
