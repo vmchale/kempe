@@ -207,6 +207,7 @@ data X86 reg a = PushReg { ann :: a, rSrc :: reg }
                | AndRR { ann :: a, rDest :: reg, rSrc :: reg }
                | OrRR { ann :: a, rDest :: reg, rSrc :: reg }
                | PopcountRR { ann :: a, rDest :: reg, rSrc :: reg }
+               | NegR { ann :: a, rSrc :: reg }
                deriving (Generic, NFData, Functor)
 
 i4 :: Doc ann -> Doc ann
@@ -269,6 +270,7 @@ instance Pretty reg => Pretty (X86 reg a) where
     pretty (AndRR _ r0 r1)      = i4 ("and" <+> pretty r0 <+> pretty r1)
     pretty (OrRR _ r0 r1)       = i4 ("or" <+> pretty r0 <+> pretty r1)
     pretty (PopcountRR _ r0 r1) = i4 ("popcnt" <+> pretty r0 <> "," <+> pretty r1)
+    pretty (NegR _ r)           = i4 ("neg" <+> pretty r)
 
 prettyAsm :: Pretty reg => [X86 reg a] -> Doc ann
 prettyAsm = ((prolegomena <> hardline <> "section .text" <> hardline) <>) . concatWith (\x y -> x <> hardline <> y) . fmap pretty

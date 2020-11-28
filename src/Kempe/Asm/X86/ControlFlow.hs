@@ -109,6 +109,7 @@ uses Cqo{}               = S.empty -- TODO?
 uses (AndRR _ r r')      = S.fromList [r, r']
 uses (OrRR _ r r')       = S.fromList [r, r']
 uses (PopcountRR _ _ r') = S.singleton r'
+uses (NegR _ r)          = S.singleton r
 uses _                   = S.empty
 
 defs :: X86 reg ann -> S.Set reg
@@ -131,6 +132,7 @@ defs (ShiftLRR _ r _)   = S.singleton r
 defs (AndRR _ r _)      = S.singleton r
 defs (OrRR _ r _)       = S.singleton r
 defs (PopcountRR _ r _) = S.singleton r
+defs (NegR _ r)         = S.singleton r
 -- defs for IdivR &c.?
 defs _                  = S.empty
 

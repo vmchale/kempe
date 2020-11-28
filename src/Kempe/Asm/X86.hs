@@ -260,6 +260,10 @@ evalE (IR.PopcountIR e0) r = do
     ; placeE <- evalE e0 r'
     ; pure $ placeE ++ [ PopcountRR () (toAbsReg r) (toAbsReg r') ]
     }
+evalE (IR.IntNegIR e) r = do
+    { placeE <- evalE e r
+    ; pure $ placeE ++ [ NegR () (toAbsReg r) ]
+    }
 
 toByte :: Bool -> Word8
 toByte False = 0

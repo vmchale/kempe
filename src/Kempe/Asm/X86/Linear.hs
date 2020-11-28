@@ -252,3 +252,4 @@ allocReg (MovACTag l a t)                      = (MovACTag () <$> useAddr l a <*
 allocReg (AndRR l r0 r1)                       = (AndRR () <$> useReg l r0 <*> useReg l r1) <* freeDone l
 allocReg (OrRR l r0 r1)                        = (OrRR () <$> useReg l r0 <*> useReg l r1) <* freeDone l
 allocReg (PopcountRR l r0 r1)                  = (PopcountRR () <$> useReg l r0 <*> useReg l r1) <* freeDone l
+allocReg (NegR l r)                            = NegR () <$> useReg l r -- shouldn't be anything to free
