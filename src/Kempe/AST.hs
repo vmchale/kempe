@@ -228,7 +228,6 @@ data BuiltinFn = Drop
                | WordShiftR
                | WordShiftL
                | WordXor
-               | BuiltinNot
                -- TODO: IntLte and such
                deriving (Eq, Generic, NFData)
 
@@ -252,7 +251,6 @@ instance Pretty BuiltinFn where
     pretty WordShiftR = ">>~"
     pretty IntXor     = "xori"
     pretty WordXor    = "xoru"
-    pretty BuiltinNot = "¬"
 
 data ABI = Cabi
          | Kabi
