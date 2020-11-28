@@ -149,8 +149,15 @@ data Exp = ConstInt Int64
          | Mem Int64 Exp -- fetch from address
          | ExprIntBinOp IntBinOp Exp Exp
          | ExprIntRel RelBinOp Exp Exp
+         | BoolBinOp BoolBinOp Exp Exp
+         | IntNegIR Exp
          deriving (Generic, NFData)
            -- TODO: one for data, one for C ABI
+
+data BoolBinOp = BoolAnd
+               | BoolOr
+               | BoolXor
+               deriving (Generic, NFData)
 
 data RelBinOp = IntEqIR
               | IntNeqIR
@@ -228,6 +235,13 @@ intShift cons = do
     pure $
         pop 1 t0 ++ pop 8 t1 ++ push 8 (ExprIntBinOp cons (Reg t1) (Reg t0))
 
+boolOp :: BoolBinOp -> TempM [Stmt]
+boolOp op = do
+    t0 <- getTemp8
+    t1 <- getTemp8
+    pure $
+        pop 1 t0 ++ pop 1 t1 ++ push 8 (BoolBinOp op (Reg t1) (Reg t0))
+
 intOp :: IntBinOp -> TempM [Stmt]
 intOp cons = do
     t0 <- getTemp64 -- registers are 64 bits for integers
@@ -290,6 +304,13 @@ writeAtom _ (AtBuiltin _ WordShiftL)  = intShift WordShiftLIR
 writeAtom _ (AtBuiltin _ WordShiftR)  = intShift WordShiftRIR
 writeAtom _ (AtBuiltin _ WordDiv)     = intOp WordDivIR
 writeAtom _ (AtBuiltin _ WordMod)     = intOp WordModIR
+writeAtom _ (AtBuiltin _ And)         = boolOp BoolAnd
+writeAtom _ (AtBuiltin _ Or)          = boolOp BoolOr
+writeAtom _ (AtBuiltin _ Xor)         = boolOp BoolXor
+writeAtom _ (AtBuiltin _ IntNeg)      = do
+    t0 <- getTemp64
+    pure $
+        pop 8 t0 ++ push 8 (IntNegIR (Reg t0))
 writeAtom _ (AtBuiltin (is, _) Drop)  =
     let sz = size (last is) in
         pure [ dataPointerDec sz ]

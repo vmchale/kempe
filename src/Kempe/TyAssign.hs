@@ -172,6 +172,13 @@ typeOfBuiltin IntGt      = pure intBinOp
 typeOfBuiltin WordMinus  = pure wordBinOp
 typeOfBuiltin WordDiv    = pure wordBinOp
 typeOfBuiltin WordMod    = pure wordBinOp
+typeOfBuiltin And        = pure boolOp
+typeOfBuiltin Or         = pure boolOp
+typeOfBuiltin Xor        = pure boolOp
+typeOfBuiltin IntNeg     = pure $ StackType S.empty [TyBuiltin () TyInt] [TyBuiltin () TyInt]
+
+boolOp :: StackType ()
+boolOp = StackType S.empty [TyBuiltin () TyBool, TyBuiltin () TyBool] [TyBuiltin () TyBool]
 
 intRel :: StackType ()
 intRel = StackType S.empty [TyBuiltin () TyInt, TyBuiltin () TyInt] [TyBuiltin () TyBool]

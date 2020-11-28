@@ -227,7 +227,10 @@ data BuiltinFn = Drop
                | WordShiftR
                | WordShiftL
                | WordXor
-               -- TODO: IntLte and such
+               | And
+               | Or
+               | Xor
+               | IntNeg
                deriving (Eq, Generic, NFData)
 
 instance Pretty BuiltinFn where
@@ -256,6 +259,10 @@ instance Pretty BuiltinFn where
     pretty WordMinus  = "-~"
     pretty WordDiv    = "/~"
     pretty WordMod    = "%~"
+    pretty And        = "&"
+    pretty Or         = "||"
+    pretty Xor        = "xor"
+    pretty IntNeg     = "~"
 
 data ABI = Cabi
          | Kabi

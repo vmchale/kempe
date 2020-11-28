@@ -96,6 +96,9 @@ tokens :-
         "<"                      { mkSym Lt }
         ">=                      { mkSym Geq }
         ">"                      { mkSym Gt }
+        "&"                      { mkSym AndTok }
+        "||"                     { mkSym OrTok }
+        "~"                      { mkSym NegTok }
 
         type                     { mkKw KwType }
         import                   { mkKw KwImport }
@@ -119,6 +122,7 @@ tokens :-
         swap                     { mkBuiltin BuiltinSwap }
         xori                     { mkBuiltin BuiltinIntXor }
         xoru                     { mkBuiltin BuiltinWordXor }
+        "xor"                    { mkBuiltin BuiltinBoolXor }
 
         $digit+                  { tok (\p s -> alex $ TokInt p (read $ ASCII.unpack s)) }
         "0x"$hexit+u             { tok (\p s -> TokWord p <$> readHex' (BSL.init $ BSL.drop 2 s)) }
@@ -217,6 +221,9 @@ data Sym = Arrow
          | Neq
          | Geq
          | Gt
+         | AndTok
+         | OrTok
+         | NegTok
          deriving (Generic, NFData)
 
 instance Pretty Sym where
@@ -254,6 +261,9 @@ instance Pretty Sym where
     pretty Neq        = "!="
     pretty Geq        = ">="
     pretty Gt         = ">"
+    pretty AndTok     = "&"
+    pretty OrTok      = "||"
+    pretty NegTok     = "~"
 
 data Keyword = KwType
              | KwImport
@@ -286,6 +296,7 @@ data Builtin = BuiltinBool
              | BuiltinDup
              | BuiltinIntXor
              | BuiltinWordXor
+             | BuiltinBoolXor
              deriving (Generic, NFData)
 
 instance Pretty Builtin where
@@ -300,6 +311,7 @@ instance Pretty Builtin where
     pretty BuiltinDup         = "dup"
     pretty BuiltinIntXor      = "xori"
     pretty BuiltinWordXor     = "xoru"
+    pretty BuiltinBoolXor     = "xor"
 
 data Token a = EOF { loc :: a }
              | TokSym { loc :: a, _sym :: Sym }

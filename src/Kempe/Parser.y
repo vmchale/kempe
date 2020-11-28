@@ -66,6 +66,9 @@ import Prettyprinter (Pretty (pretty), (<+>))
     shiftlU { TokSym $$ ShiftLU }
     shiftr { TokSym $$ ShiftR }
     shiftl { TokSym $$ ShiftL }
+    neg { TokSym $$ NegTok }
+    and { TokSym $$ AndTok }
+    or { TokSym $$ OrTok }
 
     name { TokName _ $$ }
     tyName { TokTyName  _ $$ }
@@ -94,6 +97,7 @@ import Prettyprinter (Pretty (pretty), (<+>))
     drop { TokBuiltin $$ BuiltinDrop }
     intXor { TokBuiltin $$ BuiltinIntXor }
     wordXor { TokBuiltin $$ BuiltinWordXor }
+    boolXor { TokBuiltin $$ BuiltinBoolXor }
 
 %%
 
@@ -179,12 +183,16 @@ Atom :: { Atom AlexPosn AlexPosn }
      | lt { AtBuiltin $1 IntLt }
      | geq { AtBuiltin $1 IntGeq }
      | gt { AtBuiltin $1 IntGt }
+     | and { AtBuiltin $1 And }
+     | or { AtBuiltin $1 Or }
+     | neg { AtBuiltin $1 IntNeg }
      | shiftl { AtBuiltin $1 IntShiftL }
      | shiftr { AtBuiltin $1 IntShiftR }
      | shiftlU { AtBuiltin $1 WordShiftL }
      | shiftrU { AtBuiltin $1 WordShiftR }
      | intXor { AtBuiltin $1 IntXor }
      | wordXor { AtBuiltin $1 WordXor }
+     | boolXor { AtBuiltin $1 Xor }
 
 CaseLeaf :: { (Pattern AlexPosn AlexPosn, [Atom AlexPosn AlexPosn]) }
          : vbar Pattern caseArr many(Atom) { ($2, reverse $4) }
