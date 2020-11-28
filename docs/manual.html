@@ -229,6 +229,7 @@
 <ul>
 <li><a href="#polymorphism">Polymorphism</a></li>
 </ul></li>
+<li><a href="#literals">Literals</a></li>
 <li><a href="#builtins">Builtins</a></li>
 <li><a href="#sum-types">Sum Types</a>
 <ul>
@@ -272,6 +273,9 @@
 <pre><code>id : a -- a
    =: [ ]</code></pre>
 <p>The Kempe typechecker basically works though it is slow.</p>
+<h2 id="literals">Literals</h2>
+<p>Integer literals have type <code>-- Int</code>.</p>
+<p>Positive literals followed by a <code>u</code> have type <code>-- Word</code>, e.g. <code>1u</code>.</p>
 <h2 id="builtins">Builtins</h2>
 <p>The Kempe compiler has a few builtin functions that you can use for arithmetic and for shuffling data around. Many of them are familiar to stack-based programmers:</p>
 <ul>

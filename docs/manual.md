@@ -52,6 +52,12 @@ id : a -- a
 
 The Kempe typechecker basically works though it is slow.
 
+## Literals
+
+Integer literals have type `-- Int`.
+
+Positive literals followed by a `u` have type `-- Word`, e.g. `1u`.
+
 ## Builtins
 
 The Kempe compiler has a few builtin functions that you can use for arithmetic
