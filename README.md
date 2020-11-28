@@ -10,6 +10,12 @@ See manual
 
 ## Installation
 
+Installation is via [cabal-install](https://www.haskell.org/cabal/):
+
+```
+cabal install kempe
+```
+
 For shell completions put the following in your `~/.bashrc` or
 `~/.bash_profile`:
 
