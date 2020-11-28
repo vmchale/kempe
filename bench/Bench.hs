@@ -75,10 +75,11 @@ main =
                         , bench "X86 (examples/splitmix.kmp)" $ nf reconstruct s
                         , bench "X86 (lib/numbertheory.kmp)" $ nf reconstruct n
                         ]
-                  , env absX86 $ \ ~(s, f) ->
+                  , env absX86 $ \ ~(s, f, n) ->
                       bgroup "Register allocation"
                         [ bench "X86/linear (examples/factorial.kmp)" $ nf allocRegs f
                         , bench "X86/linear (examples/splitmix.kmp)" $ nf allocRegs s
+                        , bench "X86/linear (lib/numbertheory.kmp)" $ nf allocRegs n
                         ]
                   , bgroup "Pipeline"
                         [ bench "Validate (examples/factorial.kmp)" $ nfIO (tcFile "examples/factorial.kmp")
@@ -122,7 +123,8 @@ main =
           cfEnv = (,,) <$> splitmixX86Cf <*> facX86Cf <*> numX86Cf
           facAbsX86 = reconstruct <$> facX86Cf
           splitmixAbsX86 = reconstruct <$> splitmixX86Cf
-          absX86 = (,) <$> splitmixAbsX86 <*> facAbsX86
+          numAbsX86 = reconstruct <$> numX86Cf
+          absX86 = (,,) <$> splitmixAbsX86 <*> facAbsX86 <*> numAbsX86
 
 yeetIO :: Exception e => Either e a -> IO a
 yeetIO = either throwIO pure
