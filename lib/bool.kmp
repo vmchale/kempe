@@ -8,3 +8,9 @@ not : Bool -- Bool
 
 eq : Bool Bool -- Bool
    =: [ xor not ]
+
+nand : Bool Bool -- Bool
+     =: [ & not ]
+
+nor : Bool Bool -- Bool
+    =: [ || not ]
