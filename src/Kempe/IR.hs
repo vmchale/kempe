@@ -127,6 +127,8 @@ instance Pretty Exp where
     pretty (ExprIntBinOp op e e') = parens (pretty op <+> pretty e <+> pretty e')
     pretty (ExprIntRel op e e')   = parens (pretty op <+> pretty e <+> pretty e')
     pretty (ConstTag b)           = parens ("tag" <+> prettyHex b)
+    pretty (BoolBinOp op e e')    = parens (pretty op <+> pretty e <+> pretty e')
+    pretty (IntNegIR e)           = parens ("~" <+> pretty e)
 
 data Stmt = Labeled Label
           | Jump Label
@@ -158,6 +160,11 @@ data BoolBinOp = BoolAnd
                | BoolOr
                | BoolXor
                deriving (Generic, NFData)
+
+instance Pretty BoolBinOp where
+    pretty BoolAnd = "&"
+    pretty BoolOr  = "||"
+    pretty BoolXor = "xor"
 
 data RelBinOp = IntEqIR
               | IntNeqIR
@@ -270,6 +277,12 @@ intRel cons = do
     pure $
         pop 8 t0 ++ pop 8 t1 ++ push 1 (ExprIntRel cons (Reg t1) (Reg t0))
 
+intNeg :: TempM [Stmt]
+intNeg = do
+    t0 <- getTemp64
+    pure $
+        pop 8 t0 ++ push 8 (IntNegIR (Reg t0))
+
 -- | This throws exceptions on nonsensical input.
 writeAtom :: Label -- ^ Context for possible TCO
           -> Atom (ConsAnn MonoStackType) MonoStackType
@@ -307,10 +320,7 @@ writeAtom _ (AtBuiltin _ WordMod)     = intOp WordModIR
 writeAtom _ (AtBuiltin _ And)         = boolOp BoolAnd
 writeAtom _ (AtBuiltin _ Or)          = boolOp BoolOr
 writeAtom _ (AtBuiltin _ Xor)         = boolOp BoolXor
-writeAtom _ (AtBuiltin _ IntNeg)      = do
-    t0 <- getTemp64
-    pure $
-        pop 8 t0 ++ push 8 (IntNegIR (Reg t0))
+writeAtom _ (AtBuiltin _ IntNeg)      = intNeg
 writeAtom _ (AtBuiltin (is, _) Drop)  =
     let sz = size (last is) in
         pure [ dataPointerDec sz ]
@@ -384,6 +394,16 @@ dipify sz (AtBuiltin _ WordShiftL) = dipShift sz WordShiftLIR
 dipify sz (AtBuiltin _ WordShiftR) = dipShift sz WordShiftRIR
 dipify sz (AtBuiltin _ WordPlus)   = dipOp sz IntPlusIR
 dipify sz (AtBuiltin _ WordTimes)  = dipOp sz IntTimesIR
+dipify sz (AtBuiltin _ IntGeq)     = dipRel sz IntGeqIR
+dipify sz (AtBuiltin _ IntGt)      = dipRel sz IntGtIR
+dipify sz (AtBuiltin _ IntNeq)     = dipRel sz IntNeqIR
+dipify sz (AtBuiltin _ IntNeg)     = dipDo sz <$> intNeg -- works b/c doesn't grow stack
+dipify sz (AtBuiltin _ And)        = dipBoolOp sz BoolAnd
+dipify sz (AtBuiltin _ Or)         = dipBoolOp sz BoolOr
+dipify sz (AtBuiltin _ Xor)        = dipBoolOp sz BoolXor
+dipify sz (AtBuiltin _ WordMinus)  = dipOp sz IntMinusIR
+dipify sz (AtBuiltin _ WordDiv)    = dipOp sz WordDivIR
+dipify sz (AtBuiltin _ WordMod)    = dipOp sz WordModIR
 dipify _ (AtBuiltin ([], _) Dup) = error "Internal error: Ill-typed dup!"
 dipify sz (AtBuiltin (is, _) Dup) = do
     let sz' = size (last is) in
@@ -426,6 +446,9 @@ dipRel sz rel = dipDo sz <$> intRel rel
 
 dipOp :: Int64 -> IntBinOp -> TempM [Stmt]
 dipOp sz op = dipDo sz <$> intOp op
+
+dipBoolOp :: Int64 -> BoolBinOp -> TempM [Stmt]
+dipBoolOp sz op = dipDo sz <$> boolOp op
 
 copyBytes :: Int64 -- ^ dest offset
           -> Int64 -- ^ src offset
