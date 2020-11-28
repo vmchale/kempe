@@ -273,7 +273,7 @@
 <p>Kempe allows polymorphic functions. So we can define:</p>
 <pre><code>id : a -- a
    =: [ ]</code></pre>
-<p>The Kempe typechecker basically works though it is slow.</p>
+<p>The Kempe typechecker basically works though unification is slow.</p>
 <h2 id="literals">Literals</h2>
 <p>Integer literals have type <code>-- Int</code>.</p>
 <p>Positive literals followed by a <code>u</code> have type <code>-- Word</code>, e.g. <code>1u</code>.</p>
@@ -282,6 +282,7 @@
 <ul>
 <li><code>dup : a -- a a</code></li>
 <li><code>swap : a b -- b a</code></li>
+<li><code>drop : a --</code></li>
 </ul>
 <p>There is one higher-order construct, <code>dip</code>, which we illustrate by example:</p>
 <pre><code>nip : a b -- b
@@ -306,6 +307,10 @@
 <li>Floats</li>
 <li>Strings</li>
 <li>Recursive data types</li>
+<li>Pointers</li>
+<li>Dynamically sized data types</li>
+<li>Operator overloading</li>
+<li>Modules/imports</li>
 </ul>
 <h1 id="programming-in-kempe">Programming in Kempe</h1>
 <h2 id="invoking-the-compiler">Invoking the Compiler</h2>
@@ -319,14 +324,14 @@
 
 %foreign cabi fac</code></pre>
 <p>This would be called with a C wrapper like so:</p>
-<pre><code>#include &lt;stdio.h&gt;
-
-extern int fac(int);
-
-int main(int argc, char *argv[]) {
-    printf(&quot;%d&quot;, fac(3));
-}</code></pre>
-<p>Unlike the frontend and type checker, the backend is incomplete.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;stdio.h&gt;</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="kw">extern</span> <span class="dt">int</span> fac(<span class="dt">int</span>);</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> main(<span class="dt">int</span> argc, <span class="dt">char</span> *argv[]) {</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    printf(<span class="st">&quot;%d&quot;</span>, fac(<span class="dv">3</span>));</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<p>Unlike the frontend and type checker, the backend is dodgy.</p>
 <h2 id="internals">Internals</h2>
 <p>Kempe maintains its own stack and stores the pointer in <code>rbp</code>.</p>
 <p>Kempe procedures do not require any registers to be preserved across function calls.</p>
