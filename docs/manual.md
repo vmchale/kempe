@@ -110,6 +110,8 @@ Kempe is missing a good many features, such as:
   * Recursive data types
   * Pointers
   * Dynamically sized data types
+  * Operator overloading
+  * Modules/imports
 
 # Programming in Kempe
 
