@@ -108,6 +108,8 @@ Kempe is missing a good many features, such as:
   * Floats
   * Strings
   * Recursive data types
+  * Pointers
+  * Dynamically sized data types
 
 # Programming in Kempe
 
@@ -130,7 +132,7 @@ fac : Int -- Int
 
 This would be called with a C wrapper like so:
 
-```
+```c
 #include <stdio.h>
 
 extern int fac(int);
@@ -140,7 +142,7 @@ int main(int argc, char *argv[]) {
 }
 ```
 
-Unlike the frontend and type checker, the backend is incomplete.
+Unlike the frontend and type checker, the backend is dodgy.
 
 ## Internals
 
