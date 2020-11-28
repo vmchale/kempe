@@ -10,13 +10,13 @@ not : Bool -- Bool
 odd : Int -- Bool
     =: [ dup 0 =
             if( drop False
-              , even not )
+              , - 1 even )
        ]
 
 even : Int -- Bool
      =: [ dup 0 =
             if( drop True
-              , odd not )
+              , - 1 odd )
         ]
 
 %foreign cabi even
