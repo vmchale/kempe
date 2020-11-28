@@ -11,6 +11,7 @@ import           Kempe.Asm.X86
 import           Kempe.Asm.X86.ControlFlow
 import           Kempe.Asm.X86.Linear
 import           Kempe.Asm.X86.Liveness
+import           Kempe.Asm.X86.Type
 import           Kempe.IR
 import           Kempe.IR.Opt
 import           Kempe.Shuttle

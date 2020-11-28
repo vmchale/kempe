@@ -2,12 +2,7 @@
 
 -- | Started out trying to implement maximal munch but ended with something
 -- "flatter" that works with Kempe IR and my shitty register allocator.
-module Kempe.Asm.X86 ( X86 (..)
-                     , Addr (..)
-                     , irToX86
-                     , AbsReg (..)
-                     , runWriteM
-                     , WriteM
+module Kempe.Asm.X86 ( irToX86
                      ) where
 
 import           Control.Monad.State.Strict (State, evalState, gets, modify)
