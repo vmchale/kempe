@@ -16,6 +16,18 @@ import           Kempe.Asm.X86.Type
 import           Lens.Micro                 (Lens')
 import           Lens.Micro.Mtl             (modifying, (.=))
 
+-- brief problem:
+--
+--     mov HL16, 1 {datapointer,rdx ; datapointer,HL16,rdx}
+--     jmp kmp_16 {datapointer,HL16,rdx ; datapointer,HL16,rdx}
+-- kmp_15: {datapointer,rdx ; datapointer,rdx}
+--     mov HL16, 0 {datapointer,rdx ; datapointer,HL16,rdx}
+-- kmp_16: {datapointer,HL16,rdx ; datapointer,HL16,rdx}
+--     mov [datapointer], HL16 {datapointer,HL16,rdx ; datapointer,rdx}
+--
+-- so it feels free to allocate HL16 after kmp_15, though they must match!
+
+
 -- set of free registers we iterate over
 data AllocSt = AllocSt { allocs :: M.Map AbsReg X86Reg -- ^ Already allocated registers
                        , free64 :: S.Set X86Reg -- TODO: IntSet here?
