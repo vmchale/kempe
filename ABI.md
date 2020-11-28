@@ -4,7 +4,7 @@
 
 # x86
 
-  * `rbp` has Kempe data pointer.
+  * `rbx` has Kempe data pointer.
 
 # Aarch64
 

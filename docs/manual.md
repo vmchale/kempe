@@ -185,7 +185,7 @@ do not require any registers to be preserved across function calls.
 ### C Calls
 
 When exporting to C, `kc` generates code that initializes the Kempe data pointer
-(`rbp`). Thus, one should avoid calling into Kempe code too often!
+(`rbx`). Thus, one should avoid calling into Kempe code too often!
 
 Note that the Kempe data pointer is static, so calling different Kempe functions
 in different threads will fail unpredictably.
