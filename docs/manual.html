@@ -230,7 +230,10 @@
 <li><a href="#polymorphism">Polymorphism</a></li>
 </ul></li>
 <li><a href="#literals">Literals</a></li>
-<li><a href="#builtins">Builtins</a></li>
+<li><a href="#builtins">Builtins</a>
+<ul>
+<li><a href="#if-blocks">If Blocks</a></li>
+</ul></li>
 <li><a href="#sum-types">Sum Types</a>
 <ul>
 <li><a href="#pattern-matching">Pattern Matching</a></li>
@@ -284,9 +287,32 @@
 <li><code>swap : a b -- b a</code></li>
 <li><code>drop : a --</code></li>
 </ul>
+<p>For arithmetic:</p>
+<ul>
+<li><code>+ : Int Int -- Int</code></li>
+<li><code>* : Int Int -- Int</code></li>
+<li><code>- : Int Int -- Int</code></li>
+<li><code>/ : Int Int -- Int</code></li>
+<li><code>% : Int Int -- Int</code></li>
+<li><code>&gt;&gt; : Int Int -- Int</code></li>
+<li><code>&lt;&lt; : Int Int -- Int</code></li>
+<li><code>xori : Int Int -- Int</code></li>
+<li><code>+~ : Word Word -- Word</code></li>
+<li><code>*~ : Word Word -- Word</code></li>
+</ul>
 <p>There is one higher-order construct, <code>dip</code>, which we illustrate by example:</p>
 <pre><code>nip : a b -- b
     =: [ dip(drop) ]</code></pre>
+<h3 id="if-blocks">If Blocks</h3>
+<p>If-blocks are atoms which contain two blocks of atoms on each arm. If the next item on the stack is <code>True</code>, the first will be executed, otherwise the second.</p>
+<pre><code>loop : Int Int -- Int
+     =: [ swap dup 0 =
+          if( drop
+            , dup 1 - dip(*) swap loop )
+        ]
+
+fac_tailrec : Int -- Int
+            =: [ 1 loop ]</code></pre>
 <h2 id="sum-types">Sum Types</h2>
 <p>Kempe supports sum types, for instance:</p>
 <pre><code>type Either a b { Left a | Right b }</code></pre>
@@ -304,13 +330,13 @@
 <h2 id="non-features">Non-Features</h2>
 <p>Kempe is missing a good many features, such as:</p>
 <ul>
+<li>Modules/imports</li>
 <li>Floats</li>
+<li>Dynamically sized data types</li>
 <li>Strings</li>
 <li>Recursive data types</li>
 <li>Pointers</li>
-<li>Dynamically sized data types</li>
 <li>Operator overloading</li>
-<li>Modules/imports</li>
 </ul>
 <h1 id="programming-in-kempe">Programming in Kempe</h1>
 <h2 id="invoking-the-compiler">Invoking the Compiler</h2>
@@ -324,13 +350,13 @@
 
 %foreign cabi fac</code></pre>
 <p>This would be called with a C wrapper like so:</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;stdio.h&gt;</span></span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="kw">extern</span> <span class="dt">int</span> fac(<span class="dt">int</span>);</span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> main(<span class="dt">int</span> argc, <span class="dt">char</span> *argv[]) {</span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    printf(<span class="st">&quot;%d&quot;</span>, fac(<span class="dv">3</span>));</span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb10"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;stdio.h&gt;</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="kw">extern</span> <span class="dt">int</span> fac(<span class="dt">int</span>);</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> main(<span class="dt">int</span> argc, <span class="dt">char</span> *argv[]) {</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>    printf(<span class="st">&quot;%d&quot;</span>, fac(<span class="dv">3</span>));</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <p>Unlike the frontend and type checker, the backend is dodgy.</p>
 <h2 id="internals">Internals</h2>
 <p>Kempe maintains its own stack and stores the pointer in <code>rbp</code>.</p>
@@ -353,16 +379,16 @@ next : Word -- Word Word
 
 %foreign kabi next</code></pre>
 <p>Compare the <a href="http://prng.di.unimi.it/splitmix64.c">C implementation</a>:</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;stdint.h&gt;</span></span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="co">// modified to have &quot;&quot;multiple return&quot;&quot; since C doesn&#39;t really have that</span></span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="dt">uint64_t</span> next(<span class="dt">uint64_t</span> x, <span class="dt">uint64_t</span>* y) {</span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint64_t</span> z = (x += <span class="bn">0x9e3779b97f4a7c15</span>);</span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    z = (z ^ (z &gt;&gt; <span class="dv">30</span>)) * <span class="bn">0xbf58476d1ce4e5b9</span>;</span>
-<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>    z = (z ^ (z &gt;&gt; <span class="dv">27</span>)) * <span class="bn">0x94d049bb133111eb</span>;</span>
-<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>    *y = x;</span>
-<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> z ^ (z &gt;&gt; <span class="dv">31</span>);</span>
-<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb12"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;stdint.h&gt;</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="co">// modified to have &quot;&quot;multiple return&quot;&quot; since C doesn&#39;t really have that</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="dt">uint64_t</span> next(<span class="dt">uint64_t</span> x, <span class="dt">uint64_t</span>* y) {</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint64_t</span> z = (x += <span class="bn">0x9e3779b97f4a7c15</span>);</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>    z = (z ^ (z &gt;&gt; <span class="dv">30</span>)) * <span class="bn">0xbf58476d1ce4e5b9</span>;</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>    z = (z ^ (z &gt;&gt; <span class="dv">27</span>)) * <span class="bn">0x94d049bb133111eb</span>;</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>    *y = x;</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> z ^ (z &gt;&gt; <span class="dv">31</span>);</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <h2 id="gcd">GCD</h2>
 <pre><code>gcd : Int Int -- Int
     =: [ dup 0 =

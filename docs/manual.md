@@ -68,11 +68,40 @@ programmers:
   * `swap : a b -- b a`
   * `drop : a --`
 
+For arithmetic:
+
+  * `+ : Int Int -- Int`
+  * `* : Int Int -- Int`
+  * `- : Int Int -- Int`
+  * `/ : Int Int -- Int`
+  * `% : Int Int -- Int`
+  * `>> : Int Int -- Int`
+  * `<< : Int Int -- Int`
+  * `xori : Int Int -- Int`
+  * `+~ : Word Word -- Word`
+  * `*~ : Word Word -- Word`
+
 There is one higher-order construct, `dip`, which we illustrate by example:
 
 ```
 nip : a b -- b
     =: [ dip(drop) ]
+```
+
+### If Blocks
+
+If-blocks are atoms which contain two blocks of atoms on each arm. If the next
+item on the stack is `True`, the first will be executed, otherwise the second.
+
+```
+loop : Int Int -- Int
+     =: [ swap dup 0 =
+          if( drop
+            , dup 1 - dip(*) swap loop )
+        ]
+
+fac_tailrec : Int -- Int
+            =: [ 1 loop ]
 ```
 
 ## Sum Types
@@ -105,13 +134,13 @@ isRight : ((Either a) b) -- Bool
 
 Kempe is missing a good many features, such as:
 
+  * Modules/imports
   * Floats
+  * Dynamically sized data types
   * Strings
   * Recursive data types
   * Pointers
-  * Dynamically sized data types
   * Operator overloading
-  * Modules/imports
 
 # Programming in Kempe
 
