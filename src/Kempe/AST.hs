@@ -59,14 +59,7 @@ instance Pretty BuiltinTy where
     pretty TyInt8 = "Int8"
     pretty TyWord = "Word"
 
--- special cases w.r.t. codegen
--- dk what tensor types are (or morphisms) but they look cool?
---
--- recursion > while loop (polymorphic recursion though :o )
---
 -- equality for sum types &c.
---
--- what about pattern matches that bind variables??
 
 data KempeTy a = TyBuiltin a BuiltinTy
                | TyNamed a (TyName a)
