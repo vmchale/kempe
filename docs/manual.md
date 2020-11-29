@@ -228,6 +228,9 @@ in different threads will fail unpredictably.
 
 ### Kempe ABI
 
+Sum types have a guaranteed representation so that they can be used from other
+languages.
+
 # Examples
 
 ## Splitmix Pseudorandom Number Generator
