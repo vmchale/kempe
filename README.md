@@ -1,4 +1,4 @@
-# kempe
+# Kempe
 
 Kempe is a stack-based language and toy compiler for x86_64. It requires the
 [nasm](https://nasm.us/) assembler.
