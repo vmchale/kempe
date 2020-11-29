@@ -482,7 +482,7 @@ dipify sz (AtName sty n) =
 dipify sz a@(Case sty _) =
     dipSupp sz sty <$> writeAtom Nothing a
 
-dipSupp :: Int64 -> MonoStackType -> [Stmt] -> [Stmt]
+dipSupp :: Int64 -> MonoStackType -> [Stmt] -> [Stmt] -- FIXME: MonoStackType doesn't have cons size information
 dipSupp sz (is, os) stmts =
     let excessSz = sizeStack os - sizeStack is -- how much the atom(s) grow the stack
         in case compare excessSz 0 of
