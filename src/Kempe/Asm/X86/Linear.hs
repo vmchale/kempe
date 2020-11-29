@@ -257,3 +257,4 @@ allocReg (Jle _ l)                             = pure $ Jle () l
 allocReg (Jge _ l)                             = pure $ Jge () l
 allocReg (Jg _ l)                              = pure $ Jg () l
 allocReg (Jne _ l)                             = pure $ Jne () l
+allocReg (MovRCTag l r b)                      = MovRCTag () <$> useReg l r <*> pure b -- don't need to free anything

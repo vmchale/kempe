@@ -157,6 +157,7 @@ defs (AndRR _ r _)      = S.singleton r
 defs (OrRR _ r _)       = S.singleton r
 defs (PopcountRR _ r _) = S.singleton r
 defs (NegR _ r)         = S.singleton r
+defs (MovRCTag _ r _)   = S.singleton r
 -- defs for IdivR &c.?
 defs _                  = S.empty
 
