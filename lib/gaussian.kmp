@@ -9,9 +9,10 @@ unGaussian : Gaussian -- Int Int
     }
 ]
 
-
 grp : a b c -- b a c
     =: [ dip(swap) ]
 
 add : Gaussian Gaussian -- Gaussian
     =: [ dip(unGaussian) unGaussian grp + dip(+) Gaussian ]
+
+%foreign kabi add
