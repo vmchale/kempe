@@ -145,6 +145,23 @@ isRight : ((Either a) b) -- Bool
 ]
 ```
 
+## FFI
+
+Kempe can call into C functions. Suppose we have
+
+```c
+int rand(void);
+```
+
+Then we can declare this as:
+
+```
+rand : -- Int
+     =: $cfun"rand"
+```
+
+And `rand` will be available to call as a Kempe function.
+
 ## Recursion
 
 `kc` optimizes tail recursion.
