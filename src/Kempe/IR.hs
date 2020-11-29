@@ -395,9 +395,11 @@ mkLeaf l p as = do
     pure (s, Labeled l' : as')
 
 patternSwitch :: Pattern (ConsAnn MonoStackType) MonoStackType -> Label -> [Stmt]
-patternSwitch (PatternBool _ True) l  = [MJump (Mem 1 (Reg DataPointer)) l]
-patternSwitch (PatternBool _ False) l = [MJump (EqByte (Mem 1 (Reg DataPointer)) (ConstTag 0)) l]
-patternSwitch (PatternWildcard _) l   = [Jump l]
+patternSwitch (PatternBool _ True) l                   = [MJump (Mem 1 (Reg DataPointer)) l]
+patternSwitch (PatternBool _ False) l                  = [MJump (EqByte (Mem 1 (Reg DataPointer)) (ConstTag 0)) l]
+patternSwitch (PatternWildcard _) l                    = [Jump l]
+patternSwitch (PatternInt _ i) l                       = [MJump (ExprIntRel IntEqIR (Mem 8 (Reg DataPointer)) (ConstInt $ fromInteger i)) l]
+patternSwitch (PatternCons ann@(ConsAnn _ tag' _) _) l = [ undefined, MJump (EqByte (Mem 1 (Reg DataPointer)) (ConstTag tag')) l ]
 
 -- | Constructors may need to be padded, this computes the number of bytes of
 -- padding
