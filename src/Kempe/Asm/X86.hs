@@ -300,6 +300,20 @@ evalE (IR.ExprIntBinOp IR.IntMinusIR e0 e1) r = do
     ; placeE' <- evalE e1 r1
     ; pure $ placeE ++ placeE' ++ [ MovRR () (toAbsReg r) (toAbsReg r0), SubRR () (toAbsReg r) (toAbsReg r1) ]
     }
+evalE (IR.ExprIntBinOp IR.IntPlusIR e0 e1) r = do
+    { r0 <- allocTemp64
+    ; r1 <- allocTemp64
+    ; placeE <- evalE e0 r0
+    ; placeE' <- evalE e1 r1
+    ; pure $ placeE ++ placeE' ++ [ MovRR () (toAbsReg r) (toAbsReg r0), AddRR () (toAbsReg r) (toAbsReg r1) ]
+    }
+evalE (IR.ExprIntBinOp IR.IntTimesIR e0 e1) r = do
+    { r0 <- allocTemp64
+    ; r1 <- allocTemp64
+    ; placeE <- evalE e0 r0
+    ; placeE' <- evalE e1 r1
+    ; pure $ placeE ++ placeE' ++ [ MovRR () (toAbsReg r) (toAbsReg r0), ImulRR () (toAbsReg r) (toAbsReg r1) ]
+    }
 evalE (IR.PopcountIR e0) r = do
     { r' <- allocTemp64
     ; placeE <- evalE e0 r'
