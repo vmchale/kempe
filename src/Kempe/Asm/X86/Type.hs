@@ -197,7 +197,11 @@ data X86 reg a = PushReg { ann :: a, rSrc :: reg }
                | Label { ann :: a, label :: Label }
                | BSLabel { ann :: a, bsLabel :: BS.ByteString }
                | Je { ann :: a, jLabel :: Label }
+               | Jne { ann :: a, jLabel :: Label }
+               | Jg { ann :: a, jLabel :: Label }
+               | Jge { ann :: a, jLabel :: Label }
                | Jl { ann :: a, jLabel :: Label }
+               | Jle { ann :: a, jLabel :: Label }
                | CmpAddrReg { ann :: a, addrCmp :: Addr reg, rCmp :: reg }
                | CmpRegReg { ann :: a, rCmp :: reg, rCmp' :: reg } -- for simplicity
                | CmpAddrBool { ann :: a, addrCmp :: Addr reg, bCmp :: Word8 }
@@ -271,6 +275,10 @@ instance Pretty reg => Pretty (X86 reg a) where
     pretty (OrRR _ r0 r1)       = i4 ("or" <+> pretty r0 <+> pretty r1)
     pretty (PopcountRR _ r0 r1) = i4 ("popcnt" <+> pretty r0 <> "," <+> pretty r1)
     pretty (NegR _ r)           = i4 ("neg" <+> pretty r)
+    pretty (Jne _ l)            = i4 ("jne" <+> prettyLabel l)
+    pretty (Jg _ l)             = i4 ("jg" <+> prettyLabel l)
+    pretty (Jge _ l)            = i4 ("jge" <+> prettyLabel l)
+    pretty (Jle _ l)            = i4 ("jle" <+> prettyLabel l)
 
 prettyAsm :: Pretty reg => [X86 reg a] -> Doc ann
 prettyAsm = ((prolegomena <> hardline <> "section .text" <> hardline) <>) . concatWith (\x y -> x <> hardline <> y) . fmap pretty

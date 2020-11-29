@@ -53,8 +53,32 @@ addControlFlow ((Je _ l):asms) = do
 addControlFlow ((Jl _ l):asms) = do
     { i <- getFresh
     ; (f, asms') <- next asms
-    ; l_i <- lookupLabel l -- TODO: is this what's wanted?
+    ; l_i <- lookupLabel l
     ; pure (Jl (ControlAnn i (f [l_i]) S.empty S.empty) l : asms')
+    }
+addControlFlow ((Jle _ l):asms) = do
+    { i <- getFresh
+    ; (f, asms') <- next asms
+    ; l_i <- lookupLabel l
+    ; pure (Jle (ControlAnn i (f [l_i]) S.empty S.empty) l : asms')
+    }
+addControlFlow ((Jne _ l):asms) = do
+    { i <- getFresh
+    ; (f, asms') <- next asms
+    ; l_i <- lookupLabel l
+    ; pure (Jne (ControlAnn i (f [l_i]) S.empty S.empty) l : asms')
+    }
+addControlFlow ((Jge _ l):asms) = do
+    { i <- getFresh
+    ; (f, asms') <- next asms
+    ; l_i <- lookupLabel l
+    ; pure (Jge (ControlAnn i (f [l_i]) S.empty S.empty) l : asms')
+    }
+addControlFlow ((Jg _ l):asms) = do
+    { i <- getFresh
+    ; (f, asms') <- next asms
+    ; l_i <- lookupLabel l
+    ; pure (Jg (ControlAnn i (f [l_i]) S.empty S.empty) l : asms')
     }
 addControlFlow ((Jump _ l):asms) = do
     { i <- getFresh

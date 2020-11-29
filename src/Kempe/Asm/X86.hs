@@ -109,6 +109,30 @@ irEmit (IR.MovMem (IR.Reg r) _ (IR.ExprIntRel IR.IntLtIR (IR.Reg r1) (IR.Reg r2)
     ; l2 <- getLabel
     ; pure [ CmpRegReg () (toAbsReg r1) (toAbsReg r2), Jl () l0, Jump () l1, Label () l0, MovABool () (Reg $ toAbsReg r) 1, Jump () l2, Label () l1, MovABool () (Reg $ toAbsReg r) 0, Label () l2 ]
     }
+irEmit (IR.MovMem (IR.Reg r) _ (IR.ExprIntRel IR.IntGtIR (IR.Reg r1) (IR.Reg r2))) = do
+    { l0 <- getLabel
+    ; l1 <- getLabel
+    ; l2 <- getLabel
+    ; pure [ CmpRegReg () (toAbsReg r1) (toAbsReg r2), Jg () l0, Jump () l1, Label () l0, MovABool () (Reg $ toAbsReg r) 1, Jump () l2, Label () l1, MovABool () (Reg $ toAbsReg r) 0, Label () l2 ]
+    }
+irEmit (IR.MovMem (IR.Reg r) _ (IR.ExprIntRel IR.IntGeqIR (IR.Reg r1) (IR.Reg r2))) = do
+    { l0 <- getLabel
+    ; l1 <- getLabel
+    ; l2 <- getLabel
+    ; pure [ CmpRegReg () (toAbsReg r1) (toAbsReg r2), Jge () l0, Jump () l1, Label () l0, MovABool () (Reg $ toAbsReg r) 1, Jump () l2, Label () l1, MovABool () (Reg $ toAbsReg r) 0, Label () l2 ]
+    }
+irEmit (IR.MovMem (IR.Reg r) _ (IR.ExprIntRel IR.IntNeqIR (IR.Reg r1) (IR.Reg r2))) = do
+    { l0 <- getLabel
+    ; l1 <- getLabel
+    ; l2 <- getLabel
+    ; pure [ CmpRegReg () (toAbsReg r1) (toAbsReg r2), Jne () l0, Jump () l1, Label () l0, MovABool () (Reg $ toAbsReg r) 1, Jump () l2, Label () l1, MovABool () (Reg $ toAbsReg r) 0, Label () l2 ]
+    }
+irEmit (IR.MovMem (IR.Reg r) _ (IR.ExprIntRel IR.IntLeqIR (IR.Reg r1) (IR.Reg r2))) = do
+    { l0 <- getLabel
+    ; l1 <- getLabel
+    ; l2 <- getLabel
+    ; pure [ CmpRegReg () (toAbsReg r1) (toAbsReg r2), Jle () l0, Jump () l1, Label () l0, MovABool () (Reg $ toAbsReg r) 1, Jump () l2, Label () l1, MovABool () (Reg $ toAbsReg r) 0, Label () l2 ]
+    }
 irEmit (IR.MovTemp r1 (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r2) (IR.ConstInt i))) | r1 == r2 = do
     pure [ SubRC () (toAbsReg r1) i ]
 irEmit (IR.MovTemp r1 (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r2) (IR.ConstInt i))) | r1 == r2 = do
