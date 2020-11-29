@@ -390,6 +390,7 @@ fac_tailrec : Int -- Int
 <p>When exporting to C, <code>kc</code> generates code that initializes the Kempe data pointer (<code>rbx</code>). Thus, one should avoid calling into Kempe code too often!</p>
 <p>Note that the Kempe data pointer is static, so calling different Kempe functions in different threads will fail unpredictably.</p>
 <h3 id="kempe-abi">Kempe ABI</h3>
+<p>Sum types have a guaranteed representation so that they can be used from other languages.</p>
 <h1 id="examples">Examples</h1>
 <h2 id="splitmix-pseudorandom-number-generator">Splitmix Pseudorandom Number Generator</h2>
 <p>The generator in question comes from a <a href="https://dl.acm.org/doi/10.1145/2714064.2660195">recent paper</a>.</p>
