@@ -5,6 +5,7 @@ import qualified Data.Version        as V
 import           Kempe.File
 import           Options.Applicative
 import qualified Paths_kempe         as P
+import           System.Exit         (ExitCode (ExitFailure), exitWith)
 
 data Command = TypeCheck !FilePath
              | Compile !FilePath !(Maybe FilePath) !Bool !Bool !Bool -- TODO: take arch on cli
@@ -15,6 +16,7 @@ run (Compile _ Nothing _ False False)     = putStrLn "No output file specified!"
 run (Compile fp (Just o) dbg False False) = compile fp o dbg
 run (Compile fp Nothing False True False) = irFile fp
 run (Compile fp Nothing False False True) = x86File fp
+run _                                     = putStrLn "Invalid combination of CLI options. Try kc --help" *> exitWith (ExitFailure 1)
 
 kmpFile :: Parser FilePath
 kmpFile = argument str
