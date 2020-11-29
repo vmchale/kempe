@@ -27,7 +27,6 @@ import           Lens.Micro.Mtl             (modifying, (.=))
 --
 -- so it feels free to allocate HL16 after kmp_15, though they must match!
 
-
 -- set of free registers we iterate over
 data AllocSt = AllocSt { allocs :: M.Map AbsReg X86Reg -- ^ Already allocated registers
                        , free64 :: S.Set X86Reg -- TODO: IntSet here?
