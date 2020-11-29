@@ -214,7 +214,7 @@ consLookup tn@(Name _ (Unique i) l) = do
 dipify :: StackType () -> TypeM () (StackType ())
 dipify (StackType fvrs is os) = do
     n <- dummyName "a"
-    pure $ StackType (S.insert n fvrs) (TyVar () n:is) (TyVar () n:os)
+    pure $ StackType (S.insert n fvrs) (is ++ [TyVar () n]) (os ++ [TyVar () n])
 
 tyLeaf :: (Pattern b a, [Atom b a]) -> TypeM () (StackType ())
 tyLeaf (p, as) = do
