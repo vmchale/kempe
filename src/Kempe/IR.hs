@@ -407,8 +407,8 @@ dipify sz (AtBuiltin _ WordTimes)  = dipOp sz IntTimesIR
 dipify sz (AtBuiltin _ IntGeq)     = dipRel sz IntGeqIR
 dipify sz (AtBuiltin _ IntGt)      = dipRel sz IntGtIR
 dipify sz (AtBuiltin _ IntNeq)     = dipRel sz IntNeqIR
-dipify sz (AtBuiltin _ IntNeg)     = dipDo sz <$> intNeg -- works b/c doesn't grow stack
-dipify sz (AtBuiltin _ Popcount)   = dipDo sz <$> wordCount
+dipify sz (AtBuiltin _ IntNeg)     = plainShift sz <$> intNeg
+dipify sz (AtBuiltin _ Popcount)   = plainShift sz <$> wordCount
 dipify sz (AtBuiltin _ And)        = dipBoolOp sz BoolAnd
 dipify sz (AtBuiltin _ Or)         = dipBoolOp sz BoolOr
 dipify sz (AtBuiltin _ Xor)        = dipBoolOp sz BoolXor
@@ -438,6 +438,14 @@ dipPush sz sz' e =
     copyBytes 0 (-sz) sz
         ++ push sz' e
         ++ copyBytes (-sz) 0 sz -- copy bytes back (data pointer has been incremented already by push)
+
+-- for e.g. negation where the stack size stays the same
+plainShift :: Int64 -> [Stmt] -> [Stmt]
+plainShift sz stmt =
+    let shiftNext = dataPointerDec sz
+        shiftBack = dataPointerInc sz
+    in
+        (shiftNext : stmt ++ [shiftBack])
 
 -- works in general because relations, shifts, operations shrink the size of the
 -- stack.
