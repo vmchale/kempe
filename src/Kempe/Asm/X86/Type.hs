@@ -208,6 +208,7 @@ data X86 reg a = PushReg { ann :: a, rSrc :: reg }
                | CmpAddrBool { ann :: a, addrCmp :: Addr reg, bCmp :: Word8 }
                | CmpRegBool { ann :: a, rCmp :: reg, bCmp :: Word8 }
                | IdivR { ann :: a, rDiv :: reg }
+               | DivR { ann :: a, rDiv :: reg }
                | Cqo { ann :: a }
                | AndRR { ann :: a, rDest :: reg, rSrc :: reg }
                | OrRR { ann :: a, rDest :: reg, rSrc :: reg }
@@ -270,6 +271,7 @@ instance Pretty reg => Pretty (X86 reg a) where
     pretty (ShiftRRR _ r0 r1)   = i4 ("shr" <+> pretty r0 <> "," <+> pretty r1)
     pretty (ShiftLRR _ r0 r1)   = i4 ("shl" <+> pretty r0 <> "," <+> pretty r1)
     pretty (IdivR _ r)          = i4 ("idiv" <+> pretty r)
+    pretty (DivR _ r)           = i4 ("div" <+> pretty r)
     pretty Cqo{}                = i4 "cqo"
     pretty (MovACTag _ a t)     = i4 ("mov" <+> pretty a <> "," <+> pretty t)
     pretty (AndRR _ r0 r1)      = i4 ("and" <+> pretty r0 <+> pretty r1)

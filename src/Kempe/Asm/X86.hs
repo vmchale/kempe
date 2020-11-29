@@ -247,7 +247,7 @@ evalE (IR.Mem 8 (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r1) (IR.ConstInt i))) r =
     pure [ MovRA () (toAbsReg r) (AddrRCMinus (toAbsReg r1) i) ]
 evalE (IR.Mem 8 (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r1) (IR.ConstInt i))) r =
     pure [ MovRA () (toAbsReg r) (AddrRCPlus (toAbsReg r1) i) ]
-evalE (IR.Mem _ e) r = do -- don't need to check size b/c we're storing in r in theory
+evalE (IR.Mem _ e) r = do -- don't need to check size b/c we're storing in r
     { r' <- allocTemp64
     ; placeE <- evalE e r'
     ; pure $ placeE ++ [MovRA () (toAbsReg r) (Reg $ toAbsReg r')]
@@ -297,6 +297,20 @@ evalE (IR.ExprIntBinOp IR.IntDivIR e0 e1) r = do
     ; placeE <- evalE e0 r0
     ; placeE' <- evalE e1 r1
     ; pure $ placeE ++ placeE' ++ [ MovRR () QuotRes (toAbsReg r0), Cqo (), IdivR () (toAbsReg r1), MovRR () (toAbsReg r) QuotRes ]
+    }
+evalE (IR.ExprIntBinOp IR.WordDivIR e0 e1) r = do
+    { r0 <- allocTemp64
+    ; r1 <- allocTemp64
+    ; placeE <- evalE e0 r0
+    ; placeE' <- evalE e1 r1
+    ; pure $ placeE ++ placeE' ++ [ MovRR () QuotRes (toAbsReg r0), XorRR () RemRes RemRes, DivR () (toAbsReg r1), MovRR () (toAbsReg r) QuotRes ]
+    }
+evalE (IR.ExprIntBinOp IR.WordModIR e0 e1) r = do
+    { r0 <- allocTemp64
+    ; r1 <- allocTemp64
+    ; placeE <- evalE e0 r0
+    ; placeE' <- evalE e1 r1
+    ; pure $ placeE ++ placeE' ++ [ MovRR () QuotRes (toAbsReg r0), XorRR () RemRes RemRes, DivR () (toAbsReg r1), MovRR () (toAbsReg r) RemRes ]
     }
 evalE (IR.BoolBinOp IR.BoolAnd e0 e1) r = do
     { r0 <- allocTemp8

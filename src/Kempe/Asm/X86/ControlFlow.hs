@@ -129,6 +129,7 @@ uses (ShiftRRR _ r r')   = S.fromList [r, r']
 uses (MovRCi8 _ r _)     = S.singleton r
 uses (MovACTag _ a _)    = addrRegs a
 uses (IdivR _ r)         = S.singleton r
+uses (DivR _ r)          = S.singleton r
 uses Cqo{}               = S.empty -- TODO?
 uses (AndRR _ r r')      = S.fromList [r, r']
 uses (OrRR _ r r')       = S.fromList [r, r']
