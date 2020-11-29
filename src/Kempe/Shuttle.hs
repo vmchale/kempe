@@ -10,8 +10,8 @@ import           Kempe.Monomorphize
 import           Kempe.TyAssign
 
 inlineAssignFlatten :: Int
-              -> Module a c b
-              -> Either (Error ()) (Module () (ConsAnn (StackType ())) (StackType ()), Int)
+                    -> Module a c b
+                    -> Either (Error ()) (Module () (ConsAnn (StackType ())) (StackType ()), Int)
 inlineAssignFlatten ctx m = do
     -- check before inlining otherwise users would get weird errors
     void $ runTypeM ctx (checkModule m)
