@@ -263,10 +263,24 @@ evalE (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r1) (IR.ConstInt i)) r = do
 -- FIXME: because my linear register allocator is shitty, I can't keep
 -- registers across jumps... so evaluating = or < as an expression in
 -- general is hard ?
-evalE (IR.ExprIntBinOp IR.WordShiftLIR (IR.Reg r1) (IR.Reg r2)) r = -- FIXME: maximal munch use evalE recursively
+evalE (IR.ExprIntBinOp IR.WordShiftLIR (IR.Reg r1) (IR.Reg r2)) r =
     pure [ MovRR () ShiftExponent (toAbsReg r2), MovRR () (toAbsReg r) (toAbsReg r1), ShiftLRR () (toAbsReg r) ShiftExponent ]
 evalE (IR.ExprIntBinOp IR.WordShiftRIR (IR.Reg r1) (IR.Reg r2)) r = -- FIXME: maximal munch use evalE recursively
     pure [ MovRR () ShiftExponent (toAbsReg r2), MovRR () (toAbsReg r) (toAbsReg r1), ShiftRRR () (toAbsReg r) ShiftExponent]
+evalE (IR.ExprIntBinOp IR.WordShiftLIR e0 e1) r = do
+    { r0 <- allocTemp64
+    ; r1 <- allocTemp8
+    ; placeE0 <- evalE e0 r0
+    ; placeE1 <- evalE e1 r1
+    ; pure $ placeE0 ++ placeE1 ++ [ MovRR () ShiftExponent (toAbsReg r0), MovRR () (toAbsReg r) (toAbsReg r1), ShiftLRR () (toAbsReg r) ShiftExponent ]
+    }
+evalE (IR.ExprIntBinOp IR.WordShiftRIR e0 e1) r = do
+    { r0 <- allocTemp64
+    ; r1 <- allocTemp8
+    ; placeE0 <- evalE e0 r0
+    ; placeE1 <- evalE e1 r1
+    ; pure $ placeE0 ++ placeE1 ++ [ MovRR () ShiftExponent (toAbsReg r0), MovRR () (toAbsReg r) (toAbsReg r1), ShiftRRR () (toAbsReg r) ShiftExponent ]
+    }
 evalE (IR.ExprIntBinOp IR.IntModIR e0 e1) r = do
     { r0 <- allocTemp64
     ; r1 <- allocTemp64
