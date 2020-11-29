@@ -136,6 +136,7 @@ Decl :: { KempeDecl AlexPosn AlexPosn AlexPosn }
 
 TyDecl :: { KempeDecl AlexPosn AlexPosn AlexPosn }
        : type tyName many(name) braces(sepBy(TyLeaf, vbar)) { TyDecl $1 $2 (reverse $3) (reverse $4) }
+       | type tyName many(name) braces(TyLeaf) { TyDecl $1 $2 (reverse $3) [$4] }
        | type tyName many(name) lbrace rbrace { TyDecl $1 $2 (reverse $3) [] } -- necessary since sepBy always has some "flesh"
 
 Type :: { KempeTy AlexPosn }
