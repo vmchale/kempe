@@ -1,0 +1,17 @@
+; Gaussian integers
+
+type Gaussian { Gaussian Int Int }
+
+unGaussian : Gaussian -- Int Int
+           =: [
+    { case
+        | Gaussian -> 
+    }
+]
+
+
+grp : a b c -- b a c
+    =: [ dip(swap) ]
+
+add : Gaussian Gaussian -- Gaussian
+    =: [ dip(unGaussian) unGaussian grp + dip(+) Gaussian ]
