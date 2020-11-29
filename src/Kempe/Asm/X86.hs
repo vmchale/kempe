@@ -97,7 +97,7 @@ irEmit (IR.MovMem (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r0) (IR.ConstInt i)) _ (
     { r' <- allocReg64
     ; pure [ MovRA () r' (AddrRCPlus (toAbsReg r1) j), MovAR () (AddrRCPlus (toAbsReg r0) i) r' ]
     }
-irEmit (IR.MovMem (IR.Reg r) _ (IR.ExprIntRel IR.IntEqIR (IR.Reg r1) (IR.Reg r2))) = do
+irEmit (IR.MovMem (IR.Reg r) _ (IR.ExprIntRel IR.IntEqIR (IR.Reg r1) (IR.Reg r2))) = do -- TODO: int eq more general (Reg r1) could be e1 &c.
     { l0 <- getLabel
     ; l1 <- getLabel
     ; l2 <- getLabel
@@ -205,6 +205,8 @@ irEmit (IR.CJump e l l') = do
     ; bEval <- evalE e r
     ; pure (bEval ++ [CmpRegBool () (toAbsReg r) 1, Je () l, Jump () l'])
     }
+irEmit (IR.MJump (IR.EqByte (IR.Mem 1 (IR.Reg r)) (IR.ConstTag b)) l) =
+    pure [CmpAddrBool () (Reg $ toAbsReg r) b, Je () l]
 irEmit (IR.MJump e l) = do
     { r <- allocTemp8
     ; bEval <- evalE e r
@@ -228,6 +230,7 @@ evalE (IR.ConstInt i) r                                             = pure [MovR
 evalE (IR.ConstBool b) r                                            = pure [MovRCBool () (toAbsReg r) (toByte b)]
 evalE (IR.ConstInt8 i) r                                            = pure [MovRCi8 () (toAbsReg r) i]
 evalE (IR.ConstWord w) r                                            = pure [MovRWord () (toAbsReg r) w]
+evalE (IR.ConstTag b) r                                             = pure [MovRCTag () (toAbsReg r) b]
 evalE (IR.Reg r') r                                                 = pure [MovRR () (toAbsReg r) (toAbsReg r')]
 evalE (IR.Mem _ (IR.Reg r1)) r                                      = pure [MovRA () (toAbsReg r) (Reg $ toAbsReg r1) ] -- TODO: sanity check reg/mem access size?
 evalE (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r1) (IR.ConstInt i)) r | r == r1 = pure [SubRC () (toAbsReg r) i]
