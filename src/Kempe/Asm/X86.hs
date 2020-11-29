@@ -207,6 +207,13 @@ irEmit (IR.CJump e l l') = do
     }
 irEmit (IR.MJump (IR.EqByte (IR.Mem 1 (IR.Reg r)) (IR.ConstTag b)) l) =
     pure [CmpAddrBool () (Reg $ toAbsReg r) b, Je () l]
+irEmit (IR.MJump (IR.EqByte e0 e1) l) = do
+    { r0 <- allocTemp8
+    ; r1 <- allocTemp8
+    ; placeE0 <- evalE e0 r0
+    ; placeE1 <- evalE e1 r1
+    ; pure $ placeE0 ++ placeE1 ++ [CmpRegReg () (toAbsReg r0) (toAbsReg r1), Je () l]
+    }
 irEmit (IR.MJump e l) = do
     { r <- allocTemp8
     ; bEval <- evalE e r

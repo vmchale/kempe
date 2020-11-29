@@ -382,7 +382,7 @@ writeAtom l (Case (is, _) ls) =
             let (switches, meat) = NE.unzip leaves
             ret <- newLabel
             let meat' = (++ [Jump ret]) . toList <$> meat
-            pure $ dataPointerDec decSz : concatMap toList switches ++ concat meat'
+            pure $ dataPointerDec decSz : concatMap toList switches ++ concat meat' ++ [Labeled ret]
 
 zipWithM :: (Applicative m) => (a -> b -> m c) -> NonEmpty a -> NonEmpty b -> m (NonEmpty c)
 zipWithM f xs ys = sequenceA (NE.zipWith f xs ys)
