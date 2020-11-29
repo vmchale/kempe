@@ -116,6 +116,7 @@ instance Pretty Stmt where
     pretty (MovMem e _ e')       = parens ("movmem" <+> pretty e <+> pretty e') -- TODO: maybe print size?
     pretty (CJump e l l')        = parens ("cjump" <+> pretty e <+> prettyLabel l <+> prettyLabel l')
     pretty (WrapKCall _ ty fn l) = hardline <> "export" <+> pretty (decodeUtf8 fn) <+> braces (prettyMonoStackType ty) <+> prettyLabel l
+    pretty (MJump e l)           = parens ("mjump" <+> pretty e <+> prettyLabel l)
 
 instance Pretty Exp where
     pretty (ConstInt i)           = parens ("int" <+> pretty i)
@@ -136,6 +137,7 @@ data Stmt = Labeled Label
           | Jump Label
           -- conditional jump for ifs
           | CJump Exp Label Label
+          | MJump Exp Label
           | CCall MonoStackType BSL.ByteString
           | KCall Label -- KCall is a jump to a Kempe procedure
           | WrapKCall ABI MonoStackType BS.ByteString Label

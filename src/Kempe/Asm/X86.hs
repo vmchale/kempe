@@ -190,14 +190,25 @@ irEmit (IR.MovMem e 1 e') = do
     }
 irEmit (IR.CJump (IR.Mem 1 (IR.Reg r)) l l') =
     pure [CmpAddrBool () (Reg (toAbsReg r)) 1, Je () l, Jump () l']
+irEmit (IR.MJump (IR.Mem 1 (IR.Reg r)) l) =
+    pure [CmpAddrBool () (Reg (toAbsReg r)) 1, Je () l]
 irEmit (IR.CJump (IR.Mem 1 (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r) (IR.ConstInt i))) l l') =
     pure [CmpAddrBool () (AddrRCMinus (toAbsReg r) i) 1, Je () l, Jump () l']
+irEmit (IR.MJump (IR.Mem 1 (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r) (IR.ConstInt i))) l) =
+    pure [CmpAddrBool () (AddrRCMinus (toAbsReg r) i) 1, Je () l]
 irEmit (IR.CJump (IR.Mem 1 (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r) (IR.ConstInt i))) l l') =
     pure [CmpAddrBool () (AddrRCPlus (toAbsReg r) i) 1, Je () l, Jump () l']
+irEmit (IR.MJump (IR.Mem 1 (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r) (IR.ConstInt i))) l) =
+    pure [CmpAddrBool () (AddrRCPlus (toAbsReg r) i) 1, Je () l]
 irEmit (IR.CJump e l l') = do
     { r <- allocTemp8
     ; bEval <- evalE e r
     ; pure (bEval ++ [CmpRegBool () (toAbsReg r) 1, Je () l, Jump () l'])
+    }
+irEmit (IR.MJump e l) = do
+    { r <- allocTemp8
+    ; bEval <- evalE e r
+    ; pure (bEval ++ [CmpRegBool () (toAbsReg r) 1, Je () l])
     }
 
 save :: [X86 AbsReg ()]
