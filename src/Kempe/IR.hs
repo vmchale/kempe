@@ -353,7 +353,7 @@ writeAtom l (If _ as as') = do
     l0 <- newLabel
     l1 <- newLabel
     let ifIR = CJump (Mem 1 (Reg DataPointer)) l0 l1
-    asIR <- tryTCO l <$> writeAtoms l as -- FIXME: what if `if`-block is not at the end?
+    asIR <- tryTCO l <$> writeAtoms l as
     asIR' <- tryTCO l <$> writeAtoms l as'
     l2 <- newLabel
     pure $ dataPointerDec 1 : ifIR : (Labeled l0 : asIR ++ [Jump l2]) ++ (Labeled l1 : asIR') ++ [Labeled l2]
@@ -372,19 +372,29 @@ writeAtom _ (AtBuiltin _ Swap) = error "Ill-typed swap!"
 writeAtom _ (AtCons ann@(ConsAnn _ tag' _) _) =
     pure $ dataPointerInc (padBytes ann) : push 1 (ConstTag tag')
 writeAtom _ (Case ([], _) _) = error "Internal error: Ill-typed case statement?!"
-writeAtom _ (Case (is, _) ls) =
+writeAtom l (Case (is, _) ls) =
     let (ps, ass) = NE.unzip ls
         decSz = size (last is)
         in do
-            leaves <- zipWithM mkLeaf ps ass
+            leaves <- zipWithM (mkLeaf l) ps ass
             let (switches, meat) = NE.unzip leaves
-            pure $ dataPointerDec decSz : toList switches ++ concatMap toList meat
+            ret <- newLabel
+            let meat' = (++ [Jump ret]) . toList <$> meat
+            pure $ dataPointerDec decSz : concatMap toList switches ++ concat meat'
 
 zipWithM :: (Applicative m) => (a -> b -> m c) -> NonEmpty a -> NonEmpty b -> m (NonEmpty c)
 zipWithM f xs ys = sequenceA (NE.zipWith f xs ys)
 
-mkLeaf :: Pattern (ConsAnn MonoStackType) MonoStackType -> [Atom (ConsAnn MonoStackType) MonoStackType] -> TempM (Stmt, [Stmt])
-mkLeaf _ = undefined
+mkLeaf :: Maybe Label -> Pattern (ConsAnn MonoStackType) MonoStackType -> [Atom (ConsAnn MonoStackType) MonoStackType] -> TempM ([Stmt], [Stmt])
+mkLeaf l p as = do
+    l' <- newLabel
+    as' <- writeAtoms l as
+    let s = patternSwitch p l'
+    pure (s, Labeled l' : as')
+
+patternSwitch :: Pattern (ConsAnn MonoStackType) MonoStackType -> Label -> [Stmt]
+patternSwitch (PatternBool _ True) l = [MJump (Mem 1 (Reg DataPointer)) l]
+patternSwitch (PatternWildcard _) l  = [Jump l]
 
 -- | Constructors may need to be padded, this computes the number of bytes of
 -- padding
