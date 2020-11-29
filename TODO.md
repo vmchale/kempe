@@ -35,6 +35,7 @@
 - [ ] Constructors not inlined; need type specializations when one calls
   a constructor on a constructor!
 - [x] Save callee-save registers on C call
+  - [ ] caller-save registers
 # Pipeline
 - [ ] Inliner (all non-recursive?)
 - [ ] https://www.cs.princeton.edu/courses/archive/spr19/cos217/lectures/13_Assembly1.pdf (von neumann -> c where int ptrs, ATS & such are useful...)
