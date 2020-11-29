@@ -25,6 +25,7 @@ module Kempe.AST ( BuiltinTy (..)
                  , prettyTypedModule
                  , prettyFancyModule
                  , prettyModule
+                 , flipStackType
                  -- * I resent this...
                  , voidStackType
                  ) where
@@ -45,7 +46,7 @@ import           Data.Word               (Word8)
 import           GHC.Generics            (Generic)
 import           Kempe.Name
 import           Numeric.Natural
-import           Prettyprinter           (Doc, Pretty (pretty), align, braces, brackets, concatWith, fillSep, hsep, parens, pipe, sep, (<+>))
+import           Prettyprinter           (Doc, Pretty (pretty), align, braces, brackets, colon, concatWith, fillSep, hsep, parens, pipe, sep, (<+>))
 
 data BuiltinTy = TyInt
                | TyBool
@@ -78,6 +79,9 @@ type MonoStackType = ([KempeTy ()], [KempeTy ()])
 -- generation phase.
 data ConsAnn a = ConsAnn { tySz :: Int64, tag :: Word8, consTy :: a }
     deriving (Functor, Foldable, Traversable, Generic, NFData)
+
+instance Pretty a => Pretty (ConsAnn a) where
+    pretty (ConsAnn tSz b ty) = braces ("tySz" <+> colon <+> pretty tSz <+> "tag" <+> colon <+> pretty b <+> "type" <+> colon <+> pretty ty)
 
 prettyMonoStackType :: MonoStackType -> Doc a
 prettyMonoStackType (is, os) = sep (fmap pretty is) <+> "--" <+> sep (fmap pretty os)
@@ -350,3 +354,7 @@ size (TyApp _ TyVar{} _)      = error "Internal error: type variables should not
 
 sizeStack :: [KempeTy a] -> Int64
 sizeStack = getSum . foldMap (Sum . size)
+
+-- | Used in "Kempe.Monomorphize" for patterns
+flipStackType :: StackType () -> StackType ()
+flipStackType (StackType vars is os) = StackType vars os is

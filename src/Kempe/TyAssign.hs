@@ -501,9 +501,6 @@ assignPattern PatternWildcard{} = do
     let resType = StackType (S.singleton aN) [TyVar () aN] []
     pure (resType, PatternWildcard resType)
 
-flipStackType :: StackType () -> StackType ()
-flipStackType (StackType vars is os) = StackType vars os is
-
 mergeMany :: NonEmpty (StackType ()) -> TypeM () (StackType ())
 mergeMany (t :| ts) = foldM mergeStackTypes t ts
 
