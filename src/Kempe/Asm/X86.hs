@@ -260,6 +260,8 @@ evalE (IR.ExprIntBinOp IR.IntXorIR (IR.Reg r1) (IR.Reg r2)) r = do
     pure [ MovRR () (toAbsReg r) (toAbsReg r1), XorRR () (toAbsReg r) (toAbsReg r2) ]
 evalE (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r1) (IR.ConstInt i)) r = do
     pure [ MovRR () (toAbsReg r) (toAbsReg r1), SubRC () (toAbsReg r) i ]
+evalE (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r1) (IR.Reg r2)) r = do
+    pure [ MovRR () (toAbsReg r) (toAbsReg r1), SubRR () (toAbsReg r) (toAbsReg r2) ]
 -- FIXME: because my linear register allocator is shitty, I can't keep
 -- registers across jumps... so evaluating = or < as an expression in
 -- general is hard ?
@@ -289,8 +291,13 @@ evalE (IR.ExprIntBinOp IR.IntModIR e0 e1) r = do
     -- QuotRes is rax, so move r1 to rax first
     ; pure $ placeE ++ placeE' ++ [ MovRR () QuotRes (toAbsReg r0), Cqo (), IdivR () (toAbsReg r1), MovRR () (toAbsReg r) RemRes ]
     }
-evalE (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r1) (IR.Reg r2)) r = do
-    pure [ MovRR () (toAbsReg r) (toAbsReg r1), SubRR () (toAbsReg r) (toAbsReg r2) ]
+evalE (IR.ExprIntBinOp IR.IntDivIR e0 e1) r = do
+    { r0 <- allocTemp64
+    ; r1 <- allocTemp64
+    ; placeE <- evalE e0 r0
+    ; placeE' <- evalE e1 r1
+    ; pure $ placeE ++ placeE' ++ [ MovRR () QuotRes (toAbsReg r0), Cqo (), IdivR () (toAbsReg r1), MovRR () (toAbsReg r) QuotRes ]
+    }
 evalE (IR.BoolBinOp IR.BoolAnd e0 e1) r = do
     { r0 <- allocTemp8
     ; r1 <- allocTemp8

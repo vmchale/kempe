@@ -39,6 +39,7 @@
 - [ ] Inliner (all non-recursive?)
 - [ ] https://www.cs.princeton.edu/courses/archive/spr19/cos217/lectures/13_Assembly1.pdf (von neumann -> c where int ptrs, ATS & such are useful...)
 # Features
+- [ ] `divMod` function?
 - [ ] Change `i8` to `u8`?
 - [ ] Floats
 - [ ] `fmt` subcommand
