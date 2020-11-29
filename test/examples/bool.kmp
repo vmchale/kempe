@@ -1,0 +1,19 @@
+not : Bool -- Bool
+    =: [
+    { case
+        | True  -> False
+        | False -> True
+    }
+]
+
+eq : Bool Bool -- Bool
+   =: [ xor not ]
+
+nand : Bool Bool -- Bool
+     =: [ & not ]
+
+nor : Bool Bool -- Bool
+    =: [ || not ]
+
+%foreign cabi not
+%foreign cabi eq
