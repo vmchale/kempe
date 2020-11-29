@@ -135,6 +135,7 @@ instance Pretty Exp where
     pretty (BoolBinOp op e e')    = parens (pretty op <+> pretty e <+> pretty e')
     pretty (IntNegIR e)           = parens ("~" <+> pretty e)
     pretty (PopcountIR e)         = parens ("popcount" <+> pretty e)
+    pretty (EqByte e e')          = parens ("=b" <+> pretty e <+> pretty e')
 
 data Stmt = Labeled Label
           | Jump Label
@@ -161,6 +162,7 @@ data Exp = ConstInt Int64
          | BoolBinOp BoolBinOp Exp Exp
          | IntNegIR Exp
          | PopcountIR Exp
+         | EqByte Exp Exp
          deriving (Generic, NFData)
            -- TODO: one for data, one for C ABI
 
@@ -393,8 +395,9 @@ mkLeaf l p as = do
     pure (s, Labeled l' : as')
 
 patternSwitch :: Pattern (ConsAnn MonoStackType) MonoStackType -> Label -> [Stmt]
-patternSwitch (PatternBool _ True) l = [MJump (Mem 1 (Reg DataPointer)) l]
-patternSwitch (PatternWildcard _) l  = [Jump l]
+patternSwitch (PatternBool _ True) l  = [MJump (Mem 1 (Reg DataPointer)) l]
+patternSwitch (PatternBool _ False) l = [MJump (EqByte (Mem 1 (Reg DataPointer)) (ConstTag 0)) l]
+patternSwitch (PatternWildcard _) l   = [Jump l]
 
 -- | Constructors may need to be padded, this computes the number of bytes of
 -- padding
