@@ -215,9 +215,10 @@ writeModule = foldMapA writeDecl
 
 -- optimize tail-recursion, if possible
 -- This is a little slow
-tryTCO :: Label -> [Stmt] -> [Stmt]
-tryTCO _ []    = []
-tryTCO l stmts =
+tryTCO :: Maybe Label -> [Stmt] -> [Stmt]
+tryTCO _ []           = []
+tryTCO Nothing stmts  = stmts
+tryTCO (Just l) stmts =
     let end = last stmts
         in
             case end of
@@ -228,14 +229,14 @@ tryTCO l stmts =
 writeDecl :: KempeDecl () (ConsAnn MonoStackType) MonoStackType -> TempM [Stmt]
 writeDecl (FunDecl _ (Name _ u _) _ _ as) = do
     bl <- broadcastName u
-    (++ [Ret]) . (Labeled bl:) . tryTCO bl <$> writeAtoms bl as
+    (++ [Ret]) . (Labeled bl:) . tryTCO (Just bl) <$> writeAtoms (Just bl) as
 writeDecl (ExtFnDecl ty (Name _ u _) _ _ cName) = do
     bl <- broadcastName u
     pure [Labeled bl, CCall ty cName, Ret]
 writeDecl (Export sTy abi n) = pure . WrapKCall abi sTy (encodeUtf8 $ name n) <$> lookupName n
 writeDecl TyDecl{} = error "Internal error: type declarations should not exist at this stage"
 
-writeAtoms :: Label -> [Atom (ConsAnn MonoStackType) MonoStackType] -> TempM [Stmt]
+writeAtoms :: Maybe Label -> [Atom (ConsAnn MonoStackType) MonoStackType] -> TempM [Stmt]
 writeAtoms l = foldMapA (writeAtom l)
 
 intShift :: IntBinOp -> TempM [Stmt]
@@ -293,14 +294,14 @@ wordCount = do
         pop 8 t0 ++ push 8 (PopcountIR (Reg t0))
 
 -- | This throws exceptions on nonsensical input.
-writeAtom :: Label -- ^ Context for possible TCO
+writeAtom :: Maybe Label -- ^ Context for possible TCO
           -> Atom (ConsAnn MonoStackType) MonoStackType
           -> TempM [Stmt]
 writeAtom _ (IntLit _ i)              = pure $ push 8 (ConstInt $ fromInteger i)
 writeAtom _ (Int8Lit _ i)             = pure $ push 1 (ConstInt8 i)
 writeAtom _ (WordLit _ w)             = pure $ push 8 (ConstWord $ fromIntegral w)
 writeAtom _ (BoolLit _ b)             = pure $ push 1 (ConstBool b)
-writeAtom _ (AtName _ n)              = pure . KCall <$> lookupName n -- TODO: when to do tco?
+writeAtom _ (AtName _ n)              = pure . KCall <$> lookupName n
 writeAtom _ (AtBuiltin ([], _) Drop)  = error "Internal error: Ill-typed drop!"
 writeAtom _ (AtBuiltin ([], _) Dup)   = error "Internal error: Ill-typed dup!"
 writeAtom _ (Dip ([], _) _)           = error "Internal error: Ill-typed dip()!"
@@ -432,6 +433,19 @@ dipify sz (AtCons ann@(ConsAnn _ tag' _) _) =
         copyBytes 0 (-sz) sz
             ++ dataPointerInc (padBytes ann) : push 1 (ConstTag tag')
             ++ copyBytes (-sz) 0 sz
+dipify sz a@(If sty _ _) =
+    dipSupp sz sty <$> writeAtom Nothing a
+dipify sz (AtName sty n) =
+    dipSupp sz sty . pure . KCall <$> lookupName n
+dipify sz a@(Case sty _) =
+    dipSupp sz sty <$> writeAtom Nothing a
+
+dipSupp :: Int64 -> MonoStackType -> [Stmt] -> [Stmt]
+dipSupp sz (is, os) stmts =
+    let excessSz = sizeStack os - sizeStack is -- how much the atom(s) grow the stack
+        in case compare excessSz 0 of
+            EQ -> plainShift sz stmts
+            LT -> dipDo sz stmts
 
 dipPush :: Int64 -> Int64 -> Exp -> [Stmt]
 dipPush sz sz' e =
