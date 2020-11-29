@@ -262,7 +262,7 @@ boolOp op = do
     t0 <- getTemp8
     t1 <- getTemp8
     pure $
-        pop 1 t0 ++ pop 1 t1 ++ push 8 (BoolBinOp op (Reg t1) (Reg t0))
+        pop 1 t0 ++ pop 1 t1 ++ push 1 (BoolBinOp op (Reg t1) (Reg t0))
 
 intOp :: IntBinOp -> TempM [Stmt]
 intOp cons = do
@@ -382,7 +382,7 @@ writeAtom l (Case (is, _) ls) =
             let (switches, meat) = NE.unzip leaves
             ret <- newLabel
             let meat' = (++ [Jump ret]) . toList <$> meat
-            pure $ dataPointerDec decSz : concatMap toList switches ++ concat meat'
+            pure $ dataPointerDec decSz : concatMap toList switches ++ concat meat' ++ [Labeled ret]
 
 zipWithM :: (Applicative m) => (a -> b -> m c) -> NonEmpty a -> NonEmpty b -> m (NonEmpty c)
 zipWithM f xs ys = sequenceA (NE.zipWith f xs ys)
