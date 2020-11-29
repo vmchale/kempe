@@ -10,4 +10,5 @@ main = defaultMain $
         , goldenOutput "test/examples/splitmix.kmp" "test/harness/splitmix.c" "test/golden/splitmix.out"
         , goldenOutput "lib/numbertheory.kmp" "test/harness/numbertheory.c" "test/golden/numbertheory.out"
         , goldenOutput "test/examples/hamming.kmp" "test/harness/hamming.c" "test/golden/hamming.out"
+        , goldenOutput "test/examples/bool.kmp" "test/harness/bool.c" "test/golden/bool.out"
         ]
