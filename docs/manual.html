@@ -396,10 +396,10 @@ next : Word -- Word Word
 
 %foreign kabi next</code></pre>
 <p>Note that <code>30i8</code> is an <code>Int8</code> literal; shifts take an <code>Int8</code> as the exponent.</p>
-<p>Compare the <a href="http://prng.di.unimi.it/splitmix64.c">C implementation</a>:</p>
+<p>Compare this <a href="http://prng.di.unimi.it/splitmix64.c">C implementation</a>:</p>
 <div class="sourceCode" id="cb12"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;stdint.h&gt;</span></span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="co">// modified to have &quot;&quot;multiple return&quot;&quot; since C doesn&#39;t really have that</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="co">// modified to have &quot;&quot;multiple return&quot;&quot; with destination-passing style</span></span>
 <span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="dt">uint64_t</span> next(<span class="dt">uint64_t</span> x, <span class="dt">uint64_t</span>* y) {</span>
 <span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint64_t</span> z = (x += <span class="bn">0x9e3779b97f4a7c15</span>);</span>
 <span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>    z = (z ^ (z &gt;&gt; <span class="dv">30</span>)) * <span class="bn">0xbf58476d1ce4e5b9</span>;</span>

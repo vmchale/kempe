@@ -235,12 +235,12 @@ next : Word -- Word Word
 
 Note that `30i8` is an `Int8` literal; shifts take an `Int8` as the exponent.
 
-Compare the [C implementation](http://prng.di.unimi.it/splitmix64.c):
+Compare this [C implementation](http://prng.di.unimi.it/splitmix64.c):
 
 ```c
 #include <stdint.h>
 
-// modified to have ""multiple return"" since C doesn't really have that
+// modified to have ""multiple return"" with destination-passing style
 uint64_t next(uint64_t x, uint64_t* y) {
 	uint64_t z = (x += 0x9e3779b97f4a7c15);
 	z = (z ^ (z >> 30)) * 0xbf58476d1ce4e5b9;
