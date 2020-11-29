@@ -160,7 +160,7 @@ rand : -- Int
      =: $cfun"rand"
 ```
 
-And `rand` will be available to call as a Kempe function.
+And `rand` will be available as a Kempe function.
 
 ## Recursion
 
