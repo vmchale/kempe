@@ -277,21 +277,21 @@ evalE (IR.BoolBinOp IR.BoolAnd e0 e1) r = do
     ; r1 <- allocTemp8
     ; placeE <- evalE e0 r0
     ; placeE' <- evalE e1 r1
-    ; pure $ placeE ++ placeE' ++ [ MovRR () (toAbsReg r0) (toAbsReg r), AndRR () (toAbsReg r) (toAbsReg r1) ]
+    ; pure $ placeE ++ placeE' ++ [ MovRR () (toAbsReg r) (toAbsReg r0), AndRR () (toAbsReg r) (toAbsReg r1) ]
     }
 evalE (IR.BoolBinOp IR.BoolOr e0 e1) r = do
     { r0 <- allocTemp8
     ; r1 <- allocTemp8
     ; placeE <- evalE e0 r0
     ; placeE' <- evalE e1 r1
-    ; pure $ placeE ++ placeE' ++ [ MovRR () (toAbsReg r0) (toAbsReg r), OrRR () (toAbsReg r) (toAbsReg r1) ]
+    ; pure $ placeE ++ placeE' ++ [ MovRR () (toAbsReg r) (toAbsReg r0), OrRR () (toAbsReg r) (toAbsReg r1) ]
     }
 evalE (IR.BoolBinOp IR.BoolXor e0 e1) r = do
     { r0 <- allocTemp8
     ; r1 <- allocTemp8
     ; placeE <- evalE e0 r0
     ; placeE' <- evalE e1 r1
-    ; pure $ placeE ++ placeE' ++ [ MovRR () (toAbsReg r0) (toAbsReg r), XorRR () (toAbsReg r) (toAbsReg r1) ]
+    ; pure $ placeE ++ placeE' ++ [ MovRR () (toAbsReg r) (toAbsReg r0), XorRR () (toAbsReg r) (toAbsReg r1) ]
     }
 evalE (IR.ExprIntBinOp IR.IntMinusIR e0 e1) r = do
     { r0 <- allocTemp64
