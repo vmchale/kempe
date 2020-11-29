@@ -247,6 +247,11 @@ evalE (IR.Mem 8 (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r1) (IR.ConstInt i))) r =
     pure [ MovRA () (toAbsReg r) (AddrRCMinus (toAbsReg r1) i) ]
 evalE (IR.Mem 8 (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r1) (IR.ConstInt i))) r =
     pure [ MovRA () (toAbsReg r) (AddrRCPlus (toAbsReg r1) i) ]
+evalE (IR.Mem _ e) r = do -- don't need to check size b/c we're storing in r in theory
+    { r' <- allocTemp64
+    ; placeE <- evalE e r'
+    ; pure $ placeE ++ [MovRA () (toAbsReg r) (Reg $ toAbsReg r')]
+    }
 evalE (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r1) (IR.Reg r2)) r =
     pure [ MovRR () (toAbsReg r) (toAbsReg r1), AddRR () (toAbsReg r) (toAbsReg r2) ]
 evalE (IR.ExprIntBinOp IR.IntTimesIR (IR.Reg r1) (IR.Reg r2)) r = do
@@ -313,6 +318,13 @@ evalE (IR.ExprIntBinOp IR.IntTimesIR e0 e1) r = do
     ; placeE <- evalE e0 r0
     ; placeE' <- evalE e1 r1
     ; pure $ placeE ++ placeE' ++ [ MovRR () (toAbsReg r) (toAbsReg r0), ImulRR () (toAbsReg r) (toAbsReg r1) ]
+    }
+evalE (IR.ExprIntBinOp IR.IntXorIR e0 e1) r = do
+    { r0 <- allocTemp64
+    ; r1 <- allocTemp64
+    ; placeE <- evalE e0 r0
+    ; placeE' <- evalE e1 r1
+    ; pure $ placeE ++ placeE' ++ [ MovRR () (toAbsReg r) (toAbsReg r0), XorRR () (toAbsReg r) (toAbsReg r1) ]
     }
 evalE (IR.PopcountIR e0) r = do
     { r' <- allocTemp64
