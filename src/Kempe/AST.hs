@@ -15,6 +15,7 @@ module Kempe.AST ( BuiltinTy (..)
                  , KempeDecl (..)
                  , Pattern (..)
                  , ABI (..)
+                 , ConsSizes
                  , Module
                  , freeVars
                  , MonoStackType
@@ -37,6 +38,7 @@ import           Data.Bitraversable      (Bitraversable (..))
 import qualified Data.ByteString.Lazy    as BSL
 import           Data.Functor            (void)
 import           Data.Int                (Int64, Int8)
+import qualified Data.IntMap             as IM
 import           Data.List.NonEmpty      (NonEmpty)
 import qualified Data.List.NonEmpty      as NE
 import           Data.Monoid             (Sum (..))
@@ -338,6 +340,8 @@ extrVars (TyApp _ ty ty') = extrVars ty ++ extrVars ty'
 
 freeVars :: [KempeTy a] -> S.Set (Name a)
 freeVars tys = S.fromList (concatMap extrVars tys)
+
+type ConsSizes = IM.IntMap Int64
 
 -- | Don't call this on ill-kinded types; it won't throw any error.
 size :: KempeTy a -> Int64

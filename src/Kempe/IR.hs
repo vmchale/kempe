@@ -217,8 +217,8 @@ instance Pretty IntBinOp where
     pretty WordModIR    = "%~"
     pretty WordDivIR    = "/~"
 
-writeModule :: Module () (ConsAnn MonoStackType) MonoStackType -> TempM [Stmt]
-writeModule = foldMapA writeDecl
+writeModule :: ConsSizes -> Module () (ConsAnn MonoStackType) MonoStackType -> TempM [Stmt]
+writeModule cs = foldMapA (writeDecl cs)
 
 -- optimize tail-recursion, if possible
 -- This is a little slow
@@ -233,22 +233,22 @@ tryTCO (Just l) stmts =
                 _                  -> stmts
 
 -- FIXME: Current broadcast + write approach fails mutually recursive functions
-writeDecl :: KempeDecl () (ConsAnn MonoStackType) MonoStackType -> TempM [Stmt]
-writeDecl (FunDecl _ (Name _ u _) _ _ as) = do
+writeDecl :: ConsSizes -> KempeDecl () (ConsAnn MonoStackType) MonoStackType -> TempM [Stmt]
+writeDecl cs (FunDecl _ (Name _ u _) _ _ as) = do
     bl <- broadcastName u
-    (++ [Ret]) . (Labeled bl:) . tryTCO (Just bl) <$> writeAtoms (Just bl) as
-writeDecl (ExtFnDecl ty (Name _ u _) _ _ cName) = do
+    (++ [Ret]) . (Labeled bl:) . tryTCO (Just bl) <$> writeAtoms cs (Just bl) as
+writeDecl _ (ExtFnDecl ty (Name _ u _) _ _ cName) = do
     bl <- broadcastName u
     pure [Labeled bl, CCall ty cName, Ret] -- TODO: caller-save registers here
-writeDecl (Export sTy abi n) = pure . WrapKCall abi sTy (encodeUtf8 $ name n) <$> lookupName n
-writeDecl TyDecl{} = error "Internal error: type declarations should not exist at this stage"
+writeDecl _ (Export sTy abi n) = pure . WrapKCall abi sTy (encodeUtf8 $ name n) <$> lookupName n
+writeDecl _ TyDecl{} = error "Internal error: type declarations should not exist at this stage"
 
-writeAtoms :: Maybe Label -> [Atom (ConsAnn MonoStackType) MonoStackType] -> TempM [Stmt]
-writeAtoms _ [] = pure []
-writeAtoms Nothing stmts = foldMapA (writeAtom Nothing) stmts
-writeAtoms l stmts =
+writeAtoms :: ConsSizes -> Maybe Label -> [Atom (ConsAnn MonoStackType) MonoStackType] -> TempM [Stmt]
+writeAtoms _ _ [] = pure []
+writeAtoms cs Nothing stmts = foldMapA (writeAtom cs Nothing) stmts
+writeAtoms cs l stmts =
     let end = last stmts
-        in (++) <$> foldMapA (writeAtom Nothing) (init stmts) <*> writeAtom l end
+        in (++) <$> foldMapA (writeAtom cs Nothing) (init stmts) <*> writeAtom cs l end
 
 intShift :: IntBinOp -> TempM [Stmt]
 intShift cons = do
@@ -305,64 +305,65 @@ wordCount = do
         pop 8 t0 ++ push 8 (PopcountIR (Reg t0))
 
 -- | This throws exceptions on nonsensical input.
-writeAtom :: Maybe Label -- ^ Context for possible TCO
+writeAtom :: ConsSizes
+          -> Maybe Label -- ^ Context for possible TCO
           -> Atom (ConsAnn MonoStackType) MonoStackType
           -> TempM [Stmt]
-writeAtom _ (IntLit _ i)              = pure $ push 8 (ConstInt $ fromInteger i)
-writeAtom _ (Int8Lit _ i)             = pure $ push 1 (ConstInt8 i)
-writeAtom _ (WordLit _ w)             = pure $ push 8 (ConstWord $ fromIntegral w)
-writeAtom _ (BoolLit _ b)             = pure $ push 1 (ConstBool b)
-writeAtom _ (AtName _ n)              = pure . KCall <$> lookupName n
-writeAtom _ (AtBuiltin ([], _) Drop)  = error "Internal error: Ill-typed drop!"
-writeAtom _ (AtBuiltin ([], _) Dup)   = error "Internal error: Ill-typed dup!"
-writeAtom _ (Dip ([], _) _)           = error "Internal error: Ill-typed dip()!"
-writeAtom _ (AtBuiltin _ IntPlus)     = intOp IntPlusIR
-writeAtom _ (AtBuiltin _ IntMinus)    = intOp IntMinusIR
-writeAtom _ (AtBuiltin _ IntTimes)    = intOp IntTimesIR
-writeAtom _ (AtBuiltin _ IntDiv)      = intOp IntDivIR -- what to do on failure?
-writeAtom _ (AtBuiltin _ IntMod)      = intOp IntModIR
-writeAtom _ (AtBuiltin _ IntXor)      = intOp IntXorIR
-writeAtom _ (AtBuiltin _ IntShiftR)   = intShift WordShiftRIR -- TODO: shr or sar?
-writeAtom _ (AtBuiltin _ IntShiftL)   = intShift WordShiftLIR
-writeAtom _ (AtBuiltin _ IntEq)       = intRel IntEqIR
-writeAtom _ (AtBuiltin _ IntLt)       = intRel IntLtIR
-writeAtom _ (AtBuiltin _ IntLeq)      = intRel IntLeqIR
-writeAtom _ (AtBuiltin _ WordPlus)    = intOp IntPlusIR
-writeAtom _ (AtBuiltin _ WordTimes)   = intOp IntTimesIR
-writeAtom _ (AtBuiltin _ WordXor)     = intOp IntXorIR
-writeAtom _ (AtBuiltin _ WordMinus)   = intOp IntMinusIR
-writeAtom _ (AtBuiltin _ IntNeq)      = intRel IntNeqIR
-writeAtom _ (AtBuiltin _ IntGeq)      = intRel IntGeqIR
-writeAtom _ (AtBuiltin _ IntGt)       = intRel IntGtIR
-writeAtom _ (AtBuiltin _ WordShiftL)  = intShift WordShiftLIR
-writeAtom _ (AtBuiltin _ WordShiftR)  = intShift WordShiftRIR
-writeAtom _ (AtBuiltin _ WordDiv)     = intOp WordDivIR
-writeAtom _ (AtBuiltin _ WordMod)     = intOp WordModIR
-writeAtom _ (AtBuiltin _ And)         = boolOp BoolAnd
-writeAtom _ (AtBuiltin _ Or)          = boolOp BoolOr
-writeAtom _ (AtBuiltin _ Xor)         = boolOp BoolXor
-writeAtom _ (AtBuiltin _ IntNeg)      = intNeg
-writeAtom _ (AtBuiltin _ Popcount)    = wordCount
-writeAtom _ (AtBuiltin (is, _) Drop)  =
+writeAtom _ _ (IntLit _ i)              = pure $ push 8 (ConstInt $ fromInteger i)
+writeAtom _ _ (Int8Lit _ i)             = pure $ push 1 (ConstInt8 i)
+writeAtom _ _ (WordLit _ w)             = pure $ push 8 (ConstWord $ fromIntegral w)
+writeAtom _ _ (BoolLit _ b)             = pure $ push 1 (ConstBool b)
+writeAtom _ _ (AtName _ n)              = pure . KCall <$> lookupName n
+writeAtom _ _ (AtBuiltin ([], _) Drop)  = error "Internal error: Ill-typed drop!"
+writeAtom _ _ (AtBuiltin ([], _) Dup)   = error "Internal error: Ill-typed dup!"
+writeAtom _ _ (Dip ([], _) _)           = error "Internal error: Ill-typed dip()!"
+writeAtom _ _ (AtBuiltin _ IntPlus)     = intOp IntPlusIR
+writeAtom _ _ (AtBuiltin _ IntMinus)    = intOp IntMinusIR
+writeAtom _ _ (AtBuiltin _ IntTimes)    = intOp IntTimesIR
+writeAtom _ _ (AtBuiltin _ IntDiv)      = intOp IntDivIR -- what to do on failure?
+writeAtom _ _ (AtBuiltin _ IntMod)      = intOp IntModIR
+writeAtom _ _ (AtBuiltin _ IntXor)      = intOp IntXorIR
+writeAtom _ _ (AtBuiltin _ IntShiftR)   = intShift WordShiftRIR -- TODO: shr or sar?
+writeAtom _ _ (AtBuiltin _ IntShiftL)   = intShift WordShiftLIR
+writeAtom _ _ (AtBuiltin _ IntEq)       = intRel IntEqIR
+writeAtom _ _ (AtBuiltin _ IntLt)       = intRel IntLtIR
+writeAtom _ _ (AtBuiltin _ IntLeq)      = intRel IntLeqIR
+writeAtom _ _ (AtBuiltin _ WordPlus)    = intOp IntPlusIR
+writeAtom _ _ (AtBuiltin _ WordTimes)   = intOp IntTimesIR
+writeAtom _ _ (AtBuiltin _ WordXor)     = intOp IntXorIR
+writeAtom _ _ (AtBuiltin _ WordMinus)   = intOp IntMinusIR
+writeAtom _ _ (AtBuiltin _ IntNeq)      = intRel IntNeqIR
+writeAtom _ _ (AtBuiltin _ IntGeq)      = intRel IntGeqIR
+writeAtom _ _ (AtBuiltin _ IntGt)       = intRel IntGtIR
+writeAtom _ _ (AtBuiltin _ WordShiftL)  = intShift WordShiftLIR
+writeAtom _ _ (AtBuiltin _ WordShiftR)  = intShift WordShiftRIR
+writeAtom _ _ (AtBuiltin _ WordDiv)     = intOp WordDivIR
+writeAtom _ _ (AtBuiltin _ WordMod)     = intOp WordModIR
+writeAtom _ _ (AtBuiltin _ And)         = boolOp BoolAnd
+writeAtom _ _ (AtBuiltin _ Or)          = boolOp BoolOr
+writeAtom _ _ (AtBuiltin _ Xor)         = boolOp BoolXor
+writeAtom _ _ (AtBuiltin _ IntNeg)      = intNeg
+writeAtom _ _ (AtBuiltin _ Popcount)    = wordCount
+writeAtom _ _ (AtBuiltin (is, _) Drop)  =
     let sz = size (last is) in
         pure [ dataPointerDec sz ]
-writeAtom _ (AtBuiltin (is, _) Dup)   =
+writeAtom _ _ (AtBuiltin (is, _) Dup)   =
     let sz = size (last is) in
         pure $
              copyBytes 0 (-sz) sz
                 ++ [ dataPointerInc sz ] -- move data pointer over sz bytes
-writeAtom l (If _ as as') = do
+writeAtom cs l (If _ as as') = do
     l0 <- newLabel
     l1 <- newLabel
     let ifIR = CJump (Mem 1 (Reg DataPointer)) l0 l1
-    asIR <- tryTCO l <$> writeAtoms l as
-    asIR' <- tryTCO l <$> writeAtoms l as'
+    asIR <- tryTCO l <$> writeAtoms cs l as
+    asIR' <- tryTCO l <$> writeAtoms cs l as'
     l2 <- newLabel
     pure $ dataPointerDec 1 : ifIR : (Labeled l0 : asIR ++ [Jump l2]) ++ (Labeled l1 : asIR') ++ [Labeled l2]
-writeAtom _ (Dip (is, _) as) =
+writeAtom cs _ (Dip (is, _) as) =
     let sz = size (last is)
-    in foldMapA (dipify sz) as
-writeAtom _ (AtBuiltin ([i0, i1], _) Swap) =
+    in foldMapA (dipify cs sz) as
+writeAtom _ _ (AtBuiltin ([i0, i1], _) Swap) =
     let sz0 = size i0
         sz1 = size i1
     in
@@ -370,15 +371,15 @@ writeAtom _ (AtBuiltin ([i0, i1], _) Swap) =
             copyBytes 0 (-sz0 - sz1) sz0 -- copy i0 to end of the stack
                 ++ copyBytes (-sz0 - sz1) (-sz1) sz1 -- copy i1 to where i0 used to be
                 ++ copyBytes (-sz0) 0 sz0 -- copy i0 at end of stack to its new place
-writeAtom _ (AtBuiltin _ Swap) = error "Ill-typed swap!"
-writeAtom _ (AtCons ann@(ConsAnn _ tag' _) _) =
+writeAtom _ _ (AtBuiltin _ Swap) = error "Ill-typed swap!"
+writeAtom _ _ (AtCons ann@(ConsAnn _ tag' _) _) =
     pure $ dataPointerInc (padBytes ann) : push 1 (ConstTag tag')
-writeAtom _ (Case ([], _) _) = error "Internal error: Ill-typed case statement?!"
-writeAtom l (Case (is, _) ls) =
+writeAtom _ _ (Case ([], _) _) = error "Internal error: Ill-typed case statement?!"
+writeAtom cs l (Case (is, _) ls) =
     let (ps, ass) = NE.unzip ls
         decSz = size (last is)
         in do
-            leaves <- zipWithM (mkLeaf l) ps ass
+            leaves <- zipWithM (mkLeaf cs l) ps ass
             let (switches, meat) = NE.unzip leaves
             ret <- newLabel
             let meat' = (++ [Jump ret]) . toList <$> meat
@@ -387,10 +388,10 @@ writeAtom l (Case (is, _) ls) =
 zipWithM :: (Applicative m) => (a -> b -> m c) -> NonEmpty a -> NonEmpty b -> m (NonEmpty c)
 zipWithM f xs ys = sequenceA (NE.zipWith f xs ys)
 
-mkLeaf :: Maybe Label -> Pattern (ConsAnn MonoStackType) MonoStackType -> [Atom (ConsAnn MonoStackType) MonoStackType] -> TempM ([Stmt], [Stmt])
-mkLeaf l p as = do
+mkLeaf :: ConsSizes -> Maybe Label -> Pattern (ConsAnn MonoStackType) MonoStackType -> [Atom (ConsAnn MonoStackType) MonoStackType] -> TempM ([Stmt], [Stmt])
+mkLeaf cs l p as = do
     l' <- newLabel
-    as' <- writeAtoms l as
+    as' <- writeAtoms cs l as
     let s = patternSwitch p l'
     pure (s, Labeled l' : as')
 
@@ -410,15 +411,15 @@ patternSwitch (PatternCons ann@(ConsAnn _ tag' _) _) l =
 padBytes :: ConsAnn MonoStackType -> Int64
 padBytes (ConsAnn sz _ (is, _)) = sz - sizeStack is - 1
 
-dipify :: Int64 -> Atom (ConsAnn MonoStackType) MonoStackType -> TempM [Stmt]
-dipify _ (AtBuiltin ([], _) Drop) = error "Internal error: Ill-typed drop!"
-dipify sz (AtBuiltin (is, _) Drop) =
+dipify :: ConsSizes ->  Int64 -> Atom (ConsAnn MonoStackType) MonoStackType -> TempM [Stmt]
+dipify _ _ (AtBuiltin ([], _) Drop) = error "Internal error: Ill-typed drop!"
+dipify _ sz (AtBuiltin (is, _) Drop) =
     let sz' = size (last is)
         shift = dataPointerDec sz' -- shift data pointer over by sz' bytes
         -- copy sz bytes over (-sz') bytes from the data pointer
         copyBytes' = copyBytes (-sz - sz') (-sz) sz
         in pure $ copyBytes' ++ [shift]
-dipify sz (AtBuiltin ([i0, i1], _) Swap) =
+dipify _ sz (AtBuiltin ([i0, i1], _) Swap) =
     let sz0 = size i0
         sz1 = size i1
     in
@@ -426,61 +427,61 @@ dipify sz (AtBuiltin ([i0, i1], _) Swap) =
             copyBytes 0 (-sz - sz0 - sz1) sz0 -- copy i0 to end of the stack
                 ++ copyBytes (-sz - sz0 - sz1) (-sz - sz1) sz1 -- copy i1 to where i0 used to be
                 ++ copyBytes (-sz - sz0) 0 sz0 -- copy i0 at end of stack to its new place
-dipify _ (Dip ([], _) _) = error "Internal error: Ill-typed dip()!"
-dipify sz (Dip (is, _) as) =
+dipify _ _ (Dip ([], _) _) = error "Internal error: Ill-typed dip()!"
+dipify cs sz (Dip (is, _) as) =
     let sz' = size (last is)
-        in foldMapA (dipify (sz + sz')) as
-dipify _ (AtBuiltin _ Swap)        = error "Internal error: Ill-typed swap!"
-dipify sz (AtBuiltin _ IntTimes)   = dipOp sz IntTimesIR
-dipify sz (AtBuiltin _ IntPlus)    = dipOp sz IntPlusIR
-dipify sz (AtBuiltin _ IntMinus)   = dipOp sz IntMinusIR
-dipify sz (AtBuiltin _ IntDiv)     = dipOp sz IntDivIR
-dipify sz (AtBuiltin _ IntMod)     = dipOp sz IntModIR
-dipify sz (AtBuiltin _ IntXor)     = dipOp sz IntXorIR
-dipify sz (AtBuiltin _ IntEq)      = dipRel sz IntEqIR
-dipify sz (AtBuiltin _ IntLt)      = dipRel sz IntLtIR
-dipify sz (AtBuiltin _ IntLeq)     = dipRel sz IntLeqIR
-dipify sz (AtBuiltin _ IntShiftL)  = dipShift sz WordShiftLIR
-dipify sz (AtBuiltin _ IntShiftR)  = dipShift sz WordShiftRIR
-dipify sz (AtBuiltin _ WordXor)    = dipOp sz IntXorIR
-dipify sz (AtBuiltin _ WordShiftL) = dipShift sz WordShiftLIR
-dipify sz (AtBuiltin _ WordShiftR) = dipShift sz WordShiftRIR
-dipify sz (AtBuiltin _ WordPlus)   = dipOp sz IntPlusIR
-dipify sz (AtBuiltin _ WordTimes)  = dipOp sz IntTimesIR
-dipify sz (AtBuiltin _ IntGeq)     = dipRel sz IntGeqIR
-dipify sz (AtBuiltin _ IntGt)      = dipRel sz IntGtIR
-dipify sz (AtBuiltin _ IntNeq)     = dipRel sz IntNeqIR
-dipify sz (AtBuiltin _ IntNeg)     = plainShift sz <$> intNeg
-dipify sz (AtBuiltin _ Popcount)   = plainShift sz <$> wordCount
-dipify sz (AtBuiltin _ And)        = dipBoolOp sz BoolAnd
-dipify sz (AtBuiltin _ Or)         = dipBoolOp sz BoolOr
-dipify sz (AtBuiltin _ Xor)        = dipBoolOp sz BoolXor
-dipify sz (AtBuiltin _ WordMinus)  = dipOp sz IntMinusIR
-dipify sz (AtBuiltin _ WordDiv)    = dipOp sz WordDivIR
-dipify sz (AtBuiltin _ WordMod)    = dipOp sz WordModIR
-dipify _ (AtBuiltin ([], _) Dup) = error "Internal error: Ill-typed dup!"
-dipify sz (AtBuiltin (is, _) Dup) = do
+        in foldMapA (dipify cs (sz + sz')) as
+dipify _ _ (AtBuiltin _ Swap)        = error "Internal error: Ill-typed swap!"
+dipify _ sz (AtBuiltin _ IntTimes)   = dipOp sz IntTimesIR
+dipify _ sz (AtBuiltin _ IntPlus)    = dipOp sz IntPlusIR
+dipify _ sz (AtBuiltin _ IntMinus)   = dipOp sz IntMinusIR
+dipify _ sz (AtBuiltin _ IntDiv)     = dipOp sz IntDivIR
+dipify _ sz (AtBuiltin _ IntMod)     = dipOp sz IntModIR
+dipify _ sz (AtBuiltin _ IntXor)     = dipOp sz IntXorIR
+dipify _ sz (AtBuiltin _ IntEq)      = dipRel sz IntEqIR
+dipify _ sz (AtBuiltin _ IntLt)      = dipRel sz IntLtIR
+dipify _ sz (AtBuiltin _ IntLeq)     = dipRel sz IntLeqIR
+dipify _ sz (AtBuiltin _ IntShiftL)  = dipShift sz WordShiftLIR
+dipify _ sz (AtBuiltin _ IntShiftR)  = dipShift sz WordShiftRIR
+dipify _ sz (AtBuiltin _ WordXor)    = dipOp sz IntXorIR
+dipify _ sz (AtBuiltin _ WordShiftL) = dipShift sz WordShiftLIR
+dipify _ sz (AtBuiltin _ WordShiftR) = dipShift sz WordShiftRIR
+dipify _ sz (AtBuiltin _ WordPlus)   = dipOp sz IntPlusIR
+dipify _ sz (AtBuiltin _ WordTimes)  = dipOp sz IntTimesIR
+dipify _ sz (AtBuiltin _ IntGeq)     = dipRel sz IntGeqIR
+dipify _ sz (AtBuiltin _ IntGt)      = dipRel sz IntGtIR
+dipify _ sz (AtBuiltin _ IntNeq)     = dipRel sz IntNeqIR
+dipify _ sz (AtBuiltin _ IntNeg)     = plainShift sz <$> intNeg
+dipify _ sz (AtBuiltin _ Popcount)   = plainShift sz <$> wordCount
+dipify _ sz (AtBuiltin _ And)        = dipBoolOp sz BoolAnd
+dipify _ sz (AtBuiltin _ Or)         = dipBoolOp sz BoolOr
+dipify _ sz (AtBuiltin _ Xor)        = dipBoolOp sz BoolXor
+dipify _ sz (AtBuiltin _ WordMinus)  = dipOp sz IntMinusIR
+dipify _ sz (AtBuiltin _ WordDiv)    = dipOp sz WordDivIR
+dipify _ sz (AtBuiltin _ WordMod)    = dipOp sz WordModIR
+dipify _ _ (AtBuiltin ([], _) Dup) = error "Internal error: Ill-typed dup!"
+dipify _ sz (AtBuiltin (is, _) Dup) = do
     let sz' = size (last is) in
         pure $
              copyBytes 0 (-sz) sz -- copy sz bytes over to the end of the stack
                 ++ copyBytes (-sz) (-sz - sz') sz' -- copy sz' bytes over (duplicate)
                 ++ copyBytes (-sz + sz') 0 sz -- copy sz bytes back
                 ++ [ dataPointerInc sz' ] -- move data pointer over sz' bytes
-dipify sz (IntLit _ i) = pure $ dipPush sz 8 (ConstInt $ fromInteger i)
-dipify sz (WordLit _ w) = pure $ dipPush sz 8 (ConstWord $ fromIntegral w)
-dipify sz (Int8Lit _ i) = pure $ dipPush sz 1 (ConstInt8 i)
-dipify sz (BoolLit _ b) = pure $ dipPush sz 1 (ConstBool b)
-dipify sz (AtCons ann@(ConsAnn _ tag' _) _) =
+dipify _ sz (IntLit _ i) = pure $ dipPush sz 8 (ConstInt $ fromInteger i)
+dipify _ sz (WordLit _ w) = pure $ dipPush sz 8 (ConstWord $ fromIntegral w)
+dipify _ sz (Int8Lit _ i) = pure $ dipPush sz 1 (ConstInt8 i)
+dipify _ sz (BoolLit _ b) = pure $ dipPush sz 1 (ConstBool b)
+dipify _ sz (AtCons ann@(ConsAnn _ tag' _) _) =
     pure $
         copyBytes 0 (-sz) sz
             ++ dataPointerInc (padBytes ann) : push 1 (ConstTag tag')
             ++ copyBytes (-sz) 0 sz
-dipify sz a@(If sty _ _) =
-    dipSupp sz sty <$> writeAtom Nothing a
-dipify sz (AtName sty n) =
+dipify cs sz a@(If sty _ _) =
+    dipSupp sz sty <$> writeAtom cs Nothing a
+dipify _ sz (AtName sty n) =
     dipSupp sz sty . pure . KCall <$> lookupName n
-dipify sz a@(Case sty _) =
-    dipSupp sz sty <$> writeAtom Nothing a
+dipify cs sz a@(Case sty _) =
+    dipSupp sz sty <$> writeAtom cs Nothing a
 
 dipSupp :: Int64 -> MonoStackType -> [Stmt] -> [Stmt]
 dipSupp sz (is, os) stmts =

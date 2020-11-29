@@ -16,6 +16,7 @@ module Kempe.Monomorphize ( closedModule
                           , mkModuleMap
                           ) where
 
+import           Control.Arrow              ((&&&))
 import           Control.Monad              ((<=<))
 import           Control.Monad.Except       (MonadError, throwError)
 import           Control.Monad.State.Strict (StateT, gets, runStateT)
@@ -39,9 +40,10 @@ import           Lens.Micro.Mtl             (modifying)
 -- | New function names, keyed by name + specialized type
 --
 -- also max state threaded through.
-data RenameEnv = RenameEnv { maxState :: Int
-                           , fnEnv    :: M.Map (Unique, StackType ()) Unique
-                           , consEnv  :: M.Map (Unique, StackType ()) (Unique, ConsAnn (StackType ()))
+data RenameEnv = RenameEnv { maxState  :: Int
+                           , fnEnv     :: M.Map (Unique, StackType ()) Unique
+                           , consEnv   :: M.Map (Unique, StackType ()) (Unique, ConsAnn (StackType ()))
+                           , consSzEnv :: ConsSizes
                            }
 
 type MonoM = StateT RenameEnv (Either (Error ()))
@@ -52,11 +54,14 @@ maxStateLens f s = fmap (\x -> s { maxState = x }) (f (maxState s))
 consEnvLens :: Lens' RenameEnv (M.Map (Unique, StackType ()) (Unique, ConsAnn (StackType ())))
 consEnvLens f s = fmap (\x -> s { consEnv = x }) (f (consEnv s))
 
+consSzEnvLens :: Lens' RenameEnv ConsSizes
+consSzEnvLens f s = fmap (\x -> s { consSzEnv = x }) (f (consSzEnv s))
+
 fnEnvLens :: Lens' RenameEnv (M.Map (Unique, StackType ()) Unique)
 fnEnvLens f s = fmap (\x -> s { fnEnv = x }) (f (fnEnv s))
 
-runMonoM :: Int -> MonoM a -> Either (Error ()) (a, Int)
-runMonoM maxI = fmap (second maxState) . flip runStateT (RenameEnv maxI mempty mempty)
+runMonoM :: Int -> MonoM a -> Either (Error ()) (a, (Int, ConsSizes))
+runMonoM maxI = fmap (second (maxState &&& consSzEnv)) . flip runStateT (RenameEnv maxI mempty mempty mempty)
 
 freshName :: T.Text -> a -> MonoM (Name a)
 freshName n ty = do
@@ -208,6 +213,7 @@ renamedCons (Name t i _) sty@(is, os) fAnn = do
     let newStackType = StackType S.empty is os
         ann = fAnn newStackType
     modifying consEnvLens (M.insert (i, newStackType) (j, ann))
+    modifying consSzEnvLens (IM.insert (unUnique j) (tySz ann))
     pure (Name t' j newStackType)
 
 -- | Insert a specialized rename.

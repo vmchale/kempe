@@ -45,7 +45,7 @@ dumpTyped fp = do
 dumpMono :: FilePath -> IO ()
 dumpMono fp = do
     (i, m) <- parsedFp fp
-    mMono <- yeetIO $ monomorphize i m
+    (mMono, _) <- yeetIO $ monomorphize i m
     putDoc $ prettyTypedModule (fmap (bimap fromMonoConsAnn fromMono) mMono)
     where fromMono (is, os) = StackType S.empty is os
           fromMonoConsAnn (ConsAnn _ _ ty) = fromMono ty
