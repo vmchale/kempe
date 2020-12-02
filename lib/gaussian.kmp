@@ -15,4 +15,8 @@ grp : a b c -- b a c
 add : Gaussian Gaussian -- Gaussian
     =: [ dip(unGaussian) unGaussian grp + dip(+) Gaussian ]
 
+mkGaussian : Int Int -- Gaussian
+           =: [ Gaussian ]
+
 %foreign kabi add
+%foreign kabi mkGaussian

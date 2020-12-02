@@ -199,10 +199,6 @@ sizeLeaf tys =
     sizeStack <$> gets szEnv <*> pure (filter (not . isTyVar) tys)
 
 insTyDecl :: KempeDecl a c b -> MonoM ()
-insTyDecl (TyDecl _ (Name _ (Unique k) _) _ [leaf]) = do
-    leafSize <- sizeLeaf (snd leaf)
-    let consSz = leafSize
-    modifying szEnvLens (IM.insert k consSz)
 insTyDecl (TyDecl _ (Name _ (Unique k) _) _ leaves) = do
     leafSizes <- traverse sizeLeaf (fmap snd leaves)
     -- this is kinda sketch because it takes max w/o tyvars
