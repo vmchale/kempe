@@ -62,7 +62,7 @@ data X86Reg = R8
             | Rsp
             | Rbp
             | Rbx
-            | Rdi
+            | Rdi -- can I use rsi/rdi??
             | Rsi
             -- cl is reserved in this implementation which it really shouldn't be
             -- rax and rdx (and friends) are reserved for unsigned mult.
@@ -315,9 +315,13 @@ calleeRestore =
 callerSave :: Doc ann
 callerSave =
     "%macro callersave 0"
+    <#> prettyLines (fmap pretty toPush)
     <#> "%endmacro"
+    where toPush = PushReg () <$> [Rax, Rcx, Rdx, R8, R9, R10, R11]
 
 callerRestore :: Doc ann
 callerRestore =
     "%macro callerrestore 0"
+    <#> prettyLines (fmap pretty toPop)
     <#> "%endmacro"
+    where toPop = PopReg () <$> [R11, R10, R9, R8, Rdx, Rcx, Rax]
