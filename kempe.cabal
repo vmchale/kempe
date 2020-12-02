@@ -55,7 +55,6 @@ library kempe-modules
         Kempe.Asm.X86.Type
         Kempe.Proc.Nasm
         Prettyprinter.Ext
-        Data.Bifunctor.Ext
         Data.Foldable.Ext
 
     default-language: Haskell2010
