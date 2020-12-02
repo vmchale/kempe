@@ -489,9 +489,17 @@ dipSupp env sz (is, os) stmts =
         in case compare excessSz 0 of
             EQ -> plainShift sz stmts
             LT -> dipDo sz stmts
+            GT -> dipHelp excessSz sz stmts
+
+dipHelp :: Int64 -> Int64 -> [Stmt] -> [Stmt]
+dipHelp excessSz dipSz stmts =
+    copyBytes excessSz (-dipSz) dipSz -- copy bytes past end of stack
+        ++ stmts
+        ++ copyBytes (-dipSz) 0 dipSz -- copy bytes back (now from 0 of stack; data pointer has been set)
 
 dipPush :: Int64 -> Int64 -> Exp -> [Stmt]
 dipPush sz sz' e =
+    -- FIXME: is this right?
     copyBytes 0 (-sz) sz
         ++ push sz' e
         ++ copyBytes (-sz) 0 sz -- copy bytes back (data pointer has been incremented already by push)
