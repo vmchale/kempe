@@ -12,6 +12,7 @@ unGaussian : Gaussian -- Int Int
 grp : a b c -- b a c
     =: [ dip(swap) ]
 
+; perhaps unimpressive but I use this to test sizing
 add : Gaussian Gaussian -- Gaussian
     =: [ dip(unGaussian) unGaussian grp + dip(+) Gaussian ]
 
