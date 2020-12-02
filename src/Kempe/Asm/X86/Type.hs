@@ -51,6 +51,8 @@ data X86Reg = R8
             | R13
             | R14
             | R15
+            | Rdi -- can I use rsi/rdi??
+            | Rsi
             -- -- | BH
             -- -- | BL
             | R8b
@@ -61,11 +63,11 @@ data X86Reg = R8
             | R13b
             | R14b
             | R15b
+            | Sil
+            | Dil
             | Rsp
             | Rbp
             | Rbx
-            | Rdi -- can I use rsi/rdi??
-            | Rsi
             -- cl is reserved in this implementation which it really shouldn't be
             -- rax and rdx (and friends) are reserved for unsigned mult.
             | Rcx
@@ -112,6 +114,8 @@ instance Pretty X86Reg where
     pretty R15b = "r15b"
     pretty Rsi  = "rsi"
     pretty Rdi  = "rdi"
+    pretty Sil  = "sil"
+    pretty Dil  = "dil"
 
 data AbsReg = DataPointer
             | AllocReg64 !Int -- TODO: register by size
@@ -321,11 +325,11 @@ callerSave =
     "%macro callersave 0"
     <#> prettyLines (fmap pretty toPush)
     <#> "%endmacro"
-    where toPush = PushReg () <$> [Rax, Rcx, Rdx, R8, R9, R10, R11]
+    where toPush = PushReg () <$> [Rax, Rcx, Rdx, Rsi, Rdi, R8, R9, R10, R11]
 
 callerRestore :: Doc ann
 callerRestore =
     "%macro callerrestore 0"
     <#> prettyLines (fmap pretty toPop)
     <#> "%endmacro"
-    where toPop = PopReg () <$> [R11, R10, R9, R8, Rdx, Rcx, Rax]
+    where toPop = PopReg () <$> [R11, R10, R9, R8, Rdi, Rsi, Rdx, Rcx, Rax]

@@ -47,7 +47,7 @@ allFree :: AllocSt
 allFree = AllocSt mempty allReg64 (S.fromList [R8b .. R15b])
 
 allReg64 :: S.Set X86Reg
-allReg64 = S.fromList [R8 .. R15]
+allReg64 = S.fromList [R8 .. Rsi]
 
 type AllocM = State AllocSt
 
@@ -83,6 +83,10 @@ assoc R15b = S.singleton R15
 assoc Rcx  = S.fromList [CH, CL]
 assoc CH   = S.singleton Rcx
 assoc CL   = S.singleton Rcx
+assoc Rsi  = S.singleton Sil
+assoc Rdi  = S.singleton Dil
+assoc Sil  = S.singleton Rsi
+assoc Dil  = S.singleton Rdi
 
 allocRegs :: [X86 AbsReg Liveness] -> [X86 X86Reg ()]
 allocRegs = runAllocM . traverse allocReg
