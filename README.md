@@ -6,7 +6,7 @@ Kempe is a stack-based language and toy compiler for x86_64. It requires the
 Inspiration is primarily from [Mirth](https://github.com/mirth-lang/mirth).
 
 See manual
-[here](http://hackage.haskell.org/package/kempe/src/doc/manual.pdf).
+[here](http://hackage.haskell.org/package/kempe/src/docs/manual.pdf).
 
 ## Installation
 
