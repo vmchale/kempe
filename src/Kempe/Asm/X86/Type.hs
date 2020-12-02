@@ -124,12 +124,6 @@ data AbsReg = DataPointer
             | ShiftExponent
             | QuotRes -- quotient register for idiv, rax
             | RemRes -- remainder register for idiv, rdx
-            | CalleeSave1
-            | CalleeSave2
-            | CalleeSave3
-            | CalleeSave4
-            | CalleeSave5
-            | CalleeSave6
             deriving (Eq, Ord, Generic, NFData)
 
 instance Pretty AbsReg where
@@ -146,12 +140,6 @@ instance Pretty AbsReg where
     pretty ShiftExponent  = "cl"
     pretty QuotRes        = "rax"
     pretty RemRes         = "rdx"
-    pretty CalleeSave1    = "rbx"
-    pretty CalleeSave2    = "rbp"
-    pretty CalleeSave3    = "r12"
-    pretty CalleeSave4    = "r13"
-    pretty CalleeSave5    = "r14"
-    pretty CalleeSave6    = "r15"
 
 -- [ebx+ecx*4h-20h]
 data Addr reg = Reg reg
@@ -214,6 +202,7 @@ data X86 reg a = PushReg { ann :: a, rSrc :: reg }
                | OrRR { ann :: a, rDest :: reg, rSrc :: reg }
                | PopcountRR { ann :: a, rDest :: reg, rSrc :: reg }
                | NegR { ann :: a, rSrc :: reg }
+               | NasmMacro0 { ann :: a, macroName :: BS.ByteString }
                deriving (Generic, NFData, Functor)
 
 i4 :: Doc ann -> Doc ann
@@ -283,12 +272,33 @@ instance Pretty reg => Pretty (X86 reg a) where
     pretty (Jge _ l)            = i4 ("jge" <+> prettyLabel l)
     pretty (Jle _ l)            = i4 ("jle" <+> prettyLabel l)
     pretty (MovRCTag _ r b)     = i4 ("mov" <+> pretty r <> "," <+> pretty b)
+    pretty (NasmMacro0 _ b)     = pretty (decodeUtf8 b)
 
 prettyAsm :: Pretty reg => [X86 reg a] -> Doc ann
-prettyAsm = ((prolegomena <> hardline <> "section .text" <> hardline) <>) . concatWith (\x y -> x <> hardline <> y) . fmap pretty
+prettyAsm = ((prolegomena <#> macros <#> "section .text" <> hardline) <>) . concatWith (<#>) . fmap pretty
 
 prettyDebugAsm :: Pretty reg => [X86 reg Liveness] -> Doc ann
 prettyDebugAsm = concatWith (\x y -> x <> hardline <> y) . fmap prettyLive
 
 prolegomena :: Doc ann
 prolegomena = "section .bss" <> hardline <> "kempe_data: resb 0x8012" -- 32 kb
+
+macros :: Doc ann
+macros = concatWith (<#>)
+    [ calleeSave
+    , calleeRestore
+    ]
+
+-- | Save non-volatile registers
+calleeSave :: Doc ann
+calleeSave =
+    "%macro calleesave 0"
+    <#> "%endmacro"
+
+calleeRestore :: Doc ann
+calleeRestore =
+    "%macro calleerestore 0"
+    <#> "%endmacro"
+
+-- rbx, rbp, r12-r15 callee-saved (non-volatile)
+-- rest caller-saved (volatile)
