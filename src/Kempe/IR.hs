@@ -493,9 +493,14 @@ dipSupp env sz (is, os) stmts =
 
 dipHelp :: Int64 -> Int64 -> [Stmt] -> [Stmt]
 dipHelp excessSz dipSz stmts =
-    copyBytes excessSz (-dipSz) dipSz -- copy bytes past end of stack
+    let shiftNext = dataPointerDec dipSz
+        shiftBack = dataPointerInc dipSz
+    in
+    shiftNext
+        : copyBytes excessSz (-dipSz) dipSz -- copy bytes past end of stack
         ++ stmts
         ++ copyBytes (-dipSz) 0 dipSz -- copy bytes back (now from 0 of stack; data pointer has been set)
+        ++ [shiftBack]
 
 dipPush :: Int64 -> Int64 -> Exp -> [Stmt]
 dipPush sz sz' e =
