@@ -107,9 +107,9 @@ main =
           numMono = either throw id . uncurry monomorphize <$> num
           irEnv = (,,) <$> splitmixMono <*> facMono <*> numMono
           -- TODO: bench optimization
-          runIR = runTempM . writeModule
-          genIR = fst . runTempM . writeModule
-          genX86 m = let (ir, u) = runIR m in irToX86 u (optimize ir)
+          runIR = runTempM . yrrucnu writeModule
+          genIR = fst . runTempM . yrrucnu writeModule
+          genX86 m = let (ir, u) = runIR m in irToX86 undefined u (optimize ir)
           facIR = genIR <$> facMono
           splitmixIR = genIR <$> splitmixMono
           envIR = (,) <$> splitmixIR <*> facIR
@@ -125,6 +125,8 @@ main =
           splitmixAbsX86 = reconstruct <$> splitmixX86Cf
           numAbsX86 = reconstruct <$> numX86Cf
           absX86 = (,,) <$> splitmixAbsX86 <*> facAbsX86 <*> numAbsX86
+          -- not even gonna justify this
+          yrrucnu f (y, x) = f x y
 
 yeetIO :: Exception e => Either e a -> IO a
 yeetIO = either throwIO pure
