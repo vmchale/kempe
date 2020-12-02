@@ -221,15 +221,17 @@ writeModule env m = traverse_ assignName m *> foldMapA (writeDecl env) m
 
 -- optimize tail-recursion, if possible
 -- This is a little slow
-tryTCO :: Maybe Label -> [Stmt] -> [Stmt]
+tryTCO :: Bool -- ^ Can it be optimized here?
+       -> [Stmt]
+       -> [Stmt]
 tryTCO _ []           = []
-tryTCO Nothing stmts  = stmts
-tryTCO (Just l) stmts =
+tryTCO False stmts  = stmts
+tryTCO True stmts =
     let end = last stmts
         in
             case end of
-                KCall l' | l == l' -> init stmts ++ [Jump l]
-                _                  -> stmts
+                KCall l' -> init stmts ++ [Jump l']
+                _        -> stmts
 
 assignName :: KempeDecl a c b -> TempM ()
 assignName (FunDecl _ (Name _ u _) _ _ _) = broadcastName u
@@ -242,19 +244,19 @@ assignName TyDecl{} = error "Internal error: type declarations should not exist 
 writeDecl :: SizeEnv -> KempeDecl () (ConsAnn MonoStackType) MonoStackType -> TempM [Stmt]
 writeDecl env (FunDecl _ n _ _ as) = do
     bl <- lookupName n
-    (++ [Ret]) . (Labeled bl:) . tryTCO (Just bl) <$> writeAtoms env (Just bl) as
+    (++ [Ret]) . (Labeled bl:) . tryTCO True <$> writeAtoms env True as
 writeDecl _ (ExtFnDecl ty n _ _ cName) = do
     bl <- lookupName n
     pure [Labeled bl, CCall ty cName, Ret]
 writeDecl _ (Export sTy abi n) = pure . WrapKCall abi sTy (encodeUtf8 $ name n) <$> lookupName n
 writeDecl _ TyDecl{} = error "Internal error: type declarations should not exist at this stage"
 
-writeAtoms :: SizeEnv -> Maybe Label -> [Atom (ConsAnn MonoStackType) MonoStackType] -> TempM [Stmt]
+writeAtoms :: SizeEnv -> Bool -> [Atom (ConsAnn MonoStackType) MonoStackType] -> TempM [Stmt]
 writeAtoms _ _ [] = pure []
-writeAtoms env Nothing stmts = foldMapA (writeAtom env Nothing) stmts
+writeAtoms env False stmts = foldMapA (writeAtom env False) stmts
 writeAtoms env l stmts =
     let end = last stmts
-        in (++) <$> foldMapA (writeAtom env Nothing) (init stmts) <*> writeAtom env l end
+        in (++) <$> foldMapA (writeAtom env False) (init stmts) <*> writeAtom env l end
 
 intShift :: IntBinOp -> TempM [Stmt]
 intShift cons = do
@@ -312,7 +314,7 @@ wordCount = do
 
 -- | This throws exceptions on nonsensical input.
 writeAtom :: SizeEnv
-          -> Maybe Label -- ^ Context for possible TCO
+          -> Bool -- ^ Can we do TCO?
           -> Atom (ConsAnn MonoStackType) MonoStackType
           -> TempM [Stmt]
 writeAtom _ _ (IntLit _ i)              = pure $ push 8 (ConstInt $ fromInteger i)
@@ -394,7 +396,7 @@ writeAtom env l (Case (is, _) ls) =
 zipWithM :: (Applicative m) => (a -> b -> m c) -> NonEmpty a -> NonEmpty b -> m (NonEmpty c)
 zipWithM f xs ys = sequenceA (NE.zipWith f xs ys)
 
-mkLeaf :: SizeEnv -> Maybe Label -> Pattern (ConsAnn MonoStackType) MonoStackType -> [Atom (ConsAnn MonoStackType) MonoStackType] -> TempM ([Stmt], [Stmt])
+mkLeaf :: SizeEnv -> Bool -> Pattern (ConsAnn MonoStackType) MonoStackType -> [Atom (ConsAnn MonoStackType) MonoStackType] -> TempM ([Stmt], [Stmt])
 mkLeaf env l p as = do
     l' <- newLabel
     as' <- writeAtoms env l as
@@ -483,11 +485,11 @@ dipify env sz (AtCons ann@(ConsAnn _ tag' _) _) =
             ++ dataPointerInc (padBytes env ann) : push 1 (ConstTag tag')
             ++ copyBytes (-sz) 0 sz
 dipify env sz a@(If sty _ _) =
-    dipSupp env sz sty <$> writeAtom env Nothing a
+    dipSupp env sz sty <$> writeAtom env False a
 dipify env sz (AtName sty n) =
     dipSupp env sz sty . pure . KCall <$> lookupName n
 dipify env sz a@(Case sty _) =
-    dipSupp env sz sty <$> writeAtom env Nothing a
+    dipSupp env sz sty <$> writeAtom env False a
 
 dipSupp :: SizeEnv -> Int64 -> MonoStackType -> [Stmt] -> [Stmt]
 dipSupp env sz (is, os) stmts =
