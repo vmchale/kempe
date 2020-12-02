@@ -3,7 +3,6 @@
 module Kempe.Shuttle ( monomorphize
                      ) where
 
-import           Data.Bitraversable (bitraverse)
 import           Data.Functor       (void)
 import           Kempe.AST
 import           Kempe.Error
@@ -13,7 +12,7 @@ import           Kempe.TyAssign
 
 inlineAssignFlatten :: Int
                     -> Module a c b
-                    -> Either (Error ()) (Module () (ConsAnn (StackType ())) (StackType ()), (Int, SizeEnv))
+                    -> Either (Error ()) (Module () (ConsAnn MonoStackType) (StackType ()), (Int, SizeEnv))
 inlineAssignFlatten ctx m = do
     -- check before inlining otherwise users would get weird errors
     void $ runTypeM ctx (checkModule m)
@@ -26,7 +25,7 @@ monomorphize :: Int
 monomorphize ctx m = do
     (flat, (_, env)) <- inlineAssignFlatten ctx m
     let flatFn' = filter (not . isTyDecl) flat
-    (, env) <$> traverse (bitraverse tryMonoConsAnn tryMono) flatFn'
+    (, env) <$> traverse (traverse tryMono) flatFn'
 
 isTyDecl :: KempeDecl a c b -> Bool
 isTyDecl TyDecl{} = True

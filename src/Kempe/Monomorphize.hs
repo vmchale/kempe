@@ -9,7 +9,6 @@ module Kempe.Monomorphize ( closedModule
                           , runMonoM
                           , flattenModule
                           , tryMono
-                          , tryMonoConsAnn
                           , ConsAnn (..)
                           -- * Benchmark
                           , closure
@@ -18,6 +17,7 @@ module Kempe.Monomorphize ( closedModule
 
 import           Control.Arrow              ((&&&))
 import           Control.Monad              ((<=<))
+import Data.Tuple (swap)
 import           Control.Monad.Except       (MonadError, throwError)
 import           Control.Monad.State.Strict (StateT, gets, runStateT)
 import           Data.Bifunctor             (second)
@@ -45,7 +45,7 @@ import           Lens.Micro.Mtl             (modifying)
 -- also max state threaded through.
 data RenameEnv = RenameEnv { maxState :: Int
                            , fnEnv    :: M.Map (Unique, StackType ()) Unique
-                           , consEnv  :: M.Map (Unique, StackType ()) (Unique, ConsAnn (StackType ()))
+                           , consEnv  :: M.Map (Unique, StackType ()) (Unique, ConsAnn MonoStackType)
                            , szEnv    :: SizeEnv
                            }
 
@@ -54,7 +54,7 @@ type MonoM = StateT RenameEnv (Either (Error ()))
 maxStateLens :: Lens' RenameEnv Int
 maxStateLens f s = fmap (\x -> s { maxState = x }) (f (maxState s))
 
-consEnvLens :: Lens' RenameEnv (M.Map (Unique, StackType ()) (Unique, ConsAnn (StackType ())))
+consEnvLens :: Lens' RenameEnv (M.Map (Unique, StackType ()) (Unique, ConsAnn MonoStackType))
 consEnvLens f s = fmap (\x -> s { consEnv = x }) (f (consEnv s))
 
 fnEnvLens :: Lens' RenameEnv (M.Map (Unique, StackType ()) Unique)
@@ -75,10 +75,6 @@ freshName n ty = do
 tryMono :: MonadError (Error ()) m => StackType () -> m MonoStackType
 tryMono (StackType _ is os) | S.null (freeVars (is ++ os)) = pure (is, os)
                             | otherwise = throwError $ MonoFailed ()
-
--- TODO: possible to get rid of this?
-tryMonoConsAnn :: MonadError (Error ()) m => ConsAnn (StackType ()) -> m (ConsAnn MonoStackType)
-tryMonoConsAnn = traverse tryMono
 
 -- | A 'ModuleMap' is a map which retrives the 'KempeDecl' associated with
 -- a given 'Name'
@@ -108,20 +104,20 @@ squishType (TyApp _ ty ty')         = squishType ty <> squishType ty'
 squishMonoStackType :: MonoStackType -> T.Text
 squishMonoStackType (is, os) = foldMap squishType is <> "TT" <> foldMap squishType os
 
-renamePattern :: Pattern (StackType ()) (StackType ()) -> MonoM (Pattern (ConsAnn (StackType ())) (StackType ()))
+renamePattern :: Pattern (StackType ()) (StackType ()) -> MonoM (Pattern (ConsAnn MonoStackType) (StackType ()))
 renamePattern (PatternInt ty i)    = pure $ PatternInt ty i
 renamePattern (PatternWildcard ty) = pure $ PatternWildcard ty
 renamePattern (PatternBool ty b)   = pure $ PatternBool ty b
 renamePattern (PatternCons ty (Name t u _)) = do
     cSt <- gets consEnv
     let (u', ann) = M.findWithDefault (error "Internal error? unfound constructor") (u, flipStackType ty) cSt
-        ann' = flipStackType <$> ann
+        ann' = swap <$> ann
     pure $ PatternCons ann' (Name t u' ann')
 
-renameCase :: (Pattern (StackType ()) (StackType ()), [Atom (StackType ()) (StackType ())]) -> MonoM (Pattern (ConsAnn (StackType ())) (StackType ()), [Atom (ConsAnn (StackType ())) (StackType ())])
+renameCase :: (Pattern (StackType ()) (StackType ()), [Atom (StackType ()) (StackType ())]) -> MonoM (Pattern (ConsAnn MonoStackType) (StackType ()), [Atom (ConsAnn MonoStackType) (StackType ())])
 renameCase (p, as) = (,) <$> renamePattern p <*> traverse renameAtom as
 
-renameAtom :: Atom (StackType ()) (StackType ()) -> MonoM (Atom (ConsAnn (StackType ())) (StackType ()))
+renameAtom :: Atom (StackType ()) (StackType ()) -> MonoM (Atom (ConsAnn MonoStackType) (StackType ()))
 renameAtom (AtBuiltin ty b)         = pure $ AtBuiltin ty b
 renameAtom (If ty as as')           = If ty <$> traverse renameAtom as <*> traverse renameAtom as'
 renameAtom (IntLit ty i)            = pure $ IntLit ty i
@@ -139,7 +135,7 @@ renameAtom (AtCons ty (Name t u _)) = do
     let (u', ann) = M.findWithDefault (error "Internal error? unfound constructor") (u, ty) cSt
     pure $ AtCons ann (Name t u' ann)
 
-renameDecl :: KempeDecl () (StackType ()) (StackType ()) -> MonoM (KempeDecl () (ConsAnn (StackType ())) (StackType ()))
+renameDecl :: KempeDecl () (StackType ()) (StackType ()) -> MonoM (KempeDecl () (ConsAnn MonoStackType) (StackType ()))
 renameDecl (FunDecl l n is os as) = FunDecl l n is os <$> traverse renameAtom as
 renameDecl (Export ty abi (Name t u l)) = do
     mSt <- gets fnEnv
@@ -149,11 +145,11 @@ renameDecl (ExtFnDecl l n tys tys' b) = pure $ ExtFnDecl l n tys tys' b
 renameDecl (TyDecl l n vars ls)       = pure $ TyDecl l n vars ls
 
 -- | Call 'closedModule' and perform any necessary renamings
-flattenModule :: Module () (StackType ()) (StackType ()) -> MonoM (Module () (ConsAnn (StackType ())) (StackType ()))
+flattenModule :: Module () (StackType ()) (StackType ()) -> MonoM (Module () (ConsAnn MonoStackType) (StackType ()))
 flattenModule = renameMonoM <=< closedModule
 
 -- | To be called after 'closedModule'
-renameMonoM :: Module () (StackType ()) (StackType ()) -> MonoM (Module () (ConsAnn (StackType ())) (StackType ()))
+renameMonoM :: Module () (StackType ()) (StackType ()) -> MonoM (Module () (ConsAnn MonoStackType) (StackType ()))
 renameMonoM = traverse renameDecl
 
 -- | Filter so that only the 'KempeDecl's necessary for exports are there, and
@@ -227,12 +223,12 @@ specializeDecl (Export l abi n) _           = pure $ Export l abi n
 specializeDecl TyDecl{} _                   = error "Shouldn't happen."
 -- leave exports and foreign imports alone (have to be monomorphic)
 
-renamedCons :: TyName a -> MonoStackType -> (StackType () -> ConsAnn (StackType ())) -> MonoM (TyName (StackType ()))
+renamedCons :: TyName a -> MonoStackType -> (MonoStackType -> ConsAnn MonoStackType) -> MonoM (TyName (StackType ()))
 renamedCons (Name t i _) sty@(is, os) fAnn = do
     let t' = t <> squishMonoStackType sty
     (Name _ j _) <- freshName t' sty
     let newStackType = StackType S.empty is os
-        ann = fAnn newStackType
+        ann = fAnn sty
     modifying consEnvLens (M.insert (i, newStackType) (j, ann))
     pure (Name t' j newStackType)
 
