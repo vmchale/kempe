@@ -20,8 +20,8 @@ toAbsReg IR.DataPointer = DataPointer
 
 type WriteM = State IR.WriteSt
 
-irToX86 :: IR.WriteSt -> [IR.Stmt] -> [X86 AbsReg ()]
-irToX86 w = runWriteM w . foldMapA irEmit
+irToX86 :: SizeEnv -> IR.WriteSt -> [IR.Stmt] -> [X86 AbsReg ()]
+irToX86 env w = runWriteM w . foldMapA (irEmit env)
 
 nextLabels :: IR.WriteSt -> IR.WriteSt
 nextLabels (IR.WriteSt ls ts) = IR.WriteSt (tail ls) ts
@@ -50,171 +50,171 @@ allocReg8 = AllocReg8 <$> getInt
 runWriteM :: IR.WriteSt -> WriteM a -> a
 runWriteM = flip evalState
 
-irEmit :: IR.Stmt -> WriteM [X86 AbsReg ()]
-irEmit (IR.Jump l) = pure [Jump () l]
-irEmit (IR.Labeled l) = pure [Label () l]
-irEmit (IR.KCall l) = pure [Call () l]
-irEmit IR.Ret = pure [Ret ()]
-irEmit (IR.MovMem (IR.Reg r) _ (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r1) (IR.Reg r2))) = do
+irEmit :: SizeEnv -> IR.Stmt -> WriteM [X86 AbsReg ()]
+irEmit _ (IR.Jump l) = pure [Jump () l]
+irEmit _ (IR.Labeled l) = pure [Label () l]
+irEmit _ (IR.KCall l) = pure [Call () l]
+irEmit _ IR.Ret = pure [Ret ()]
+irEmit _ (IR.MovMem (IR.Reg r) _ (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r1) (IR.Reg r2))) = do
     { r' <- allocReg64
     ; pure [ MovRR () r' (toAbsReg r1), SubRR () r' (toAbsReg r2), MovAR () (Reg $ toAbsReg r) r' ]
     }
-irEmit (IR.MovMem (IR.Reg r) _ (IR.ConstInt i)) =
+irEmit _ (IR.MovMem (IR.Reg r) _ (IR.ConstInt i)) =
     pure [ MovAC () (Reg $ toAbsReg r) i ]
-irEmit (IR.MovMem (IR.Reg r) _ (IR.ConstBool b)) =
+irEmit _ (IR.MovMem (IR.Reg r) _ (IR.ConstBool b)) =
     pure [ MovABool () (Reg $ toAbsReg r) (toByte b) ]
-irEmit (IR.MovMem (IR.Reg r) _ (IR.ConstTag b)) =
+irEmit _ (IR.MovMem (IR.Reg r) _ (IR.ConstTag b)) =
     pure [ MovACTag () (Reg $ toAbsReg r) b ]
-irEmit (IR.MovMem (IR.Reg r) _ (IR.ExprIntBinOp IR.IntTimesIR (IR.Reg r1) (IR.Reg r2))) = do
+irEmit _ (IR.MovMem (IR.Reg r) _ (IR.ExprIntBinOp IR.IntTimesIR (IR.Reg r1) (IR.Reg r2))) = do
     { r' <- allocReg64
     ; pure [ MovRR () r' (toAbsReg r1), ImulRR () r' (toAbsReg r2), MovAR () (Reg $ toAbsReg r) r' ]
     }
-irEmit (IR.MovMem (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r0) (IR.ConstInt i)) _ (IR.Mem 1 (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r1) (IR.ConstInt j)))) = do
+irEmit _ (IR.MovMem (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r0) (IR.ConstInt i)) _ (IR.Mem 1 (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r1) (IR.ConstInt j)))) = do
     { r' <- allocReg8
     ; pure [ MovRA () r' (AddrRCPlus (toAbsReg r1) j), MovAR () (AddrRCPlus (toAbsReg r0) i) r' ]
     }
-irEmit (IR.MovMem (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r0) (IR.ConstInt i)) _ (IR.Mem 1 (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r1) (IR.ConstInt j)))) = do
+irEmit _ (IR.MovMem (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r0) (IR.ConstInt i)) _ (IR.Mem 1 (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r1) (IR.ConstInt j)))) = do
     { r' <- allocReg8
     ; pure [ MovRA () r' (AddrRCMinus (toAbsReg r1) j), MovAR () (AddrRCPlus (toAbsReg r0) i) r' ]
     }
-irEmit (IR.MovMem (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r0) (IR.ConstInt i)) _ (IR.Mem 1 (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r1) (IR.ConstInt j)))) = do
+irEmit _ (IR.MovMem (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r0) (IR.ConstInt i)) _ (IR.Mem 1 (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r1) (IR.ConstInt j)))) = do
     { r' <- allocReg8
     ; pure [ MovRA () r' (AddrRCMinus (toAbsReg r1) j), MovAR () (AddrRCMinus (toAbsReg r0) i) r' ]
     }
-irEmit (IR.MovMem (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r0) (IR.ConstInt i)) _ (IR.Mem 1 (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r1) (IR.ConstInt j)))) = do
+irEmit _ (IR.MovMem (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r0) (IR.ConstInt i)) _ (IR.Mem 1 (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r1) (IR.ConstInt j)))) = do
     { r' <- allocReg8
     ; pure [ MovRA () r' (AddrRCPlus (toAbsReg r1) j), MovAR () (AddrRCMinus (toAbsReg r0) i) r' ]
     }
-irEmit (IR.MovMem (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r0) (IR.ConstInt i)) _ (IR.Mem 8 (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r1) (IR.ConstInt j)))) = do
+irEmit _ (IR.MovMem (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r0) (IR.ConstInt i)) _ (IR.Mem 8 (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r1) (IR.ConstInt j)))) = do
     { r' <- allocReg64
     ; pure [ MovRA () r' (AddrRCMinus (toAbsReg r1) j), MovAR () (AddrRCMinus (toAbsReg r0) i) r' ]
     }
-irEmit (IR.MovMem (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r0) (IR.ConstInt i)) _ (IR.Mem 8 (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r1) (IR.ConstInt j)))) = do
+irEmit _ (IR.MovMem (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r0) (IR.ConstInt i)) _ (IR.Mem 8 (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r1) (IR.ConstInt j)))) = do
     { r' <- allocReg64
     ; pure [ MovRA () r' (AddrRCPlus (toAbsReg r1) j), MovAR () (AddrRCMinus (toAbsReg r0) i) r' ]
     }
-irEmit (IR.MovMem (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r0) (IR.ConstInt i)) _ (IR.Mem 8 (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r1) (IR.ConstInt j)))) = do
+irEmit _ (IR.MovMem (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r0) (IR.ConstInt i)) _ (IR.Mem 8 (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r1) (IR.ConstInt j)))) = do
     { r' <- allocReg64
     ; pure [ MovRA () r' (AddrRCPlus (toAbsReg r1) j), MovAR () (AddrRCPlus (toAbsReg r0) i) r' ]
     }
-irEmit (IR.MovMem (IR.Reg r) _ (IR.ExprIntRel IR.IntEqIR (IR.Reg r1) (IR.Reg r2))) = do -- TODO: int eq more general (Reg r1) could be e1 &c.
+irEmit _ (IR.MovMem (IR.Reg r) _ (IR.ExprIntRel IR.IntEqIR (IR.Reg r1) (IR.Reg r2))) = do -- TODO: int eq more general (Reg r1) could be e1 &c.
     { l0 <- getLabel
     ; l1 <- getLabel
     ; l2 <- getLabel
     ; pure [ CmpRegReg () (toAbsReg r1) (toAbsReg r2), Je () l0, Jump () l1, Label () l0, MovABool () (Reg $ toAbsReg r) 1, Jump () l2, Label () l1, MovABool () (Reg $ toAbsReg r) 0, Label () l2 ]
     }
-irEmit (IR.MovMem (IR.Reg r) _ (IR.ExprIntRel IR.IntLtIR (IR.Reg r1) (IR.Reg r2))) = do
+irEmit _ (IR.MovMem (IR.Reg r) _ (IR.ExprIntRel IR.IntLtIR (IR.Reg r1) (IR.Reg r2))) = do
     { l0 <- getLabel
     ; l1 <- getLabel
     ; l2 <- getLabel
     ; pure [ CmpRegReg () (toAbsReg r1) (toAbsReg r2), Jl () l0, Jump () l1, Label () l0, MovABool () (Reg $ toAbsReg r) 1, Jump () l2, Label () l1, MovABool () (Reg $ toAbsReg r) 0, Label () l2 ]
     }
-irEmit (IR.MovMem (IR.Reg r) _ (IR.ExprIntRel IR.IntGtIR (IR.Reg r1) (IR.Reg r2))) = do
+irEmit _ (IR.MovMem (IR.Reg r) _ (IR.ExprIntRel IR.IntGtIR (IR.Reg r1) (IR.Reg r2))) = do
     { l0 <- getLabel
     ; l1 <- getLabel
     ; l2 <- getLabel
     ; pure [ CmpRegReg () (toAbsReg r1) (toAbsReg r2), Jg () l0, Jump () l1, Label () l0, MovABool () (Reg $ toAbsReg r) 1, Jump () l2, Label () l1, MovABool () (Reg $ toAbsReg r) 0, Label () l2 ]
     }
-irEmit (IR.MovMem (IR.Reg r) _ (IR.ExprIntRel IR.IntGeqIR (IR.Reg r1) (IR.Reg r2))) = do
+irEmit _ (IR.MovMem (IR.Reg r) _ (IR.ExprIntRel IR.IntGeqIR (IR.Reg r1) (IR.Reg r2))) = do
     { l0 <- getLabel
     ; l1 <- getLabel
     ; l2 <- getLabel
     ; pure [ CmpRegReg () (toAbsReg r1) (toAbsReg r2), Jge () l0, Jump () l1, Label () l0, MovABool () (Reg $ toAbsReg r) 1, Jump () l2, Label () l1, MovABool () (Reg $ toAbsReg r) 0, Label () l2 ]
     }
-irEmit (IR.MovMem (IR.Reg r) _ (IR.ExprIntRel IR.IntNeqIR (IR.Reg r1) (IR.Reg r2))) = do
+irEmit _ (IR.MovMem (IR.Reg r) _ (IR.ExprIntRel IR.IntNeqIR (IR.Reg r1) (IR.Reg r2))) = do
     { l0 <- getLabel
     ; l1 <- getLabel
     ; l2 <- getLabel
     ; pure [ CmpRegReg () (toAbsReg r1) (toAbsReg r2), Jne () l0, Jump () l1, Label () l0, MovABool () (Reg $ toAbsReg r) 1, Jump () l2, Label () l1, MovABool () (Reg $ toAbsReg r) 0, Label () l2 ]
     }
-irEmit (IR.MovMem (IR.Reg r) _ (IR.ExprIntRel IR.IntLeqIR (IR.Reg r1) (IR.Reg r2))) = do
+irEmit _ (IR.MovMem (IR.Reg r) _ (IR.ExprIntRel IR.IntLeqIR (IR.Reg r1) (IR.Reg r2))) = do
     { l0 <- getLabel
     ; l1 <- getLabel
     ; l2 <- getLabel
     ; pure [ CmpRegReg () (toAbsReg r1) (toAbsReg r2), Jle () l0, Jump () l1, Label () l0, MovABool () (Reg $ toAbsReg r) 1, Jump () l2, Label () l1, MovABool () (Reg $ toAbsReg r) 0, Label () l2 ]
     }
-irEmit (IR.MovTemp r1 (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r2) (IR.ConstInt i))) | r1 == r2 = do
+irEmit _ (IR.MovTemp r1 (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r2) (IR.ConstInt i))) | r1 == r2 = do
     pure [ SubRC () (toAbsReg r1) i ]
-irEmit (IR.MovTemp r1 (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r2) (IR.ConstInt i))) | r1 == r2 = do
+irEmit _ (IR.MovTemp r1 (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r2) (IR.ConstInt i))) | r1 == r2 = do
     pure [ AddRC () (toAbsReg r1) i ]
 -- For 128-bit returns we'd have to use rax and rdx
-irEmit (IR.WrapKCall Cabi (is, [o]) n l) | all (\i -> size i <= 8) is && size o <= 8 && length is <= 6 = do
-    { let offs = scanl' (+) 0 (fmap size is)
-    ; let totalSize = sizeStack is
+irEmit env (IR.WrapKCall Cabi (is, [o]) n l) | all (\i -> size env i <= 8) is && size env o <= 8 && length is <= 6 = do
+    { let offs = scanl' (+) 0 (fmap (size env) is)
+    ; let totalSize = sizeStack env is
     ; let argRegs = [CArg1, CArg2, CArg3, CArg4, CArg5, CArg6]
-    ; pure $ [BSLabel () n, MovRL () DataPointer "kempe_data"] ++ save ++ zipWith (\r i-> MovAR () (AddrRCPlus DataPointer i) r) argRegs offs ++ [AddRC () DataPointer totalSize, Call () l, MovRA () CRet (AddrRCMinus DataPointer (size o))] ++ restore ++ [Ret ()] -- TODO: bytes on the stack eh
+    ; pure $ [BSLabel () n, MovRL () DataPointer "kempe_data"] ++ save ++ zipWith (\r i-> MovAR () (AddrRCPlus DataPointer i) r) argRegs offs ++ [AddRC () DataPointer totalSize, Call () l, MovRA () CRet (AddrRCMinus DataPointer (size env o))] ++ restore ++ [Ret ()] -- TODO: bytes on the stack eh
     }
-irEmit (IR.WrapKCall Kabi (_, _) n l) =
+irEmit _ (IR.WrapKCall Kabi (_, _) n l) =
     pure [BSLabel () n, Call () l, Ret ()]
-irEmit (IR.MovMem (IR.Reg r) _ (IR.ConstInt8 i)) =
+irEmit _ (IR.MovMem (IR.Reg r) _ (IR.ConstInt8 i)) =
     pure [ MovACi8 () (Reg $ toAbsReg r) i ]
     -- see: https://github.com/cirosantilli/x86-assembly-cheat/blob/master/x86-64/movabs.asm for why we don't do this ^ for words
-irEmit (IR.MovMem (IR.Reg r) _ (IR.ExprIntBinOp IR.IntXorIR (IR.Reg r1) (IR.Reg r2))) = do
+irEmit _ (IR.MovMem (IR.Reg r) _ (IR.ExprIntBinOp IR.IntXorIR (IR.Reg r1) (IR.Reg r2))) = do
     { r' <- allocReg64
     ; pure [ MovRR () r' (toAbsReg r1), XorRR () r' (toAbsReg r2), MovAR () (Reg $ toAbsReg r) r' ]
     }
-irEmit (IR.MovMem (IR.Reg r) _ (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r1) (IR.Reg r2))) = do
+irEmit _ (IR.MovMem (IR.Reg r) _ (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r1) (IR.Reg r2))) = do
     { r' <- allocReg64
     ; pure [ MovRR () r' (toAbsReg r1), AddRR () r' (toAbsReg r2), MovAR () (Reg $ toAbsReg r) r' ]
     }
-irEmit (IR.MovMem (IR.Reg r) _ (IR.ExprIntBinOp IR.WordShiftRIR (IR.Reg r1) (IR.Reg r2))) = do
+irEmit _ (IR.MovMem (IR.Reg r) _ (IR.ExprIntBinOp IR.WordShiftRIR (IR.Reg r1) (IR.Reg r2))) = do
     { r' <- allocReg64
     ; pure [ MovRR () ShiftExponent (toAbsReg r2), MovRR () r' (toAbsReg r1), ShiftRRR () r' ShiftExponent, MovAR () (Reg $ toAbsReg r) r' ]
     }
-irEmit (IR.MovMem (IR.Reg r) _ (IR.ExprIntBinOp IR.WordShiftLIR (IR.Reg r1) (IR.Reg r2))) = do
+irEmit _ (IR.MovMem (IR.Reg r) _ (IR.ExprIntBinOp IR.WordShiftLIR (IR.Reg r1) (IR.Reg r2))) = do
     { r' <- allocReg64
     ; pure [ MovRR () ShiftExponent (toAbsReg r2), MovRR () r' (toAbsReg r1), ShiftLRR () r' ShiftExponent, MovAR () (Reg $ toAbsReg r) r' ]
     }
-irEmit (IR.MovMem (IR.Reg r) _ (IR.ExprIntBinOp IR.IntModIR (IR.Reg r1) (IR.Reg r2))) =
+irEmit _ (IR.MovMem (IR.Reg r) _ (IR.ExprIntBinOp IR.IntModIR (IR.Reg r1) (IR.Reg r2))) =
     -- QuotRes is rax, so move r1 to rax first
     pure [ MovRR () QuotRes (toAbsReg r1), Cqo (), IdivR () (toAbsReg r2), MovAR () (Reg $ toAbsReg r) RemRes ]
-irEmit (IR.MovTemp r e) = evalE e r
-irEmit (IR.MovMem (IR.Reg r) 1 e) = do
+irEmit _ (IR.MovTemp r e) = evalE e r
+irEmit _ (IR.MovMem (IR.Reg r) 1 e) = do
     { r' <- allocTemp8
     ; put <- evalE e r'
     ; pure $ put ++ [MovAR () (Reg $ toAbsReg r) (toAbsReg r')]
     }
-irEmit (IR.MovMem e 8 e') = do
+irEmit _ (IR.MovMem e 8 e') = do
     { r <- allocTemp64
     ; r' <- allocTemp64
     ; eEval <- evalE e r
     ; e'Eval <- evalE e' r'
     ; pure (eEval ++ e'Eval ++ [MovAR () (Reg $ toAbsReg r) (toAbsReg r')])
     }
-irEmit (IR.MovMem e 1 e') = do
+irEmit _ (IR.MovMem e 1 e') = do
     { r <- allocTemp64
     ; r' <- allocTemp8
     ; eEval <- evalE e r
     ; e'Eval <- evalE e' r'
     ; pure (eEval ++ e'Eval ++ [MovAR () (Reg $ toAbsReg r) (toAbsReg r')])
     }
-irEmit (IR.CJump (IR.Mem 1 (IR.Reg r)) l l') =
+irEmit _ (IR.CJump (IR.Mem 1 (IR.Reg r)) l l') =
     pure [CmpAddrBool () (Reg (toAbsReg r)) 1, Je () l, Jump () l']
-irEmit (IR.MJump (IR.Mem 1 (IR.Reg r)) l) =
+irEmit _ (IR.MJump (IR.Mem 1 (IR.Reg r)) l) =
     pure [CmpAddrBool () (Reg (toAbsReg r)) 1, Je () l]
-irEmit (IR.CJump (IR.Mem 1 (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r) (IR.ConstInt i))) l l') =
+irEmit _ (IR.CJump (IR.Mem 1 (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r) (IR.ConstInt i))) l l') =
     pure [CmpAddrBool () (AddrRCMinus (toAbsReg r) i) 1, Je () l, Jump () l']
-irEmit (IR.MJump (IR.Mem 1 (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r) (IR.ConstInt i))) l) =
+irEmit _ (IR.MJump (IR.Mem 1 (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r) (IR.ConstInt i))) l) =
     pure [CmpAddrBool () (AddrRCMinus (toAbsReg r) i) 1, Je () l]
-irEmit (IR.CJump (IR.Mem 1 (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r) (IR.ConstInt i))) l l') =
+irEmit _ (IR.CJump (IR.Mem 1 (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r) (IR.ConstInt i))) l l') =
     pure [CmpAddrBool () (AddrRCPlus (toAbsReg r) i) 1, Je () l, Jump () l']
-irEmit (IR.MJump (IR.Mem 1 (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r) (IR.ConstInt i))) l) =
+irEmit _ (IR.MJump (IR.Mem 1 (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r) (IR.ConstInt i))) l) =
     pure [CmpAddrBool () (AddrRCPlus (toAbsReg r) i) 1, Je () l]
-irEmit (IR.CJump e l l') = do
+irEmit _ (IR.CJump e l l') = do
     { r <- allocTemp8
     ; bEval <- evalE e r
     ; pure (bEval ++ [CmpRegBool () (toAbsReg r) 1, Je () l, Jump () l'])
     }
-irEmit (IR.MJump (IR.EqByte (IR.Mem 1 (IR.Reg r)) (IR.ConstTag b)) l) =
+irEmit _ (IR.MJump (IR.EqByte (IR.Mem 1 (IR.Reg r)) (IR.ConstTag b)) l) =
     pure [CmpAddrBool () (Reg $ toAbsReg r) b, Je () l]
-irEmit (IR.MJump (IR.EqByte e0 e1) l) = do
+irEmit _ (IR.MJump (IR.EqByte e0 e1) l) = do
     { r0 <- allocTemp8
     ; r1 <- allocTemp8
     ; placeE0 <- evalE e0 r0
     ; placeE1 <- evalE e1 r1
     ; pure $ placeE0 ++ placeE1 ++ [CmpRegReg () (toAbsReg r0) (toAbsReg r1), Je () l]
     }
-irEmit (IR.MJump e l) = do
+irEmit _ (IR.MJump e l) = do
     { r <- allocTemp8
     ; bEval <- evalE e r
     ; pure (bEval ++ [CmpRegBool () (toAbsReg r) 1, Je () l])

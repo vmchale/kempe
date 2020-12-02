@@ -69,7 +69,7 @@ x86NoYeet fp = testCase ("Selects instructions for " ++ fp) $ do
 irNoYeet :: FilePath -> TestTree
 irNoYeet fp = testCase ("Generates IR without throwing an exception (" ++ fp ++ ")") $ do
     (i, m) <- parsedFp fp
-    let res = fst $ irGen i m
+    let (res, _, _) = irGen i m
     assertBool "Worked without failure" (res `deepseq` True)
 
 inlineTest :: FilePath -> TestTree

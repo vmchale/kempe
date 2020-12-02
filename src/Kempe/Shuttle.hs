@@ -1,3 +1,5 @@
+{-# LANGUAGE TupleSections #-}
+
 module Kempe.Shuttle ( monomorphize
                      ) where
 
@@ -11,7 +13,7 @@ import           Kempe.TyAssign
 
 inlineAssignFlatten :: Int
                     -> Module a c b
-                    -> Either (Error ()) (Module () (ConsAnn (StackType ())) (StackType ()), Int)
+                    -> Either (Error ()) (Module () (ConsAnn (StackType ())) (StackType ()), (Int, SizeEnv))
 inlineAssignFlatten ctx m = do
     -- check before inlining otherwise users would get weird errors
     void $ runTypeM ctx (checkModule m)
@@ -20,11 +22,11 @@ inlineAssignFlatten ctx m = do
 
 monomorphize :: Int
              -> Module a c b
-             -> Either (Error ()) (Module () (ConsAnn MonoStackType) MonoStackType)
+             -> Either (Error ()) (Module () (ConsAnn MonoStackType) MonoStackType, SizeEnv)
 monomorphize ctx m = do
-    (flat, _) <- inlineAssignFlatten ctx m
+    (flat, (_, env)) <- inlineAssignFlatten ctx m
     let flatFn' = filter (not . isTyDecl) flat
-    traverse (bitraverse tryMonoConsAnn tryMono) flatFn'
+    (, env) <$> traverse (bitraverse tryMonoConsAnn tryMono) flatFn'
 
 isTyDecl :: KempeDecl a c b -> Bool
 isTyDecl TyDecl{} = True

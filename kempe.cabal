@@ -69,7 +69,7 @@ library kempe-modules
         base >=4.11 && <5,
         array -any,
         bytestring -any,
-        containers -any,
+        containers >=0.6.0.0,
         deepseq -any,
         text -any,
         mtl -any,

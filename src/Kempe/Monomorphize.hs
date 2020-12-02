@@ -16,12 +16,16 @@ module Kempe.Monomorphize ( closedModule
                           , mkModuleMap
                           ) where
 
+import           Control.Arrow              ((&&&))
 import           Control.Monad              ((<=<))
 import           Control.Monad.Except       (MonadError, throwError)
 import           Control.Monad.State.Strict (StateT, gets, runStateT)
 import           Data.Bifunctor             (second)
+import           Data.Containers.ListUtils  (nubOrd)
+import           Data.Foldable              (traverse_)
 import           Data.Function              (on)
 import           Data.Functor               (($>))
+import           Data.Int                   (Int64)
 import qualified Data.IntMap                as IM
 import           Data.List                  (find, groupBy, partition)
 import qualified Data.Map                   as M
@@ -42,6 +46,7 @@ import           Lens.Micro.Mtl             (modifying)
 data RenameEnv = RenameEnv { maxState :: Int
                            , fnEnv    :: M.Map (Unique, StackType ()) Unique
                            , consEnv  :: M.Map (Unique, StackType ()) (Unique, ConsAnn (StackType ()))
+                           , szEnv    :: SizeEnv
                            }
 
 type MonoM = StateT RenameEnv (Either (Error ()))
@@ -55,8 +60,11 @@ consEnvLens f s = fmap (\x -> s { consEnv = x }) (f (consEnv s))
 fnEnvLens :: Lens' RenameEnv (M.Map (Unique, StackType ()) Unique)
 fnEnvLens f s = fmap (\x -> s { fnEnv = x }) (f (fnEnv s))
 
-runMonoM :: Int -> MonoM a -> Either (Error ()) (a, Int)
-runMonoM maxI = fmap (second maxState) . flip runStateT (RenameEnv maxI mempty mempty)
+szEnvLens :: Lens' RenameEnv SizeEnv
+szEnvLens f s = fmap (\x -> s { szEnv = x }) (f (szEnv s))
+
+runMonoM :: Int -> MonoM a -> Either (Error ()) (a, (Int, SizeEnv))
+runMonoM maxI = fmap (second (maxState &&& szEnv)) . flip runStateT (RenameEnv maxI mempty mempty mempty)
 
 freshName :: T.Text -> a -> MonoM (Name a)
 freshName n ty = do
@@ -157,6 +165,7 @@ renameMonoM = traverse renameDecl
 closedModule :: Module () (StackType ()) (StackType ()) -> MonoM (Module () (StackType ()) (StackType ()))
 closedModule m = addExports <$> do
     { fn' <- traverse (uncurry specializeDecl . drop1) fnDecls
+    ; traverse_ insTyDecl $ nubOrd (snd3 <$> tyDecls)
     ; ty' <- specializeTyDecls tyDecls
     ; pure (ty' ++ fn')
     }
@@ -181,15 +190,32 @@ specializeTyDecls ds = traverse (uncurry mkTyDecl) processed
           process tyDs@((_, x, _):_) = (x, zip (fst3 <$> tyDs) (thd3 <$> tyDs))
           process []                 = error "Empty group!"
 
+isTyVar :: KempeTy a -> Bool
+isTyVar TyVar{} = True
+isTyVar _       = False
+
+sizeLeaf :: [KempeTy a] -> MonoM Int64
+sizeLeaf tys =
+    sizeStack <$> gets szEnv <*> pure (filter (not . isTyVar) tys)
+
+insTyDecl :: KempeDecl a c b -> MonoM ()
+insTyDecl (TyDecl _ (Name _ (Unique k) _) _ leaves) = do
+    leafSizes <- traverse sizeLeaf (fmap snd leaves)
+    -- this is kinda sketch because it takes max w/o tyvars
+    let consSz = maximum leafSizes
+    modifying szEnvLens (IM.insert k consSz)
+insTyDecl _ = error "Shouldn't happen."
+
 mkTyDecl :: KempeDecl () (StackType ()) (StackType ()) -> [(TyName (StackType ()), StackType ())] -> MonoM (KempeDecl () (StackType ()) (StackType ()))
 mkTyDecl (TyDecl _ tn ns preConstrs) constrs = do
-    renCons <- traverse (\(tn', ty) -> do { ty'@(is, _) <- tryMono ty ; (, is) <$> renamedCons (tn' $> ty') ty' (ConsAnn (szType ty') (getTag tn')) }) constrs
+    env <- gets szEnv
+    renCons <- traverse (\(tn', ty) -> do { ty'@(is, _) <- tryMono ty ; (, is) <$> renamedCons (tn' $> ty') ty' (ConsAnn (szType env ty') (getTag tn')) }) constrs
     pure $ TyDecl () tn ns renCons
     where indexAt p xs = fst $ fromMaybe (error "Internal error.") $ find (\(_, x) -> p x) (zip [0..] xs)
           getTag (Name _ u _) = indexAt (== u) preIxes
           preIxes = fmap (unique . fst) preConstrs
-          szType (_, [o]) = 1 + size o
-          szType _        = error "Internal error: ill-typed constructor."
+          szType env (_, [o]) = 1 + size env o
+          szType _ _          = error "Internal error: ill-typed constructor."
 mkTyDecl _ _ = error "Shouldn't happen."
 
 specializeDecl :: KempeDecl () (StackType ()) (StackType ()) -> StackType () -> MonoM (KempeDecl () (StackType ()) (StackType ()))

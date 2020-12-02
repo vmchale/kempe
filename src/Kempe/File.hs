@@ -14,6 +14,7 @@ import           Control.Exception         (Exception, throwIO)
 import           Data.Bifunctor            (bimap)
 import qualified Data.ByteString.Lazy      as BSL
 import qualified Data.Set                  as S
+import           Data.Tuple.Extra          (fst3)
 import           Kempe.AST
 import           Kempe.Asm.X86.Type
 import           Kempe.Error
@@ -45,13 +46,13 @@ dumpTyped fp = do
 dumpMono :: FilePath -> IO ()
 dumpMono fp = do
     (i, m) <- parsedFp fp
-    mMono <- yeetIO $ monomorphize i m
+    (mMono, _) <- yeetIO $ monomorphize i m
     putDoc $ prettyTypedModule (fmap (bimap fromMonoConsAnn fromMono) mMono)
     where fromMono (is, os) = StackType S.empty is os
           fromMonoConsAnn (ConsAnn _ _ ty) = fromMono ty
 
 dumpIR :: Int -> Module a c b -> Doc ann
-dumpIR = prettyIR . fst .* irGen
+dumpIR = prettyIR . fst3 .* irGen
 
 dumpX86 :: Int -> Module a c b -> Doc ann
 dumpX86 = prettyAsm .* x86Alloc

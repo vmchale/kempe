@@ -18,6 +18,7 @@ module Kempe.AST ( BuiltinTy (..)
                  , Module
                  , freeVars
                  , MonoStackType
+                 , SizeEnv
                  , size
                  , sizeStack
                  , prettyMonoStackType
@@ -37,6 +38,7 @@ import           Data.Bitraversable      (Bitraversable (..))
 import qualified Data.ByteString.Lazy    as BSL
 import           Data.Functor            (void)
 import           Data.Int                (Int64, Int8)
+import qualified Data.IntMap             as IM
 import           Data.List.NonEmpty      (NonEmpty)
 import qualified Data.List.NonEmpty      as NE
 import           Data.Monoid             (Sum (..))
@@ -45,6 +47,7 @@ import           Data.Text.Lazy.Encoding (decodeUtf8)
 import           Data.Word               (Word8)
 import           GHC.Generics            (Generic)
 import           Kempe.Name
+import           Kempe.Unique
 import           Numeric.Natural
 import           Prettyprinter           (Doc, Pretty (pretty), align, braces, brackets, colon, concatWith, fillSep, hsep, parens, pipe, sep, (<+>))
 
@@ -102,7 +105,7 @@ data Pattern c b = PatternInt b Integer
                  | PatternCons c (TyName c) -- a constructed pattern
                  | PatternWildcard b
                  | PatternBool b Bool
-                 deriving (Eq, Generic, NFData, Functor, Foldable, Traversable)
+                 deriving (Eq, Ord, Generic, NFData, Functor, Foldable, Traversable)
 
 instance Bifunctor Pattern where
     second = fmap
@@ -161,7 +164,7 @@ data Atom c b = AtName b (Name b)
               | BoolLit b Bool
               | AtBuiltin b BuiltinFn
               | AtCons c (TyName c)
-              deriving (Eq, Generic, NFData, Functor, Foldable, Traversable)
+              deriving (Eq, Ord, Generic, NFData, Functor, Foldable, Traversable)
 
 instance Bifunctor Atom where
     second = fmap
@@ -236,7 +239,7 @@ data BuiltinFn = Drop
                | Xor
                | IntNeg
                | Popcount
-               deriving (Eq, Generic, NFData)
+               deriving (Eq, Ord, Generic, NFData)
 
 instance Pretty BuiltinFn where
     pretty Drop       = "drop"
@@ -272,7 +275,7 @@ instance Pretty BuiltinFn where
 
 data ABI = Cabi
          | Kabi
-         deriving (Eq, Generic, NFData)
+         deriving (Eq, Ord, Generic, NFData)
 
 instance Pretty ABI where
     pretty Cabi = "cabi"
@@ -295,7 +298,7 @@ data KempeDecl a c b = TyDecl a (TyName a) [Name a] [(TyName b, [KempeTy a])]
                      | FunDecl b (Name b) [KempeTy a] [KempeTy a] [Atom c b]
                      | ExtFnDecl b (Name b) [KempeTy a] [KempeTy a] BSL.ByteString -- ShortByteString?
                      | Export b ABI (Name b)
-                     deriving (Eq, Generic, NFData, Functor, Foldable, Traversable)
+                     deriving (Eq, Ord, Generic, NFData, Functor, Foldable, Traversable)
 
 instance Bifunctor (KempeDecl a) where
     first _ (TyDecl x tn ns ls)        = TyDecl x tn ns ls
@@ -339,21 +342,22 @@ extrVars (TyApp _ ty ty') = extrVars ty ++ extrVars ty'
 freeVars :: [KempeTy a] -> S.Set (Name a)
 freeVars tys = S.fromList (concatMap extrVars tys)
 
--- | Don't call this on ill-kinded types; it won't throw any error.
-size :: KempeTy a -> Int64
-size (TyBuiltin _ TyInt)      = 8 -- since we're only targeting x86_64 and aarch64 we have 64-bit 'Int's
-size (TyBuiltin _ TyBool)     = 1
-size (TyBuiltin _ TyInt8)     = 1
-size (TyBuiltin _ TyWord)     = 8
-size TyVar{}                  = error "Internal error: type variables should not be present at this stage."
-size TyNamed{}                = undefined
-size (TyApp _ TyNamed{} ty)   = undefined
-size (TyApp _ ty@TyApp{} ty') = size ty + size ty'
-size (TyApp _ TyBuiltin{} _)  = error "Internal error: ill-kinded type!"
-size (TyApp _ TyVar{} _)      = error "Internal error: type variables should not be present at this stage."
+type SizeEnv = IM.IntMap Int64
 
-sizeStack :: [KempeTy a] -> Int64
-sizeStack = getSum . foldMap (Sum . size)
+-- the kempe sizing system is kind of fucked (it works tho)
+
+-- | Don't call this on ill-kinded types; it won't throw any error.
+size :: SizeEnv -> KempeTy a -> Int64
+size _ (TyBuiltin _ TyInt)                 = 8 -- since we're only targeting x86_64 and aarch64 we have 64-bit 'Int's
+size _ (TyBuiltin _ TyBool)                = 1
+size _ (TyBuiltin _ TyInt8)                = 1
+size _ (TyBuiltin _ TyWord)                = 8
+size _ TyVar{}                             = error "Internal error: type variables should not be present at this stage."
+size env (TyNamed _ (Name _ (Unique k) _)) = IM.findWithDefault (error "Size not in map!") k env
+size env (TyApp _ ty ty')                  = size env ty + size env ty'
+
+sizeStack :: SizeEnv -> [KempeTy a] -> Int64
+sizeStack env = getSum . foldMap (Sum . size env)
 
 -- | Used in "Kempe.Monomorphize" for patterns
 flipStackType :: StackType () -> StackType ()
