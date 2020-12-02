@@ -5,7 +5,7 @@ type Gaussian { Gaussian Int Int }
 unGaussian : Gaussian -- Int Int
            =: [
     { case
-        | Gaussian -> 
+        | Gaussian ->
     }
 ]
 
@@ -16,4 +16,8 @@ grp : a b c -- b a c
 add : Gaussian Gaussian -- Gaussian
     =: [ dip(unGaussian) unGaussian grp + dip(+) Gaussian ]
 
+conjugate : Gaussian -- Gaussian
+          =: [ unGaussian ~ Gaussian ]
+
 %foreign kabi add
+%foreign kabi conjugate
