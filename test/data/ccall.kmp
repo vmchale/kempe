@@ -1,0 +1,7 @@
+rand : -- Int
+     =: $cfun"rand"
+
+randTwice : -- Int Int
+          =: [ rand rand ]
+
+%foreign kabi randTwice
