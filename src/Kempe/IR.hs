@@ -239,7 +239,7 @@ writeDecl env (FunDecl _ (Name _ u _) _ _ as) = do
     (++ [Ret]) . (Labeled bl:) . tryTCO (Just bl) <$> writeAtoms env (Just bl) as
 writeDecl _ (ExtFnDecl ty (Name _ u _) _ _ cName) = do
     bl <- broadcastName u
-    pure [Labeled bl, CCall ty cName, Ret] -- TODO: caller-save registers here
+    pure [Labeled bl, CCall ty cName, Ret]
 writeDecl _ (Export sTy abi n) = pure . WrapKCall abi sTy (encodeUtf8 $ name n) <$> lookupName n
 writeDecl _ TyDecl{} = error "Internal error: type declarations should not exist at this stage"
 
