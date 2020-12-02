@@ -19,7 +19,7 @@ module Kempe.IR ( writeModule
                 ) where
 
 import           Control.DeepSeq            (NFData)
-import           Data.Foldable              (toList)
+import           Data.Foldable              (toList, traverse_)
 import           Data.List.NonEmpty         (NonEmpty)
 import qualified Data.List.NonEmpty         as NE
 -- strict b/c it's faster according to benchmarks
@@ -92,11 +92,10 @@ getTemp8 = Temp8 <$> getTemp
 newLabel :: TempM Label
 newLabel = gets (head . labels) <* modify nextLabels
 
-broadcastName :: Unique -> TempM Label
+broadcastName :: Unique -> TempM ()
 broadcastName (Unique i) = do
     l <- newLabel
     modifying atLabelsLens (IM.insert i l)
-    pure l
 
 lookupName :: Name a -> TempM Label
 lookupName (Name _ (Unique i) _) =
@@ -218,7 +217,7 @@ instance Pretty IntBinOp where
     pretty WordDivIR    = "/~"
 
 writeModule :: SizeEnv -> Module () (ConsAnn MonoStackType) MonoStackType -> TempM [Stmt]
-writeModule env = foldMapA (writeDecl env)
+writeModule env m = traverse_ assignName m *> foldMapA (writeDecl env) m
 
 -- optimize tail-recursion, if possible
 -- This is a little slow
@@ -232,13 +231,20 @@ tryTCO (Just l) stmts =
                 KCall l' | l == l' -> init stmts ++ [Jump l]
                 _                  -> stmts
 
+assignName :: KempeDecl a c b -> TempM ()
+assignName (FunDecl _ (Name _ u _) _ _ _) = broadcastName u
+assignName (ExtFnDecl _ (Name _ u _) _ _ _) = broadcastName u
+assignName Export{} = pure ()
+assignName TyDecl{} = error "Internal error: type declarations should not exist at this stage"
+
+
 -- FIXME: Current broadcast + write approach fails mutually recursive functions
 writeDecl :: SizeEnv -> KempeDecl () (ConsAnn MonoStackType) MonoStackType -> TempM [Stmt]
-writeDecl env (FunDecl _ (Name _ u _) _ _ as) = do
-    bl <- broadcastName u
+writeDecl env (FunDecl _ n _ _ as) = do
+    bl <- lookupName n
     (++ [Ret]) . (Labeled bl:) . tryTCO (Just bl) <$> writeAtoms env (Just bl) as
-writeDecl _ (ExtFnDecl ty (Name _ u _) _ _ cName) = do
-    bl <- broadcastName u
+writeDecl _ (ExtFnDecl ty n _ _ cName) = do
+    bl <- lookupName n
     pure [Labeled bl, CCall ty cName, Ret]
 writeDecl _ (Export sTy abi n) = pure . WrapKCall abi sTy (encodeUtf8 $ name n) <$> lookupName n
 writeDecl _ TyDecl{} = error "Internal error: type declarations should not exist at this stage"
