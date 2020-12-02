@@ -287,7 +287,12 @@ macros :: Doc ann
 macros = concatWith (<#>)
     [ calleeSave
     , calleeRestore
+    , callerSave
+    , callerRestore
     ]
+
+-- rbx, rbp, r12-r15 callee-saved (non-volatile)
+-- rest caller-saved (volatile)
 
 -- | Save non-volatile registers
 calleeSave :: Doc ann
@@ -300,5 +305,12 @@ calleeRestore =
     "%macro calleerestore 0"
     <#> "%endmacro"
 
--- rbx, rbp, r12-r15 callee-saved (non-volatile)
--- rest caller-saved (volatile)
+callerSave :: Doc ann
+callerSave =
+    "%macro callersave 0"
+    <#> "%endmacro"
+
+callerRestore :: Doc ann
+callerRestore =
+    "%macro callerrestore 0"
+    <#> "%endmacro"
