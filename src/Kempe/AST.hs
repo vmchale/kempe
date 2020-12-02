@@ -32,9 +32,7 @@ module Kempe.AST ( BuiltinTy (..)
                  ) where
 
 import           Control.DeepSeq         (NFData)
-import           Data.Bifoldable         (Bifoldable (bifoldMap))
 import           Data.Bifunctor          (Bifunctor (..))
-import           Data.Bitraversable      (Bitraversable (..))
 import qualified Data.ByteString.Lazy    as BSL
 import           Data.Functor            (void)
 import           Data.Int                (Int64, Int8)
@@ -114,18 +112,6 @@ instance Bifunctor Pattern where
     first _ (PatternWildcard l) = PatternWildcard l
     first _ (PatternBool l b)   = PatternBool l b
 
-instance Bifoldable Pattern where
-    bifoldMap _ g (PatternInt l i)    = foldMap g (PatternInt l i)
-    bifoldMap _ g (PatternWildcard l) = foldMap g (PatternWildcard l)
-    bifoldMap _ g (PatternBool l b)   = foldMap g (PatternBool l b)
-    bifoldMap f _ (PatternCons l tn)  = f l <> foldMap f tn
-
-instance Bitraversable Pattern where
-    bitraverse _ g (PatternInt l i)    = traverse g (PatternInt l i)
-    bitraverse _ g (PatternWildcard l) = traverse g (PatternWildcard l)
-    bitraverse _ g (PatternBool l b)   = traverse g (PatternBool l b)
-    bitraverse f _ (PatternCons l cn)  = PatternCons <$> f l <*> traverse f cn
-
 instance Pretty (Pattern c a) where
     pretty (PatternInt _ i)   = pretty i
     pretty (PatternBool _ b)  = pretty b
@@ -180,34 +166,6 @@ instance Bifunctor Atom where
     first f (Case l ls)     =
         let (ps, aLs) = NE.unzip ls
             in Case l $ NE.zip (fmap (first f) ps) (fmap (fmap (first f)) aLs)
-
-instance Bifoldable Atom where
-    bifoldMap _ g (AtName x n)    = foldMap g (AtName x n)
-    bifoldMap _ g (IntLit l i)    = foldMap g (IntLit l i)
-    bifoldMap _ g (Int8Lit l i)   = foldMap g (Int8Lit l i)
-    bifoldMap _ g (WordLit l w)   = foldMap g (WordLit l w)
-    bifoldMap _ g (BoolLit l b)   = foldMap g (BoolLit l b)
-    bifoldMap _ g (AtBuiltin l b) = foldMap g (AtBuiltin l b)
-    bifoldMap f _ (AtCons l c)    = f l <> foldMap f c
-    bifoldMap f g (Dip l as)      = g l <> foldMap (bifoldMap f g) as
-    bifoldMap f g (If l as as')   = g l <> foldMap (bifoldMap f g) as <> foldMap (bifoldMap f g) as'
-    bifoldMap f g (Case l ls)     =
-        let (ps, as) = NE.unzip ls
-            in g l <> foldMap (bifoldMap f g) ps <> foldMap (foldMap (bifoldMap f g)) as
-
-instance Bitraversable Atom where
-    bitraverse _ g (AtName x n)    = traverse g (AtName x n)
-    bitraverse _ g (IntLit l i)    = traverse g (IntLit l i)
-    bitraverse _ g (Int8Lit l i)   = traverse g (Int8Lit l i)
-    bitraverse _ g (WordLit l w)   = traverse g (WordLit l w)
-    bitraverse _ g (BoolLit l b)   = traverse g (BoolLit l b)
-    bitraverse _ g (AtBuiltin l b) = traverse g (AtBuiltin l b)
-    bitraverse f _ (AtCons l c)    = AtCons <$> f l <*> traverse f c
-    bitraverse f g (Dip l as)      = Dip <$> g l <*> traverse (bitraverse f g) as
-    bitraverse f g (If l as as')   = If <$> g l <*> traverse (bitraverse f g) as <*> traverse (bitraverse f g) as'
-    bitraverse f g (Case l ls)     =
-        let (ps, as) = NE.unzip ls
-            in Case <$> g l <*> (NE.zip <$> traverse (bitraverse f g) ps <*> traverse (traverse (bitraverse f g)) as)
 
 data BuiltinFn = Drop
                | Swap
@@ -306,18 +264,6 @@ instance Bifunctor (KempeDecl a) where
     first _ (ExtFnDecl l n tys tys' b) = ExtFnDecl l n tys tys' b
     first _ (Export l abi n)           = Export l abi n
     second = fmap
-
-instance Bifoldable (KempeDecl a) where
-    bifoldMap _ g (TyDecl x tn ns ls)        = foldMap g (TyDecl x tn ns ls)
-    bifoldMap _ g (ExtFnDecl l n tys tys' b) = foldMap g (ExtFnDecl l n tys tys' b)
-    bifoldMap _ g (Export l abi n)           = foldMap g (Export l abi n)
-    bifoldMap f g (FunDecl x n _ _ a)        = g x <> foldMap g n <> foldMap (bifoldMap f g) a
-
-instance Bitraversable (KempeDecl a) where
-    bitraverse _ g (TyDecl l tn ns ls)        = traverse g (TyDecl l tn ns ls)
-    bitraverse f g (FunDecl x n tys tys' a)   = FunDecl <$> g x <*> traverse g n <*> pure tys <*> pure tys' <*> traverse (bitraverse f g) a
-    bitraverse _ g (ExtFnDecl l n tys tys' b) = traverse g (ExtFnDecl l n tys tys' b)
-    bitraverse _ g (Export l abi n)           = traverse g (Export l abi n)
 
 prettyModuleGeneral :: (Atom c b -> Doc ann) -> Module a c b -> Doc ann
 prettyModuleGeneral atomizer = sep . fmap (prettyKempeDecl atomizer)
