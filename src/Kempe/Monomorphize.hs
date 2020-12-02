@@ -17,7 +17,6 @@ module Kempe.Monomorphize ( closedModule
 
 import           Control.Arrow              ((&&&))
 import           Control.Monad              ((<=<))
-import Data.Tuple (swap)
 import           Control.Monad.Except       (MonadError, throwError)
 import           Control.Monad.State.Strict (StateT, gets, runStateT)
 import           Data.Bifunctor             (second)
@@ -32,6 +31,7 @@ import qualified Data.Map                   as M
 import           Data.Maybe                 (fromMaybe, mapMaybe)
 import qualified Data.Set                   as S
 import qualified Data.Text                  as T
+import           Data.Tuple                 (swap)
 import           Data.Tuple.Extra           (fst3, snd3, thd3)
 import           Kempe.AST
 import           Kempe.Error
