@@ -60,4 +60,4 @@ randTwice : -- Int Int
 odd : Int -- Bool
     =: [ 2 % 0 = ]
 
-%foreign cabi randTwice
+%foreign kabi randTwice
