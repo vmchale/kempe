@@ -32,6 +32,6 @@ eval "$(kc --bash-completion-script kc)"
     is broken)
   * If pattern matches fail at runtime, code just keeps running with whatever
     was after the jumps (no pattern match exhaustiveness checker)
-  * Can't export or call C functions with more than 6 arguments; can't accept or
+  * Can't export or call C functions with more than 6 arguments; can't call or
     export large arguments (i.e. structs) passed by value.
   * Sizing for ADTs is not rigorous.
