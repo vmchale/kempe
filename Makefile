@@ -7,7 +7,7 @@ MAKEFLAGS += --warn-undefined-variables --no-builtin-rules
 HS_SRC := $(shell find src -type f) kempe.cabal
 
 moddeps.svg: $(HS_SRC)
-	cd src && graphmod --no-cabal Kempe.Pipeline | dot -Tsvg -o ../$@
+	cd src && graphmod --no-cabal Kempe.File | dot -Tsvg -o ../$@
 
 docs: docs/manual.pdf docs/manual.html
 
