@@ -253,3 +253,4 @@ allocReg (Jne _ l)                             = pure $ Jne () l
 allocReg (MovRCTag l r b)                      = MovRCTag () <$> useReg l r <*> pure b -- don't need to free anything
 allocReg (DivR l r)                            = (DivR () <$> useReg l r) <* freeDone l
 allocReg (NasmMacro0 _ b)                      = pure $ NasmMacro0 () b
+allocReg (CallBS _ b)                      = pure $ CallBS () b

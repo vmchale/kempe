@@ -16,10 +16,12 @@ module Kempe.Asm.X86.Type ( X86 (..)
 
 import           Control.DeepSeq    (NFData)
 import qualified Data.ByteString    as BS
+import qualified Data.ByteString.Lazy as BSL
 import           Data.Foldable      (toList)
 import           Data.Int           (Int64, Int8)
 import qualified Data.Set           as S
 import           Data.Text.Encoding (decodeUtf8)
+import qualified Data.Text.Lazy.Encoding as TL
 import           Data.Word          (Word8)
 import           GHC.Generics       (Generic)
 import           Prettyprinter      (Doc, Pretty (pretty), braces, brackets, colon, concatWith, hardline, indent, punctuate, (<+>))
@@ -159,6 +161,7 @@ data X86 reg a = PushReg { ann :: a, rSrc :: reg }
                | PushConst { ann :: a, iSrc :: Int64 }
                | Jump { ann :: a, label :: Label }
                | Call { ann :: a, label :: Label }
+               | CallBS { ann :: a, bslLabel :: BSL.ByteString }
                | Ret { ann :: a }
                -- intel-ish syntax; destination first
                | MovRA { ann :: a, rDest :: reg, addrSrc :: Addr reg }
@@ -272,7 +275,8 @@ instance Pretty reg => Pretty (X86 reg a) where
     pretty (Jge _ l)            = i4 ("jge" <+> prettyLabel l)
     pretty (Jle _ l)            = i4 ("jle" <+> prettyLabel l)
     pretty (MovRCTag _ r b)     = i4 ("mov" <+> pretty r <> "," <+> pretty b)
-    pretty (NasmMacro0 _ b)     = pretty (decodeUtf8 b)
+    pretty (NasmMacro0 _ b)     = i4 (pretty (decodeUtf8 b))
+    pretty (CallBS _ b) = i4 ("call" <+> pretty (TL.decodeUtf8 b))
 
 prettyLines :: [Doc ann] -> Doc ann
 prettyLines = concatWith (<#>)

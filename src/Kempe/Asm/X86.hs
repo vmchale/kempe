@@ -137,6 +137,8 @@ irEmit _ (IR.MovTemp r1 (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r2) (IR.ConstInt 
     pure [ SubRC () (toAbsReg r1) i ]
 irEmit _ (IR.MovTemp r1 (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r2) (IR.ConstInt i))) | r1 == r2 = do
     pure [ AddRC () (toAbsReg r1) i ]
+irEmit env (IR.CCall (is, [o]) b) | all (\i -> size env i <= 8) is && size env o <= 8 && length is <= 6 =
+    pure $ [NasmMacro0 () "callersave", CallBS () b, NasmMacro0 () "callerrestore"]
 -- For 128-bit returns we'd have to use rax and rdx
 irEmit env (IR.WrapKCall Cabi (is, [o]) n l) | all (\i -> size env i <= 8) is && size env o <= 8 && length is <= 6 = do
     { let offs = scanl' (+) 0 (fmap (size env) is)
