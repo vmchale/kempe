@@ -274,8 +274,11 @@ instance Pretty reg => Pretty (X86 reg a) where
     pretty (MovRCTag _ r b)     = i4 ("mov" <+> pretty r <> "," <+> pretty b)
     pretty (NasmMacro0 _ b)     = pretty (decodeUtf8 b)
 
+prettyLines :: [Doc ann] -> Doc ann
+prettyLines = concatWith (<#>)
+
 prettyAsm :: Pretty reg => [X86 reg a] -> Doc ann
-prettyAsm = ((prolegomena <#> macros <#> "section .text" <> hardline) <>) . concatWith (<#>) . fmap pretty
+prettyAsm = ((prolegomena <#> macros <#> "section .text" <> hardline) <>) . prettyLines . fmap pretty
 
 prettyDebugAsm :: Pretty reg => [X86 reg Liveness] -> Doc ann
 prettyDebugAsm = concatWith (\x y -> x <> hardline <> y) . fmap prettyLive
@@ -284,7 +287,7 @@ prolegomena :: Doc ann
 prolegomena = "section .bss" <> hardline <> "kempe_data: resb 0x8012" -- 32 kb
 
 macros :: Doc ann
-macros = concatWith (<#>)
+macros = prettyLines
     [ calleeSave
     , calleeRestore
     , callerSave
@@ -298,12 +301,16 @@ macros = concatWith (<#>)
 calleeSave :: Doc ann
 calleeSave =
     "%macro calleesave 0"
+    <#> prettyLines (fmap pretty toPush)
     <#> "%endmacro"
+    where toPush = PushReg () <$> [Rbx, Rbp, R12, R13, R14, R15]
 
 calleeRestore :: Doc ann
 calleeRestore =
     "%macro calleerestore 0"
+    <#> prettyLines (fmap pretty toPop)
     <#> "%endmacro"
+    where toPop = PopReg () <$> [R15, R14, R13, R12, Rbp, Rbx]
 
 callerSave :: Doc ann
 callerSave =
