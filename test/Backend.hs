@@ -39,6 +39,7 @@ backendTests =
         , codegen "lib/numbertheory.kmp"
         , codegen "test/examples/bool.kmp"
         , codegen "lib/gaussian.kmp"
+        , codegen "test/data/ccall.kmp"
         ]
 
 codegen :: FilePath -> TestTree
