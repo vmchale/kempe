@@ -131,6 +131,14 @@ Kempe supports sum types, for instance:
 type Either a b { Left a | Right b }
 ```
 
+Note that empty sum types such as
+
+```
+type Void {}
+```
+
+are not really supported.
+
 ### Pattern Matching
 
 Sum types are taken apart with pattern matching, viz.
