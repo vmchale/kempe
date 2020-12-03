@@ -9,6 +9,7 @@ import           Kempe.Asm.X86
 import           Kempe.Asm.X86.ControlFlow
 import           Kempe.Asm.X86.Linear
 import           Kempe.Asm.X86.Liveness
+import           Kempe.Check.Pattern
 import           Kempe.File
 import           Kempe.IR
 import           Kempe.IR.Opt
@@ -43,6 +44,10 @@ main =
                       , bench "closedModule" $ nf (runSpecialize =<<) (runAssign p)
                       , bench "closure" $ nf (\m -> closure (m, mkModuleMap m)) (bivoid <$> snd p)
                       ]
+                , env eitherMod $ \ e ->
+                    bgroup "Pattern match exhaustiveness checker"
+                        [ bench "lib/either.kmp" $ nf checkModuleExhaustive e
+                        ]
                   , env parsedInteresting $ \ ~(f, n) ->
                       bgroup "Inliner"
                         [ bench "examples/factorial.kmp" $ nf inline (snd f)
@@ -96,6 +101,7 @@ main =
           splitmix = yeetIO . parseWithMax =<< BSL.readFile "examples/splitmix.kmp"
           fac = yeetIO . parseWithMax =<< BSL.readFile "examples/factorial.kmp"
           num = yeetIO . parseWithMax =<< BSL.readFile "lib/numbertheory.kmp"
+          eitherMod = yeetIO . parse =<< BSL.readFile "lib/either.kmp"
           parsedInteresting = (,) <$> fac <*> num
           prelude = yeetIO . parseWithMax =<< BSL.readFile "prelude/fn.kmp"
           forTyEnv = (,,) <$> parsedM <*> splitmix <*> prelude

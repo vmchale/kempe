@@ -40,6 +40,7 @@ library kempe-modules
         Kempe.Pipeline
         Kempe.Shuttle
         Kempe.Inline
+        Kempe.Check.Pattern
         Kempe.IR
         Kempe.IR.Opt
         Kempe.Asm.X86
@@ -50,7 +51,6 @@ library kempe-modules
     hs-source-dirs:   src
     other-modules:
         Kempe.Check.Restrict
-        Kempe.Check.Pattern
         Kempe.Unique
         Kempe.Name
         Kempe.Error
