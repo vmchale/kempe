@@ -10,8 +10,6 @@ restrictConstructors :: Module a c b -> Maybe (Error a)
 restrictConstructors = foldMapAlternative restrictDecl
 
 restrictDecl :: KempeDecl a c b -> Maybe (Error a)
-restrictDecl FunDecl{}         = Nothing
-restrictDecl ExtFnDecl{}       = Nothing
-restrictDecl Export{}          = Nothing
 restrictDecl (TyDecl l n _ ls) | length ls > 256 = Just (FatSumType l n)
                                | otherwise = Nothing
+restrictDecl _                 = Nothing

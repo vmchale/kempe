@@ -50,6 +50,7 @@ library kempe-modules
     hs-source-dirs:   src
     other-modules:
         Kempe.Check.Restrict
+        Kempe.Check.Pattern
         Kempe.Unique
         Kempe.Name
         Kempe.Error

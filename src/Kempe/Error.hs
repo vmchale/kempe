@@ -25,6 +25,7 @@ data Error a = PoorScope a (Name a)
              | IllKinded a (KempeTy a)
              | BadType a
              | FatSumType a (TyName a)
+             | InexhaustiveMatch a
              deriving (Generic, NFData)
 
 instance (Pretty a) => Show (Error a) where
@@ -42,5 +43,6 @@ instance Pretty (Error a) where
     pretty (IllKinded _ ty)              = "Ill-kinded type:" <+> squotes (pretty ty) <> ". Note that type variables have kind ⭑ in Kempe."
     pretty (BadType _)                   = "All types appearing in a signature must have kind ⭑"
     pretty (FatSumType _ tn)             = "Sum type" <+> pretty tn <+> "has too many constructors! Sum types are limited to 256 constructors in Kempe."
+    pretty InexhaustiveMatch{}           = "Inexhaustive pattern match."
 
 instance (Pretty a, Typeable a) => Exception (Error a)

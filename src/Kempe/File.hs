@@ -13,10 +13,12 @@ import           Control.Composition       ((.*))
 import           Control.Exception         (Exception, throwIO)
 import           Data.Bifunctor            (bimap)
 import qualified Data.ByteString.Lazy      as BSL
+import           Data.Functor              (void)
 import qualified Data.Set                  as S
 import           Data.Tuple.Extra          (fst3)
 import           Kempe.AST
 import           Kempe.Asm.X86.Type
+import           Kempe.Check.Pattern
 import           Kempe.Error
 import           Kempe.IR
 import           Kempe.Lexer
@@ -28,11 +30,17 @@ import           Kempe.TyAssign
 import           Prettyprinter             (Doc, hardline)
 import           Prettyprinter.Render.Text (putDoc)
 
+mErr :: Maybe (Error ()) -> Either (Error ()) ()
+mErr Nothing    = Right ()
+mErr (Just err) = Left err
+
 tcFile :: FilePath -> IO (Either (Error ()) ())
 tcFile fp = do
     contents <- BSL.readFile fp
     (maxU, m) <- yeetIO $ parseWithMax contents
-    pure $ fst <$> runTypeM maxU (checkModule m)
+    pure $ do
+        void $ runTypeM maxU (checkModule m)
+        mErr $ checkModuleExhaustive (void <$> m)
 
 yeetIO :: Exception e => Either e a -> IO a
 yeetIO = either throwIO pure

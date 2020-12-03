@@ -102,7 +102,7 @@ instance Pretty (KempeTy a) where
     pretty (TyApp _ ty ty') = parens (pretty ty <+> pretty ty')
 
 data Pattern c b = PatternInt b Integer
-                 | PatternCons c (TyName c) -- a constructed pattern
+                 | PatternCons { patternKind :: c, patternName :: TyName c } -- a constructed pattern
                  | PatternWildcard b
                  | PatternBool b Bool
                  deriving (Eq, Ord, Generic, NFData, Functor, Foldable, Traversable)
