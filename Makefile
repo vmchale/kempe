@@ -10,10 +10,10 @@ BINS := bin/x86_64-linux-kc.lz \
     bin/x86_64-linux-kc.gz \
     bin/x86_64-linux-kc.zst
 
-bins: $(BINS)
-
 moddeps.svg: $(HS_SRC)
 	cd src && graphmod --no-cabal Kempe.File | dot -Tsvg -o ../$@
+
+bins: $(BINS)
 
 docs: docs/manual.pdf docs/manual.html
 
