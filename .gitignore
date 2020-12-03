@@ -32,3 +32,4 @@ numbertheory
 numbertheory.S
 *_dats.c
 kc-perf/bench
+bin

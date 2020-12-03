@@ -6,6 +6,12 @@ MAKEFLAGS += --warn-undefined-variables --no-builtin-rules
 
 HS_SRC := $(shell find src -type f) kempe.cabal
 
+BINS := bin/x86_64-linux-kc.lz \
+    bin/x86_64-linux-kc.gz \
+    bin/x86_64-linux-kc.zst
+
+bins: $(BINS)
+
 moddeps.svg: $(HS_SRC)
 	cd src && graphmod --no-cabal Kempe.File | dot -Tsvg -o ../$@
 
@@ -39,4 +45,20 @@ install:
 	cabal install exe:kc --overwrite-policy=always
 
 clean:
-	rm -rf dist-newstyle *.rlib *.d *.rmeta *.o stack.yaml.lock factorial.S factorial splitmix.S numbertheory.S numbertheory *.so
+	rm -rf dist-newstyle *.rlib *.d *.rmeta *.o stack.yaml.lock factorial.S factorial splitmix.S numbertheory.S numbertheory *.so bin
+
+%.zst: %
+	sak compress $< $@ --best
+
+%.lz: %
+	sak compress $< $@ --best
+
+%.gz: %
+	sak compress $< $@ --best
+
+bin/x86_64-linux-kc: $(HS_SRC)
+	@mkdir -p $(dir $@)
+	cabal build exe:kc --enable-executable-static
+	export BIN=$$(fd 'x86_64-linux.*kc$$' dist-newstyle -t x -p -I); \
+	    cp $$BIN $@ ; \
+	    strip $@
