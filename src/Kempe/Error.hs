@@ -3,6 +3,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Kempe.Error ( Error (..)
+                   , mErr
                    ) where
 
 import           Control.DeepSeq   (NFData)
@@ -27,6 +28,10 @@ data Error a = PoorScope a (Name a)
              | FatSumType a (TyName a)
              | InexhaustiveMatch a
              deriving (Generic, NFData)
+
+mErr :: Maybe (Error ()) -> Either (Error ()) ()
+mErr Nothing    = Right ()
+mErr (Just err) = Left err
 
 instance (Pretty a) => Show (Error a) where
     show = show . pretty

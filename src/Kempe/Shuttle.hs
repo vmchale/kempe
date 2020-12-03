@@ -3,8 +3,9 @@
 module Kempe.Shuttle ( monomorphize
                      ) where
 
-import           Data.Functor       (void)
+import           Data.Functor        (void)
 import           Kempe.AST
+import           Kempe.Check.Pattern
 import           Kempe.Error
 import           Kempe.Inline
 import           Kempe.Monomorphize
@@ -15,7 +16,9 @@ inlineAssignFlatten :: Int
                     -> Either (Error ()) (Module () (ConsAnn MonoStackType) (StackType ()), (Int, SizeEnv))
 inlineAssignFlatten ctx m = do
     -- check before inlining otherwise users would get weird errors
-    void $ runTypeM ctx (checkModule m)
+    void $ do
+        void $ runTypeM ctx (checkModule m)
+        mErr $ checkModuleExhaustive (void <$> m)
     (mTy, i) <- runTypeM ctx (assignModule $ inline m)
     runMonoM i (flattenModule mTy)
 

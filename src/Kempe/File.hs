@@ -30,10 +30,6 @@ import           Kempe.TyAssign
 import           Prettyprinter             (Doc, hardline)
 import           Prettyprinter.Render.Text (putDoc)
 
-mErr :: Maybe (Error ()) -> Either (Error ()) ()
-mErr Nothing    = Right ()
-mErr (Just err) = Left err
-
 tcFile :: FilePath -> IO (Either (Error ()) ())
 tcFile fp = do
     contents <- BSL.readFile fp
