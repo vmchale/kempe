@@ -34,6 +34,7 @@ module Kempe.AST ( BuiltinTy (..)
 import           Control.DeepSeq         (NFData)
 import           Data.Bifunctor          (Bifunctor (..))
 import qualified Data.ByteString.Lazy    as BSL
+import           Data.Foldable           (toList)
 import           Data.Functor            (void)
 import           Data.Int                (Int64, Int8)
 import qualified Data.IntMap             as IM
@@ -47,7 +48,8 @@ import           GHC.Generics            (Generic)
 import           Kempe.Name
 import           Kempe.Unique
 import           Numeric.Natural
-import           Prettyprinter           (Doc, Pretty (pretty), align, braces, brackets, colon, concatWith, fillSep, hsep, parens, pipe, sep, (<+>))
+import           Prettyprinter           (Doc, Pretty (pretty), align, braces, brackets, colon, concatWith, fillSep, hsep, parens, pipe, sep, vsep, (<+>))
+import           Prettyprinter.Ext
 
 data BuiltinTy = TyInt
                | TyBool
@@ -118,6 +120,10 @@ instance Pretty (Pattern c a) where
     pretty PatternWildcard{}  = "_"
     pretty (PatternCons _ tn) = pretty tn
 
+prettyTypedPattern :: Pattern (StackType ()) (StackType ()) -> Doc ann
+prettyTypedPattern (PatternCons ty tn) = parens (pretty tn <+> ":" <+> pretty ty)
+prettyTypedPattern p                   = pretty p
+
 instance Pretty (Atom c a) where
     pretty (AtName _ n)    = pretty n
     pretty (Dip _ as)      = "dip(" <> fillSep (fmap pretty as) <> ")"
@@ -128,6 +134,13 @@ instance Pretty (Atom c a) where
     pretty (BoolLit _ b)   = pretty b
     pretty (WordLit _ w)   = pretty w <> "u"
     pretty (Int8Lit _ i)   = pretty i <> "i8"
+    pretty (Case _ ls)     = "case" <+> braces (align (vsep (toList $ fmap (uncurry prettyLeaf) ls)))
+
+prettyLeaf :: Pattern c a -> [Atom c a] -> Doc ann
+prettyLeaf p as = pipe <+> pretty p <+> "->" <+> align (fillSep (fmap pretty as))
+
+prettyTypedLeaf :: Pattern (StackType ()) (StackType ()) -> [Atom (StackType ()) (StackType ())] -> Doc ann
+prettyTypedLeaf p as = pipe <+> prettyTypedPattern p <+> "->" <+> align (fillSep (fmap prettyTyped as))
 
 prettyTyped :: Atom (StackType ()) (StackType ()) -> Doc ann
 prettyTyped (AtName ty n)    = parens (pretty n <+> ":" <+> pretty ty)
@@ -139,6 +152,7 @@ prettyTyped (IntLit _ i)     = pretty i
 prettyTyped (BoolLit _ b)    = pretty b
 prettyTyped (Int8Lit _ i)    = pretty i <> "i8"
 prettyTyped (WordLit _ n)    = pretty n <> "u"
+prettyTyped (Case _ ls)      = "case" <+> braces (align (vsep (toList $ fmap (uncurry prettyTypedLeaf) ls)))
 
 data Atom c b = AtName b (Name b)
               | Case b (NonEmpty (Pattern c b, [Atom c b]))
@@ -240,9 +254,9 @@ instance Pretty ABI where
     pretty Kabi = "kabi"
 
 prettyKempeDecl :: (Atom c b -> Doc ann) -> KempeDecl a c b -> Doc ann
-prettyKempeDecl atomizer (FunDecl _ n is os as) = pretty n <+> ":" <+> sep (fmap pretty is) <+> "--" <+> sep (fmap pretty os) <+> "=:" <+> brackets (align (fillSep (atomizer <$> as)))
+prettyKempeDecl atomizer (FunDecl _ n is os as) = pretty n <+> align (":" <+> sep (fmap pretty is) <+> "--" <+> sep (fmap pretty os) <#> "=:" <+> brackets (align (fillSep (atomizer <$> as))))
 prettyKempeDecl _ (Export _ abi n)              = "%foreign" <+> pretty abi <+> pretty n
-prettyKempeDecl _ (ExtFnDecl _ n is os b)       = pretty n <+> ":" <+> sep (fmap pretty is) <+> "--" <+> sep (fmap pretty os) <+> "=:" <+> "$cfun" <> pretty (decodeUtf8 b)
+prettyKempeDecl _ (ExtFnDecl _ n is os b)       = pretty n <+> align (":" <+> sep (fmap pretty is) <+> "--" <+> sep (fmap pretty os) <#> "=:" <+> "$cfun" <> pretty (decodeUtf8 b))
 prettyKempeDecl _ (TyDecl _ tn ns ls)           = "type" <+> pretty tn <+> hsep (fmap pretty ns) <+> braces (concatWith (\x y -> x <+> pipe <+> y) $ fmap (uncurry prettyTyLeaf) ls)
 
 instance Pretty (KempeDecl a b c) where
