@@ -16,6 +16,7 @@ import           Data.Bifunctor             (bimap, second)
 import           Data.Foldable              (traverse_)
 import           Data.Functor               (void, ($>))
 import qualified Data.IntMap                as IM
+import           Data.List                  (foldl')
 import           Data.List.NonEmpty         (NonEmpty (..))
 import qualified Data.Set                   as S
 import qualified Data.Text                  as T
@@ -303,7 +304,8 @@ tyInsertLeaf n@(Name _ (Unique k) _) vars (Name _ (Unique i) _, ins) | S.null va
     modifying constructorTypesLens (IM.insert i (voidStackType $ StackType vars ins [TyNamed undefined n])) *>
     modifying kindEnvLens (IM.insert k Star)
                                                | otherwise =
-    modifying constructorTypesLens (IM.insert i (voidStackType $ StackType vars ins [app (TyNamed undefined n) (S.toList vars)])) *>
+    let ty = voidStackType $ StackType vars ins [app (TyNamed undefined n) (S.toList vars)] in
+    modifying constructorTypesLens (IM.insert i ty) *>
     modifying kindEnvLens (IM.insert k (mkHKT $ S.size vars))
 
 assignTyLeaf :: Name b
@@ -322,7 +324,7 @@ assignTyLeaf n@(Name _ (Unique k) _) vars (tn@(Name _ (Unique i) _), ins) | S.nu
     (tn $> ty, fmap void ins)
 
 app :: KempeTy a -> [Name a] -> KempeTy a
-app = foldr (\n ty -> TyApp undefined ty (TyVar undefined n))
+app = foldl' (\ty n -> TyApp undefined ty (TyVar undefined n))
 
 kindLookup :: TyName a -> TypeM a Kind
 kindLookup n@(Name _ (Unique i) l) = do

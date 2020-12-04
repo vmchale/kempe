@@ -16,7 +16,7 @@
 - [x] Linear scan register allocator
 - [ ] Graph (?) register allocator
 # Performance
-- [ ] Liveness analysis on a per-decl basis?
+- [ ] Liveness analysis on a per-decl basis? (basic blocks)
 - [ ] Use `cmov` for storing bools
 - [ ] `lea`, `xchg`? `test`?
 ## Data Structures
