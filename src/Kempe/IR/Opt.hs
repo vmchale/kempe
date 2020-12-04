@@ -4,7 +4,7 @@ module Kempe.IR.Opt ( optimize
 import           Kempe.IR
 
 optimize :: [Stmt] -> [Stmt]
-optimize = successiveBumps . removeNop
+optimize = sameTarget . successiveBumps . removeNop
 
 -- | Often IR generation will leave us with something like
 --
@@ -44,6 +44,19 @@ successiveBumps
         :(MovMem e0' k' (Mem 8 e1'))
         :ss) | k == k' && e0 == e1' && e1 == e0' = st : successiveBumps ss
 successiveBumps (s:ss) = s : successiveBumps ss
+
+
+-- | Stuff like
+--
+-- > (movmem (- (reg datapointer) (int 8)) (mem [8] (- (reg datapointer) (int 0))))
+-- > (movmem (- (reg datapointer) (int 8)) (mem [8] (- (reg datapointer) (int 16))))
+sameTarget :: [Stmt] -> [Stmt]
+sameTarget [] = []
+sameTarget
+    ((MovMem e0 k _)
+        :st@(MovMem e0' k' _)
+        :ss) | k == k' && e0 == e0' = st : sameTarget ss
+sameTarget (s:ss) = s : sameTarget ss
 
 removeNop :: [Stmt] -> [Stmt]
 removeNop = filter (not . isNop)
