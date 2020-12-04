@@ -55,9 +55,9 @@
 - [ ] tail recursion modulo cons ?
 - [ ] `.intel_syntax noprefix` for arm
 ## Builtins
-- [ ] `rem` builtin or the like?
+- [ ] `rem` builtin or the like? (basically functions in library)
   - [ ] `sal`, `sar`?
-- [ ] `popcnt` basically
+- [x] `popcnt` basically
 # Test Cases
 - [ ] Unit tests for type merge?
 - [ ] Unit tests for catTypes?

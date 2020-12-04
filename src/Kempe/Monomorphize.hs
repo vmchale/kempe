@@ -2,8 +2,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TupleSections     #-}
 
--- | This module is kind of half-assed. I don't have any references and it fails
--- under various corner cases.
+-- | This module is kind of half-assed. I don't have any references and it
+-- depends on the inliner.
 module Kempe.Monomorphize ( closedModule
                           , MonoM
                           , runMonoM
