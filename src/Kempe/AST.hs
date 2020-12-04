@@ -147,12 +147,12 @@ prettyTyped (AtName ty n)    = parens (pretty n <+> ":" <+> pretty ty)
 prettyTyped (Dip _ as)       = "dip(" <> fillSep (prettyTyped <$> as) <> ")"
 prettyTyped (AtBuiltin ty b) = parens (pretty b <+> ":" <+> pretty ty)
 prettyTyped (AtCons ty tn)   = parens (pretty tn <+> ":" <+> pretty ty)
-prettyTyped (If _ as as')    = "if(" <> align (fillSep (prettyTyped <$> as)) <> ", " <> align (fillSep (prettyTyped <$> as')) <> ")"
+prettyTyped (If _ as as')    = "if(" <> fillSep (prettyTyped <$> as) <> ", " <> fillSep (prettyTyped <$> as') <> ")"
 prettyTyped (IntLit _ i)     = pretty i
 prettyTyped (BoolLit _ b)    = pretty b
 prettyTyped (Int8Lit _ i)    = pretty i <> "i8"
 prettyTyped (WordLit _ n)    = pretty n <> "u"
-prettyTyped (Case _ ls)      = "case" <+> braces (align (vsep (toList $ fmap (uncurry prettyTypedLeaf) ls)))
+prettyTyped (Case _ ls)      = "case" <+> braces (vsep (toList $ fmap (uncurry prettyTypedLeaf) ls))
 
 data Atom c b = AtName b (Name b)
               | Case b (NonEmpty (Pattern c b, [Atom c b]))
