@@ -21,6 +21,9 @@ module Kempe.AST ( BuiltinTy (..)
                  , SizeEnv
                  , size
                  , sizeStack
+                 , SizeEnv'
+                 , size'
+                 , cSize
                  , prettyMonoStackType
                  , prettyTyped
                  , prettyTypedModule
@@ -302,9 +305,14 @@ extrVars (TyApp _ ty ty') = extrVars ty ++ extrVars ty'
 freeVars :: [KempeTy a] -> S.Set (Name a)
 freeVars tys = S.fromList (concatMap extrVars tys)
 
-type SizeEnv = IM.IntMap Int64
+-- machinery for assigning a constructor to a function of its concrete types
+-- (and then curry forward...)
 
--- the kempe sizing system is kind of fucked (it works tho)
+type Size = [Int64] -> Int64
+type SizeEnv = IM.IntMap Int64
+type SizeEnv' = IM.IntMap Size
+
+-- the kempe sizing system is kind of fucked (it mostly works tho)
 
 -- | Don't call this on ill-kinded types; it won't throw any error.
 size :: SizeEnv -> KempeTy a -> Int64
@@ -315,6 +323,19 @@ size _ (TyBuiltin _ TyWord)                = 8
 size _ TyVar{}                             = error "Internal error: type variables should not be present at this stage."
 size env (TyNamed _ (Name _ (Unique k) _)) = IM.findWithDefault (error "Size not in map!") k env
 size env (TyApp _ ty ty')                  = size env ty + size env ty'
+
+-- | Don't call this on ill-kinded types; it won't throw any error.
+size' :: SizeEnv' -> KempeTy a -> Size
+size' _ (TyBuiltin _ TyInt)                 = const 8
+size' _ (TyBuiltin _ TyBool)                = const 1
+size' _ (TyBuiltin _ TyInt8)                = const 1
+size' _ (TyBuiltin _ TyWord)                = const 8
+size' _ TyVar{}                             = error "Internal error: type variables should not be present at this stage."
+size' env (TyNamed _ (Name _ (Unique k) _)) = IM.findWithDefault (error "Size not in map!") k env
+size' env (TyApp _ ty ty')                  = \tys -> size' env ty (size' env ty' [] : tys)
+
+cSize :: Size -> Int64
+cSize = ($ [])
 
 sizeStack :: SizeEnv -> [KempeTy a] -> Int64
 sizeStack env = getSum . foldMap (Sum . size env)
