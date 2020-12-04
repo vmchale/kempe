@@ -50,6 +50,9 @@ successiveBumps (s:ss) = s : successiveBumps ss
 --
 -- > (movmem (- (reg datapointer) (int 8)) (mem [8] (- (reg datapointer) (int 0))))
 -- > (movmem (- (reg datapointer) (int 8)) (mem [8] (- (reg datapointer) (int 16))))
+--
+-- Basically if two successive 'Stmt's write to the same location, only bother
+-- with the second one.
 sameTarget :: [Stmt] -> [Stmt]
 sameTarget [] = []
 sameTarget
