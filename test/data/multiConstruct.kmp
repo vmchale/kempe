@@ -1,0 +1,8 @@
+type Either a b { Left a | Right b }
+
+type Maybe a { Just a | Nothing }
+
+mkJustRight : Int -- ((Either Int) (Maybe Int))
+            =: [ Just Right ]
+
+%foreign kabi mkJustRight

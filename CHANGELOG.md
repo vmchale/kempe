@@ -1,6 +1,7 @@
 # kempe
 
   * Add optimizations (simplify code so that liveness analysis is quicker)
+  * Fix major bug in kind-checker
 
 ## 0.1.0.1
 

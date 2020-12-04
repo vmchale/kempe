@@ -295,7 +295,7 @@ tyAtoms = foldM
 -- from size,
 mkHKT :: Int -> Kind
 mkHKT 0 = Star
-mkHKT i = TyCons (mkHKT i) Star
+mkHKT i = TyCons (mkHKT $ i - 1) Star
 
 tyInsertLeaf :: Name b -- ^ type being declared
              -> S.Set (Name b) -> (TyName a, [KempeTy b]) -> TypeM () ()
