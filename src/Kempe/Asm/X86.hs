@@ -50,6 +50,8 @@ allocReg8 = AllocReg8 <$> getInt
 runWriteM :: IR.WriteSt -> WriteM a -> a
 runWriteM = flip evalState
 
+-- | This should handle 'MovMem's of divers sizes but for now it just does
+-- 1 byte or 8 bytes at a time.
 irEmit :: SizeEnv -> IR.Stmt -> WriteM [X86 AbsReg ()]
 irEmit _ (IR.Jump l) = pure [Jump () l]
 irEmit _ (IR.Labeled l) = pure [Label () l]
