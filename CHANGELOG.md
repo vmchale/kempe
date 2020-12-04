@@ -1,5 +1,7 @@
 # kempe
 
+  * Add optimizations (simplify code so that liveness analysis is quicker)
+
 ## 0.1.0.1
 
   * Better debug pretty-printer
