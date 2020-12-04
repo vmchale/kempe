@@ -287,3 +287,29 @@ gcd : Int Int -- Int
            , dup dip(%) swap gcd )
        ]
 ```
+
+## Mutual Recursion
+
+`kc` supports mutual recursion:
+
+```
+not : Bool -- Bool
+    =: [
+    { case
+        | True -> False
+        | _    -> True
+    }
+]
+
+odd : Int -- Bool
+    =: [ dup 0 =
+            if( drop False
+              , - 1 even )
+       ]
+
+even : Int -- Bool
+     =: [ dup 0 =
+            if( drop True
+              , - 1 odd )
+        ]
+```

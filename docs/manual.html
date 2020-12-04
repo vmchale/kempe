@@ -255,6 +255,7 @@
 <ul>
 <li><a href="#splitmix-pseudorandom-number-generator">Splitmix Pseudorandom Number Generator</a></li>
 <li><a href="#gcd">GCD</a></li>
+<li><a href="#mutual-recursion">Mutual Recursion</a></li>
 </ul></li>
 </ul>
 </nav>
@@ -425,5 +426,26 @@ next : Word -- Word Word
          if( drop
            , dup dip(%) swap gcd )
        ]</code></pre>
+<h2 id="mutual-recursion">Mutual Recursion</h2>
+<p><code>kc</code> supports mutual recursion:</p>
+<pre><code>not : Bool -- Bool
+    =: [
+    { case
+        | True -&gt; False
+        | _    -&gt; True
+    }
+]
+
+odd : Int -- Bool
+    =: [ dup 0 =
+            if( drop False
+              , - 1 even )
+       ]
+
+even : Int -- Bool
+     =: [ dup 0 =
+            if( drop True
+              , - 1 odd )
+        ]</code></pre>
 </body>
 </html>
