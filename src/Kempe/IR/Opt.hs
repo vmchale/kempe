@@ -45,7 +45,6 @@ successiveBumps
         :ss) | k == k' && e0 == e1' && e1 == e0' = st : successiveBumps ss
 successiveBumps (s:ss) = s : successiveBumps ss
 
-
 -- | Stuff like
 --
 -- > (movmem (- (reg datapointer) (int 8)) (mem [8] (- (reg datapointer) (int 0))))
