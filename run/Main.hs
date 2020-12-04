@@ -3,19 +3,23 @@ module Main (main) where
 import           Control.Exception         (throwIO)
 import           Control.Monad             ((<=<))
 import qualified Data.Version              as V
+import           Kempe.AST
 import           Kempe.File
 import           Options.Applicative
 import qualified Paths_kempe               as P
-import           Prettyprinter             (pretty)
-import           Prettyprinter.Render.Text (putDoc)
+import           Prettyprinter             (LayoutOptions (LayoutOptions), PageWidth (AvailablePerLine), hardline, layoutSmart)
+import           Prettyprinter.Render.Text (renderIO)
 import           System.Exit               (ExitCode (ExitFailure), exitWith)
+import           System.IO                 (stdout)
 
 data Command = TypeCheck !FilePath
              | Compile !FilePath !(Maybe FilePath) !Bool !Bool !Bool -- TODO: take arch on cli
              | Format !FilePath
 
 fmt :: FilePath -> IO ()
-fmt = putDoc <=< fmap (pretty . snd) . parsedFp
+fmt = renderIO stdout <=< fmap (render . (<> hardline) . prettyModule . snd) . parsedFp
+    where render = layoutSmart settings
+          settings = LayoutOptions $ AvailablePerLine 80 0.5
 
 run :: Command -> IO ()
 run (TypeCheck fp)                        = either throwIO pure =<< tcFile fp
