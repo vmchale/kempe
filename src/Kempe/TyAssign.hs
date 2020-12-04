@@ -19,6 +19,7 @@ import qualified Data.IntMap                as IM
 import           Data.List.NonEmpty         (NonEmpty (..))
 import qualified Data.Set                   as S
 import qualified Data.Text                  as T
+import           Data.Tuple.Extra           (fst3)
 import           Kempe.AST
 import           Kempe.Error
 import           Kempe.Name
@@ -280,7 +281,6 @@ assignAtom (Case _ ls) = do
     let newLeaves = fmap dropFst lRes
     pure (resType, Case resType newLeaves)
     where dropFst (_, y, z) = (y, z)
-          fst3 ~(x, _, _) = x
 
 assignAtoms :: [Atom b a] -> TypeM () ([Atom (StackType ()) (StackType ())], StackType ())
 assignAtoms = foldM
