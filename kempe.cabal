@@ -110,7 +110,8 @@ executable kc
     build-depends:
         base -any,
         optparse-applicative -any,
-        kempe-modules -any
+        kempe-modules -any,
+        prettyprinter >=1.7.0
 
     if impl(ghc >=8.0)
         ghc-options:
