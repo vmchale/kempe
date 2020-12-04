@@ -162,13 +162,13 @@ data Exp = ConstInt Int64
          | IntNegIR Exp
          | PopcountIR Exp
          | EqByte Exp Exp
-         deriving (Generic, NFData)
+         deriving (Eq, Generic, NFData)
            -- TODO: one for data, one for C ABI
 
 data BoolBinOp = BoolAnd
                | BoolOr
                | BoolXor
-               deriving (Generic, NFData)
+               deriving (Eq, Generic, NFData)
 
 instance Pretty BoolBinOp where
     pretty BoolAnd = "&"
@@ -181,7 +181,7 @@ data RelBinOp = IntEqIR
               | IntGtIR
               | IntLeqIR
               | IntGeqIR
-              deriving (Generic, NFData)
+              deriving (Eq, Generic, NFData)
 
 instance Pretty RelBinOp where
     pretty IntEqIR  = "="
@@ -202,7 +202,7 @@ data IntBinOp = IntPlusIR
               -- int/word mod are different, see: https://stackoverflow.com/questions/8231882/how-to-implement-the-mod-operator-in-assembly
               | WordModIR
               | WordDivIR
-              deriving (Generic, NFData)
+              deriving (Eq, Generic, NFData)
 
 instance Pretty IntBinOp where
     pretty IntPlusIR    = "+"
