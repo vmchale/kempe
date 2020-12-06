@@ -1,6 +1,6 @@
 *.cpphs linguist-language=Haskell
 *.y linguist-language=Happy
 *.x linguist-language=Alex
-benchmarks/bench.dats linguist-vendored
+ABI/psABI-x86_64.pdf linguist-vendored
 docs/index.html linguist-generated
 docs/index.pdf linguist-generated
