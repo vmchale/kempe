@@ -65,7 +65,7 @@ library kempe-modules
         FlexibleContexts GeneralizedNewtypeDeriving OverloadedStrings
         StandaloneDeriving TupleSections DeriveAnyClass
 
-    ghc-options:      -Wall -O2
+    ghc-options:      -Wall
     build-depends:
         base >=4.11 && <5,
         array -any,
