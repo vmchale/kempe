@@ -555,6 +555,7 @@ copyBytes off1 off2 b
     | b `mod` 8 == 0 =
         let is = fmap (8*) [0..(b `div` 8 - 1)] in
             [ MovMem (dataPointerPlus (i + off1)) 8 (Mem 8 $ dataPointerPlus (i + off2)) | i <- is ]
+    -- TODO: 4 byte chunks, &c. (would require more registers).
     | otherwise =
         [ MovMem (dataPointerPlus (i + off1)) 1 (Mem 1 $ dataPointerPlus (i + off2)) | i <- [0..(b-1)] ]
 
