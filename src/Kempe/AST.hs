@@ -152,7 +152,7 @@ prettyTyped (IntLit _ i)     = pretty i
 prettyTyped (BoolLit _ b)    = pretty b
 prettyTyped (Int8Lit _ i)    = pretty i <> "i8"
 prettyTyped (WordLit _ n)    = pretty n <> "u"
-prettyTyped (Case _ ls)      = "case" <+> braces (vsep (toList $ fmap (uncurry prettyTypedLeaf) ls))
+prettyTyped (Case _ ls)      = braces ("case" <+> (vsep (toList $ fmap (uncurry prettyTypedLeaf) ls)))
 
 data Atom c b = AtName b (Name b)
               | Case b (NonEmpty (Pattern c b, [Atom c b]))
