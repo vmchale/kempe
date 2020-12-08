@@ -1,0 +1,10 @@
+type Param a b c
+    { C a b b
+    | D a b c
+    }
+
+; this should have 7 bytes of padding before the D, so as to match a C constructor
+mkConcrete : -- (((Param Int8) Int) Int8)
+      =: [ 0i8 0 0i8 D ]
+
+%foreign kabi mkConcrete

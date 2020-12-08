@@ -353,10 +353,10 @@ writeAtom _ _ (AtBuiltin _ Xor)         = boolOp BoolXor
 writeAtom _ _ (AtBuiltin _ IntNeg)      = intNeg
 writeAtom _ _ (AtBuiltin _ Popcount)    = wordCount
 writeAtom env _ (AtBuiltin (is, _) Drop)  =
-    let sz = size env (last is) in
+    let sz = size' env (last is) in
         pure [ dataPointerDec sz ]
 writeAtom env _ (AtBuiltin (is, _) Dup)   =
-    let sz = size env (last is) in
+    let sz = size' env (last is) in
         pure $
              copyBytes 0 (-sz) sz
                 ++ [ dataPointerInc sz ] -- move data pointer over sz bytes
@@ -369,11 +369,11 @@ writeAtom env l (If _ as as') = do
     l2 <- newLabel
     pure $ dataPointerDec 1 : ifIR : (Labeled l0 : asIR ++ [Jump l2]) ++ (Labeled l1 : asIR') ++ [Labeled l2]
 writeAtom env _ (Dip (is, _) as) =
-    let sz = size env (last is)
+    let sz = size' env (last is)
     in foldMapA (dipify env sz) as
 writeAtom env _ (AtBuiltin ([i0, i1], _) Swap) =
-    let sz0 = size env i0
-        sz1 = size env i1
+    let sz0 = size' env i0
+        sz1 = size' env i1
     in
         pure $
             copyBytes 0 (-sz0 - sz1) sz0 -- copy i0 to end of the stack
@@ -385,7 +385,7 @@ writeAtom env _ (AtCons ann@(ConsAnn _ tag' _) _) =
 writeAtom _ _ (Case ([], _) _) = error "Internal error: Ill-typed case statement?!"
 writeAtom env l (Case (is, _) ls) =
     let (ps, ass) = NE.unzip ls
-        decSz = size env (last is)
+        decSz = size' env (last is)
         in do
             leaves <- zipWithM (mkLeaf env l) ps ass
             let (switches, meat) = NE.unzip leaves
@@ -422,14 +422,14 @@ padBytes env (ConsAnn sz _ (is, _)) = sz - sizeStack env is - 1
 dipify :: SizeEnv -> Int64 -> Atom (ConsAnn MonoStackType) MonoStackType -> TempM [Stmt]
 dipify _ _ (AtBuiltin ([], _) Drop) = error "Internal error: Ill-typed drop!"
 dipify env sz (AtBuiltin (is, _) Drop) =
-    let sz' = size env (last is)
+    let sz' = size' env (last is)
         shift = dataPointerDec sz' -- shift data pointer over by sz' bytes
         -- copy sz bytes over (-sz') bytes from the data pointer
         copyBytes' = copyBytes (-sz - sz') (-sz) sz
         in pure $ copyBytes' ++ [shift]
 dipify env sz (AtBuiltin ([i0, i1], _) Swap) =
-    let sz0 = size env i0
-        sz1 = size env i1
+    let sz0 = size' env i0
+        sz1 = size' env i1
     in
         pure $
             copyBytes 0 (-sz - sz0 - sz1) sz0 -- copy i0 to end of the stack
@@ -437,7 +437,7 @@ dipify env sz (AtBuiltin ([i0, i1], _) Swap) =
                 ++ copyBytes (-sz - sz0) 0 sz0 -- copy i0 at end of stack to its new place
 dipify _ _ (Dip ([], _) _) = error "Internal error: Ill-typed dip()!"
 dipify env sz (Dip (is, _) as) =
-    let sz' = size env (last is)
+    let sz' = size' env (last is)
         in foldMapA (dipify env (sz + sz')) as
 dipify _ _ (AtBuiltin _ Swap)        = error "Internal error: Ill-typed swap!"
 dipify _ sz (AtBuiltin _ IntTimes)   = dipOp sz IntTimesIR
@@ -469,7 +469,7 @@ dipify _ sz (AtBuiltin _ WordDiv)    = dipOp sz WordDivIR
 dipify _ sz (AtBuiltin _ WordMod)    = dipOp sz WordModIR
 dipify _ _ (AtBuiltin ([], _) Dup) = error "Internal error: Ill-typed dup!"
 dipify env sz (AtBuiltin (is, _) Dup) = do
-    let sz' = size env (last is) in
+    let sz' = size' env (last is) in
         pure $
              copyBytes 0 (-sz) sz -- copy sz bytes over to the end of the stack
                 ++ copyBytes (-sz) (-sz - sz') sz' -- copy sz' bytes over (duplicate)

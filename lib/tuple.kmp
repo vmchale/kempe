@@ -1,0 +1,13 @@
+type Pair a b { Pair a b }
+
+unPair : ((Pair a) b) -- a b
+       =: [ { case | Pair -> } ]
+
+fst : ((Pair a) b) -- a
+    =: [ unPair drop ]
+
+snd : ((Pair a) b) -- b
+    =: [ unPair nip ]
+
+nip : a b -- b
+    =: [ dip(drop) ]
