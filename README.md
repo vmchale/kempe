@@ -30,7 +30,7 @@ eval "$(kc --bash-completion-script kc)"
   * Monomorphization fails on recursive polymorphic functions
 
     Hopefully this isn't too sinful; I can't think of any examples of recursive
-    polymorphic functions as Kempe does not have dynamically-sized types
+    polymorphic functions
   * Can't export or call C functions with more than 6 arguments; can't call or
     export large arguments (i.e. structs) passed by value.
 

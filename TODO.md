@@ -3,6 +3,8 @@
 # ABI support
 - [ ] Kempe ABI proper
 - [ ] Fortran?
+# Documentatio
+- [ ] http://texdoc.net/texmf-dist/doc/latex/bytefield/bytefield.pdf
 # Examples
 - [ ] delink?
 - [x] Primality test (and link to C...)

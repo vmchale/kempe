@@ -241,6 +241,28 @@ in different threads will fail unpredictably.
 Sum types have a guaranteed representation so that they can be used from other
 languages.
 
+Consider:
+
+```
+type Param a b c
+    { C a b b
+    | D a b c
+    }
+```
+
+Kempe types always have the same size; a value constructed with `C` will occupy
+the same number of bytes on the stack as a `D`.
+
+So, for instance
+
+```
+mkD : Int8 Int Int8 -- (((Param Int8) Int) Int8)
+    =: [ D ]
+```
+
+will pad the value with 7 bytes, as a `(((Param Int8) Int) Int8)` constructed
+with `C` would be 7 bytes bigger.
+
 # Examples
 
 ## Splitmix Pseudorandom Number Generator
