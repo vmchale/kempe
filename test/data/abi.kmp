@@ -1,0 +1,9 @@
+type Param a b 
+    { C a a b
+    | D a b
+    }
+
+mkConcrete : -- ((Param Int8) Int)
+      =: [ 0i8 0i8 0 C ]
+
+%foreign kabi mkConcrete
