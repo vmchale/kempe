@@ -63,5 +63,7 @@ sameTarget (s:ss) = s : sameTarget ss
 removeNop :: [Stmt] -> [Stmt]
 removeNop = filter (not . isNop)
     where
+        isNop (MovTemp e (ExprIntBinOp IntPlusIR (Reg e') (ConstInt 0))) | e == e' = True
+        isNop (MovTemp e (ExprIntBinOp IntMinusIR (Reg e') (ConstInt 0))) | e == e' = True
         isNop (MovMem e _ (Mem _ e')) | e == e' = True -- the Eq on Exp is kinda weird, but if the syntax trees are the same then they're certainly equivalent semantically
         isNop _ = False
