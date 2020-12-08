@@ -1,5 +1,8 @@
 # kempe
 
+  * Fix internal pretty-printer (exposed as hidden `fmt` subcommand)
+  * Optimize IR cases
+
 ## 0.1.0.2
 
   * Add optimizations (simplify code so that liveness analysis is quicker)
