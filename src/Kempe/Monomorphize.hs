@@ -190,15 +190,15 @@ isTyVar :: KempeTy a -> Bool
 isTyVar TyVar{} = True
 isTyVar _       = False
 
-sizeLeaf :: [KempeTy a] -> MonoM Size
-sizeLeaf tys =
+sizeLeaf :: [Name a] -> [KempeTy a] -> MonoM Int64
+sizeLeaf fv tys =
     sizeStack <$> gets szEnv <*> pure (filter (not . isTyVar) tys)
 
 insTyDecl :: KempeDecl a c b -> MonoM ()
-insTyDecl (TyDecl _ (Name _ (Unique k) _) _ leaves) = do
-    leafSizes <- traverse sizeLeaf (fmap snd leaves)
+insTyDecl (TyDecl _ (Name _ (Unique k) _) fv leaves) = do
+    leafSizes <- traverse (sizeLeaf fv) (fmap snd leaves)
     -- this is kinda sketch because it takes max w/o tyvars
-    let consSz = \tys -> 1 + maximum (($ tys) <$> leafSizes) -- for the tag
+    let consSz = \tys -> 1 + maximum leafSizes -- for the tag
     modifying szEnvLens (IM.insert k consSz)
 insTyDecl _ = error "Shouldn't happen."
 

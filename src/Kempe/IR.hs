@@ -417,7 +417,7 @@ patternSwitch env (PatternCons ann@(ConsAnn _ tag' _) _) l =
 -- | Constructors may need to be padded, this computes the number of bytes of
 -- padding
 padBytes :: SizeEnv -> ConsAnn MonoStackType -> Int64
-padBytes env (ConsAnn sz _ (is, _)) = sz - sizeStack' env is - 1
+padBytes env (ConsAnn sz _ (is, _)) = sz - sizeStack env is - 1
 
 dipify :: SizeEnv -> Int64 -> Atom (ConsAnn MonoStackType) MonoStackType -> TempM [Stmt]
 dipify _ _ (AtBuiltin ([], _) Drop) = error "Internal error: Ill-typed drop!"
@@ -493,7 +493,7 @@ dipify env sz a@(Case sty _) =
 
 dipSupp :: SizeEnv -> Int64 -> MonoStackType -> [Stmt] -> [Stmt]
 dipSupp env sz (is, os) stmts =
-    let excessSz = sizeStack' env os - sizeStack' env is -- how much the atom(s) grow the stack
+    let excessSz = sizeStack env os - sizeStack env is -- how much the atom(s) grow the stack
         in case compare excessSz 0 of
             EQ -> plainShift sz stmts
             LT -> dipDo sz stmts

@@ -23,7 +23,6 @@ module Kempe.AST ( BuiltinTy (..)
                  , size
                  , sizeStack
                  , size'
-                 , sizeStack'
                  , cSize
                  , prettyMonoStackType
                  , prettyTyped
@@ -328,10 +327,9 @@ cSize :: Size -> Int64
 cSize = ($ [])
 
 size' env = cSize . size env
-sizeStack' env = cSize . sizeStack env
 
-sizeStack :: SizeEnv -> [KempeTy a] -> Size
-sizeStack env tys = \tys' -> getSum (foldMap (Sum . ($ tys') . size env) tys)
+sizeStack :: SizeEnv -> [KempeTy a] -> Int64
+sizeStack env = getSum . foldMap (Sum . size' env)
 
 -- | Used in "Kempe.Monomorphize" for patterns
 flipStackType :: StackType () -> StackType ()
