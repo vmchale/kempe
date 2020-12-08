@@ -19,10 +19,11 @@ module Kempe.AST ( BuiltinTy (..)
                  , freeVars
                  , MonoStackType
                  , SizeEnv
+                 , Size
                  , size
                  , sizeStack
-                 , SizeEnv'
                  , size'
+                 , sizeStack'
                  , cSize
                  , prettyMonoStackType
                  , prettyTyped
@@ -155,7 +156,7 @@ prettyTyped (IntLit _ i)     = pretty i
 prettyTyped (BoolLit _ b)    = pretty b
 prettyTyped (Int8Lit _ i)    = pretty i <> "i8"
 prettyTyped (WordLit _ n)    = pretty n <> "u"
-prettyTyped (Case _ ls)      = braces ("case" <+> (vsep (toList $ fmap (uncurry prettyTypedLeaf) ls)))
+prettyTyped (Case _ ls)      = braces ("case" <+> vsep (toList $ fmap (uncurry prettyTypedLeaf) ls))
 
 data Atom c b = AtName b (Name b)
               | Case b (NonEmpty (Pattern c b, [Atom c b]))
@@ -309,36 +310,28 @@ freeVars tys = S.fromList (concatMap extrVars tys)
 -- (and then curry forward...)
 
 type Size = [Int64] -> Int64
-type SizeEnv = IM.IntMap Int64
-type SizeEnv' = IM.IntMap Size
+type SizeEnv = IM.IntMap Size
 
 -- the kempe sizing system is kind of fucked (it mostly works tho)
 
 -- | Don't call this on ill-kinded types; it won't throw any error.
-size :: SizeEnv -> KempeTy a -> Int64
-size _ (TyBuiltin _ TyInt)                 = 8 -- since we're only targeting x86_64 and aarch64 we have 64-bit 'Int's
-size _ (TyBuiltin _ TyBool)                = 1
-size _ (TyBuiltin _ TyInt8)                = 1
-size _ (TyBuiltin _ TyWord)                = 8
+size :: SizeEnv -> KempeTy a -> Size
+size _ (TyBuiltin _ TyInt)                 = const 8
+size _ (TyBuiltin _ TyBool)                = const 1
+size _ (TyBuiltin _ TyInt8)                = const 1
+size _ (TyBuiltin _ TyWord)                = const 8
 size _ TyVar{}                             = error "Internal error: type variables should not be present at this stage."
 size env (TyNamed _ (Name _ (Unique k) _)) = IM.findWithDefault (error "Size not in map!") k env
-size env (TyApp _ ty ty')                  = size env ty + size env ty'
-
--- | Don't call this on ill-kinded types; it won't throw any error.
-size' :: SizeEnv' -> KempeTy a -> Size
-size' _ (TyBuiltin _ TyInt)                 = const 8
-size' _ (TyBuiltin _ TyBool)                = const 1
-size' _ (TyBuiltin _ TyInt8)                = const 1
-size' _ (TyBuiltin _ TyWord)                = const 8
-size' _ TyVar{}                             = error "Internal error: type variables should not be present at this stage."
-size' env (TyNamed _ (Name _ (Unique k) _)) = IM.findWithDefault (error "Size not in map!") k env
-size' env (TyApp _ ty ty')                  = \tys -> size' env ty (size' env ty' [] : tys)
+size env (TyApp _ ty ty')                  = \tys -> size env ty (size env ty' [] : tys)
 
 cSize :: Size -> Int64
 cSize = ($ [])
 
-sizeStack :: SizeEnv -> [KempeTy a] -> Int64
-sizeStack env = getSum . foldMap (Sum . size env)
+size' env = cSize . size env
+sizeStack' env = cSize . sizeStack env
+
+sizeStack :: SizeEnv -> [KempeTy a] -> Size
+sizeStack env tys = \tys' -> getSum (foldMap (Sum . ($ tys') . size env) tys)
 
 -- | Used in "Kempe.Monomorphize" for patterns
 flipStackType :: StackType () -> StackType ()

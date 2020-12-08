@@ -139,16 +139,16 @@ irEmit _ (IR.MovTemp r1 (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r2) (IR.ConstInt 
     pure [ SubRC () (toAbsReg r1) i ]
 irEmit _ (IR.MovTemp r1 (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r2) (IR.ConstInt i))) | r1 == r2 = do
     pure [ AddRC () (toAbsReg r1) i ]
-irEmit env (IR.CCall (is, []) b) | all (\i -> size env i <= 8) is && length is <= 6 =
+irEmit env (IR.CCall (is, []) b) | all (\i -> size' env i <= 8) is && length is <= 6 =
     pure [NasmMacro0 () "callersave", CallBS () b, NasmMacro0 () "callerrestore"]
-irEmit env (IR.CCall (is, [o]) b) | all (\i -> size env i <= 8) is && size env o <= 8 && length is <= 6 =
+irEmit env (IR.CCall (is, [o]) b) | all (\i -> size' env i <= 8) is && size' env o <= 8 && length is <= 6 =
     pure [NasmMacro0 () "callersave", CallBS () b, NasmMacro0 () "callerrestore"]
 -- For 128-bit returns we'd have to use rax and rdx
-irEmit env (IR.WrapKCall Cabi (is, [o]) n l) | all (\i -> size env i <= 8) is && size env o <= 8 && length is <= 6 = do
-    { let offs = scanl' (+) 0 (fmap (size env) is)
-    ; let totalSize = sizeStack env is
+irEmit env (IR.WrapKCall Cabi (is, [o]) n l) | all (\i -> size' env i <= 8) is && size' env o <= 8 && length is <= 6 = do
+    { let offs = scanl' (+) 0 (fmap (size' env) is)
+    ; let totalSize = sizeStack' env is
     ; let argRegs = [CArg1, CArg2, CArg3, CArg4, CArg5, CArg6]
-    ; pure $ [BSLabel () n, MovRL () DataPointer "kempe_data", NasmMacro0 () "calleesave"] ++ zipWith (\r i-> MovAR () (AddrRCPlus DataPointer i) r) argRegs offs ++ [AddRC () DataPointer totalSize, Call () l, MovRA () CRet (AddrRCMinus DataPointer (size env o)), NasmMacro0 () "calleerestore", Ret ()] -- TODO: bytes on the stack eh
+    ; pure $ [BSLabel () n, MovRL () DataPointer "kempe_data", NasmMacro0 () "calleesave"] ++ zipWith (\r i-> MovAR () (AddrRCPlus DataPointer i) r) argRegs offs ++ [AddRC () DataPointer totalSize, Call () l, MovRA () CRet (AddrRCMinus DataPointer (size' env o)), NasmMacro0 () "calleerestore", Ret ()] -- TODO: bytes on the stack eh
     }
 irEmit _ (IR.WrapKCall Kabi (_, _) n l) =
     pure [BSLabel () n, Call () l, Ret ()]

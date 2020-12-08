@@ -190,7 +190,7 @@ isTyVar :: KempeTy a -> Bool
 isTyVar TyVar{} = True
 isTyVar _       = False
 
-sizeLeaf :: [KempeTy a] -> MonoM Int64
+sizeLeaf :: [KempeTy a] -> MonoM Size
 sizeLeaf tys =
     sizeStack <$> gets szEnv <*> pure (filter (not . isTyVar) tys)
 
@@ -198,7 +198,7 @@ insTyDecl :: KempeDecl a c b -> MonoM ()
 insTyDecl (TyDecl _ (Name _ (Unique k) _) _ leaves) = do
     leafSizes <- traverse sizeLeaf (fmap snd leaves)
     -- this is kinda sketch because it takes max w/o tyvars
-    let consSz = 1 + maximum leafSizes -- for the tag
+    let consSz = \tys -> 1 + maximum (($ tys) <$> leafSizes) -- for the tag
     modifying szEnvLens (IM.insert k consSz)
 insTyDecl _ = error "Shouldn't happen."
 
@@ -210,7 +210,7 @@ mkTyDecl (TyDecl _ tn ns preConstrs) constrs = do
     where indexAt p xs = fst $ fromMaybe (error "Internal error.") $ find (\(_, x) -> p x) (zip [0..] xs)
           getTag (Name _ u _) = indexAt (== u) preIxes
           preIxes = fmap (unique . fst) preConstrs
-          szType env (_, [o]) = size env o
+          szType env (_, [o]) = size' env o
           szType _ _          = error "Internal error: ill-typed constructor."
 mkTyDecl _ _ = error "Shouldn't happen."
 
