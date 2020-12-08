@@ -26,7 +26,7 @@ import           Data.Function              (on)
 import           Data.Functor               (($>))
 import           Data.Int                   (Int64)
 import qualified Data.IntMap                as IM
-import           Data.List                  (find, groupBy, partition)
+import           Data.List                  (elemIndex, find, groupBy, partition)
 import qualified Data.Map                   as M
 import           Data.Maybe                 (fromMaybe, mapMaybe)
 import qualified Data.Set                   as S
@@ -190,15 +190,30 @@ isTyVar :: KempeTy a -> Bool
 isTyVar TyVar{} = True
 isTyVar _       = False
 
-sizeLeaf :: [Name a] -> [KempeTy a] -> MonoM Int64
-sizeLeaf fv tys =
-    sizeStack <$> gets szEnv <*> pure (filter (not . isTyVar) tys)
+extrNames :: KempeTy a -> Maybe (Name a)
+extrNames (TyNamed _ tn) = Just tn
+extrNames _              = Nothing
+
+sizeLeaf :: [Name a] -> [KempeTy a] -> MonoM Size
+sizeLeaf fv tys = do
+    { let (tvs, conc) = partition isTyVar tys
+    ; pad <- sizeStack <$> gets szEnv <*> pure conc
+    ; let tvPrecompose = fmap forVar (mapMaybe extrNames tvs)
+    ; let tvComposed = foldr compose (const pad) tvPrecompose
+    ; pure tvComposed
+    }
+  where
+    findIx x = fromMaybe (error "Internal error: can't find index of type variable.") $ elemIndex x fv
+    forVar n =
+        let i = findIx n
+            in (!! i)
+    compose sz sz' = \tys' -> sz tys' + sz' tys'
 
 insTyDecl :: KempeDecl a c b -> MonoM ()
 insTyDecl (TyDecl _ (Name _ (Unique k) _) fv leaves) = do
     leafSizes <- traverse (sizeLeaf fv) (fmap snd leaves)
     -- this is kinda sketch because it takes max w/o tyvars
-    let consSz = \tys -> 1 + maximum leafSizes -- for the tag
+    let consSz = \tys -> 1 + maximum (($tys) <$> leafSizes) -- for the tag
     modifying szEnvLens (IM.insert k consSz)
 insTyDecl _ = error "Shouldn't happen."
 
