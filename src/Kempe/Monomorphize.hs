@@ -190,15 +190,17 @@ isTyVar :: KempeTy a -> Bool
 isTyVar TyVar{} = True
 isTyVar _       = False
 
-extrNames :: KempeTy a -> Maybe (Name a)
-extrNames (TyNamed _ tn) = Just tn
-extrNames _              = Nothing
+extrNames :: KempeTy a -> Name a
+extrNames (TyVar _ n) = n
+extrNames _           = error "Internal error!"
 
-sizeLeaf :: [Name a] -> [KempeTy a] -> MonoM Size
+sizeLeaf :: [Name a] -- ^ Type variables as declared
+         -> [KempeTy a]
+         -> MonoM Size
 sizeLeaf fv tys = do
     { let (tvs, conc) = partition isTyVar tys
     ; pad <- sizeStack <$> gets szEnv <*> pure conc
-    ; let tvPrecompose = fmap forVar (mapMaybe extrNames tvs)
+    ; let tvPrecompose = fmap (forVar . extrNames) tvs
     ; let tvComposed = foldr compose (const pad) tvPrecompose
     ; pure tvComposed
     }
@@ -212,7 +214,6 @@ sizeLeaf fv tys = do
 insTyDecl :: KempeDecl a c b -> MonoM ()
 insTyDecl (TyDecl _ (Name _ (Unique k) _) fv leaves) = do
     leafSizes <- traverse (sizeLeaf fv) (fmap snd leaves)
-    -- this is kinda sketch because it takes max w/o tyvars
     let consSz = \tys -> 1 + maximum (($tys) <$> leafSizes) -- for the tag
     modifying szEnvLens (IM.insert k consSz)
 insTyDecl _ = error "Shouldn't happen."
