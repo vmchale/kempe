@@ -1,0 +1,76 @@
+
+kmp1:
+(movtemp datapointer (- (reg datapointer) (int 17)))
+(mjump (=b (mem [1] (+ (reg datapointer) (int 0))) (tag 0x0)) kmp4)
+
+kmp4:
+(j kmp5)
+
+kmp5:
+(ret)
+
+kmp2:
+(movtemp datapointer (- (reg datapointer) (int 17)))
+(call kmp1)
+(movmem (- (reg datapointer) (int 0)) (mem [1] (+ (reg datapointer) (int 17))))
+(movmem (+ (reg datapointer) (int 1)) (mem [1] (+ (reg datapointer) (int 18))))
+(movmem (+ (reg datapointer) (int 2)) (mem [1] (+ (reg datapointer) (int 19))))
+(movmem (+ (reg datapointer) (int 3)) (mem [1] (+ (reg datapointer) (int 20))))
+(movmem (+ (reg datapointer) (int 4)) (mem [1] (+ (reg datapointer) (int 21))))
+(movmem (+ (reg datapointer) (int 5)) (mem [1] (+ (reg datapointer) (int 22))))
+(movmem (+ (reg datapointer) (int 6)) (mem [1] (+ (reg datapointer) (int 23))))
+(movmem (+ (reg datapointer) (int 7)) (mem [1] (+ (reg datapointer) (int 24))))
+(movmem (+ (reg datapointer) (int 8)) (mem [1] (+ (reg datapointer) (int 25))))
+(movmem (+ (reg datapointer) (int 9)) (mem [1] (+ (reg datapointer) (int 26))))
+(movmem (+ (reg datapointer) (int 10)) (mem [1] (+ (reg datapointer) (int 27))))
+(movmem (+ (reg datapointer) (int 11)) (mem [1] (+ (reg datapointer) (int 28))))
+(movmem (+ (reg datapointer) (int 12)) (mem [1] (+ (reg datapointer) (int 29))))
+(movmem (+ (reg datapointer) (int 13)) (mem [1] (+ (reg datapointer) (int 30))))
+(movmem (+ (reg datapointer) (int 14)) (mem [1] (+ (reg datapointer) (int 31))))
+(movmem (+ (reg datapointer) (int 15)) (mem [1] (+ (reg datapointer) (int 32))))
+(movmem (+ (reg datapointer) (int 16)) (mem [1] (+ (reg datapointer) (int 33))))
+(mjump (=b (mem [1] (+ (reg datapointer) (int 0))) (tag 0x0)) kmp6)
+
+kmp6:
+(j kmp7)
+
+kmp7:
+(movmem (- (reg datapointer) (int 0)) (mem [8] (- (reg datapointer) (int 24))))
+(movmem (- (reg datapointer) (int 24)) (mem [8] (- (reg datapointer) (int 16))))
+(movmem (- (reg datapointer) (int 16)) (mem [8] (- (reg datapointer) (int 0))))
+(movtemp datapointer (- (reg datapointer) (int 8)))
+(movtemp t_1 (mem [8] (reg datapointer)))
+(movtemp datapointer (- (reg datapointer) (int 8)))
+(movtemp t_2 (mem [8] (reg datapointer)))
+(movmem (reg datapointer) (+ (reg t_2) (reg t_1)))
+(movtemp datapointer (- (reg datapointer) (int 8)))
+(movtemp t_3 (mem [8] (reg datapointer)))
+(movtemp datapointer (- (reg datapointer) (int 8)))
+(movtemp t_4 (mem [8] (reg datapointer)))
+(movmem (reg datapointer) (+ (reg t_4) (reg t_3)))
+(movtemp datapointer (+ (reg datapointer) (int 8)))
+(movmem (- (reg datapointer) (int 0)) (mem [8] (+ (reg datapointer) (int 8))))
+(movtemp datapointer (+ (reg datapointer) (int 8)))
+(movmem (reg datapointer) (tag 0x0))
+(movtemp datapointer (+ (reg datapointer) (int 1)))
+(ret)
+
+kmp3:
+(movtemp datapointer (- (reg datapointer) (int 17)))
+(mjump (=b (mem [1] (+ (reg datapointer) (int 0))) (tag 0x0)) kmp8)
+
+kmp8:
+(j kmp9)
+
+kmp9:
+(movtemp datapointer (- (reg datapointer) (int 8)))
+(movtemp t_5 (mem [8] (reg datapointer)))
+(movmem (reg datapointer) (~ (reg t_5)))
+(movtemp datapointer (+ (reg datapointer) (int 8)))
+(movmem (reg datapointer) (tag 0x0))
+(movtemp datapointer (+ (reg datapointer) (int 1)))
+(ret)
+
+export add {Gaussian_1 Gaussian_1 -- Gaussian_1} kmp2
+
+export conjugate {Gaussian_1 -- Gaussian_1} kmp3

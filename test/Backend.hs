@@ -1,12 +1,7 @@
 module Backend ( backendTests
-               , backendGolden
                ) where
 
-import           Control.Composition       ((.*))
 import           Control.DeepSeq           (deepseq)
-import qualified Data.Text.Lazy            as TL
-import           Data.Text.Lazy.Encoding   (encodeUtf8)
-import           Kempe.AST
 import           Kempe.Asm.X86.ControlFlow
 import           Kempe.Asm.X86.Liveness
 import           Kempe.File
@@ -14,10 +9,8 @@ import           Kempe.Inline
 import           Kempe.Monomorphize
 import           Kempe.Pipeline
 import           Kempe.Shuttle
-import           Prettyprinter             (defaultLayoutOptions, layoutPretty, pretty)
-import           Prettyprinter.Render.Text (renderLazy)
+import           Prettyprinter             (pretty)
 import           Test.Tasty
-import           Test.Tasty.Golden         (goldenVsString)
 import           Test.Tasty.HUnit
 import           Type
 
@@ -50,23 +43,6 @@ backendTests =
         , codegen "test/data/ccall.kmp"
         , codegen "test/data/mutual.kmp"
         ]
-
-backendGolden :: TestTree
-backendGolden =
-    testGroup "IR goldens"
-        [ goldenIR "test/data/abi.kmp" "test/golden/abi.ir" ]
-
-dumpIRLazyText :: Int -> Module a c b -> TL.Text
-dumpIRLazyText = renderLazy . layoutPretty defaultLayoutOptions .* dumpIR
-
-goldenIR :: FilePath
-         -> FilePath
-         -> TestTree
-goldenIR fp out =
-    goldenVsString fp out $
-        do
-            res <- parsedFp fp
-            pure $ encodeUtf8 $ uncurry dumpIRLazyText res
 
 codegen :: FilePath -> TestTree
 codegen fp = testCase ("Generates code without throwing an exception (" ++ fp ++ ")") $ do

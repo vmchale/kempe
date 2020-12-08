@@ -2,6 +2,7 @@
 
 module Main (main) where
 
+import           Abi
 import           Backend
 import           Parser
 import           Test.Tasty
