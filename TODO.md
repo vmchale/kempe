@@ -16,6 +16,7 @@
 - [x] Linear scan register allocator
 - [ ] Graph (?) register allocator
 # Performance
+- [ ] look at http://hackage.haskell.org/package/linearscan-hoopl
 - [ ] Liveness analysis on a per-decl basis? (basic blocks)
 - [ ] Use `cmov` for storing bools
 - [ ] `lea`, `xchg`? `test`?
@@ -23,6 +24,7 @@
 - [ ] Difference lists when laying down atoms/IR
 - [ ] Do sets actually help?
   - [ ] https://hackage.haskell.org/package/hoopl (may be faster)
+- [ ] https://hackage.haskell.org/package/fmlist
 # Bugs
 - [x] The current setup ignores extern imports -> no it doesn't
 - [x] Exported functions w/ C ABI should be there (so it can link)
@@ -41,13 +43,13 @@
 - [ ] https://www.cs.princeton.edu/courses/archive/spr19/cos217/lectures/13_Assembly1.pdf (von neumann -> c where int ptrs, ATS & such are useful...)
 # Features
 - [ ] Arithmetic and patterns for `i8`
-- [ ] `divMod` function?
+- [ ] `divMod` builtin?
 - [ ] Floats
 - [ ] `fmt` subcommand
 - [ ] `abstype` for pointer abstract types?
 - [ ] REPL for type inspection?
   - [ ] ─
-- [ ] Pattern match exhaustiveness checker
+- [x] Pattern match exhaustiveness checker
 - [ ] Tuples (?)
 - [ ] Error messages should have line numbers
 - [x] Tail-call optimization (easier than I thought?)
