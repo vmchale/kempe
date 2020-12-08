@@ -1,6 +1,6 @@
 cabal-version:   3.0
 name:            kempe
-version:         0.1.0.1
+version:         0.1.0.2
 license:         BSD-3-Clause
 license-file:    LICENSE
 copyright:       Copyright: (c) 2020 Vanessa McHale
@@ -65,7 +65,7 @@ library kempe-modules
         FlexibleContexts GeneralizedNewtypeDeriving OverloadedStrings
         StandaloneDeriving TupleSections DeriveAnyClass
 
-    ghc-options:      -Wall -O2
+    ghc-options:      -Wall
     build-depends:
         base >=4.11 && <5,
         array -any,

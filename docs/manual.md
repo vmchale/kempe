@@ -153,6 +153,8 @@ isRight : ((Either a) b) -- Bool
 ]
 ```
 
+Note that pattern matches in Kempe must be exhaustive.
+
 ## FFI
 
 Kempe can call into C functions. Suppose we have

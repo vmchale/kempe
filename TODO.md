@@ -16,6 +16,7 @@
 - [x] Linear scan register allocator
 - [ ] Graph (?) register allocator
 # Performance
+- [ ] look at http://hackage.haskell.org/package/linearscan-hoopl
 - [ ] Liveness analysis on a per-decl basis? (basic blocks)
 - [ ] Use `cmov` for storing bools
 - [ ] `lea`, `xchg`? `test`?
@@ -23,11 +24,13 @@
 - [ ] Difference lists when laying down atoms/IR
 - [ ] Do sets actually help?
   - [ ] https://hackage.haskell.org/package/hoopl (may be faster)
+- [ ] https://hackage.haskell.org/package/fmlist
 # Bugs
 - [x] The current setup ignores extern imports -> no it doesn't
 - [x] Exported functions w/ C ABI should be there (so it can link)
 - [ ] Throw error when return value in C ABI is too big
 - [x] Constructors aren't monomorphized
+  - [ ] http://mlton.org/Monomorphise
   - [ ] Constructors that call constructors don't dispatch/monomorphize
     properly?
 - [x] Correctly restore registers (C ABI)
