@@ -145,7 +145,10 @@ test-suite kempe-test
         tasty-hunit -any,
         bytestring -any,
         prettyprinter >=1.7.0,
-        deepseq -any
+        deepseq -any,
+        tasty-golden -any,
+        text -any,
+        composition-prelude -any
 
     if impl(ghc >=8.0)
         ghc-options:

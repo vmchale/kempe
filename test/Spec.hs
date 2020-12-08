@@ -13,4 +13,5 @@ main = defaultMain $
         [ parserTests
         , typeTests
         , backendTests
+        , backendGolden
         ]

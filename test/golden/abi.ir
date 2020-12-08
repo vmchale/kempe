@@ -1,0 +1,13 @@
+
+kmp1:
+(movmem (reg datapointer) (int8 0))
+(movtemp datapointer (+ (reg datapointer) (int 1)))
+(movmem (reg datapointer) (int 0))
+(movtemp datapointer (+ (reg datapointer) (int 8)))
+(movmem (reg datapointer) (int8 0))
+(movtemp datapointer (+ (reg datapointer) (int 8)))
+(movmem (reg datapointer) (tag 0x1))
+(movtemp datapointer (+ (reg datapointer) (int 1)))
+(ret)
+
+export mkConcrete { -- (((Param_1 Int8) Int) Int8)} kmp1
