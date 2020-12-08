@@ -1,6 +1,7 @@
 # kempe
 
   * Fix internal pretty-printer (exposed as hidden `fmt` subcommand)
+  * Optimize IR cases
 
 ## 0.1.0.2
 
