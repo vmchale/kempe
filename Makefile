@@ -11,7 +11,7 @@ BINS := bin/x86_64-linux-kc.lz \
     bin/x86_64-linux-kc.zst
 
 moddeps.svg: $(HS_SRC)
-	cd src && graphmod --no-cabal Kempe.File | dot -Tsvg -o ../$@
+	graphmod -i src | dot -Tsvg -o $@
 
 bins: $(BINS)
 
