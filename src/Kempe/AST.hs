@@ -326,6 +326,7 @@ size env (TyApp _ ty ty')                  = \tys -> size env ty (size env ty' [
 cSize :: Size -> Int64
 cSize = ($ [])
 
+size' :: SizeEnv -> KempeTy a -> Int64
 size' env = cSize . size env
 
 sizeStack :: SizeEnv -> [KempeTy a] -> Int64
