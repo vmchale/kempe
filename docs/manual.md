@@ -251,7 +251,7 @@ type Param a b c
 ```
 
 Kempe types always have the same size; a value constructed with `C` will occupy
-the same number of bytes on the stack as a `D`.
+the same number of bytes on the stack as a value constructed with `D`.
 
 So, for instance
 
