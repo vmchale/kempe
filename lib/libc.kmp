@@ -1,0 +1,7 @@
+; bindings to libc (x86_64 guess)
+
+rand : -- Int
+     =: $cfun"rand"
+
+exit : Int --
+     =: $cfun"exit"
