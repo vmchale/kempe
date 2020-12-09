@@ -13,6 +13,7 @@ import           Control.Composition       ((.*))
 import           Control.Exception         (Exception, throwIO)
 import           Data.Bifunctor            (bimap)
 import           Data.Functor              (void)
+import           Data.Semigroup            ((<>))
 import qualified Data.Set                  as S
 import           Data.Tuple.Extra          (fst3)
 import           Kempe.AST

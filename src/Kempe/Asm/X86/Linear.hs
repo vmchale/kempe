@@ -11,6 +11,7 @@ import           Control.Monad.State.Strict (State, evalState, gets)
 import           Data.Foldable              (traverse_)
 import qualified Data.Map                   as M
 import           Data.Maybe                 (fromMaybe)
+import           Data.Semigroup             ((<>))
 import qualified Data.Set                   as S
 import           Kempe.Asm.X86.Type
 import           Lens.Micro                 (Lens')

@@ -28,6 +28,7 @@ import qualified Data.IntMap                as IM
 import           Data.List                  (elemIndex, find, groupBy, partition)
 import qualified Data.Map                   as M
 import           Data.Maybe                 (fromMaybe, mapMaybe)
+import           Data.Semigroup             ((<>))
 import qualified Data.Set                   as S
 import qualified Data.Text                  as T
 import           Data.Tuple                 (swap)

@@ -8,6 +8,7 @@ module Kempe.Error ( Error (..)
 
 import           Control.DeepSeq   (NFData)
 import           Control.Exception (Exception)
+import           Data.Semigroup    ((<>))
 import           Data.Typeable     (Typeable)
 import           GHC.Generics      (Generic)
 import           Kempe.AST

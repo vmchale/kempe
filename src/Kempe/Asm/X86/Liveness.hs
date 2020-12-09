@@ -8,6 +8,7 @@ module Kempe.Asm.X86.Liveness ( Liveness
 import           Control.Composition (thread)
 -- this seems to be faster
 import qualified Data.IntMap.Lazy    as IM
+import           Data.Semigroup      ((<>))
 import qualified Data.Set            as S
 import           Kempe.Asm.X86.Type
 

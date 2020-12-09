@@ -18,6 +18,7 @@ import           Data.Functor               (void, ($>))
 import qualified Data.IntMap                as IM
 import           Data.List                  (foldl')
 import           Data.List.NonEmpty         (NonEmpty (..))
+import           Data.Semigroup             ((<>))
 import qualified Data.Set                   as S
 import qualified Data.Text                  as T
 import           Data.Tuple.Extra           (fst3)

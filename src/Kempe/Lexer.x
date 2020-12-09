@@ -27,6 +27,7 @@ import Data.Functor (($>))
 import Data.Int (Int8)
 import qualified Data.IntMap as IM
 import qualified Data.Map as M
+import Data.Semigroup ((<>))
 import qualified Data.Text as T
 import Data.Text.Encoding (decodeUtf8)
 import GHC.Generics (Generic)

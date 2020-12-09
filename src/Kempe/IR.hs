@@ -30,6 +30,7 @@ import qualified Data.ByteString.Lazy       as BSL
 import           Data.Foldable.Ext
 import           Data.Int                   (Int64, Int8)
 import qualified Data.IntMap                as IM
+import           Data.Semigroup             ((<>))
 import           Data.Text.Encoding         (decodeUtf8, encodeUtf8)
 import           Data.Word                  (Word8)
 import           GHC.Generics               (Generic)

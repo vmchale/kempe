@@ -45,6 +45,7 @@ import qualified Data.IntMap             as IM
 import           Data.List.NonEmpty      (NonEmpty)
 import qualified Data.List.NonEmpty      as NE
 import           Data.Monoid             (Sum (..))
+import           Data.Semigroup          ((<>))
 import qualified Data.Set                as S
 import           Data.Text.Lazy.Encoding (decodeUtf8)
 import           Data.Word               (Word8)

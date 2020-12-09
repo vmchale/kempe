@@ -19,6 +19,7 @@ import qualified Data.ByteString         as BS
 import qualified Data.ByteString.Lazy    as BSL
 import           Data.Foldable           (toList)
 import           Data.Int                (Int64, Int8)
+import           Data.Semigroup          ((<>))
 import qualified Data.Set                as S
 import           Data.Text.Encoding      (decodeUtf8)
 import qualified Data.Text.Lazy.Encoding as TL

@@ -3,6 +3,7 @@ module Main (main) where
 import           Control.Exception         (Exception, throwIO)
 import           Control.Monad             ((<=<))
 import qualified Data.ByteString.Lazy      as BSL
+import           Data.Semigroup            ((<>))
 import qualified Data.Version              as V
 import           Kempe.AST
 import           Kempe.File
