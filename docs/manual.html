@@ -360,7 +360,6 @@ fac_tailrec : Int -- Int
 <h2 id="non-features">Non-Features</h2>
 <p>Kempe is missing a good many features, such as:</p>
 <ul>
-<li>Modules/imports</li>
 <li>Floats</li>
 <li>Dynamically sized data types</li>
 <li>Strings</li>
@@ -401,7 +400,7 @@ fac_tailrec : Int -- Int
     { C a b b
     | D a b c
     }</code></pre>
-<p>Kempe types always have the same size; a value constructed with <code>C</code> will occupy the same number of bytes on the stack as a <code>D</code>.</p>
+<p>Kempe types always have the same size; a value constructed with <code>C</code> will occupy the same number of bytes on the stack as a value constructed with <code>D</code>.</p>
 <p>So, for instance</p>
 <pre><code>mkD : Int8 Int Int8 -- (((Param Int8) Int) Int8)
     =: [ D ]</code></pre>
