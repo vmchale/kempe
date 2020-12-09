@@ -51,6 +51,8 @@ $latin = [a-zA-Z]
 
 @foreign = \" $latin @follow_char* \"
 
+@module_str = \" [^\"] \"
+
 tokens :-
 
     <0> {
@@ -119,6 +121,7 @@ tokens :-
         False                    { mkBuiltin (BuiltinBoolLit False) }
         dup                      { mkBuiltin BuiltinDup }
         drop                     { mkBuiltin BuiltinDrop }
+
         swap                     { mkBuiltin BuiltinSwap }
         xori                     { mkBuiltin BuiltinIntXor }
         xoru                     { mkBuiltin BuiltinWordXor }
@@ -135,11 +138,16 @@ tokens :-
 
         @name                    { tok (\p s -> TokName p <$> newIdentAlex p (mkText s)) }
         @tyname                  { tok (\p s -> TokTyName p <$> newIdentAlex p (mkText s)) }
-        @foreign                 { tok (\p s -> alex $ TokForeign p s) }
+        @foreign                 { tok (\p s -> alex $ TokForeign p (dropQuotes s)) }
+
+        @module_str              { tok (\p s -> alex $ TokModuleStr p (dropQuotes s)) }
 
     }
 
 {
+
+dropQuotes :: BSL.ByteString -> BSL.ByteString
+dropQuotes = BSL.init . BSL.tail
 
 readHex' :: (Eq a, Num a) => BSL.ByteString -> Alex a
 readHex' bs =
@@ -328,6 +336,7 @@ data Token a = EOF { loc :: a }
              | TokInt8 { loc :: a, int8 :: Int8 }
              | TokWord { loc :: a, word :: Natural }
              | TokForeign { loc :: a, ident :: BSL.ByteString }
+             | TokModuleStr { loc :: a, moduleFp :: BSL.ByteString }
              | TokBuiltin { loc :: a, builtin :: Builtin }
              deriving (Generic, NFData)
 
