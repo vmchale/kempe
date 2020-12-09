@@ -1,6 +1,5 @@
-type Either a b { Left a | Right b }
-
-type Maybe a { Just a | Nothing }
+import "lib/maybe.kmp"
+import "lib/either.kmp"
 
 mkJustRight : Int -- ((Either Int) (Maybe Int))
             =: [ Just Right ]

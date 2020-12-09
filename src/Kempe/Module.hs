@@ -26,7 +26,7 @@ loopFps :: [FilePath] -> AlexUserState -> IO (AlexUserState, [FilePath], Declara
 loopFps [] st = pure (st, [], [])
 loopFps (fp:fps) st = do
     (st', Module is ds) <- parseStep fp st
-    third3 (ds ++) <$> loopFps (fps ++ fmap ASCII.unpack is) st'
+    third3 (++ ds) <$> loopFps (fps ++ fmap ASCII.unpack is) st'
 
 parseStep :: FilePath -> AlexUserState -> IO (AlexUserState, Module AlexPosn AlexPosn AlexPosn)
 parseStep fp st = do
