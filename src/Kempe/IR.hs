@@ -38,7 +38,7 @@ import           Kempe.Name
 import           Kempe.Unique
 import           Lens.Micro                 (Lens')
 import           Lens.Micro.Mtl             (modifying)
-import           Prettyprinter              (Doc, Pretty (pretty), braces, brackets, colon, concatWith, hardline, parens, (<+>))
+import           Prettyprinter              (Doc, Pretty (pretty), braces, brackets, colon, hardline, parens, (<+>))
 import           Prettyprinter.Ext
 
 type Label = Word
