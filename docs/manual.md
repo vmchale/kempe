@@ -180,7 +180,6 @@ And `rand` will be available as a Kempe function.
 
 Kempe is missing a good many features, such as:
 
-  * Modules/imports
   * Floats
   * Dynamically sized data types
   * Strings
