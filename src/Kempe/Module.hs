@@ -13,13 +13,15 @@ import           Kempe.Lexer
 import           Kempe.Parser
 
 parseProcess :: FilePath -> IO (Int, Declarations AlexPosn AlexPosn AlexPosn)
-parseProcess fp =
-    (fst3 *** body) <$> parseStep fp
+parseProcess fp = do
+    contents <- BSL.readFile fp
+    (st, m) <- yeetIO $ parseWithInitCtx contents
+    pure $ (fst3 *** body) (st, m)
 
 yeetIO :: Exception e => Either e a -> IO a
 yeetIO = either throwIO pure
 
-parseStep :: FilePath -> IO (AlexUserState, Module AlexPosn AlexPosn AlexPosn)
-parseStep fp = do
+parseStep :: FilePath -> AlexUserState -> IO (AlexUserState, Module AlexPosn AlexPosn AlexPosn)
+parseStep fp st = do
     contents <- BSL.readFile fp
-    yeetIO $ parseWithCtx contents
+    yeetIO $ parseWithCtx contents st

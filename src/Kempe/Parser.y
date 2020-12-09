@@ -5,6 +5,7 @@
     module Kempe.Parser ( parse
                         , parseWithMax
                         , parseWithCtx
+                        , parseWithInitCtx
                         , ParseError (..)
                         ) where
 
@@ -245,13 +246,22 @@ parse :: BSL.ByteString -> Either (ParseError AlexPosn) (Module AlexPosn AlexPos
 parse = fmap snd . parseWithMax
 
 parseWithMax :: BSL.ByteString -> Either (ParseError AlexPosn) (Int, Module AlexPosn AlexPosn AlexPosn)
-parseWithMax = fmap (first fst3) . parseWithCtx
+parseWithMax = fmap (first fst3) . parseWithInitCtx
 
-parseWithCtx :: BSL.ByteString -> Either (ParseError AlexPosn) (AlexUserState, Module AlexPosn AlexPosn AlexPosn)
-parseWithCtx = runParse parseModule
+parseWithInitCtx :: BSL.ByteString -> Either (ParseError AlexPosn) (AlexUserState, Module AlexPosn AlexPosn AlexPosn)
+parseWithInitCtx bsl = parseWithCtx bsl alexInitUserState
+
+parseWithCtx :: BSL.ByteString -> AlexUserState -> Either (ParseError AlexPosn) (AlexUserState, Module AlexPosn AlexPosn AlexPosn)
+parseWithCtx = parseWithInitSt parseModule
 
 runParse :: Parse a -> BSL.ByteString -> Either (ParseError AlexPosn) (AlexUserState, a)
 runParse parser str = liftErr $ runAlexSt str (runExceptT parser)
+
+parseWithInitSt :: Parse a -> BSL.ByteString -> AlexUserState -> Either (ParseError AlexPosn) (AlexUserState, a)
+parseWithInitSt parser str st = liftErr $ withAlexSt str st (runExceptT parser)
+    where liftErr (Left err)            = Left (LexErr err)
+          liftErr (Right (_, Left err)) = Left err
+          liftErr (Right (i, Right x))  = Right (i, x)
 
 liftErr :: Either String (b, Either (ParseError a) c) -> Either (ParseError a) (b, c)
 liftErr (Left err)            = Left (LexErr err)

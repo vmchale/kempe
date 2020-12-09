@@ -1,15 +1,11 @@
+import "prelude/fn.kmp"
+
 ; tail recursive!
 gcd : Int Int -- Int
     =: [ dup 0 =
          if( drop
            , dup dip(%) swap gcd )
        ]
-
-over : a b -- a b a
-     =: [ dip(dup) swap ]
-
-dup2 : a b -- a b a b
-     =: [ over over ]
 
 square : Int -- Int
        =: [ dup * ]

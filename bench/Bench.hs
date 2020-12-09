@@ -1,6 +1,6 @@
 module Main (main) where
 
-import           Control.Exception         (Exception, throw, throwIO)
+import           Control.Exception         (throw)
 import           Criterion.Main
 import           Data.Bifunctor            (Bifunctor, bimap)
 import qualified Data.ByteString.Lazy      as BSL

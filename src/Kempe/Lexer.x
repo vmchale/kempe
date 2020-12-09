@@ -4,8 +4,10 @@
     {-# LANGUAGE OverloadedStrings #-}
     {-# LANGUAGE StandaloneDeriving #-}
     module Kempe.Lexer ( alexMonadScan
+                       , alexInitUserState
                        , runAlex
                        , runAlexSt
+                       , withAlexSt
                        , lexKempe
                        , AlexPosn (..)
                        , Alex (..)
@@ -51,7 +53,7 @@ $latin = [a-zA-Z]
 
 @foreign = \" $latin @follow_char* \"
 
-@module_str = \" [^\"] \"
+@module_str = \" [^\"]+ \"
 
 tokens :-
 

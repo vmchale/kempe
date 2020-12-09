@@ -19,6 +19,7 @@ syntax match kempeNum "\v[0-9]+i8"
 
 syntax match kempeKeyword "type"
 syntax match kempeKeyword "case"
+syntax match kempeKeyword "import"
 
 syntax match kempeType "Int"
 syntax match kempeType "Word"
