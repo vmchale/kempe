@@ -4,8 +4,8 @@ module Backend ( backendTests
 import           Control.DeepSeq           (deepseq)
 import           Kempe.Asm.X86.ControlFlow
 import           Kempe.Asm.X86.Liveness
-import           Kempe.File
 import           Kempe.Inline
+import           Kempe.Module
 import           Kempe.Monomorphize
 import           Kempe.Pipeline
 import           Kempe.Shuttle
@@ -46,32 +46,32 @@ backendTests =
 
 codegen :: FilePath -> TestTree
 codegen fp = testCase ("Generates code without throwing an exception (" ++ fp ++ ")") $ do
-    parsed <- parsedFp fp
+    parsed <- parseProcess fp
     let code = uncurry x86Alloc parsed
     assertBool "Doesn't fail" (code `deepseq` True)
 
 liveness :: FilePath -> TestTree
 liveness fp = testCase ("Liveness analysis terminates (" ++ fp ++ ")") $ do
-    parsed <- parsedFp fp
+    parsed <- parseProcess fp
     let x86 = uncurry x86Parsed parsed
         cf = mkControlFlow x86
     assertBool "Doesn't bottom" (reconstruct cf `deepseq` True)
 
 controlFlowGraph :: FilePath -> TestTree
 controlFlowGraph fp = testCase ("Doesn't crash while creating control flow graph for " ++ fp) $ do
-    parsed <- parsedFp fp
+    parsed <- parseProcess fp
     let x86 = uncurry x86Parsed parsed
     assertBool "Worked without exception" (mkControlFlow x86 `deepseq` True)
 
 x86NoYeet :: FilePath -> TestTree
 x86NoYeet fp = testCase ("Selects instructions for " ++ fp) $ do
-    parsed <- parsedFp fp
+    parsed <- parseProcess fp
     let x86 = uncurry x86Parsed parsed
     assertBool "Worked without exception" (x86 `deepseq` True)
 
 irNoYeet :: FilePath -> TestTree
 irNoYeet fp = testCase ("Generates IR without throwing an exception (" ++ fp ++ ")") $ do
-    (i, m) <- parsedFp fp
+    (i, m) <- parseProcess fp
     let (res, _, _) = irGen i m
     assertBool "Worked without failure" (res `deepseq` True)
 
@@ -80,7 +80,7 @@ inlineTest fp = testCase ("Inlines " ++ fp ++ " without error") $ inlineFile fp
 
 inlineFile :: FilePath -> Assertion
 inlineFile fp = do
-    (_, m) <- parsedFp fp
+    (_, m) <- parseProcess fp
     let res = inline m
     assertBool "Doesn't bottom when inlining" (res `deepseq` True)
 
@@ -95,7 +95,7 @@ monoFile fp = do
 
 pipelineWorks :: FilePath -> TestTree
 pipelineWorks fp = testCase ("Functions in " ++ fp ++ " can be specialized") $ do
-    (maxU, m) <- parsedFp fp
+    (maxU, m) <- parseProcess fp
     let res = monomorphize maxU m
     case res of
         Left err -> assertFailure (show $ pretty err)

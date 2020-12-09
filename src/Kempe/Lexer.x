@@ -341,16 +341,17 @@ data Token a = EOF { loc :: a }
              deriving (Generic, NFData)
 
 instance Pretty (Token a) where
-    pretty EOF{}             = "(eof)"
-    pretty (TokSym _ s)      = "symbol" <+> squotes (pretty s)
-    pretty (TokName _ n)     = "identifier" <+> squotes (pretty n)
-    pretty (TokTyName _ tn)  = "identifier" <+> squotes (pretty tn)
-    pretty (TokKeyword _ kw) = "keyword" <+> squotes (pretty kw)
-    pretty (TokInt _ i)      = pretty i
-    pretty (TokWord _ n)     = pretty n <> "u"
-    pretty (TokInt8 _ i)     = pretty i <> "i8"
-    pretty (TokForeign _ fn) = dquotes (pretty $ mkText fn)
-    pretty (TokBuiltin _ b)  = pretty b
+    pretty EOF{}              = "(eof)"
+    pretty (TokSym _ s)       = "symbol" <+> squotes (pretty s)
+    pretty (TokName _ n)      = "identifier" <+> squotes (pretty n)
+    pretty (TokTyName _ tn)   = "identifier" <+> squotes (pretty tn)
+    pretty (TokKeyword _ kw)  = "keyword" <+> squotes (pretty kw)
+    pretty (TokInt _ i)       = pretty i
+    pretty (TokWord _ n)      = pretty n <> "u"
+    pretty (TokInt8 _ i)      = pretty i <> "i8"
+    pretty (TokForeign _ fn)  = dquotes (pretty $ mkText fn)
+    pretty (TokModuleStr _ m) = dquotes (pretty $ mkText m)
+    pretty (TokBuiltin _ b)   = pretty b
 
 newIdentAlex :: AlexPosn -> T.Text -> Alex (Name AlexPosn)
 newIdentAlex pos t = do

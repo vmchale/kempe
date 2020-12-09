@@ -5,7 +5,6 @@ module Kempe.File ( tcFile
                   , x86File
                   , dumpX86
                   , compile
-                  , parsedFp
                   , dumpIR
                   ) where
 
@@ -13,7 +12,6 @@ module Kempe.File ( tcFile
 import           Control.Composition       ((.*))
 import           Control.Exception         (Exception, throwIO)
 import           Data.Bifunctor            (bimap)
-import qualified Data.ByteString.Lazy      as BSL
 import           Data.Functor              (void)
 import qualified Data.Set                  as S
 import           Data.Tuple.Extra          (fst3)
@@ -22,8 +20,7 @@ import           Kempe.Asm.X86.Type
 import           Kempe.Check.Pattern
 import           Kempe.Error
 import           Kempe.IR
-import           Kempe.Lexer
-import           Kempe.Parser
+import           Kempe.Module
 import           Kempe.Pipeline
 import           Kempe.Proc.Nasm
 import           Kempe.Shuttle
@@ -33,8 +30,7 @@ import           Prettyprinter.Render.Text (putDoc)
 
 tcFile :: FilePath -> IO (Either (Error ()) ())
 tcFile fp = do
-    contents <- BSL.readFile fp
-    (maxU, m) <- yeetIO $ parseWithMax contents
+    (maxU, m) <- parseProcess fp
     pure $ do
         void $ runTypeM maxU (checkModule m)
         mErr $ checkModuleExhaustive (void <$> m)
@@ -44,13 +40,13 @@ yeetIO = either throwIO pure
 
 dumpTyped :: FilePath -> IO ()
 dumpTyped fp = do
-    (i, m) <- parsedFp fp
+    (i, m) <- parseProcess fp
     (mTyped, _) <- yeetIO $ runTypeM i (assignModule m)
     putDoc $ prettyTypedModule mTyped
 
 dumpMono :: FilePath -> IO ()
 dumpMono fp = do
-    (i, m) <- parsedFp fp
+    (i, m) <- parseProcess fp
     (mMono, _) <- yeetIO $ monomorphize i m
     putDoc $ prettyTypedModule (fmap (bimap fromMonoConsAnn fromMono) mMono)
     where fromMono (is, os) = StackType S.empty is os
@@ -64,17 +60,12 @@ dumpX86 = prettyAsm .* x86Alloc
 
 irFile :: FilePath -> IO ()
 irFile fp = do
-    res <- parsedFp fp
+    res <- parseProcess fp
     putDoc $ uncurry dumpIR res <> hardline
-
-parsedFp :: FilePath -> IO (Int, Declarations AlexPosn AlexPosn AlexPosn)
-parsedFp fp = do
-    contents <- BSL.readFile fp
-    yeetIO $ parseWithMax contents
 
 x86File :: FilePath -> IO ()
 x86File fp = do
-    res <- parsedFp fp
+    res <- parseProcess fp
     putDoc $ uncurry dumpX86 res <> hardline
 
 compile :: FilePath
@@ -82,6 +73,5 @@ compile :: FilePath
         -> Bool -- ^ Debug symbols?
         -> IO ()
 compile fp o dbg = do
-    contents <- BSL.readFile fp
-    res <- yeetIO $ parseWithMax contents
+    res <- parseProcess fp
     writeO (uncurry dumpX86 res) o dbg

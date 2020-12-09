@@ -52,7 +52,7 @@ import           GHC.Generics            (Generic)
 import           Kempe.Name
 import           Kempe.Unique
 import           Numeric.Natural
-import           Prettyprinter           (Doc, Pretty (pretty), align, braces, brackets, colon, concatWith, fillSep, hsep, parens, pipe, sep, vsep, (<+>))
+import           Prettyprinter           (Doc, Pretty (pretty), align, braces, brackets, colon, concatWith, dquotes, fillSep, hsep, parens, pipe, sep, vsep, (<+>))
 import           Prettyprinter.Ext
 
 data BuiltinTy = TyInt
@@ -260,7 +260,7 @@ instance Pretty ABI where
 prettyKempeDecl :: (Atom c b -> Doc ann) -> KempeDecl a c b -> Doc ann
 prettyKempeDecl atomizer (FunDecl _ n is os as) = pretty n <+> align (":" <+> sep (fmap pretty is) <+> "--" <+> sep (fmap pretty os) <#> "=:" <+> brackets (align (fillSep (atomizer <$> as))))
 prettyKempeDecl _ (Export _ abi n)              = "%foreign" <+> pretty abi <+> pretty n
-prettyKempeDecl _ (ExtFnDecl _ n is os b)       = pretty n <+> align (":" <+> sep (fmap pretty is) <+> "--" <+> sep (fmap pretty os) <#> "=:" <+> "$cfun" <> pretty (decodeUtf8 b))
+prettyKempeDecl _ (ExtFnDecl _ n is os b)       = pretty n <+> align (":" <+> sep (fmap pretty is) <+> "--" <+> sep (fmap pretty os) <#> "=:" <+> "$cfun" <> dquotes (pretty (decodeUtf8 b)))
 prettyKempeDecl _ (TyDecl _ tn ns ls)           = "type" <+> pretty tn <+> hsep (fmap pretty ns) <+> braces (concatWith (\x y -> x <+> pipe <+> y) $ fmap (uncurry prettyTyLeaf) ls)
 
 instance Pretty (KempeDecl a b c) where
@@ -283,23 +283,29 @@ instance Bifunctor (KempeDecl a) where
     first _ (Export l abi n)           = Export l abi n
     second = fmap
 
-prettyModuleGeneral :: (Atom c b -> Doc ann) -> Declarations a c b -> Doc ann
-prettyModuleGeneral atomizer = sep . fmap (prettyKempeDecl atomizer)
+prettyDeclarationsGeneral :: (Atom c b -> Doc ann) -> Declarations a c b -> Doc ann
+prettyDeclarationsGeneral atomizer = sep . fmap (prettyKempeDecl atomizer)
+
+prettyImport :: BSL.ByteString -> Doc ann
+prettyImport b = "import" <+> dquotes (pretty (decodeUtf8 b))
+
+prettyModuleGeneral :: (Atom c b -> Doc ann) -> Module a c b -> Doc ann
+prettyModuleGeneral atomizer (Module is ds) = prettyLines (fmap prettyImport is) <#> prettyDeclarationsGeneral atomizer ds
 
 prettyFancyModule :: Declarations () (ConsAnn (StackType ())) (StackType ()) -> Doc ann
 prettyFancyModule = prettyTypedModule . fmap (first consTy)
 
 prettyTypedModule :: Declarations () (StackType ()) (StackType ()) -> Doc ann
-prettyTypedModule = prettyModuleGeneral prettyTyped
+prettyTypedModule = prettyDeclarationsGeneral prettyTyped
 
-prettyModule :: Declarations a c b -> Doc ann
+prettyModule :: Module a c b -> Doc ann
 prettyModule = prettyModuleGeneral pretty
 
 type Declarations a c b = [KempeDecl a c b]
 
-data Module a c b = Module { importFps  :: [BSL.ByteString]
-                           , moduleBody :: [KempeDecl a c b]
-                           }
+data Module a c b = Module { importFps :: [BSL.ByteString]
+                           , body      :: [KempeDecl a c b]
+                           } deriving (Generic, NFData)
 
 extrVars :: KempeTy a -> [Name a]
 extrVars TyBuiltin{}      = []

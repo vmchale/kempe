@@ -282,9 +282,6 @@ instance Pretty reg => Pretty (X86 reg a) where
     pretty (NasmMacro0 _ b)     = i4 (pretty (decodeUtf8 b))
     pretty (CallBS _ b)         = i4 ("call" <+> pretty (TL.decodeUtf8 b))
 
-prettyLines :: [Doc ann] -> Doc ann
-prettyLines = concatWith (<#>)
-
 prettyAsm :: Pretty reg => [X86 reg a] -> Doc ann
 prettyAsm = ((prolegomena <#> macros <#> "section .text" <> hardline) <>) . prettyLines . fmap pretty
 

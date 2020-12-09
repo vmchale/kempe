@@ -1,10 +1,13 @@
 module Main (main) where
 
-import           Control.Exception         (throwIO)
+import           Control.Exception         (Exception, throwIO)
 import           Control.Monad             ((<=<))
+import qualified Data.ByteString.Lazy      as BSL
 import qualified Data.Version              as V
 import           Kempe.AST
 import           Kempe.File
+import           Kempe.Lexer
+import           Kempe.Parser
 import           Options.Applicative
 import qualified Paths_kempe               as P
 import           Prettyprinter             (LayoutOptions (LayoutOptions), PageWidth (AvailablePerLine), hardline, layoutSmart)
@@ -17,9 +20,17 @@ data Command = TypeCheck !FilePath
              | Format !FilePath
 
 fmt :: FilePath -> IO ()
-fmt = renderIO stdout <=< fmap (render . (<> hardline) . prettyModule . snd) . parsedFp
+fmt = renderIO stdout <=< fmap (render . (<> hardline) . prettyModule) . parsedFp
     where render = layoutSmart settings
           settings = LayoutOptions $ AvailablePerLine 80 0.5
+
+parsedFp :: FilePath -> IO (Module AlexPosn AlexPosn AlexPosn)
+parsedFp fp = do
+     contents <- BSL.readFile fp
+     yeetIO $ parse contents
+
+yeetIO :: Exception e => Either e a -> IO a
+yeetIO = either throwIO pure
 
 run :: Command -> IO ()
 run (TypeCheck fp)                        = either throwIO pure =<< tcFile fp

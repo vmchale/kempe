@@ -7,6 +7,7 @@ import           Control.DeepSeq   (deepseq)
 import           Control.Exception (Exception, throwIO)
 import           Kempe.AST
 import           Kempe.File
+import           Kempe.Module
 import           Kempe.TyAssign
 import           Prettyprinter     (pretty)
 import           Test.Tasty
@@ -37,9 +38,9 @@ typeTests =
 yeetIO :: Exception e => Either e a -> IO a
 yeetIO = either throwIO pure
 
-assignTypes :: FilePath -> IO (Module () (StackType ()) (StackType ()), Int)
+assignTypes :: FilePath -> IO (Declarations () (StackType ()) (StackType ()), Int)
 assignTypes fp = do
-    (maxU, m) <- parsedFp fp
+    (maxU, m) <- parseProcess fp
     yeetIO $ runTypeM maxU (assignModule m)
 
 testAssignment :: FilePath -> TestTree

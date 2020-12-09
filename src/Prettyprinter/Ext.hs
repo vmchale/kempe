@@ -2,6 +2,7 @@
 
 module Prettyprinter.Ext ( (<#>)
                          , prettyHex
+                         , prettyLines
                          ) where
 
 import           Numeric       (showHex)
@@ -14,3 +15,6 @@ infixr 6 <#>
 
 prettyHex :: (Integral a, Show a) => a -> Doc ann
 prettyHex x = "0x" <> pretty (showHex x mempty)
+
+prettyLines :: [Doc ann] -> Doc ann
+prettyLines = concatWith (<#>)

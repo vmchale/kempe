@@ -4,6 +4,7 @@
     {-# LANGUAGE OverloadedStrings #-}
     module Kempe.Parser ( parse
                         , parseWithMax
+                        , parseWithCtx
                         , ParseError (..)
                         ) where
 
@@ -28,7 +29,7 @@ import Prettyprinter (Pretty (pretty), (<+>))
 
 }
 
-%name parseModule Declarations
+%name parseModule Module
 %tokentype { Token AlexPosn }
 %error { parseError }
 %monad { Parse } { (>>=) } { pure }
@@ -125,8 +126,14 @@ brackets(p)
 parens(p)
     : lparen p rparen { $2 }
 
+Module :: { Module AlexPosn AlexPosn AlexPosn }
+       : many(Import) Declarations { Module (reverse $1) $2 }
+
 Declarations :: { Declarations AlexPosn AlexPosn AlexPosn }
              : many(Decl) { (reverse $1) }
+
+Import :: { BSL.ByteString }
+       : import moduleFile { $2 }
 
 ABI :: { ABI }
     : cabi { Cabi }
@@ -234,11 +241,14 @@ instance (Pretty a, Typeable a) => Exception (ParseError a)
 
 type Parse = ExceptT (ParseError AlexPosn) Alex
 
-parse :: BSL.ByteString -> Either (ParseError AlexPosn) (Declarations AlexPosn AlexPosn AlexPosn)
+parse :: BSL.ByteString -> Either (ParseError AlexPosn) (Module AlexPosn AlexPosn AlexPosn)
 parse = fmap snd . parseWithMax
 
-parseWithMax :: BSL.ByteString -> Either (ParseError AlexPosn) (Int, Declarations AlexPosn AlexPosn AlexPosn)
-parseWithMax = fmap (first fst3) . runParse parseModule
+parseWithMax :: BSL.ByteString -> Either (ParseError AlexPosn) (Int, Module AlexPosn AlexPosn AlexPosn)
+parseWithMax = fmap (first fst3) . parseWithCtx
+
+parseWithCtx :: BSL.ByteString -> Either (ParseError AlexPosn) (AlexUserState, Module AlexPosn AlexPosn AlexPosn)
+parseWithCtx = runParse parseModule
 
 runParse :: Parse a -> BSL.ByteString -> Either (ParseError AlexPosn) (AlexUserState, a)
 runParse parser str = liftErr $ runAlexSt str (runExceptT parser)

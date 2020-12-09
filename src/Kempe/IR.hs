@@ -103,7 +103,7 @@ lookupName (Name _ (Unique i) _) =
         (IM.findWithDefault (error "Internal error in IR phase: could not look find label for name") i . atLabels)
 
 prettyIR :: [Stmt] -> Doc ann
-prettyIR = concatWith (\x y -> x <> hardline <> y) . fmap pretty
+prettyIR = prettyLines . fmap pretty
 
 prettyLabel :: Label -> Doc ann
 prettyLabel l = "kmp" <> pretty l

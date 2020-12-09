@@ -40,6 +40,7 @@ library kempe-modules
         Kempe.Pipeline
         Kempe.Shuttle
         Kempe.Inline
+        Kempe.Module
         Kempe.Check.Pattern
         Kempe.IR
         Kempe.IR.Opt
@@ -111,7 +112,8 @@ executable kc
         base -any,
         optparse-applicative -any,
         kempe-modules -any,
-        prettyprinter >=1.7.0
+        prettyprinter >=1.7.0,
+        bytestring -any
 
     if impl(ghc >=8.0)
         ghc-options:

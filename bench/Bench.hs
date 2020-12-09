@@ -15,6 +15,7 @@ import           Kempe.IR
 import           Kempe.IR.Opt
 import           Kempe.Inline
 import           Kempe.Lexer
+import           Kempe.Module
 import           Kempe.Monomorphize
 import           Kempe.Parser
 import           Kempe.Pipeline
@@ -98,13 +99,13 @@ main =
                         , bench "Object file (examples/splitmix.kmp)" $ nfIO (compile "examples/splitmix.kmp" "/tmp/splitmix.o" False)
                         ]
                 ]
-    where parsedM = yeetIO . parseWithMax =<< BSL.readFile "test/data/ty.kmp"
-          splitmix = yeetIO . parseWithMax =<< BSL.readFile "examples/splitmix.kmp"
-          fac = yeetIO . parseWithMax =<< BSL.readFile "examples/factorial.kmp"
-          num = yeetIO . parseWithMax =<< BSL.readFile "lib/numbertheory.kmp"
-          eitherMod = yeetIO . parse =<< BSL.readFile "lib/either.kmp"
+    where parsedM = parseProcess "test/data/ty.kmp"
+          splitmix = parseProcess "examples/splitmix.kmp"
+          fac = parseProcess "examples/factorial.kmp"
+          num = parseProcess "lib/numbertheory.kmp"
+          eitherMod = snd <$> parseProcess "lib/either.kmp"
           parsedInteresting = (,) <$> fac <*> num
-          prelude = yeetIO . parseWithMax =<< BSL.readFile "prelude/fn.kmp"
+          prelude = parseProcess "prelude/fn.kmp"
           forTyEnv = (,,) <$> parsedM <*> splitmix <*> prelude
           runCheck (maxU, m) = runTypeM maxU (checkModule m)
           runAssign (maxU, m) = runTypeM maxU (assignModule m)
@@ -135,13 +136,9 @@ main =
           -- not even gonna justify this
           yrrucnu f (y, x) = f x y
 
-yeetIO :: Exception e => Either e a -> IO a
-yeetIO = either throwIO pure
-
 writeAsm :: FilePath
          -> IO T.Text
 writeAsm fp = do
-    contents <- BSL.readFile fp
-    res <- yeetIO $ parseWithMax contents
+    res <- parseProcess fp
     pure $ renderText $ uncurry dumpX86 res
     where renderText = renderStrict . layoutPretty defaultLayoutOptions
