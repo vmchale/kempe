@@ -68,7 +68,7 @@ library kempe-modules
 
     ghc-options:      -Wall
     build-depends:
-        base >=4.10 && <5,
+        base >=4.8 && <5,
         array -any,
         bytestring -any,
         containers >=0.6.0.0,
