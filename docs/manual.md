@@ -16,6 +16,8 @@ cabal install kempe
 
 This provides `kc`, the Kempe compiler.
 
+`kc` requires [NASM](https://www.nasm.us/), an x86_64 assembler.
+
 ## Editor Integration
 
 A [vim plugin](https://github.com/vmchale/kempe/tree/master/vim) is
