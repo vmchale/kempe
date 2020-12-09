@@ -45,6 +45,7 @@
 - [ ] Inliner (all non-recursive?)
 - [ ] https://www.cs.princeton.edu/courses/archive/spr19/cos217/lectures/13_Assembly1.pdf (von neumann -> c where int ptrs, ATS & such are useful...)
 # Features
+- [ ] Aarch64 backend
 - [ ] Arithmetic and patterns for `i8`
 - [ ] `divMod` builtin?
 - [ ] Floats

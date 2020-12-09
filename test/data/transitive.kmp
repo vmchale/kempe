@@ -1,0 +1,6 @@
+import "lib/tuple.kmp"
+
+enTuple : Int Int -- ((Pair Int) Int)
+        =: [ Pair ]
+
+%foreign kabi enTuple
