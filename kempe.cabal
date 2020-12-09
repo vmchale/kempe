@@ -68,7 +68,7 @@ library kempe-modules
 
     ghc-options:      -Wall
     build-depends:
-        base >=4.8 && <5,
+        base >=4.9 && <5,
         array -any,
         bytestring -any,
         containers >=0.6.0.0,
@@ -77,7 +77,7 @@ library kempe-modules
         mtl -any,
         microlens -any,
         transformers -any,
-        extra -any,
+        extra >=1.7.4,
         prettyprinter >=1.7.0,
         composition-prelude >=2.0.2.0,
         microlens-mtl -any,
