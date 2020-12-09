@@ -216,7 +216,7 @@ instance Pretty IntBinOp where
     pretty WordModIR    = "%~"
     pretty WordDivIR    = "/~"
 
-writeModule :: SizeEnv -> Module () (ConsAnn MonoStackType) MonoStackType -> TempM [Stmt]
+writeModule :: SizeEnv -> Declarations () (ConsAnn MonoStackType) MonoStackType -> TempM [Stmt]
 writeModule env m = traverse_ assignName m *> foldMapA (writeDecl env) m
 
 -- optimize tail-recursion, if possible

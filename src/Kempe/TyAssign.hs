@@ -409,13 +409,13 @@ tyInsert (FunDecl _ _ ins out as) = do
 tyInsert ExtFnDecl{} = pure () -- TODO: kind-check
 tyInsert Export{} = pure ()
 
-tyModule :: Module a c b -> TypeM () ()
+tyModule :: Declarations a c b -> TypeM () ()
 tyModule m = traverse_ tyHeader m *> traverse_ tyInsert m
 
-checkModule :: Module a c b -> TypeM () ()
+checkModule :: Declarations a c b -> TypeM () ()
 checkModule m = tyModule m <* (unifyM =<< gets constraints)
 
-assignModule :: Module a c b -> TypeM () (Module () (StackType ()) (StackType ()))
+assignModule :: Declarations a c b -> TypeM () (Declarations () (StackType ()) (StackType ()))
 assignModule m = {-# SCC "assignModule" #-} do
     traverse_ tyHeader m
     m' <- traverse assignDecl m

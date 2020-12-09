@@ -56,10 +56,10 @@ dumpMono fp = do
     where fromMono (is, os) = StackType S.empty is os
           fromMonoConsAnn (ConsAnn _ _ ty) = fromMono ty
 
-dumpIR :: Int -> Module a c b -> Doc ann
+dumpIR :: Int -> Declarations a c b -> Doc ann
 dumpIR = prettyIR . fst3 .* irGen
 
-dumpX86 :: Int -> Module a c b -> Doc ann
+dumpX86 :: Int -> Declarations a c b -> Doc ann
 dumpX86 = prettyAsm .* x86Alloc
 
 irFile :: FilePath -> IO ()
@@ -67,7 +67,7 @@ irFile fp = do
     res <- parsedFp fp
     putDoc $ uncurry dumpIR res <> hardline
 
-parsedFp :: FilePath -> IO (Int, Module AlexPosn AlexPosn AlexPosn)
+parsedFp :: FilePath -> IO (Int, Declarations AlexPosn AlexPosn AlexPosn)
 parsedFp fp = do
     contents <- BSL.readFile fp
     yeetIO $ parseWithMax contents

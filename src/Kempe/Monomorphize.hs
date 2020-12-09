@@ -24,7 +24,6 @@ import           Data.Containers.ListUtils  (nubOrd)
 import           Data.Foldable              (traverse_)
 import           Data.Function              (on)
 import           Data.Functor               (($>))
-import           Data.Int                   (Int64)
 import qualified Data.IntMap                as IM
 import           Data.List                  (elemIndex, find, groupBy, partition)
 import qualified Data.Map                   as M
@@ -80,7 +79,7 @@ tryMono (StackType _ is os) | S.null (freeVars (is ++ os)) = pure (is, os)
 -- a given 'Name'
 type ModuleMap a c b = IM.IntMap (KempeDecl a c b)
 
-mkModuleMap :: Module a c b -> ModuleMap a c b
+mkModuleMap :: Declarations a c b -> ModuleMap a c b
 mkModuleMap = IM.fromList . concatMap toInt where
     toInt d@(FunDecl _ (Name _ (Unique i) _) _ _ _)   = [(i, d)]
     toInt d@(ExtFnDecl _ (Name _ (Unique i) _) _ _ _) = [(i, d)]
@@ -145,11 +144,11 @@ renameDecl (ExtFnDecl l n tys tys' b) = pure $ ExtFnDecl l n tys tys' b
 renameDecl (TyDecl l n vars ls)       = pure $ TyDecl l n vars ls
 
 -- | Call 'closedModule' and perform any necessary renamings
-flattenModule :: Module () (StackType ()) (StackType ()) -> MonoM (Module () (ConsAnn MonoStackType) (StackType ()))
+flattenModule :: Declarations () (StackType ()) (StackType ()) -> MonoM (Declarations () (ConsAnn MonoStackType) (StackType ()))
 flattenModule = renameMonoM <=< closedModule
 
 -- | To be called after 'closedModule'
-renameMonoM :: Module () (StackType ()) (StackType ()) -> MonoM (Module () (ConsAnn MonoStackType) (StackType ()))
+renameMonoM :: Declarations () (StackType ()) (StackType ()) -> MonoM (Declarations () (ConsAnn MonoStackType) (StackType ()))
 renameMonoM = traverse renameDecl
 
 -- | Filter so that only the 'KempeDecl's necessary for exports are there, and
@@ -158,7 +157,7 @@ renameMonoM = traverse renameDecl
 -- This will throw an exception on ill-typed programs.
 --
 -- The 'Module' returned will have to be renamed.
-closedModule :: Module () (StackType ()) (StackType ()) -> MonoM (Module () (StackType ()) (StackType ()))
+closedModule :: Declarations () (StackType ()) (StackType ()) -> MonoM (Declarations () (StackType ()) (StackType ()))
 closedModule m = addExports <$> do
     { fn' <- traverse (uncurry specializeDecl . drop1) fnDecls
     ; traverse_ insTyDecl $ nubOrd (snd3 <$> tyDecls)
@@ -257,7 +256,7 @@ renamed (Name t i _) sty@(is, os) = do
     modifying fnEnvLens (M.insert (i, newStackType) j)
     pure (Name t' j newStackType)
 
-closure :: Ord b => (Module a b b, ModuleMap a b b) -> S.Set (Name b, b)
+closure :: Ord b => (Declarations a b b, ModuleMap a b b) -> S.Set (Name b, b)
 closure (m, key) = loop roots S.empty
     where roots = S.fromList (exports m)
           loop ns avoid =
@@ -288,10 +287,10 @@ namesInAtom Int8Lit{}                  = S.empty
 namesInAtom WordLit{}                  = S.empty
 namesInAtom (Case _ as)                = foldMap namesInAtom (foldMap snd as) -- FIXME: patterns too
 
-exports :: Module a c b -> [(Name b, b)]
+exports :: Declarations a c b -> [(Name b, b)]
 exports = mapMaybe exportsDecl
 
-exportsOnly :: Module a c b -> Module a c b
+exportsOnly :: Declarations a c b -> Declarations a c b
 exportsOnly = mapMaybe getExport where
     getExport d@Export{} = Just d
     getExport _          = Nothing

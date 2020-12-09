@@ -28,7 +28,7 @@ import Prettyprinter (Pretty (pretty), (<+>))
 
 }
 
-%name parseModule Module
+%name parseModule Declarations
 %tokentype { Token AlexPosn }
 %error { parseError }
 %monad { Parse } { (>>=) } { pure }
@@ -74,6 +74,7 @@ import Prettyprinter (Pretty (pretty), (<+>))
     name { TokName _ $$ }
     tyName { TokTyName  _ $$ }
     foreignName { TokForeign _ $$ }
+    moduleFile { TokModuleStr _ $$ }
 
     intLit { $$@(TokInt _ _) }
     wordLit { $$@(TokWord _ _) }
@@ -86,6 +87,7 @@ import Prettyprinter (Pretty (pretty), (<+>))
     foreign { TokKeyword $$ KwForeign }
     cabi { TokKeyword $$ KwCabi }
     kabi { TokKeyword $$ KwKabi }
+    import { TokKeyword $$ KwImport }
 
     dip { TokBuiltin $$ BuiltinDip }
     boolLit { $$@(TokBuiltin _ (BuiltinBoolLit _)) }
@@ -123,8 +125,8 @@ brackets(p)
 parens(p)
     : lparen p rparen { $2 }
 
-Module :: { Module AlexPosn AlexPosn AlexPosn }
-       : many(Decl) { (reverse $1) }
+Declarations :: { Declarations AlexPosn AlexPosn AlexPosn }
+             : many(Decl) { (reverse $1) }
 
 ABI :: { ABI }
     : cabi { Cabi }
@@ -232,10 +234,10 @@ instance (Pretty a, Typeable a) => Exception (ParseError a)
 
 type Parse = ExceptT (ParseError AlexPosn) Alex
 
-parse :: BSL.ByteString -> Either (ParseError AlexPosn) (Module AlexPosn AlexPosn AlexPosn)
+parse :: BSL.ByteString -> Either (ParseError AlexPosn) (Declarations AlexPosn AlexPosn AlexPosn)
 parse = fmap snd . parseWithMax
 
-parseWithMax :: BSL.ByteString -> Either (ParseError AlexPosn) (Int, Module AlexPosn AlexPosn AlexPosn)
+parseWithMax :: BSL.ByteString -> Either (ParseError AlexPosn) (Int, Declarations AlexPosn AlexPosn AlexPosn)
 parseWithMax = fmap (first fst3) . runParse parseModule
 
 runParse :: Parse a -> BSL.ByteString -> Either (ParseError AlexPosn) (AlexUserState, a)

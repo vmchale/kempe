@@ -15,7 +15,8 @@ module Kempe.AST ( BuiltinTy (..)
                  , KempeDecl (..)
                  , Pattern (..)
                  , ABI (..)
-                 , Module
+                 , Declarations
+                 , Module (..)
                  , freeVars
                  , MonoStackType
                  , SizeEnv
@@ -282,19 +283,23 @@ instance Bifunctor (KempeDecl a) where
     first _ (Export l abi n)           = Export l abi n
     second = fmap
 
-prettyModuleGeneral :: (Atom c b -> Doc ann) -> Module a c b -> Doc ann
+prettyModuleGeneral :: (Atom c b -> Doc ann) -> Declarations a c b -> Doc ann
 prettyModuleGeneral atomizer = sep . fmap (prettyKempeDecl atomizer)
 
-prettyFancyModule :: Module () (ConsAnn (StackType ())) (StackType ()) -> Doc ann
+prettyFancyModule :: Declarations () (ConsAnn (StackType ())) (StackType ()) -> Doc ann
 prettyFancyModule = prettyTypedModule . fmap (first consTy)
 
-prettyTypedModule :: Module () (StackType ()) (StackType ()) -> Doc ann
+prettyTypedModule :: Declarations () (StackType ()) (StackType ()) -> Doc ann
 prettyTypedModule = prettyModuleGeneral prettyTyped
 
-prettyModule :: Module a c b -> Doc ann
+prettyModule :: Declarations a c b -> Doc ann
 prettyModule = prettyModuleGeneral pretty
 
-type Module a c b = [KempeDecl a c b]
+type Declarations a c b = [KempeDecl a c b]
+
+data Module a c b = Module { importFps  :: [BSL.ByteString]
+                           , moduleBody :: [KempeDecl a c b]
+                           }
 
 extrVars :: KempeTy a -> [Name a]
 extrVars TyBuiltin{}      = []

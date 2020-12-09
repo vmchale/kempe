@@ -17,13 +17,13 @@ import           Kempe.IR.Opt
 import           Kempe.Shuttle
 
 irGen :: Int -- ^ Thread uniques through
-      -> Module a c b -> ([Stmt], WriteSt, SizeEnv)
+      -> Declarations a c b -> ([Stmt], WriteSt, SizeEnv)
 irGen i m = adjEnv $ first optimize $ runTempM (writeModule env tAnnMod)
     where (tAnnMod, env) = either throw id $ monomorphize i m
           adjEnv (x, y) = (x, y, env)
 
-x86Parsed :: Int -> Module a c b -> [X86 AbsReg ()]
+x86Parsed :: Int -> Declarations a c b -> [X86 AbsReg ()]
 x86Parsed i m = let (ir, u, env) = irGen i m in irToX86 env u ir
 
-x86Alloc :: Int -> Module a c b -> [X86 X86Reg ()]
+x86Alloc :: Int -> Declarations a c b -> [X86 X86Reg ()]
 x86Alloc = allocRegs . reconstruct . mkControlFlow .* x86Parsed

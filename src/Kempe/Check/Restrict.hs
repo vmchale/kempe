@@ -6,7 +6,7 @@ import           Data.Foldable.Ext
 import           Kempe.AST
 import           Kempe.Error       (Error (FatSumType))
 
-restrictConstructors :: Module a c b -> Maybe (Error a)
+restrictConstructors :: Declarations a c b -> Maybe (Error a)
 restrictConstructors = foldMapAlternative restrictDecl
 
 restrictDecl :: KempeDecl a c b -> Maybe (Error a)

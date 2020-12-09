@@ -17,7 +17,7 @@ import           Kempe.Unique
 -- a given 'Name'
 type FnModuleMap c b = IM.IntMap (Maybe [Atom c b])
 
-inline :: Module a c b -> Module a c b
+inline :: Declarations a c b -> Declarations a c b
 inline m = fmap inlineDecl m
     where inlineDecl (FunDecl l n ty ty' as) = FunDecl l n ty ty' (inlineAtoms n as)
           inlineDecl d                       = d
@@ -44,7 +44,7 @@ inline m = fmap inlineDecl m
 
 -- | Given a module, make a map telling which top-level names are recursive or
 -- cannot be inlined
-graphRecursiveMap :: Module a c b -> (Graph, Name b -> Vertex) -> IM.IntMap Bool
+graphRecursiveMap :: Declarations a c b -> (Graph, Name b -> Vertex) -> IM.IntMap Bool
 graphRecursiveMap m (graph, nLookup) = IM.fromList $ mapMaybe fnRecursive m
     where fnRecursive (FunDecl _ n@(Name _ (Unique i) _) _ _ as) | n `elem` namesInAtoms as = Just (i, True) -- if it calls iteself
                                                                  | anyReachable n as = Just (i, True)
@@ -55,18 +55,18 @@ graphRecursiveMap m (graph, nLookup) = IM.fromList $ mapMaybe fnRecursive m
             any (\nA -> path graph (nLookup nA) (nLookup n)) (namesInAtoms as) -- TODO: lift let-binding (nLookup?)
 
 
-kempeGraph :: Module a c b -> (Graph, Vertex -> (KempeDecl a c b, Name b, [Name b]), Name b -> Vertex)
+kempeGraph :: Declarations a c b -> (Graph, Vertex -> (KempeDecl a c b, Name b, [Name b]), Name b -> Vertex)
 kempeGraph = third3 (findVtx .) . graphFromEdges . kempePreGraph
     where findVtx = fromMaybe (error "Internal error: bad name lookup!")
 
-kempePreGraph :: Module a c b -> [(KempeDecl a c b, Name b, [Name b])]
+kempePreGraph :: Declarations a c b -> [(KempeDecl a c b, Name b, [Name b])]
 kempePreGraph = mapMaybe kempeDeclToGraph
     where kempeDeclToGraph :: KempeDecl a c b -> Maybe (KempeDecl a c b, Name b, [Name b])
           kempeDeclToGraph d@(FunDecl _ n _ _ as)  = Just (d, n, foldMap namesInAtom as)
           kempeDeclToGraph d@(ExtFnDecl _ n _ _ _) = Just (d, n, [])
           kempeDeclToGraph _                       = Nothing
 
-mkFnModuleMap :: Module a c b -> FnModuleMap c b
+mkFnModuleMap :: Declarations a c b -> FnModuleMap c b
 mkFnModuleMap = IM.fromList . mapMaybe toInt where
     toInt (FunDecl _ (Name _ (Unique i) _) _ _ as)  = Just (i, Just as)
     toInt (ExtFnDecl _ (Name _ (Unique i) _) _ _ _) = Just (i, Nothing)

@@ -12,8 +12,8 @@ import           Kempe.Monomorphize
 import           Kempe.TyAssign
 
 inlineAssignFlatten :: Int
-                    -> Module a c b
-                    -> Either (Error ()) (Module () (ConsAnn MonoStackType) (StackType ()), (Int, SizeEnv))
+                    -> Declarations a c b
+                    -> Either (Error ()) (Declarations () (ConsAnn MonoStackType) (StackType ()), (Int, SizeEnv))
 inlineAssignFlatten ctx m = do
     -- check before inlining otherwise users would get weird errors
     void $ do
@@ -23,8 +23,8 @@ inlineAssignFlatten ctx m = do
     runMonoM i (flattenModule mTy)
 
 monomorphize :: Int
-             -> Module a c b
-             -> Either (Error ()) (Module () (ConsAnn MonoStackType) MonoStackType, SizeEnv)
+             -> Declarations a c b
+             -> Either (Error ()) (Declarations () (ConsAnn MonoStackType) MonoStackType, SizeEnv)
 monomorphize ctx m = do
     (flat, (_, env)) <- inlineAssignFlatten ctx m
     let flatFn' = filter (not . isTyDecl) flat

@@ -34,10 +34,10 @@ checkDecl :: PatternEnv -> KempeDecl a c b -> Maybe (Error b)
 checkDecl env (FunDecl _ _ _ _ as) = foldMapAlternative (checkAtom env) as
 checkDecl _ _                      = Nothing
 
-checkModule :: PatternEnv -> Module a c b -> Maybe (Error b)
+checkModule :: PatternEnv -> Declarations a c b -> Maybe (Error b)
 checkModule env = foldMapAlternative (checkDecl env)
 
-checkModuleExhaustive :: Module a c b -> Maybe (Error b)
+checkModuleExhaustive :: Declarations a c b -> Maybe (Error b)
 checkModuleExhaustive m =
     let env = runPatternM $ patternEnvDecls m
         in checkModule env m
@@ -54,7 +54,7 @@ typesLens f s = fmap (\x -> s { types = x }) (f (types s))
 
 type PatternM = State PatternEnv
 
-patternEnvDecls :: Module a c b -> PatternM ()
+patternEnvDecls :: Declarations a c b -> PatternM ()
 patternEnvDecls = traverse_ declAdd
 
 declAdd :: KempeDecl a c b -> PatternM ()
