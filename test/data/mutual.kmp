@@ -1,10 +1,4 @@
-not : Bool -- Bool
-    =: [
-    { case
-        | True -> False
-        | _    -> True
-    }
-]
+import "lib/bool.kmp"
 
 odd : Int -- Bool
     =: [ dup 0 =

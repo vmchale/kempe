@@ -1,3 +1,5 @@
+import "prelude/fn.kmp"
+
 type Pair a b { Pair a b }
 
 unPair : ((Pair a) b) -- a b
@@ -8,6 +10,3 @@ fst : ((Pair a) b) -- a
 
 snd : ((Pair a) b) -- b
     =: [ unPair nip ]
-
-nip : a b -- b
-    =: [ dip(drop) ]
