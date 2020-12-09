@@ -47,10 +47,13 @@
 # Features
 - [ ] Aarch64 backend
 - [ ] Arithmetic and patterns for `i8`
+- [ ] Patterns for words?
 - [ ] `divMod` builtin?
 - [ ] Floats
 - [ ] `fmt` subcommand
 - [ ] `abstype` for pointer abstract types?
+  - [ ] maybe just builtin lol
+- [ ] convert ints &c. between types
 - [ ] REPL for type inspection?
   - [ ] ─
 - [x] Pattern match exhaustiveness checker

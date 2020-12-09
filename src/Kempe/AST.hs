@@ -285,14 +285,14 @@ instance Bifunctor (KempeDecl a) where
     second = fmap
 
 prettyDeclarationsGeneral :: (Atom c b -> Doc ann) -> Declarations a c b -> Doc ann
-prettyDeclarationsGeneral atomizer = sep . fmap (prettyKempeDecl atomizer)
+prettyDeclarationsGeneral atomizer = sepDecls . fmap (prettyKempeDecl atomizer)
 
 prettyImport :: BSL.ByteString -> Doc ann
 prettyImport b = "import" <+> dquotes (pretty (decodeUtf8 b))
 
 prettyModuleGeneral :: (Atom c b -> Doc ann) -> Module a c b -> Doc ann
 prettyModuleGeneral atomizer (Module [] ds) = prettyDeclarationsGeneral atomizer ds
-prettyModuleGeneral atomizer (Module is ds) = prettyLines (fmap prettyImport is) <#> prettyDeclarationsGeneral atomizer ds
+prettyModuleGeneral atomizer (Module is ds) = prettyLines (fmap prettyImport is) <##> prettyDeclarationsGeneral atomizer ds
 
 prettyFancyModule :: Declarations () (ConsAnn (StackType ())) (StackType ()) -> Doc ann
 prettyFancyModule = prettyTypedModule . fmap (first consTy)
