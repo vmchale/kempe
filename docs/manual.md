@@ -157,6 +157,32 @@ isRight : ((Either a) b) -- Bool
 
 Note that pattern matches in Kempe must be exhaustive.
 
+## Imports
+
+Kempe has rudimentary imports. As an example:
+
+```
+import "prelude/fn.kmp"
+
+type Pair a b { Pair a b }
+
+...
+
+snd : ((Pair a) b) -- b
+    =: [ unPair nip ]
+```
+
+where `prelude/fn.kmp` contains
+
+```
+...
+
+nip : a b -- b
+    =: [ dip(drop) ]
+
+...
+```
+
 ## FFI
 
 Kempe can call into C functions. Suppose we have
