@@ -176,6 +176,8 @@ mkText = decodeUtf8 . BSL.toStrict
 instance Pretty AlexPosn where
     pretty (AlexPn _ line col) = pretty line <> colon <> pretty col
 
+deriving instance Ord AlexPosn
+
 deriving instance Generic AlexPosn
 
 deriving instance NFData AlexPosn
