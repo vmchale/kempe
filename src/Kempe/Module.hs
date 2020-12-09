@@ -17,7 +17,7 @@ import           Kempe.Parser
 parseProcess :: FilePath -> IO (Int, Declarations AlexPosn AlexPosn AlexPosn)
 parseProcess fp = do
     (st, [], ds) <- loopFps [fp] alexInitUserState
-    pure (fst3 st, dedup ds)
+    pure (fst3 st, {-# SCC "dedup" #-} dedup ds)
 
 yeetIO :: Exception e => Either e a -> IO a
 yeetIO = either throwIO pure
