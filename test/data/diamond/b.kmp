@@ -1,0 +1,2 @@
+rand : -- Int
+     =: $cfun"rand"

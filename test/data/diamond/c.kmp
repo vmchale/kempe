@@ -1,0 +1,4 @@
+import "test/data/diamond/d.kmp"
+
+res : -- Int
+    =: [ rand 1 + ]

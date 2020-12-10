@@ -1,0 +1,7 @@
+import "test/data/diamond/b.kmp"
+import "test/data/diamond/c.kmp"
+
+forExport : -- Int
+          =: [ res 2 * ]
+
+%foreign cabi forExport
