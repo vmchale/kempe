@@ -43,6 +43,7 @@ rts.o: rts.S
 
 install:
 	cabal install exe:kc --overwrite-policy=always
+	strip $$(readlink -f $$(which kc))
 
 clean:
 	rm -rf dist-newstyle *.rlib *.d *.rmeta *.o stack.yaml.lock factorial.S factorial splitmix.S numbertheory.S numbertheory *.so bin moddeps.svg
