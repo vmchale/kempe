@@ -1,6 +1,7 @@
 
 kmp1:
-(call kmp2)
+(movmem (reg datapointer) (int 17))
+(movtemp datapointer (+ (reg datapointer) (int 8)))
 (movmem (reg datapointer) (int 1))
 (movtemp t_1 (mem [8] (reg datapointer)))
 (movtemp datapointer (- (reg datapointer) (int 8)))
@@ -13,9 +14,6 @@ kmp1:
 (movtemp t_4 (mem [8] (reg datapointer)))
 (movmem (reg datapointer) (* (reg t_4) (reg t_3)))
 (movtemp datapointer (+ (reg datapointer) (int 8)))
-(ret)
-
-kmp2:
 (ret)
 
 export forExport { -- Int} kmp1
