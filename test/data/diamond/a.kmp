@@ -1,5 +1,5 @@
-import "test/data/diamond/b.kmp"
 import "test/data/diamond/c.kmp"
+import "test/data/diamond/b.kmp"
 
 forExport : -- Int
           =: [ res 2 * ]
