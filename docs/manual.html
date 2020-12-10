@@ -238,6 +238,7 @@
 <ul>
 <li><a href="#pattern-matching">Pattern Matching</a></li>
 </ul></li>
+<li><a href="#imports">Imports</a></li>
 <li><a href="#ffi">FFI</a></li>
 <li><a href="#recursion">Recursion</a></li>
 <li><a href="#non-features">Non-Features</a></li>
@@ -349,9 +350,26 @@ fac_tailrec : Int -- Int
     }
 ]</code></pre>
 <p>Note that pattern matches in Kempe must be exhaustive.</p>
+<h2 id="imports">Imports</h2>
+<p>Kempe has rudimentary imports. As an example:</p>
+<pre><code>import &quot;prelude/fn.kmp&quot;
+
+type Pair a b { Pair a b }
+
+...
+
+snd : ((Pair a) b) -- b
+    =: [ unPair nip ]</code></pre>
+<p>where <code>prelude/fn.kmp</code> contains</p>
+<pre><code>...
+
+nip : a b -- b
+    =: [ dip(drop) ]
+
+...</code></pre>
 <h2 id="ffi">FFI</h2>
 <p>Kempe can call into C functions. Suppose we have</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> rand(<span class="dt">void</span>);</span></code></pre></div>
+<div class="sourceCode" id="cb12"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> rand(<span class="dt">void</span>);</span></code></pre></div>
 <p>Then we can declare this as:</p>
 <pre><code>rand : -- Int
      =: $cfun&quot;rand&quot;</code></pre>
@@ -380,13 +398,13 @@ fac_tailrec : Int -- Int
 
 %foreign cabi fac</code></pre>
 <p>This would be called with a C wrapper like so:</p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;stdio.h&gt;</span></span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="kw">extern</span> <span class="dt">int</span> fac(<span class="dt">int</span>);</span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> main(<span class="dt">int</span> argc, <span class="dt">char</span> *argv[]) {</span>
-<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>    printf(<span class="st">&quot;%d&quot;</span>, fac(<span class="dv">3</span>));</span>
-<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb15"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;stdio.h&gt;</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="kw">extern</span> <span class="dt">int</span> fac(<span class="dt">int</span>);</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> main(<span class="dt">int</span> argc, <span class="dt">char</span> *argv[]) {</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>    printf(<span class="st">&quot;%d&quot;</span>, fac(<span class="dv">3</span>));</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <p>Unlike the frontend and type checker, the backend is dodgy.</p>
 <h2 id="internals">Internals</h2>
 <p>Kempe maintains its own stack and stores the pointer in <code>rbp</code>.</p>
@@ -421,16 +439,16 @@ next : Word -- Word Word
 %foreign kabi next</code></pre>
 <p>Note that <code>30i8</code> is an <code>Int8</code> literal; shifts take an <code>Int8</code> as the exponent.</p>
 <p>Compare this <a href="http://prng.di.unimi.it/splitmix64.c">C implementation</a>:</p>
-<div class="sourceCode" id="cb17"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;stdint.h&gt;</span></span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="co">// modified to have &quot;&quot;multiple return&quot;&quot; with destination-passing style</span></span>
-<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a><span class="dt">uint64_t</span> next(<span class="dt">uint64_t</span> x, <span class="dt">uint64_t</span>* y) {</span>
-<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint64_t</span> z = (x += <span class="bn">0x9e3779b97f4a7c15</span>);</span>
-<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>    z = (z ^ (z &gt;&gt; <span class="dv">30</span>)) * <span class="bn">0xbf58476d1ce4e5b9</span>;</span>
-<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>    z = (z ^ (z &gt;&gt; <span class="dv">27</span>)) * <span class="bn">0x94d049bb133111eb</span>;</span>
-<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>    *y = x;</span>
-<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> z ^ (z &gt;&gt; <span class="dv">31</span>);</span>
-<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb19"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;stdint.h&gt;</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="co">// modified to have &quot;&quot;multiple return&quot;&quot; with destination-passing style</span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a><span class="dt">uint64_t</span> next(<span class="dt">uint64_t</span> x, <span class="dt">uint64_t</span>* y) {</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint64_t</span> z = (x += <span class="bn">0x9e3779b97f4a7c15</span>);</span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>    z = (z ^ (z &gt;&gt; <span class="dv">30</span>)) * <span class="bn">0xbf58476d1ce4e5b9</span>;</span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>    z = (z ^ (z &gt;&gt; <span class="dv">27</span>)) * <span class="bn">0x94d049bb133111eb</span>;</span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>    *y = x;</span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> z ^ (z &gt;&gt; <span class="dv">31</span>);</span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
 <h2 id="gcd">GCD</h2>
 <pre><code>gcd : Int Int -- Int
     =: [ dup 0 =
