@@ -5,6 +5,7 @@
   * Fix padding
   * Fix bug in lexer (for C foreign calls)
   * Support down to GHC 7.10.3
+  * Unification no longer takes pathologically long time
 
 ## 0.1.0.2
 

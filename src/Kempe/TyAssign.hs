@@ -98,39 +98,52 @@ data Kind = Star
 
 type TypeM a = StateT (TyState a) (Either (Error a))
 
-onType :: (Int, KempeTy a) -> KempeTy a -> KempeTy a
-onType _ ty'@TyBuiltin{} = ty'
-onType _ ty'@TyNamed{}   = ty'
-onType (k, ty) ty'@(TyVar _ (Name _ (Unique i) _)) | i == k = ty
-                                                   | otherwise = ty'
-onType (k, ty) (TyApp l ty' ty'') = TyApp l (onType (k, ty) ty') (onType (k, ty) ty'') -- I think this is right
+type UnifyMap = IM.IntMap (KempeTy ())
 
-renameForward :: (Int, KempeTy a) -> [(KempeTy a, KempeTy a)] -> [(KempeTy a, KempeTy a)]
-renameForward _ []                      = []
-renameForward (k, ty) ((ty', ty''):tys) = (onType (k, ty) ty', onType (k, ty) ty'') : renameForward (k, ty) tys
+inContext :: UnifyMap -> KempeTy () -> KempeTy ()
+inContext um ty'@(TyVar _ (Name _ (Unique i) _)) =
+    case IM.lookup i um of
+        Just ty@TyVar{} -> inContext (IM.delete i um) ty -- prevent cyclic lookups
+        Just ty         -> ty
+        Nothing         -> ty'
+inContext _ ty'@TyBuiltin{} = ty'
+inContext _ ty'@TyNamed{} = ty'
+inContext um (TyApp l ty ty') = TyApp l (inContext um ty) (inContext um ty')
 
-unify :: [(KempeTy a, KempeTy a)] -> Either (Error ()) (IM.IntMap (KempeTy ()))
-unify []                                                             = Right mempty
-unify ((ty@(TyBuiltin _ b0), ty'@(TyBuiltin _ b1)):tys) | b0 == b1   = unify tys
-                                                        | otherwise  = Left (UnificationFailed () (void ty) (void ty'))
-unify ((ty@(TyNamed _ n0), ty'@(TyNamed _ n1)):tys) | n0 == n1       = unify tys
+unifyPrep :: UnifyMap
+            -> [(KempeTy (), KempeTy ())]
+            -> Either (Error ()) (IM.IntMap (KempeTy ()))
+unifyPrep _ [] = Right mempty
+unifyPrep um ((ty, ty'):tys) =
+    let ty'' = inContext um ty
+        ty''' = inContext um ty'
+    in unifyMatch um $ (ty'', ty'''):tys
+
+unifyMatch :: UnifyMap -> [(KempeTy (), KempeTy ())] -> Either (Error ()) (IM.IntMap (KempeTy ()))
+unifyMatch _ []                                                             = Right mempty
+unifyMatch um ((ty@(TyBuiltin _ b0), ty'@(TyBuiltin _ b1)):tys) | b0 == b1   = unifyPrep um tys
+                                                                | otherwise  = Left (UnificationFailed () ty ty')
+unifyMatch um ((ty@(TyNamed _ n0), ty'@(TyNamed _ n1)):tys) | n0 == n1       = unifyPrep um tys
                                                     | otherwise      = Left (UnificationFailed () (void ty) (void ty'))
-unify ((ty@(TyNamed _ _), TyVar  _ (Name _ (Unique k) _)):tys)       = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys) -- is this O(n^2) or something bad?
-unify ((TyVar _ (Name _ (Unique k) _), ty@(TyNamed _ _)):tys)        = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys) -- FIXME: is renameForward enough?
-unify ((ty@(TyBuiltin _ _), TyVar  _ (Name _ (Unique k) _)):tys)     = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys)
-unify ((TyVar _ (Name _ (Unique k) _), ty@(TyBuiltin _ _)):tys)      = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys)
-unify ((TyVar _ (Name _ (Unique k) _), ty@(TyVar _ _)):tys)          = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys)
-unify ((ty@TyBuiltin{}, ty'@TyNamed{}):_)                            = Left (UnificationFailed () (void ty) (void ty'))
-unify ((ty@TyNamed{}, ty'@TyBuiltin{}):_)                            = Left (UnificationFailed () (void ty) (void ty'))
-unify ((ty@TyBuiltin{}, ty'@TyApp{}):_)                              = Left (UnificationFailed () (void ty) (void ty'))
-unify ((ty@TyNamed{}, ty'@TyApp{}):_)                                = Left (UnificationFailed () (void ty) (void ty'))
-unify ((ty@TyApp{}, ty'@TyBuiltin{}):_)                              = Left (UnificationFailed () (void ty) (void ty'))
-unify ((TyVar _ (Name _ (Unique k) _), ty@TyApp{}):tys)              = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys)
-unify ((ty@TyApp{}, TyVar  _ (Name _ (Unique k) _)):tys)             = IM.insert k (void ty) <$> unify (renameForward (k, ty) tys)
-unify ((TyApp _ ty ty', TyApp _ ty'' ty'''):tys)                     = unify ((ty, ty'') : (ty', ty''') : tys) -- TODO: I think this is right?
-unify ((ty@TyApp{}, ty'@TyNamed{}):_)                                = Left (UnificationFailed () (void ty) (void ty'))
+unifyMatch um ((ty@(TyNamed _ _), TyVar  _ (Name _ (Unique k) _)):tys)       = IM.insert k ty <$> unifyPrep (IM.insert k ty um) tys
+unifyMatch um ((TyVar _ (Name _ (Unique k) _), ty@(TyNamed _ _)):tys)        = IM.insert k ty <$> unifyPrep (IM.insert k ty um) tys
+unifyMatch um ((ty@TyBuiltin{}, TyVar  _ (Name _ (Unique k) _)):tys)         = IM.insert k ty <$> unifyPrep (IM.insert k ty um) tys
+unifyMatch um ((TyVar _ (Name _ (Unique k) _), ty@(TyBuiltin _ _)):tys)      = IM.insert k ty <$> unifyPrep (IM.insert k ty um) tys
+unifyMatch um ((TyVar _ (Name _ (Unique k) _), ty@(TyVar _ _)):tys)          = IM.insert k ty <$> unifyPrep (IM.insert k ty um) tys
+unifyMatch _ ((ty@TyBuiltin{}, ty'@TyNamed{}):_)                             = Left (UnificationFailed () ty ty')
+unifyMatch _ ((ty@TyNamed{}, ty'@TyBuiltin{}):_)                             = Left (UnificationFailed () ty ty')
+unifyMatch _ ((ty@TyBuiltin{}, ty'@TyApp{}):_)                               = Left (UnificationFailed () ty ty')
+unifyMatch _ ((ty@TyNamed{}, ty'@TyApp{}):_)                                 = Left (UnificationFailed () ty ty')
+unifyMatch _ ((ty@TyApp{}, ty'@TyBuiltin{}):_)                               = Left (UnificationFailed () ty ty')
+unifyMatch um ((TyVar _ (Name _ (Unique k) _), ty@TyApp{}):tys)              = IM.insert k ty <$> unifyPrep (IM.insert k ty um) tys
+unifyMatch um ((ty@TyApp{}, TyVar  _ (Name _ (Unique k) _)):tys)             = IM.insert k ty <$> unifyPrep (IM.insert k ty um) tys
+unifyMatch um ((TyApp _ ty ty', TyApp _ ty'' ty'''):tys)                     = unifyMatch um ((ty, ty'') : (ty', ty''') : tys) -- TODO: I think this is right?
+unifyMatch _ ((ty@TyApp{}, ty'@TyNamed{}):_)                                 = Left (UnificationFailed () (void ty) (void ty'))
 
-unifyM :: S.Set (KempeTy a, KempeTy a) -> TypeM () (IM.IntMap (KempeTy ()))
+unify :: [(KempeTy (), KempeTy ())] -> Either (Error ()) (IM.IntMap (KempeTy ()))
+unify = unifyPrep IM.empty
+
+unifyM :: S.Set (KempeTy (), KempeTy ()) -> TypeM () (IM.IntMap (KempeTy ()))
 unifyM s =
     case {-# SCC "unify" #-} unify (S.toList s) of
         Right x  -> pure x

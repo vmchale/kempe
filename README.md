@@ -25,7 +25,6 @@ eval "$(kc --bash-completion-script kc)"
 
 ## Defects
 
-  * Unification takes too long
   * Errors don't have position information
   * Monomorphization fails on recursive polymorphic functions
 
