@@ -1,5 +1,4 @@
 .PHONY: install clean docs
-SHELL = bash
 
 MAKEFLAGS += --warn-undefined-variables --no-builtin-rules
 .DELETE_ON_ERROR:
@@ -18,22 +17,22 @@ bins: $(BINS)
 docs: docs/manual.pdf docs/manual.html
 
 docs/manual.pdf: docs/manual.md
-	pandoc $< -o $@ --toc
+	pandoc $^ -o $@ --toc
 
 docs/manual.html: docs/manual.md
-	pandoc -s $< -o $@ --toc
+	pandoc -s $^ -o $@ --toc
 
 numbertheory.S: lib/numbertheory.kmp
-	kc $< --dump-asm > $@
+	kc $^ --dump-asm > $@
 
 numbertheory.o: numbertheory.S
-	nasm -g -f elf64 $< -o $@
+	nasm -g -f elf64 $^ -o $@
 
 numbertheory: numbertheory.o test/harness/numbertheory.c
 	gcc -g $^ -o $@
 
 factorial.o: examples/factorial.kmp
-	kc -g $< $@
+	kc -g $^ $@
 
 factorial: factorial.o test/harness/factorial.c
 	gcc -g $^ -o $@
@@ -49,13 +48,13 @@ clean:
 	rm -rf dist-newstyle *.rlib *.d *.rmeta *.o stack.yaml.lock factorial.S factorial splitmix.S numbertheory.S numbertheory *.so bin moddeps.svg
 
 %.zst: %
-	sak compress $< $@ --best
+	sak compress ^< $@ --best
 
 %.lz: %
-	sak compress $< $@ --best
+	sak compress ^< $@ --best
 
 %.gz: %
-	sak compress $< $@ --best
+	sak compress $^ $@ --best
 
 bin/x86_64-linux-kc: $(HS_SRC)
 	@mkdir -p $(dir $@)
