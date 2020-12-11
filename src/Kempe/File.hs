@@ -17,6 +17,7 @@ import           Data.Functor              (void)
 import           Data.Semigroup            ((<>))
 import qualified Data.Set                  as S
 import           Data.Tuple.Extra          (fst3)
+import           Data.Typeable             (Typeable)
 import           Kempe.AST
 import           Kempe.Asm.X86.Type
 import           Kempe.Check.Pattern
@@ -61,10 +62,10 @@ dumpMono fp = do
     where fromMono (is, os) = StackType S.empty is os
           fromMonoConsAnn (ConsAnn _ _ ty) = fromMono ty
 
-dumpIR :: Int -> Declarations a c b -> Doc ann
+dumpIR :: Typeable a => Int -> Declarations a c b -> Doc ann
 dumpIR = prettyIR . fst3 .* irGen
 
-dumpX86 :: Int -> Declarations a c b -> Doc ann
+dumpX86 :: Typeable a => Int -> Declarations a c b -> Doc ann
 dumpX86 = prettyAsm .* x86Alloc
 
 irFile :: FilePath -> IO ()

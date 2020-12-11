@@ -34,7 +34,7 @@ mErr :: Maybe (Error ()) -> Either (Error ()) ()
 mErr Nothing    = Right ()
 mErr (Just err) = Left err
 
-instance (Pretty a) => Show (Error a) where
+instance Show (Error a) where
     show = show . pretty
 
 instance Pretty (Error a) where
@@ -51,4 +51,4 @@ instance Pretty (Error a) where
     pretty (FatSumType _ tn)             = "Sum type" <+> pretty tn <+> "has too many constructors! Sum types are limited to 256 constructors in Kempe."
     pretty InexhaustiveMatch{}           = "Inexhaustive pattern match."
 
-instance (Pretty a, Typeable a) => Exception (Error a)
+instance (Typeable a) => Exception (Error a)
