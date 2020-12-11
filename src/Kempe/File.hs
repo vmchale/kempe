@@ -1,4 +1,5 @@
 module Kempe.File ( tcFile
+                  , warnFile
                   , dumpMono
                   , dumpTyped
                   , irFile
@@ -19,8 +20,10 @@ import           Data.Tuple.Extra          (fst3)
 import           Kempe.AST
 import           Kempe.Asm.X86.Type
 import           Kempe.Check.Pattern
+import           Kempe.Check.TopLevel
 import           Kempe.Error
 import           Kempe.IR
+import           Kempe.Lexer
 import           Kempe.Module
 import           Kempe.Pipeline
 import           Kempe.Proc.Nasm
@@ -35,6 +38,11 @@ tcFile fp = do
     pure $ do
         void $ runTypeM maxU (checkModule m)
         mErr $ checkModuleExhaustive (void <$> m)
+
+warnFile :: FilePath -> IO (Maybe (Warning (AlexPosn)))
+warnFile fp = do
+    (_, m) <- parseProcess fp
+    pure $ topLevelCheck m
 
 yeetIO :: Exception e => Either e a -> IO a
 yeetIO = either throwIO pure
