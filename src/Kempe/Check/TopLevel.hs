@@ -16,7 +16,7 @@ import           Prettyprinter     (Pretty (pretty))
 data Warning a = NameClash a (Name a)
 
 instance Pretty a => Pretty (Warning a) where
-    pretty (NameClash l x) = pretty l <> ": '" <> pretty x <> "' is defined more than once."
+    pretty (NameClash l x) = pretty l <> " '" <> pretty x <> "' is defined more than once."
 
 topLevelCheck :: Declarations a c a -> Maybe (Warning a)
 topLevelCheck = checkNames . collectNames

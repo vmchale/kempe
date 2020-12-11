@@ -19,6 +19,7 @@ import           System.IO                 (stdout)
 data Command = TypeCheck !FilePath
              | Compile !FilePath !(Maybe FilePath) !Bool !Bool !Bool -- TODO: take arch on cli
              | Format !FilePath
+             | Lint !FilePath
 
 fmt :: FilePath -> IO ()
 fmt = renderIO stdout <=< fmap (render . (<> hardline) . prettyModule) . parsedFp
@@ -35,6 +36,7 @@ yeetIO = either throwIO pure
 
 run :: Command -> IO ()
 run (TypeCheck fp)                        = either throwIO pure =<< tcFile fp
+run (Lint fp)                             = maybe (pure ()) throwIO =<< warnFile fp
 run (Compile _ Nothing _ False False)     = putStrLn "No output file specified!"
 run (Compile fp (Just o) dbg False False) = compile fp o dbg
 run (Compile fp Nothing False True False) = irFile fp
@@ -50,6 +52,9 @@ kmpFile = argument str
 
 fmtP :: Parser Command
 fmtP = Format <$> kmpFile
+
+lintP :: Parser Command
+lintP = Lint <$> kmpFile
 
 debugSwitch :: Parser Bool
 debugSwitch = switch
@@ -77,7 +82,8 @@ kmpCompletions = completer . bashCompleter $ "file -X '!*.kmp' -o plusdirs"
 
 commandP :: Parser Command
 commandP = hsubparser
-    (command "typecheck" (info tcP (progDesc "Type-check module contents")))
+    (command "typecheck" (info tcP (progDesc "Type-check module contents"))
+    <> command "lint" (info lintP (progDesc "Lint a file")))
     <|> hsubparser (command "fmt" (info fmtP (progDesc "Pretty-print a Kempe file")) <> internal)
     <|> compileP
     where
