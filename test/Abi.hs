@@ -5,6 +5,7 @@ module Abi ( backendGolden
 import           Control.Composition       ((.*))
 import qualified Data.Text.Lazy            as TL
 import           Data.Text.Lazy.Encoding   (encodeUtf8)
+import           Data.Typeable             (Typeable)
 import           Kempe.AST
 import           Kempe.File
 import           Kempe.Module
@@ -22,7 +23,7 @@ backendGolden =
         , goldenIR "test/data/diamond/a.kmp" "test/golden/a.ir"
         ]
 
-dumpIRLazyText :: Int -> Declarations a c b -> TL.Text
+dumpIRLazyText :: Typeable a => Int -> Declarations a c b -> TL.Text
 dumpIRLazyText = renderLazy . layoutPretty defaultLayoutOptions .* dumpIR
 
 goldenIR :: FilePath
