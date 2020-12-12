@@ -1,0 +1,17 @@
+import "prelude/fn.kmp"
+
+succInt : Int -- Int
+        =: [ 1 + ]
+
+predInt : Int -- Int
+        =: [ 1 - ]
+
+isZeroInt : Int -- Bool
+          =: [ 0 = ]
+
+; More from Mirth
+maxInt : Int Int -- Int
+       =: [ dup2 < if(nip, drop) ]
+
+minInt : Int Int -- Int
+       =: [ dup2 < if(drop, nip) ]

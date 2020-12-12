@@ -1,0 +1,11 @@
+import "prelude/fn.kmp"
+
+type Order { LT | EQ | GT }
+
+; from Mirth
+cmpInt : Int Int -- Order
+       =: [ dup2 =
+            if( drop2 EQ
+              , < if ( LT, GT )
+              )
+          ]
