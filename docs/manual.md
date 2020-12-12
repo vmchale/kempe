@@ -183,6 +183,8 @@ nip : a b -- b
 ...
 ```
 
+The import system is sort of defective at this stage.
+
 ## FFI
 
 Kempe can call into C functions. Suppose we have
