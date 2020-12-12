@@ -9,9 +9,9 @@ import           Control.Monad.State.Strict (State, evalState, gets, modify)
 import           Data.Foldable.Ext
 import           Data.List                  (scanl')
 import           Data.Word                  (Word8)
-import           Kempe.AST
+import           Kempe.AST.Size
 import           Kempe.Asm.X86.Type
-import qualified Kempe.IR                   as IR
+import qualified Kempe.IR.Type              as IR
 
 toAbsReg :: IR.Temp -> AbsReg
 toAbsReg (IR.Temp8 i)   = AllocReg8 i

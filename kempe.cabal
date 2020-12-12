@@ -62,7 +62,9 @@ library kempe-modules
         Kempe.Unique
         Kempe.Name
         Kempe.Error
+        Kempe.AST.Size
         Kempe.Asm.X86.Type
+        Kempe.IR.Type
         Kempe.Proc.Nasm
         Prettyprinter.Ext
         Data.Foldable.Ext

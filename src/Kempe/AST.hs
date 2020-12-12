@@ -6,26 +6,20 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 -- | Frontend AST
-module Kempe.AST ( BuiltinTy (..)
-                 , KempeTy (..)
-                 , StackType (..)
-                 , ConsAnn (..)
+module Kempe.AST ( ConsAnn (..)
                  , Atom (..)
                  , BuiltinFn (..)
                  , KempeDecl (..)
                  , Pattern (..)
-                 , ABI (..)
                  , Declarations
                  , Module (..)
-                 , freeVars
+                 , ABI (..)
+                 , BuiltinTy (..)
+                 , KempeTy (..)
+                 , StackType (..)
                  , MonoStackType
-                 , SizeEnv
-                 , Size
-                 , size
-                 , sizeStack
-                 , size'
-                 , cSize
                  , prettyMonoStackType
+                 , freeVars
                  , prettyTyped
                  , prettyTypedModule
                  , prettyFancyModule
@@ -41,47 +35,19 @@ import qualified Data.ByteString.Lazy    as BSL
 import           Data.Foldable           (toList)
 import           Data.Functor            (void)
 import           Data.Int                (Int64, Int8)
-import qualified Data.IntMap             as IM
 import           Data.List.NonEmpty      (NonEmpty)
 import qualified Data.List.NonEmpty      as NE
-import           Data.Monoid             (Sum (..))
 import           Data.Semigroup          ((<>))
 import qualified Data.Set                as S
 import           Data.Text.Lazy.Encoding (decodeUtf8)
 import           Data.Word               (Word8)
 import           GHC.Generics            (Generic)
+import           Kempe.AST.Size
 import           Kempe.Name
-import           Kempe.Unique
 import           Numeric.Natural
 import           Prettyprinter           (Doc, Pretty (pretty), align, braces, brackets, colon, concatWith, dquotes, fillSep, hsep, parens, pipe, sep, vsep, (<+>))
 import           Prettyprinter.Ext
 
-data BuiltinTy = TyInt
-               | TyBool
-               | TyInt8
-               | TyWord
-               deriving (Generic, NFData, Eq, Ord)
-
-instance Pretty BuiltinTy where
-    pretty TyInt  = "Int"
-    pretty TyBool = "Bool"
-    pretty TyInt8 = "Int8"
-    pretty TyWord = "Word"
-
--- equality for sum types &c.
-
-data KempeTy a = TyBuiltin a BuiltinTy
-               | TyNamed a (TyName a)
-               | TyVar a (Name a)
-               | TyApp a (KempeTy a) (KempeTy a) -- type applied to another, e.g. Just Int
-               deriving (Generic, NFData, Functor, Eq, Ord) -- questionable eq instance but eh
-
-data StackType b = StackType { quantify :: S.Set (Name b)
-                             , inTypes  :: [KempeTy b]
-                             , outTypes :: [KempeTy b]
-                             } deriving (Generic, NFData, Eq, Ord)
-
-type MonoStackType = ([KempeTy ()], [KempeTy ()])
 
 -- | Annotation carried on constructors to keep size information through the IR
 -- generation phase.
@@ -91,20 +57,8 @@ data ConsAnn a = ConsAnn { tySz :: Int64, tag :: Word8, consTy :: a }
 instance Pretty a => Pretty (ConsAnn a) where
     pretty (ConsAnn tSz b ty) = braces ("tySz" <+> colon <+> pretty tSz <+> "tag" <+> colon <+> pretty b <+> "type" <+> colon <+> pretty ty)
 
-prettyMonoStackType :: MonoStackType -> Doc a
-prettyMonoStackType (is, os) = sep (fmap pretty is) <+> "--" <+> sep (fmap pretty os)
-
-instance Pretty (StackType a) where
-    pretty (StackType _ ins outs) = sep (fmap pretty ins) <+> "--" <+> sep (fmap pretty outs)
-
 voidStackType :: StackType a -> StackType ()
 voidStackType (StackType vars ins outs) = StackType (S.map void vars) (void <$> ins) (void <$> outs)
-
-instance Pretty (KempeTy a) where
-    pretty (TyBuiltin _ b)  = pretty b
-    pretty (TyNamed _ tn)   = pretty tn
-    pretty (TyVar _ n)      = pretty n
-    pretty (TyApp _ ty ty') = parens (pretty ty <+> pretty ty')
 
 data Pattern c b = PatternInt b Integer
                  | PatternCons { patternKind :: c, patternName :: TyName c } -- a constructed pattern
@@ -250,14 +204,6 @@ instance Pretty BuiltinFn where
     pretty IntNeg     = "~"
     pretty Popcount   = "popcount"
 
-data ABI = Cabi
-         | Kabi
-         deriving (Eq, Ord, Generic, NFData)
-
-instance Pretty ABI where
-    pretty Cabi = "cabi"
-    pretty Kabi = "kabi"
-
 prettyKempeDecl :: (Atom c b -> Doc ann) -> KempeDecl a c b -> Doc ann
 prettyKempeDecl atomizer (FunDecl _ n is os as) = pretty n <+> align (":" <+> sep (fmap pretty is) <+> "--" <+> sep (fmap pretty os) <#> "=:" <+> brackets (align (fillSep (atomizer <$> as))))
 prettyKempeDecl _ (Export _ abi n)              = "%foreign" <+> pretty abi <+> pretty n
@@ -317,33 +263,6 @@ extrVars (TyApp _ ty ty') = extrVars ty ++ extrVars ty'
 
 freeVars :: [KempeTy a] -> S.Set (Name a)
 freeVars tys = S.fromList (concatMap extrVars tys)
-
--- machinery for assigning a constructor to a function of its concrete types
--- (and then curry forward...)
-
-type Size = [Int64] -> Int64
-type SizeEnv = IM.IntMap Size
-
--- the kempe sizing system is kind of fucked (it mostly works tho)
-
--- | Don't call this on ill-kinded types; it won't throw any error.
-size :: SizeEnv -> KempeTy a -> Size
-size _ (TyBuiltin _ TyInt)                 = const 8
-size _ (TyBuiltin _ TyBool)                = const 1
-size _ (TyBuiltin _ TyInt8)                = const 1
-size _ (TyBuiltin _ TyWord)                = const 8
-size _ TyVar{}                             = error "Internal error: type variables should not be present at this stage."
-size env (TyNamed _ (Name _ (Unique k) _)) = IM.findWithDefault (error "Size not in map!") k env
-size env (TyApp _ ty ty')                  = \tys -> size env ty (size env ty' [] : tys)
-
-cSize :: Size -> Int64
-cSize = ($ [])
-
-size' :: SizeEnv -> KempeTy a -> Int64
-size' env = cSize . size env
-
-sizeStack :: SizeEnv -> [KempeTy a] -> Int64
-sizeStack env = getSum . foldMap (Sum . size' env)
 
 -- | Used in "Kempe.Monomorphize" for patterns
 flipStackType :: StackType () -> StackType ()

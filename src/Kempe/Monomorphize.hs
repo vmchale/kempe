@@ -34,6 +34,7 @@ import qualified Data.Text                  as T
 import           Data.Tuple                 (swap)
 import           Data.Tuple.Extra           (fst3, snd3, thd3)
 import           Kempe.AST
+import           Kempe.AST.Size
 import           Kempe.Error
 import           Kempe.Name
 import           Kempe.Unique

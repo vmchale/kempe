@@ -5,6 +5,7 @@ module Kempe.Shuttle ( monomorphize
 
 import           Data.Functor        (void)
 import           Kempe.AST
+import           Kempe.AST.Size
 import           Kempe.Check.Pattern
 import           Kempe.Error
 import           Kempe.Inline

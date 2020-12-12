@@ -1,7 +1,7 @@
 module Kempe.IR.Opt ( optimize
                     ) where
 
-import           Kempe.IR
+import           Kempe.IR.Type
 
 optimize :: [Stmt] -> [Stmt]
 optimize = sameTarget . successiveBumps . removeNop

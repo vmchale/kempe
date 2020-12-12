@@ -11,7 +11,7 @@ import           Control.Exception (Exception)
 import           Data.Semigroup    ((<>))
 import           Data.Typeable     (Typeable)
 import           GHC.Generics      (Generic)
-import           Kempe.AST
+import           Kempe.AST.Size
 import           Kempe.Name
 import           Prettyprinter     (Pretty (pretty), comma, squotes, (<+>))
 

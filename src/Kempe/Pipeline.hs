@@ -8,6 +8,7 @@ import           Control.Exception         (throw)
 import           Data.Bifunctor            (first)
 import           Data.Typeable             (Typeable)
 import           Kempe.AST
+import           Kempe.AST.Size
 import           Kempe.Asm.X86
 import           Kempe.Asm.X86.ControlFlow
 import           Kempe.Asm.X86.Linear
@@ -16,6 +17,7 @@ import           Kempe.Asm.X86.Type
 import           Kempe.Check.Restrict
 import           Kempe.IR
 import           Kempe.IR.Opt
+import           Kempe.IR.Type
 import           Kempe.Shuttle
 
 irGen :: Typeable a
