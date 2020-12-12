@@ -37,11 +37,11 @@ flag cross
 
 library kempe-modules
     exposed-modules:
+        Kempe.File
         Kempe.Lexer
         Kempe.Parser
         Kempe.AST
         Kempe.TyAssign
-        Kempe.File
         Kempe.Monomorphize
         Kempe.Pipeline
         Kempe.Shuttle
