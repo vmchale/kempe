@@ -17,6 +17,7 @@ data-files:
     test/golden/*.out
     test/golden/*.ir
     test/harness/*.c
+    examples/*.kmp
     prelude/*.kmp
     lib/*.kmp
     docs/manual.pdf
