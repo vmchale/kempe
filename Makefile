@@ -62,3 +62,6 @@ bin/x86_64-linux-kc: $(HS_SRC)
 	export BIN=$$(fd 'x86_64-linux.*kc$$' dist-newstyle -t x -p -I); \
 	    cp $$BIN $@ ; \
 	    strip $@
+
+tags: $(HS_SRC)
+	echo ':ctags' | cabal repl
