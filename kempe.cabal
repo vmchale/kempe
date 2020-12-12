@@ -12,6 +12,11 @@ category:        Language, Compilers
 build-type:      Simple
 data-files:
     test/data/*.kmp
+    test/err/*.kmp
+    test/examples/*.kmp
+    test/golden/*.out
+    test/golden/*.ir
+    test/harness/*.c
     prelude/*.kmp
     lib/*.kmp
     docs/manual.pdf
