@@ -4,7 +4,7 @@
   * Optimize IR cases
   * Fix padding
   * Fix bug in lexer (for C foreign calls)
-  * Support down to GHC 7.10.3
+  * Support down to GHC 8.0.2
   * Unification no longer takes pathologically long time
   * Add test files so source distribution passes
 
