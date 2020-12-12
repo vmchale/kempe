@@ -48,10 +48,10 @@ clean:
 	rm -rf dist-newstyle *.rlib *.d *.rmeta *.o stack.yaml.lock factorial.S factorial splitmix.S numbertheory.S numbertheory *.so bin moddeps.svg
 
 %.zst: %
-	sak compress ^< $@ --best
+	sak compress $< $@ --best
 
 %.lz: %
-	sak compress ^< $@ --best
+	sak compress $< $@ --best
 
 %.gz: %
 	sak compress $^ $@ --best
