@@ -1,5 +1,7 @@
 # kempe
 
+## 0.1.1.0
+
   * Fix internal pretty-printer (exposed as hidden `fmt` subcommand)
   * Optimize IR cases
   * Fix padding
@@ -7,6 +9,7 @@
   * Support down to GHC 8.0.2
   * Unification no longer takes pathologically long time
   * Add test files so source distribution passes
+  * Some sort of imports now supported.
 
 ## 0.1.0.2
 
