@@ -40,7 +40,7 @@ tcFile fp = do
         void $ runTypeM maxU (checkModule m)
         mErr $ checkModuleExhaustive (void <$> m)
 
-warnFile :: FilePath -> IO (Maybe (Warning (AlexPosn)))
+warnFile :: FilePath -> IO (Maybe (Warning AlexPosn))
 warnFile fp = do
     (_, m) <- parseProcess fp
     pure $ topLevelCheck m
