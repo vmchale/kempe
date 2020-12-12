@@ -10,6 +10,7 @@ import           Data.Foldable       (toList)
 import           Data.Foldable.Ext
 import           Data.List           (group, sort)
 import           Data.Maybe          (mapMaybe)
+import           Data.Semigroup      ((<>))
 import           Data.Typeable       (Typeable)
 import           Kempe.AST
 import           Kempe.Name
