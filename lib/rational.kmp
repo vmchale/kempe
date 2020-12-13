@@ -18,3 +18,7 @@ addRat : Rational Rational -- Rational
             dup2 * dip(swap dip(swap)) dip(* dip(*) +) 
             Rational reduce 
           ]
+
+%foreign kabi multRat
+%foreign kabi addRat
+%foreign kabi reduce

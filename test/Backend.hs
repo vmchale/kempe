@@ -42,6 +42,7 @@ backendTests =
         , codegen "lib/gaussian.kmp"
         , codegen "test/data/ccall.kmp"
         , codegen "test/data/mutual.kmp"
+        , codegen "lib/rational.kmp"
         ]
 
 codegen :: FilePath -> TestTree
