@@ -16,17 +16,21 @@ import           Kempe.Parser
 
 parseProcess :: FilePath -> IO (Int, Declarations AlexPosn AlexPosn AlexPosn)
 parseProcess fp = do
-    (st, [], ds) <- loopFps [fp] alexInitUserState
+    (st, [], ds) <- loopFps True [fp] alexInitUserState
     pure (fst3 st, {-# SCC "dedup" #-} dedup ds)
 
 yeetIO :: Exception e => Either e a -> IO a
 yeetIO = either throwIO pure
 
-loopFps :: [FilePath] -> AlexUserState -> IO (AlexUserState, [FilePath], Declarations AlexPosn AlexPosn AlexPosn)
-loopFps [] st = pure (st, [], [])
-loopFps (fp:fps) st = do
+-- TODO: if module is imported, discard its exports
+loopFps :: Bool -> [FilePath] -> AlexUserState -> IO (AlexUserState, [FilePath], Declarations AlexPosn AlexPosn AlexPosn)
+loopFps _ [] st = pure (st, [], [])
+loopFps isInit (fp:fps) st = do
     (st', Module is ds) <- parseStep fp st
-    third3 (++ ds) <$> loopFps (fmap ASCII.unpack (reverse is) ++ fps) st'
+    let discardDs = if isInit then id else filter (not . isExport)
+    third3 (++ discardDs ds) <$> loopFps False (fmap ASCII.unpack (reverse is) ++ fps) st'
+    where isExport Export{} = True
+          isExport _        = False
 
 parseStep :: FilePath -> AlexUserState -> IO (AlexUserState, Module AlexPosn AlexPosn AlexPosn)
 parseStep fp st = do
