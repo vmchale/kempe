@@ -102,6 +102,8 @@ For arithmetic:
   * `xor : Bool Bool -- Bool`
   * `~ : Int -- Int`
 
+`%` is like Haskell's `rem` and `/` is like Haskell's `quot`.
+
 There is one higher-order construct, `dip`, which we illustrate by example:
 
 ```
