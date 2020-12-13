@@ -75,7 +75,7 @@ library kempe-modules
         FlexibleContexts GeneralizedNewtypeDeriving OverloadedStrings
         StandaloneDeriving TupleSections DeriveAnyClass
 
-    ghc-options:      -Wall
+    ghc-options:      -Wall -j4 +RTS -A32m -RTS
     build-depends:
         base >=4.9 && <5,
         array -any,
@@ -182,7 +182,7 @@ test-suite kempe-golden
     hs-source-dirs:   test
     other-modules:    Harness
     default-language: Haskell2010
-    ghc-options:      -threaded -rtsopts "-with-rtsopts=-N -K1K" -Wall
+    ghc-options:      -threaded -rtsopts "-with-rtsopts=-N -K1K" -Wall -j4 +RTS -A32m -RTS
     build-depends:
         base -any,
         kempe-modules -any,
@@ -212,7 +212,7 @@ benchmark kempe-bench
     main-is:          Bench.hs
     hs-source-dirs:   bench
     default-language: Haskell2010
-    ghc-options:      -O3 -Wall
+    ghc-options:      -Wall
     build-depends:
         base -any,
         kempe-modules -any,
