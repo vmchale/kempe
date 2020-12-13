@@ -7,6 +7,9 @@ gcd : Int Int -- Int
            , dup dip(%) swap gcd )
        ]
 
+lcm : Int Int -- Int
+    =: [ dup2 dip(dip(*)) gcd / ]
+
 square : Int -- Int
        =: [ dup * ]
 

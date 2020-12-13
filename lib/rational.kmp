@@ -1,0 +1,14 @@
+import"prelude/fn.kmp"
+import"lib/numbertheory.kmp"
+
+; Slightly suspect rational based on 'Int' type
+type Rational { Rational Int Int }
+
+unRational : Rational -- Int Int
+           =: [ { case | Rational -> } ]
+
+multRat : Rational Rational -- Rational
+        =: [ dip(unRational) unRational dip(swap *) * Rational ]
+
+reduce : Rational -- Rational
+       =: [ unRational dup2 gcd dup dip(swap dip(/)) / Rational ]
