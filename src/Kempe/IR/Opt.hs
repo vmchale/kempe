@@ -40,6 +40,16 @@ successiveBumps
         :ss) =
             MovTemp DataPointer (ExprIntBinOp IntMinusIR (Reg DataPointer) (ConstInt $ i+i')) : successiveBumps ss
 successiveBumps
+    ((MovTemp DataPointer (ExprIntBinOp IntPlusIR (Reg DataPointer) (ConstInt i)))
+        :(MovTemp DataPointer (ExprIntBinOp IntMinusIR (Reg DataPointer) (ConstInt i')))
+        :ss) =
+            MovTemp DataPointer (ExprIntBinOp IntMinusIR (Reg DataPointer) (ConstInt $ i-i')) : successiveBumps ss
+successiveBumps
+    ((MovTemp DataPointer (ExprIntBinOp IntMinusIR (Reg DataPointer) (ConstInt i)))
+        :(MovTemp DataPointer (ExprIntBinOp IntPlusIR (Reg DataPointer) (ConstInt i')))
+        :ss) =
+            MovTemp DataPointer (ExprIntBinOp IntMinusIR (Reg DataPointer) (ConstInt $ i'-i)) : successiveBumps ss
+successiveBumps
     (st@(MovMem e0 k (Mem 8 e1))
         :(MovMem e0' k' (Mem 8 e1'))
         :ss) | k == k' && e0 == e1' && e1 == e0' = st : successiveBumps ss
