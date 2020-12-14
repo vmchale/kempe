@@ -14,9 +14,9 @@ reduce : Rational -- Rational
        =: [ unRational dup2 gcd dup dip(swap dip(/)) / Rational ]
 
 addRat : Rational Rational -- Rational
-       =: [ dip(unRational) unRational dip(swap) 
-            dup2 * dip(swap dip(swap)) dip(* dip(*) +) 
-            Rational reduce 
+       =: [ dip(unRational) unRational dip(swap)
+            dup2 * dip(swap dip(swap) * dip(*) +)
+            Rational reduce
           ]
 
 %foreign kabi multRat
