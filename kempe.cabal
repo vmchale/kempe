@@ -59,6 +59,7 @@ library kempe-modules
     other-modules:
         Kempe.Check.Restrict
         Kempe.Check.TopLevel
+        Kempe.Check.Lint
         Kempe.Unique
         Kempe.Name
         Kempe.Error

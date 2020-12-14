@@ -10,6 +10,7 @@ module Kempe.File ( tcFile
                   ) where
 
 -- common b/w test suite and exec, repl utils
+import           Control.Applicative       ((<|>))
 import           Control.Composition       ((.*))
 import           Control.Exception         (Exception, throwIO)
 import           Data.Bifunctor            (bimap)
@@ -20,6 +21,7 @@ import           Data.Tuple.Extra          (fst3)
 import           Data.Typeable             (Typeable)
 import           Kempe.AST
 import           Kempe.Asm.X86.Type
+import           Kempe.Check.Lint
 import           Kempe.Check.Pattern
 import           Kempe.Check.TopLevel
 import           Kempe.Error
@@ -43,7 +45,7 @@ tcFile fp = do
 warnFile :: FilePath -> IO (Maybe (Warning AlexPosn))
 warnFile fp = do
     (_, m) <- parseProcess fp
-    pure $ topLevelCheck m
+    pure (topLevelCheck m <|> lint m)
 
 yeetIO :: Exception e => Either e a -> IO a
 yeetIO = either throwIO pure
