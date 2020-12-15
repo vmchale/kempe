@@ -1,4 +1,5 @@
--- | Standard stuff.
+-- | Simple-minded basic blocks. In particular, this does not detect labels that
+-- are only targeted by only one jump.
 module Kempe.Asm.X86.BasicBlock ( BasicBlock (..)
                                 , splitInstr
                                 ) where
@@ -7,7 +8,7 @@ import           Data.List.Split    (split, whenElt)
 import           Kempe.Asm.X86.Type
 
 data BasicBlock reg a = BasicBlock { blockAnn :: a
-                                   , instr    :: [X86 reg ()]
+                                   , instr    :: [X86 reg ()] -- TODO: always () empty ann?
                                    }
 
 -- | Split x86 instructions into basic blocks
