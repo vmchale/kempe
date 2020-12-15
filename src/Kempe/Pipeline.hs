@@ -22,14 +22,14 @@ import           Kempe.Shuttle
 
 irGen :: Typeable a
       => Int -- ^ Thread uniques through
-      -> Declarations a c b -> ([Stmt], WriteSt, SizeEnv)
-irGen i m = adjEnv $ first optimize $ runTempM (writeModule env tAnnMod)
+      -> Declarations a c b -> ([[Stmt]], WriteSt, SizeEnv)
+irGen i m = adjEnv $ first (fmap optimize) $ runTempM (writeModule env tAnnMod)
     where (tAnnMod, env) = either throw id $ monomorphize i mOk
           mOk = maybe m throw (restrictConstructors m)
           adjEnv (x, y) = (x, y, env)
 
-x86Parsed :: Typeable a => Int -> Declarations a c b -> [X86 AbsReg ()]
-x86Parsed i m = let (ir, u, env) = irGen i m in irToX86 env u ir
+x86Parsed :: Typeable a => Int -> Declarations a c b -> [[X86 AbsReg ()]]
+x86Parsed i m = let (ir, u, env) = irGen i m in irToX86 env u <$> ir
 
 x86Alloc :: Typeable a => Int -> Declarations a c b -> [X86 X86Reg ()]
-x86Alloc = allocRegs . reconstruct . mkControlFlow .* x86Parsed
+x86Alloc = concat . fmap (allocRegs . reconstruct . mkControlFlow) .* x86Parsed

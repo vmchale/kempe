@@ -55,14 +55,14 @@ liveness :: FilePath -> TestTree
 liveness fp = testCase ("Liveness analysis terminates (" ++ fp ++ ")") $ do
     parsed <- parseProcess fp
     let x86 = uncurry x86Parsed parsed
-        cf = mkControlFlow x86
-    assertBool "Doesn't bottom" (reconstruct cf `deepseq` True)
+        cf = mkControlFlow <$> x86
+    assertBool "Doesn't bottom" (fmap reconstruct cf `deepseq` True)
 
 controlFlowGraph :: FilePath -> TestTree
 controlFlowGraph fp = testCase ("Doesn't crash while creating control flow graph for " ++ fp) $ do
     parsed <- parseProcess fp
     let x86 = uncurry x86Parsed parsed
-    assertBool "Worked without exception" (mkControlFlow x86 `deepseq` True)
+    assertBool "Worked without exception" (fmap mkControlFlow x86 `deepseq` True)
 
 x86NoYeet :: FilePath -> TestTree
 x86NoYeet fp = testCase ("Selects instructions for " ++ fp) $ do

@@ -65,7 +65,7 @@ dumpMono fp = do
           fromMonoConsAnn (ConsAnn _ _ ty) = fromMono ty
 
 dumpIR :: Typeable a => Int -> Declarations a c b -> Doc ann
-dumpIR = prettyIR . fst3 .* irGen
+dumpIR = prettyIR . concat . fst3 .* irGen
 
 dumpX86 :: Typeable a => Int -> Declarations a c b -> Doc ann
 dumpX86 = prettyAsm .* x86Alloc

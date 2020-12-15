@@ -75,8 +75,8 @@ lookupName (Name _ (Unique i) _) =
 prettyIR :: [Stmt] -> Doc ann
 prettyIR = prettyLines . fmap pretty
 
-writeModule :: SizeEnv -> Declarations () (ConsAnn MonoStackType) MonoStackType -> TempM [Stmt]
-writeModule env m = traverse_ assignName m *> foldMapA (writeDecl env) m
+writeModule :: SizeEnv -> Declarations () (ConsAnn MonoStackType) MonoStackType -> TempM [[Stmt]]
+writeModule env m = traverse_ assignName m *> traverse (writeDecl env) m
 
 -- optimize tail-recursion, if possible
 -- This is a little slow
