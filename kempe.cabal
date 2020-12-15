@@ -51,6 +51,7 @@ library kempe-modules
         Kempe.IR
         Kempe.IR.Opt
         Kempe.Asm.X86
+        Kempe.Asm.X86.BasicBlock
         Kempe.Asm.X86.ControlFlow
         Kempe.Asm.X86.Liveness
         Kempe.Asm.X86.Linear
@@ -93,7 +94,8 @@ library kempe-modules
         composition-prelude >=2.0.2.0,
         microlens-mtl -any,
         process >=1.2.3.0,
-        temporary -any
+        temporary -any,
+        split -any
 
     if !flag(cross)
         build-tool-depends: alex:alex -any, happy:happy -any

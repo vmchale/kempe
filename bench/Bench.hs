@@ -75,11 +75,12 @@ main =
                         [ bench "X86 (examples/factorial.kmp)" $ nf mkControlFlow f
                         , bench "X86 (examples/splitmix.kmp)" $ nf mkControlFlow s
                         ]
-                  , env cfEnv $ \ ~(s, f, n) ->
+                  , env cfEnv $ \ ~(s, f, n, r) ->
                       bgroup "Liveness analysis"
                         [ bench "X86 (examples/factorial.kmp)" $ nf reconstruct f
                         , bench "X86 (examples/splitmix.kmp)" $ nf reconstruct s
                         , bench "X86 (lib/numbertheory.kmp)" $ nf reconstruct n
+                        , bench "X86 (lib/rational.kmp)" $ nf reconstruct r
                         ]
                   , env absX86 $ \ ~(s, f, n) ->
                       bgroup "Register allocation"
@@ -94,6 +95,7 @@ main =
                         , bench "Generate assembly (examples/factorial.kmp)" $ nfIO (writeAsm "examples/factorial.kmp")
                         , bench "Generate assembly (examples/splitmix.kmp)" $ nfIO (writeAsm "examples/splitmix.kmp")
                         , bench "Generate assembly (lib/numbertheory.kmp)" $ nfIO (writeAsm "lib/numbertheory.kmp")
+                        -- , bench "Generate assembly (lib/rational.kmp)" $ nfIO (writeAsm "lib/rational.kmp")
                         , bench "Object file (examples/factorial.kmp)" $ nfIO (compile "examples/factorial.kmp" "/tmp/factorial.o" False)
                         , bench "Object file (lib/numbertheory.kmp)" $ nfIO (compile "lib/numbertheory.kmp" "/tmp/numbertheory.o" False)
                         , bench "Object file (examples/splitmix.kmp)" $ nfIO (compile "examples/splitmix.kmp" "/tmp/splitmix.o" False)
@@ -103,6 +105,7 @@ main =
           splitmix = parseProcess "examples/splitmix.kmp"
           fac = parseProcess "examples/factorial.kmp"
           num = parseProcess "lib/numbertheory.kmp"
+          rat = parseProcess "lib/rational.kmp"
           eitherMod = snd <$> parseProcess "lib/either.kmp"
           parsedInteresting = (,) <$> fac <*> num
           prelude = parseProcess "prelude/fn.kmp"
@@ -125,10 +128,12 @@ main =
           splitmixX86 = genX86 <$> splitmixMono
           x86Env = (,) <$> splitmixX86 <*> facX86
           numX86 = uncurry x86Parsed <$> num
+          ratX86 = uncurry x86Parsed <$> rat
           facX86Cf = mkControlFlow <$> facX86
           splitmixX86Cf = mkControlFlow <$> splitmixX86
           numX86Cf = mkControlFlow <$> numX86
-          cfEnv = (,,) <$> splitmixX86Cf <*> facX86Cf <*> numX86Cf
+          ratX86Cf = mkControlFlow <$> ratX86
+          cfEnv = (,,,) <$> splitmixX86Cf <*> facX86Cf <*> numX86Cf <*> ratX86Cf
           facAbsX86 = reconstruct <$> facX86Cf
           splitmixAbsX86 = reconstruct <$> splitmixX86Cf
           numAbsX86 = reconstruct <$> numX86Cf
