@@ -3,17 +3,14 @@ module Kempe.Check.TopLevel ( topLevelCheck
                             ) where
 
 import           Control.Applicative ((<|>))
-import           Control.Exception   (Exception)
 import           Data.Foldable       (toList)
 import           Data.Foldable.Ext
 import           Data.List           (group, sort)
 import           Data.Maybe          (mapMaybe)
 import           Data.Semigroup      ((<>))
-import           Data.Typeable       (Typeable)
 import           Kempe.AST
 import           Kempe.Error.Warning
 import           Kempe.Name
-import           Prettyprinter       (Pretty (pretty))
 
 topLevelCheck :: Declarations a c a -> Maybe (Warning a)
 topLevelCheck ds =
