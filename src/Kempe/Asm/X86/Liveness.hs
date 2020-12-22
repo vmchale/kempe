@@ -8,12 +8,13 @@ module Kempe.Asm.X86.Liveness ( Liveness
 import           Control.Composition (thread)
 -- this seems to be faster
 import qualified Data.IntMap.Lazy    as IM
+import qualified Data.IntSet         as IS
 import           Data.Semigroup      ((<>))
 import qualified Data.Set            as S
 import           Kempe.Asm.X86.Type
 
 emptyLiveness :: Liveness
-emptyLiveness = Liveness S.empty S.empty
+emptyLiveness = Liveness IS.empty IS.empty
 
 -- need: succ for a node
 
@@ -62,5 +63,5 @@ iterNodes is = thread (fmap stepNode is)
 stepNode :: Int -> LivenessMap -> LivenessMap
 stepNode n ns = {-# SCC "stepNode" #-} IM.insert n (c, Liveness ins' out') ns
     where (c, l) = lookupNode n ns
-          ins' = usesNode c <> (out l S.\\ defsNode c)
-          out' = S.unions (fmap ins (succNode c ns))
+          ins' = usesNode c <> (out l IS.\\ defsNode c)
+          out' = IS.unions (fmap ins (succNode c ns))
