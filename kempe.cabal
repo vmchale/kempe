@@ -51,7 +51,6 @@ library kempe-modules
         Kempe.IR
         Kempe.IR.Opt
         Kempe.Asm.X86
-        Kempe.Asm.X86.BasicBlock
         Kempe.Asm.X86.ControlFlow
         Kempe.Asm.X86.Liveness
         Kempe.Asm.X86.Linear
