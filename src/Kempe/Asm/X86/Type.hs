@@ -12,6 +12,7 @@ module Kempe.Asm.X86.Type ( X86 (..)
                           , Label
                           , prettyAsm
                           , prettyDebugAsm
+                          , toInt
                           ) where
 
 import           Control.DeepSeq         (NFData)
@@ -19,6 +20,7 @@ import qualified Data.ByteString         as BS
 import qualified Data.ByteString.Lazy    as BSL
 import           Data.Foldable           (toList)
 import           Data.Int                (Int64, Int8)
+import qualified Data.IntSet             as IS
 import           Data.Semigroup          ((<>))
 import qualified Data.Set                as S
 import           Data.Text.Encoding      (decodeUtf8)
@@ -30,17 +32,17 @@ import           Prettyprinter.Ext
 
 type Label = Word
 
-data Liveness = Liveness { ins :: !(S.Set AbsReg), out :: !(S.Set AbsReg) } -- strictness annotations make it perform better
+data Liveness = Liveness { ins :: !IS.IntSet, out :: !IS.IntSet } -- strictness annotations make it perform better
     deriving (Eq, Generic, NFData)
 
 instance Pretty Liveness where
     pretty (Liveness is os) = braces (pp is <+> ";" <+> pp os)
-        where pp = mconcat . punctuate "," . fmap pretty . toList
+        where pp = mconcat . punctuate "," . fmap pretty . IS.toList
 
 data ControlAnn = ControlAnn { node     :: !Int
                              , conn     :: [Int]
-                             , usesNode :: S.Set AbsReg
-                             , defsNode :: S.Set AbsReg
+                             , usesNode :: IS.IntSet
+                             , defsNode :: IS.IntSet
                              } deriving (Generic, NFData)
 
 -- currently just has 64-bit and 8-bit registers
@@ -132,6 +134,15 @@ data AbsReg = DataPointer
             | QuotRes -- quotient register for idiv, rax
             | RemRes -- remainder register for idiv, rdx
             deriving (Eq, Ord, Generic, NFData)
+
+-- | Make sure 8-bit and 64-bit registers have no overlap.
+--
+-- Also can't be called on abstract registers i.e. 'DataPointer' or 'CArg1'.
+-- This is kinda sus but it allows us to use an 'IntSet' for liveness analysis.
+toInt :: AbsReg -> Maybe Int
+toInt (AllocReg64 i) = Just i
+toInt (AllocReg8 i)  = Just i
+toInt _              = Nothing
 
 instance Pretty AbsReg where
     pretty DataPointer    = "datapointer"
