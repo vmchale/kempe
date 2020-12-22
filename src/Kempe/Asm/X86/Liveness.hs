@@ -10,7 +10,6 @@ import           Control.Composition (thread)
 import qualified Data.IntMap.Lazy    as IM
 import qualified Data.IntSet         as IS
 import           Data.Semigroup      ((<>))
-import qualified Data.Set            as S
 import           Kempe.Asm.X86.Type
 
 emptyLiveness :: Liveness

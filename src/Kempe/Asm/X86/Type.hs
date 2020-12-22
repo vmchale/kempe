@@ -12,17 +12,14 @@ module Kempe.Asm.X86.Type ( X86 (..)
                           , Label
                           , prettyAsm
                           , prettyDebugAsm
-                          , toInt
                           ) where
 
 import           Control.DeepSeq         (NFData)
 import qualified Data.ByteString         as BS
 import qualified Data.ByteString.Lazy    as BSL
-import           Data.Foldable           (toList)
 import           Data.Int                (Int64, Int8)
 import qualified Data.IntSet             as IS
 import           Data.Semigroup          ((<>))
-import qualified Data.Set                as S
 import           Data.Text.Encoding      (decodeUtf8)
 import qualified Data.Text.Lazy.Encoding as TL
 import           Data.Word               (Word8)
@@ -134,15 +131,6 @@ data AbsReg = DataPointer
             | QuotRes -- quotient register for idiv, rax
             | RemRes -- remainder register for idiv, rdx
             deriving (Eq, Ord, Generic, NFData)
-
--- | Make sure 8-bit and 64-bit registers have no overlap.
---
--- Also can't be called on abstract registers i.e. 'DataPointer' or 'CArg1'.
--- This is kinda sus but it allows us to use an 'IntSet' for liveness analysis.
-toInt :: AbsReg -> Maybe Int
-toInt (AllocReg64 i) = Just i
-toInt (AllocReg8 i)  = Just i
-toInt _              = Nothing
 
 instance Pretty AbsReg where
     pretty DataPointer    = "datapointer"

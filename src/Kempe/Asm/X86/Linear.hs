@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts  #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 -- | Linear scan register allocator
@@ -108,9 +109,30 @@ freeReg :: Int -> AllocM ()
 freeReg i = do
     xR <- findReg i
     modifying allocsLens (IM.delete i)
-    -- TODO: case xR of
-    modifying free8Lens (S.insert xR)
-    modifying free64Lens (<> assoc xR)
+    case xR of
+        R8   -> free64Bit xR
+        R9   -> free64Bit xR
+        R10  -> free64Bit xR
+        R11  -> free64Bit xR
+        R12  -> free64Bit xR
+        R13  -> free64Bit xR
+        R14  -> free64Bit xR
+        R15  -> free64Bit xR
+        R8b  -> free8Bit xR
+        R9b  -> free8Bit xR
+        R10b -> free8Bit xR
+        R11b -> free8Bit xR
+        R12b -> free8Bit xR
+        R13b -> free8Bit xR
+        R14b -> free8Bit xR
+        R15b -> free8Bit xR
+
+    where free64Bit xR = do
+            modifying free64Lens (S.insert xR)
+            modifying free8Lens (<> assoc xR)
+          free8Bit xR = do
+            modifying free8Lens (S.insert xR)
+            modifying free64Lens (<> assoc xR)
 
 assignReg :: Int -> X86Reg -> AllocM ()
 assignReg i xr =

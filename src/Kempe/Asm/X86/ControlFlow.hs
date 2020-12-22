@@ -33,6 +33,15 @@ broadcast i l = modify (second (M.insert l i))
 singleton :: AbsReg -> IS.IntSet
 singleton = maybe IS.empty IS.singleton . toInt
 
+-- | Make sure 8-bit and 64-bit registers have no overlap.
+--
+-- Also can't be called on abstract registers i.e. 'DataPointer' or 'CArg1'.
+-- This is kinda sus but it allows us to use an 'IntSet' for liveness analysis.
+toInt :: AbsReg -> Maybe Int
+toInt (AllocReg64 i) = Just i
+toInt (AllocReg8 i)  = Just i
+toInt _              = Nothing
+
 fromList :: [AbsReg] -> IS.IntSet
 fromList = foldMap singleton
 
