@@ -9,7 +9,6 @@ import           Data.Functor               (($>))
 import qualified Data.IntSet                as IS
 import qualified Data.Map                   as M
 import           Data.Semigroup             ((<>))
-import qualified Data.Set                   as S
 import           Kempe.Asm.X86.Type
 
 -- map of labels by node

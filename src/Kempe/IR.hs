@@ -15,7 +15,6 @@ import           Data.Bifunctor             (second)
 import           Data.Foldable.Ext
 import           Data.Int                   (Int64)
 import qualified Data.IntMap                as IM
-import           Data.Semigroup             ((<>))
 import           Data.Text.Encoding         (encodeUtf8)
 import           Kempe.AST
 import           Kempe.AST.Size
