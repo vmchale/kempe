@@ -1,5 +1,8 @@
 # kempe
 
+  * Performance improvements under the hood (use `IntSet`s for liveness
+    analysis)
+
 ## 0.1.1.0
 
   * Fix internal pretty-printer (exposed as hidden `fmt` subcommand)
