@@ -12,7 +12,6 @@ import           Control.Monad.State.Strict (State, evalState, gets)
 import           Data.Foldable              (traverse_)
 import qualified Data.IntMap                as IM
 import qualified Data.IntSet                as IS
-import qualified Data.Map                   as M
 import           Data.Maybe                 (fromMaybe)
 import           Data.Semigroup             ((<>))
 import qualified Data.Set                   as S
