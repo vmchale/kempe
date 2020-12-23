@@ -8,7 +8,7 @@ unRational : Rational -- Int Int
            =: [ { case | Rational -> } ]
 
 multRat : Rational Rational -- Rational
-        =: [ dip(unRational) unRational dip(swap *) * Rational ]
+        =: [ dip(unRational) unRational dip(swap *) * Rational reduce ]
 
 reduce : Rational -- Rational
        =: [ unRational dup2 gcd dup dip(swap dip(/)) / Rational ]
