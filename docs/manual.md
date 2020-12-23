@@ -11,7 +11,7 @@ First, install [cabal](https://www.haskell.org/cabal/download.html) and
 [GHC](https://www.haskell.org/ghc/download.html). Then:
 
 ```
-cabal install kempe
+cabal install kempe --constraint='kempe -no-par'
 ```
 
 This provides `kc`, the Kempe compiler.
