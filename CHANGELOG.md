@@ -1,6 +1,6 @@
 # kempe
 
-  * Optimizations - single cases statements are plain and efficient.
+  * Case statements with a single branch are plain and efficient.
 
 ## 0.1.1.1
 
