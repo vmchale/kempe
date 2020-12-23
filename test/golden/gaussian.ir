@@ -1,12 +1,6 @@
 
 kmp1:
 (movtemp datapointer (- (reg datapointer) (int 17)))
-(mjump (=b (mem [1] (+ (reg datapointer) (int 0))) (tag 0x0)) kmp4)
-
-kmp4:
-(j kmp5)
-
-kmp5:
 (ret)
 
 kmp2:
@@ -29,12 +23,6 @@ kmp2:
 (movmem (+ (reg datapointer) (int 14)) (mem [1] (+ (reg datapointer) (int 31))))
 (movmem (+ (reg datapointer) (int 15)) (mem [1] (+ (reg datapointer) (int 32))))
 (movmem (+ (reg datapointer) (int 16)) (mem [1] (+ (reg datapointer) (int 33))))
-(mjump (=b (mem [1] (+ (reg datapointer) (int 0))) (tag 0x0)) kmp6)
-
-kmp6:
-(j kmp7)
-
-kmp7:
 (movmem (- (reg datapointer) (int 0)) (mem [8] (- (reg datapointer) (int 24))))
 (movmem (- (reg datapointer) (int 24)) (mem [8] (- (reg datapointer) (int 16))))
 (movmem (- (reg datapointer) (int 16)) (mem [8] (- (reg datapointer) (int 0))))
@@ -56,14 +44,7 @@ kmp7:
 (ret)
 
 kmp3:
-(movtemp datapointer (- (reg datapointer) (int 17)))
-(mjump (=b (mem [1] (+ (reg datapointer) (int 0))) (tag 0x0)) kmp8)
-
-kmp8:
-(j kmp9)
-
-kmp9:
-(movtemp datapointer (- (reg datapointer) (int 8)))
+(movtemp datapointer (- (reg datapointer) (int 25)))
 (movtemp t_5 (mem [8] (reg datapointer)))
 (movmem (reg datapointer) (~ (reg t_5)))
 (movtemp datapointer (+ (reg datapointer) (int 8)))

@@ -1,5 +1,7 @@
 # kempe
 
+  * Optimizations - single cases statements are plain and efficient.
+
 ## 0.1.1.1
 
   * Performance improvements under the hood (use `IntSet`s for liveness
