@@ -99,6 +99,7 @@ main =
                         , bench "Object file (examples/factorial.kmp)" $ nfIO (compile "examples/factorial.kmp" "/tmp/factorial.o" False)
                         , bench "Object file (lib/numbertheory.kmp)" $ nfIO (compile "lib/numbertheory.kmp" "/tmp/numbertheory.o" False)
                         , bench "Object file (examples/splitmix.kmp)" $ nfIO (compile "examples/splitmix.kmp" "/tmp/splitmix.o" False)
+                        , bench "Object file (lib/rational.kmp)" $ nfIO (compile "lib/rational.kmp" "/tmp/rational.o" False)
                         ]
                 ]
     where parsedM = parseProcess "test/data/ty.kmp"
