@@ -22,6 +22,7 @@
 - [ ] Liveness analysis on a per-decl basis? (basic blocks)
 - [ ] Use `cmov` for storing bools
 - [ ] `lea`, `xchg`? `test`?
+- [ ] Last leaf in a case statement should not check tag
 ## Data Structures
 - [ ] Difference lists when laying down atoms/IR
 - [ ] Do sets actually help?
@@ -40,9 +41,9 @@
 - [ ] Constructors not inlined; need type specializations when one calls
   a constructor on a constructor!
 - [x] Save callee-save registers on C call
-  - [ ] caller-save registers (`popa`?)
+  - [x] caller-save registers (`popa`?)
 # Pipeline
-- [ ] Inliner (all non-recursive?)
+- [x] Inliner (all non-recursive?)
 - [ ] https://www.cs.princeton.edu/courses/archive/spr19/cos217/lectures/13_Assembly1.pdf (von neumann -> c where int ptrs, ATS & such are useful...)
 # Features
 - [ ] Aarch64 backend
@@ -63,6 +64,7 @@
   - [x]  Mutually recursive function optimization (what ATS does?)
 - [ ] tail recursion modulo cons ?
 - [ ] `.intel_syntax noprefix` for arm
+- [ ] Repl - Haskell interop? (function to put Kempe stack in some pointer)
 ## Builtins
 - [ ] `rem` builtin or the like? (basically functions in library)
   - [ ] `sal`, `sar`?
@@ -71,3 +73,4 @@
 - [ ] Unit tests for type merge?
 - [ ] Unit tests for catTypes?
 - [ ] Test foreign calls (e.g. `random`)
+- [ ] Custom Kempe pointer? (allocated by malloc)

@@ -7,3 +7,8 @@ global get_kempe_pointer
 get_kempe_pointer:
     mov rax, kempe_data
     ret
+
+global set_kempe_pointer
+set_kempe_pointer:
+    mov rbx, rdi
+    ret
