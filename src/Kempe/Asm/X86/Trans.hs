@@ -129,6 +129,8 @@ irEmit env (IR.WrapKCall Cabi (is, [o]) n l) | all (\i -> size' env i <= 8) is &
     }
 irEmit _ (IR.WrapKCall Kabi (_, _) n l) =
     pure [BSLabel () n, Call () l, Ret ()]
+irEmit _ (IR.WrapKCall Hooked (_, _) n l) =
+    pure [MovRR () DataPointer CArg1, BSLabel () n, Call () l, Ret ()]
 irEmit _ (IR.MovMem (IR.Reg r) _ (IR.ConstInt8 i)) =
     pure [ MovACi8 () (Reg $ toAbsReg r) i ]
     -- see: https://github.com/cirosantilli/x86-assembly-cheat/blob/master/x86-64/movabs.asm for why we don't do this ^ for words
