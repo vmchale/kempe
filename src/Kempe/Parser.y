@@ -89,6 +89,7 @@ import Prettyprinter (Pretty (pretty), (<+>))
     foreign { TokKeyword $$ KwForeign }
     cabi { TokKeyword $$ KwCabi }
     kabi { TokKeyword $$ KwKabi }
+    hooked { TokKeyword $$ KwHooked }
     import { TokKeyword $$ KwImport }
 
     dip { TokBuiltin $$ BuiltinDip }
@@ -139,6 +140,7 @@ Import :: { BSL.ByteString }
 ABI :: { ABI }
     : cabi { Cabi }
     | kabi { Kabi }
+    | hooked { Hooked }
 
 Decl :: { KempeDecl AlexPosn AlexPosn AlexPosn }
      : TyDecl { $1 }
