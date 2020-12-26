@@ -4,6 +4,7 @@ module Kempe.Error.Warning ( Warning (..)
                            ) where
 
 import           Control.Exception (Exception)
+import           Data.Semigroup    ((<>))
 import           Data.Typeable     (Typeable)
 import           Kempe.AST
 import           Kempe.Name

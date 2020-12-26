@@ -432,7 +432,7 @@ checkModule m = tyModule m <* (unifyM =<< gets constraints)
 
 assignModule :: Declarations a c b -> TypeM () (Declarations () (StackType ()) (StackType ()))
 assignModule m = {-# SCC "assignModule" #-} do
-    traverse_ tyHeader m
+    {-# SCC "tyHeader" #-} traverse_ tyHeader m
     m' <- traverse assignDecl m
     backNames <- unifyM =<< gets constraints
     pure (fmap (bimap .$ substConstraintsStack backNames) m')

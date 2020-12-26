@@ -13,7 +13,7 @@ See manual
 Installation is via [cabal-install](https://www.haskell.org/cabal/):
 
 ```
-cabal install kempe
+cabal install kempe --constraint='kempe -no-par'
 ```
 
 For shell completions put the following in your `~/.bashrc` or

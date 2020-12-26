@@ -25,7 +25,6 @@ import           Control.DeepSeq (NFData)
 import           Data.Int        (Int64)
 import qualified Data.IntMap     as IM
 import           Data.Monoid     (Sum (..))
-import           Data.Semigroup  ((<>))
 import qualified Data.Set        as S
 import           GHC.Generics    (Generic)
 import           Kempe.Name

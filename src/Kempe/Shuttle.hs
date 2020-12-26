@@ -17,6 +17,8 @@ inlineAssignFlatten :: Int
                     -> Either (Error ()) (Declarations () (ConsAnn MonoStackType) (StackType ()), (Int, SizeEnv))
 inlineAssignFlatten ctx m = do
     -- check before inlining otherwise users would get weird errors
+    -- TODO: make this more efficient now that liveness anal. is not dominating
+    -- all performance
     void $ do
         void $ runTypeM ctx (checkModule m)
         mErr $ checkModuleExhaustive (void <$> m)

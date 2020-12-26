@@ -4,7 +4,7 @@ module Kempe.IR.Opt ( optimize
 import           Kempe.IR.Type
 
 optimize :: [Stmt] -> [Stmt]
-optimize = sameTarget . successiveBumps . removeNop
+optimize = sameTarget . successiveBumps . successiveBumps . removeNop
 
 -- | Often IR generation will leave us with something like
 --

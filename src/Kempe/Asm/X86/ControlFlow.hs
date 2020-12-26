@@ -6,9 +6,9 @@ module Kempe.Asm.X86.ControlFlow ( mkControlFlow
 import           Control.Monad.State.Strict (State, evalState, gets, modify)
 import           Data.Bifunctor             (first, second)
 import           Data.Functor               (($>))
+import qualified Data.IntSet                as IS
 import qualified Data.Map                   as M
 import           Data.Semigroup             ((<>))
-import qualified Data.Set                   as S
 import           Kempe.Asm.X86.Type
 
 -- map of labels by node
@@ -29,12 +29,27 @@ lookupLabel l = gets (M.findWithDefault (error "Internal error in control-flow g
 broadcast :: Int -> Label -> FreshM ()
 broadcast i l = modify (second (M.insert l i))
 
-addrRegs :: Ord reg => Addr reg -> S.Set reg
-addrRegs (Reg r)              = S.singleton r
-addrRegs (AddrRRPlus r r')    = S.fromList [r, r']
-addrRegs (AddrRCPlus r _)     = S.singleton r
-addrRegs (AddrRCMinus r _)    = S.singleton r
-addrRegs (AddrRRScale r r' _) = S.fromList [r, r']
+singleton :: AbsReg -> IS.IntSet
+singleton = maybe IS.empty IS.singleton . toInt
+
+-- | Make sure 8-bit and 64-bit registers have no overlap.
+--
+-- Also can't be called on abstract registers i.e. 'DataPointer' or 'CArg1'.
+-- This is kinda sus but it allows us to use an 'IntSet' for liveness analysis.
+toInt :: AbsReg -> Maybe Int
+toInt (AllocReg64 i) = Just i
+toInt (AllocReg8 i)  = Just i
+toInt _              = Nothing
+
+fromList :: [AbsReg] -> IS.IntSet
+fromList = foldMap singleton
+
+addrRegs :: Addr AbsReg -> IS.IntSet
+addrRegs (Reg r)              = singleton r
+addrRegs (AddrRRPlus r r')    = fromList [r, r']
+addrRegs (AddrRCPlus r _)     = singleton r
+addrRegs (AddrRCMinus r _)    = singleton r
+addrRegs (AddrRRScale r r' _) = fromList [r, r']
 
 -- | Annotate instructions with a unique node name and a list of all possible
 -- destinations.
@@ -43,60 +58,60 @@ addControlFlow [] = pure []
 addControlFlow ((Label _ l):asms) = do
     { i <- lookupLabel l
     ; (f, asms') <- next asms
-    ; pure (Label (ControlAnn i (f []) S.empty S.empty) l : asms')
+    ; pure (Label (ControlAnn i (f []) IS.empty IS.empty) l : asms')
     }
 addControlFlow ((Je _ l):asms) = do
     { i <- getFresh
     ; (f, asms') <- next asms
     ; l_i <- lookupLabel l -- TODO: is this what's wanted?
-    ; pure (Je (ControlAnn i (f [l_i]) S.empty S.empty) l : asms')
+    ; pure (Je (ControlAnn i (f [l_i]) IS.empty IS.empty) l : asms')
     }
 addControlFlow ((Jl _ l):asms) = do
     { i <- getFresh
     ; (f, asms') <- next asms
     ; l_i <- lookupLabel l
-    ; pure (Jl (ControlAnn i (f [l_i]) S.empty S.empty) l : asms')
+    ; pure (Jl (ControlAnn i (f [l_i]) IS.empty IS.empty) l : asms')
     }
 addControlFlow ((Jle _ l):asms) = do
     { i <- getFresh
     ; (f, asms') <- next asms
     ; l_i <- lookupLabel l
-    ; pure (Jle (ControlAnn i (f [l_i]) S.empty S.empty) l : asms')
+    ; pure (Jle (ControlAnn i (f [l_i]) IS.empty IS.empty) l : asms')
     }
 addControlFlow ((Jne _ l):asms) = do
     { i <- getFresh
     ; (f, asms') <- next asms
     ; l_i <- lookupLabel l
-    ; pure (Jne (ControlAnn i (f [l_i]) S.empty S.empty) l : asms')
+    ; pure (Jne (ControlAnn i (f [l_i]) IS.empty IS.empty) l : asms')
     }
 addControlFlow ((Jge _ l):asms) = do
     { i <- getFresh
     ; (f, asms') <- next asms
     ; l_i <- lookupLabel l
-    ; pure (Jge (ControlAnn i (f [l_i]) S.empty S.empty) l : asms')
+    ; pure (Jge (ControlAnn i (f [l_i]) IS.empty IS.empty) l : asms')
     }
 addControlFlow ((Jg _ l):asms) = do
     { i <- getFresh
     ; (f, asms') <- next asms
     ; l_i <- lookupLabel l
-    ; pure (Jg (ControlAnn i (f [l_i]) S.empty S.empty) l : asms')
+    ; pure (Jg (ControlAnn i (f [l_i]) IS.empty IS.empty) l : asms')
     }
 addControlFlow ((Jump _ l):asms) = do
     { i <- getFresh
     ; nextAsms <- addControlFlow asms
     ; l_i <- lookupLabel l
-    ; pure (Jump (ControlAnn i [l_i] S.empty S.empty) l : nextAsms)
+    ; pure (Jump (ControlAnn i [l_i] IS.empty IS.empty) l : nextAsms)
     }
 addControlFlow ((Call _ l):asms) = do
     { i <- getFresh
     ; nextAsms <- addControlFlow asms
     ; l_i <- lookupLabel l
-    ; pure (Call (ControlAnn i [l_i] S.empty S.empty) l : nextAsms)
+    ; pure (Call (ControlAnn i [l_i] IS.empty IS.empty) l : nextAsms)
     }
 addControlFlow (Ret{}:asms) = do
     { i <- getFresh
     ; nextAsms <- addControlFlow asms
-    ; pure (Ret (ControlAnn i [] S.empty S.empty) : nextAsms)
+    ; pure (Ret (ControlAnn i [] IS.empty IS.empty) : nextAsms)
     }
 addControlFlow (asm:asms) = do
     { i <- getFresh
@@ -104,64 +119,64 @@ addControlFlow (asm:asms) = do
     ; pure ((asm $> ControlAnn i (f []) (uses asm) (defs asm)) : asms')
     }
 
-uses :: Ord reg => X86 reg ann -> S.Set reg
-uses (PushReg _ r)       = S.singleton r
+uses :: X86 AbsReg ann -> IS.IntSet
+uses (PushReg _ r)       = singleton r
 uses (PushMem _ a)       = addrRegs a
 uses (PopMem _ a)        = addrRegs a
 uses (MovRA _ _ a)       = addrRegs a
-uses (MovAR _ a r)       = S.singleton r <> addrRegs a
-uses (MovRR _ _ r)       = S.singleton r
-uses (AddRR _ r r')      = S.fromList [r, r']
-uses (SubRR _ r r')      = S.fromList [r, r']
-uses (ImulRR _ r r')     = S.fromList [r, r']
-uses (AddRC _ r _)       = S.singleton r
-uses (SubRC _ r _)       = S.singleton r
+uses (MovAR _ a r)       = singleton r <> addrRegs a
+uses (MovRR _ _ r)       = singleton r
+uses (AddRR _ r r')      = fromList [r, r']
+uses (SubRR _ r r')      = fromList [r, r']
+uses (ImulRR _ r r')     = fromList [r, r']
+uses (AddRC _ r _)       = singleton r
+uses (SubRC _ r _)       = singleton r
 uses (AddAC _ a _)       = addrRegs a
 uses (MovABool _ a _)    = addrRegs a
 uses (MovAC  _ a _)      = addrRegs a
 uses (MovACi8 _ a _)     = addrRegs a
-uses (XorRR _ r r')      = S.fromList [r, r']
-uses (CmpAddrReg _ a r)  = S.singleton r <> addrRegs a
-uses (CmpRegReg _ r r')  = S.fromList [r, r']
-uses (CmpRegBool _ r _)  = S.singleton r
+uses (XorRR _ r r')      = fromList [r, r']
+uses (CmpAddrReg _ a r)  = singleton r <> addrRegs a
+uses (CmpRegReg _ r r')  = fromList [r, r']
+uses (CmpRegBool _ r _)  = singleton r
 uses (CmpAddrBool _ a _) = addrRegs a
-uses (ShiftLRR _ r r')   = S.fromList [r, r']
-uses (ShiftRRR _ r r')   = S.fromList [r, r']
-uses (MovRCi8 _ r _)     = S.singleton r
+uses (ShiftLRR _ r r')   = fromList [r, r']
+uses (ShiftRRR _ r r')   = fromList [r, r']
+uses (MovRCi8 _ r _)     = singleton r
 uses (MovACTag _ a _)    = addrRegs a
-uses (IdivR _ r)         = S.singleton r
-uses (DivR _ r)          = S.singleton r
-uses Cqo{}               = S.empty -- TODO?
-uses (AndRR _ r r')      = S.fromList [r, r']
-uses (OrRR _ r r')       = S.fromList [r, r']
-uses (PopcountRR _ _ r') = S.singleton r'
-uses (NegR _ r)          = S.singleton r
-uses _                   = S.empty
+uses (IdivR _ r)         = singleton r
+uses (DivR _ r)          = singleton r
+uses Cqo{}               = IS.empty -- TODO?
+uses (AndRR _ r r')      = fromList [r, r']
+uses (OrRR _ r r')       = fromList [r, r']
+uses (PopcountRR _ _ r') = singleton r'
+uses (NegR _ r)          = singleton r
+uses _                   = IS.empty
 
-defs :: X86 reg ann -> S.Set reg
-defs (MovRA _ r _)      = S.singleton r
-defs (MovRR _ r _)      = S.singleton r
-defs (MovRC _ r _)      = S.singleton r
-defs (MovRCBool _ r _)  = S.singleton r
-defs (MovRCi8 _ r _)    = S.singleton r
-defs (MovRWord _ r _)   = S.singleton r
-defs (AddRR _ r _)      = S.singleton r
-defs (SubRR _ r _)      = S.singleton r
-defs (ImulRR _ r _)     = S.singleton r
-defs (AddRC _ r _)      = S.singleton r
-defs (SubRC _ r _)      = S.singleton r
-defs (XorRR _ r _)      = S.singleton r
-defs (MovRL _ r _)      = S.singleton r
-defs (ShiftRRR _ r _)   = S.singleton r
-defs (PopReg _ r)       = S.singleton r
-defs (ShiftLRR _ r _)   = S.singleton r
-defs (AndRR _ r _)      = S.singleton r
-defs (OrRR _ r _)       = S.singleton r
-defs (PopcountRR _ r _) = S.singleton r
-defs (NegR _ r)         = S.singleton r
-defs (MovRCTag _ r _)   = S.singleton r
+defs :: X86 AbsReg ann -> IS.IntSet
+defs (MovRA _ r _)      = singleton r
+defs (MovRR _ r _)      = singleton r
+defs (MovRC _ r _)      = singleton r
+defs (MovRCBool _ r _)  = singleton r
+defs (MovRCi8 _ r _)    = singleton r
+defs (MovRWord _ r _)   = singleton r
+defs (AddRR _ r _)      = singleton r
+defs (SubRR _ r _)      = singleton r
+defs (ImulRR _ r _)     = singleton r
+defs (AddRC _ r _)      = singleton r
+defs (SubRC _ r _)      = singleton r
+defs (XorRR _ r _)      = singleton r
+defs (MovRL _ r _)      = singleton r
+defs (ShiftRRR _ r _)   = singleton r
+defs (PopReg _ r)       = singleton r
+defs (ShiftLRR _ r _)   = singleton r
+defs (AndRR _ r _)      = singleton r
+defs (OrRR _ r _)       = singleton r
+defs (PopcountRR _ r _) = singleton r
+defs (NegR _ r)         = singleton r
+defs (MovRCTag _ r _)   = singleton r
 -- defs for IdivR &c.?
-defs _                  = S.empty
+defs _                  = IS.empty
 
 next :: [X86 AbsReg ()] -> FreshM ([Int] -> [Int], [X86 AbsReg ControlAnn])
 next asms = do

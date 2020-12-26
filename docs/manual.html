@@ -146,6 +146,7 @@
     pre > code.sourceCode { white-space: pre; position: relative; }
     pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
     pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
     code.sourceCode > span { color: inherit; text-decoration: inherit; }
     div.sourceCode { margin: 1em 0; }
     pre.sourceCode { margin: 0; }
@@ -264,7 +265,7 @@
 <p>Kempe is a stack-based language, and <code>kc</code> is a toy compiler for x86_64.</p>
 <h1 id="installing-kc">Installing kc</h1>
 <p>First, install <a href="https://www.haskell.org/cabal/download.html">cabal</a> and <a href="https://www.haskell.org/ghc/download.html">GHC</a>. Then:</p>
-<pre><code>cabal install kempe</code></pre>
+<pre><code>cabal install kempe --constraint=&#39;kempe -no-par&#39;</code></pre>
 <p>This provides <code>kc</code>, the Kempe compiler.</p>
 <p><code>kc</code> requires <a href="https://www.nasm.us/">NASM</a>, an x86_64 assembler.</p>
 <h2 id="editor-integration">Editor Integration</h2>
@@ -280,7 +281,7 @@
 <p>Kempe allows polymorphic functions. So we can define:</p>
 <pre><code>id : a -- a
    =: [ ]</code></pre>
-<p>The Kempe typechecker basically works though unification is slow.</p>
+<p>The Kempe typechecker basically works.</p>
 <h2 id="literals">Literals</h2>
 <p>Integer literals have type <code>-- Int</code>.</p>
 <p>Positive literals followed by a <code>u</code> have type <code>-- Word</code>, e.g. <code>1u</code>.</p>

@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts  #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 -- | Linear scan register allocator
@@ -9,7 +10,8 @@ module Kempe.Asm.X86.Linear ( X86Reg (..)
 
 import           Control.Monad.State.Strict (State, evalState, gets)
 import           Data.Foldable              (traverse_)
-import qualified Data.Map                   as M
+import qualified Data.IntMap                as IM
+import qualified Data.IntSet                as IS
 import           Data.Maybe                 (fromMaybe)
 import           Data.Semigroup             ((<>))
 import qualified Data.Set                   as S
@@ -29,12 +31,12 @@ import           Lens.Micro.Mtl             (modifying, (.=))
 -- so it feels free to allocate HL16 after kmp_15, though they must match!
 
 -- set of free registers we iterate over
-data AllocSt = AllocSt { allocs :: M.Map AbsReg X86Reg -- ^ Already allocated registers
+data AllocSt = AllocSt { allocs :: IM.IntMap X86Reg -- ^ Already allocated registers
                        , free64 :: S.Set X86Reg -- TODO: IntSet here?
                        , free8  :: S.Set X86Reg
                        }
 
-allocsLens :: Lens' AllocSt (M.Map AbsReg X86Reg)
+allocsLens :: Lens' AllocSt (IM.IntMap X86Reg)
 allocsLens f s = fmap (\x -> s { allocs = x }) (f (allocs s))
 
 free64Lens :: Lens' AllocSt (S.Set X86Reg)
@@ -92,46 +94,48 @@ assoc Dil  = S.singleton Rdi
 allocRegs :: [X86 AbsReg Liveness] -> [X86 X86Reg ()]
 allocRegs = runAllocM . traverse allocReg
 
-new :: Liveness -> S.Set AbsReg
-new (Liveness i o) = o S.\\ i
+new :: Liveness -> IS.IntSet
+new (Liveness i o) = o IS.\\ i
 
-done :: Liveness -> S.Set AbsReg
-done (Liveness i o) = i S.\\ o
+done :: Liveness -> IS.IntSet
+done (Liveness i o) = i IS.\\ o
 
 freeDone :: Liveness -> AllocM ()
-freeDone l = traverse_ freeAbsReg absRs
+freeDone l = traverse_ freeReg (IS.toList absRs)
     where absRs = done l
 
-freeAbsReg :: AbsReg -> AllocM ()
-freeAbsReg (AllocReg64 i) = freeAbsReg64 i
-freeAbsReg (AllocReg8 i)  = freeAbsReg8 i
-freeAbsReg _              = pure () -- maybe sketchy?
+freeReg :: Int -> AllocM ()
+freeReg i = do
+    xR <- findReg i
+    modifying allocsLens (IM.delete i)
+    case xR of
+        R8   -> free64Bit xR
+        R9   -> free64Bit xR
+        R10  -> free64Bit xR
+        R11  -> free64Bit xR
+        R12  -> free64Bit xR
+        R13  -> free64Bit xR
+        R14  -> free64Bit xR
+        R15  -> free64Bit xR
+        R8b  -> free8Bit xR
+        R9b  -> free8Bit xR
+        R10b -> free8Bit xR
+        R11b -> free8Bit xR
+        R12b -> free8Bit xR
+        R13b -> free8Bit xR
+        R14b -> free8Bit xR
+        R15b -> free8Bit xR
 
-freeAbsReg8 :: Int -> AllocM ()
-freeAbsReg8 i = do
-    xR <- findReg absR
-    modifying allocsLens (M.delete absR)
-    modifying free8Lens (S.insert xR)
-    modifying free64Lens (<> assoc xR)
+    where free64Bit xR = do
+            modifying free64Lens (S.insert xR)
+            modifying free8Lens (<> assoc xR)
+          free8Bit xR = do
+            modifying free8Lens (S.insert xR)
+            modifying free64Lens (<> assoc xR)
 
-    where absR = AllocReg8 i
-
-freeAbsReg64 :: Int -> AllocM ()
-freeAbsReg64 i = do
-    xR <- findReg absR
-    modifying allocsLens (M.delete absR)
-    modifying free64Lens (S.insert xR)
-    modifying free8Lens (<> assoc xR)
-
-    where absR = AllocReg64 i
-
-assignReg64 :: Int -> X86Reg -> AllocM ()
-assignReg64 i xr =
-    modifying allocsLens (M.insert (AllocReg64 i) xr)
-
-assignReg8 :: Int -> X86Reg -> AllocM ()
-assignReg8 i xr =
-    modifying allocsLens (M.insert (AllocReg8 i) xr)
+assignReg :: Int -> X86Reg -> AllocM ()
+assignReg i xr =
+    modifying allocsLens (IM.insert i xr)
 
 newReg64 :: AllocM X86Reg
 newReg64 = do
@@ -157,23 +161,21 @@ newReg8 = do
 
     where err = error "(internal error) No register available."
 
-findReg :: AbsReg -> AllocM X86Reg
-findReg absR = gets
-    (M.findWithDefault (error "Internal error in register allocator: unfound register") absR . allocs)
+findReg :: Int -> AllocM X86Reg
+findReg i = gets
+    (IM.findWithDefault (error "Internal error in register allocator: unfound register") i . allocs)
 
 useReg64 :: Liveness -> Int -> AllocM X86Reg
 useReg64 l i =
-    if absR `S.member` new l
-        then do { res <- newReg64 ; assignReg64 i res ; pure res }
-        else findReg absR
-    where absR = AllocReg64 i
+    if i `IS.member` new l
+        then do { res <- newReg64 ; assignReg i res ; pure res }
+        else findReg i
 
 useReg8 :: Liveness -> Int -> AllocM X86Reg
 useReg8 l i =
-    if absR `S.member` new l
-        then do { res <- newReg8 ; assignReg8 i res ; pure res }
-        else findReg absR
-    where absR = AllocReg8 i
+    if i `IS.member` new l
+        then do { res <- newReg8 ; assignReg i res ; pure res }
+        else findReg i
 
 useAddr :: Liveness -> Addr AbsReg -> AllocM (Addr X86Reg)
 useAddr l (Reg r)               = Reg <$> useReg l r

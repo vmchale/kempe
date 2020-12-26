@@ -5,3 +5,5 @@ haddock-internal: True
 program-options
   alex-options: -g
   happy-options: -gcsa
+
+constraints: kempe -no-par

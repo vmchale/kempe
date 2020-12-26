@@ -7,7 +7,7 @@ module Kempe.IR ( writeModule
                 ) where
 
 import           Data.Foldable              (toList, traverse_)
-import           Data.List.NonEmpty         (NonEmpty)
+import           Data.List.NonEmpty         (NonEmpty (..))
 import qualified Data.List.NonEmpty         as NE
 -- strict b/c it's faster according to benchmarks
 import           Control.Monad.State.Strict (State, gets, modify, runState)
@@ -15,7 +15,6 @@ import           Data.Bifunctor             (second)
 import           Data.Foldable.Ext
 import           Data.Int                   (Int64)
 import qualified Data.IntMap                as IM
-import           Data.Semigroup             ((<>))
 import           Data.Text.Encoding         (encodeUtf8)
 import           Kempe.AST
 import           Kempe.AST.Size
@@ -242,6 +241,12 @@ writeAtom _ _ (AtBuiltin _ Swap) = error "Ill-typed swap!"
 writeAtom env _ (AtCons ann@(ConsAnn _ tag' _) _) =
     pure $ dataPointerInc (padBytes env ann) : push 1 (ConstTag tag')
 writeAtom _ _ (Case ([], _) _) = error "Internal error: Ill-typed case statement?!"
+-- single-case leaf
+writeAtom env l (Case (is, _) ((_, as) :| [])) =
+    let decSz = size' env (last is)
+    in do
+        nextAs <- writeAtoms env l as
+        pure $ dataPointerDec decSz : nextAs
 writeAtom env l (Case (is, _) ls) =
     let (ps, ass) = NE.unzip ls
         decSz = size' env (last is)
