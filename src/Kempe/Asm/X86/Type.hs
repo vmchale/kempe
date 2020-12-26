@@ -289,7 +289,7 @@ prettyDebugAsm :: Pretty reg => [X86 reg Liveness] -> Doc ann
 prettyDebugAsm = concatWith (\x y -> x <> hardline <> y) . fmap prettyLive
 
 prolegomena :: Doc ann
-prolegomena = "section .bss" <> hardline <> "kempe_data: resb 0x8012" -- 32 kb
+prolegomena = "BITS 64" <#> "section .bss" <#> "kempe_data: resb 0x8012" -- 32 kb
 
 macros :: Doc ann
 macros = prettyLines
