@@ -1,6 +1,7 @@
 # kempe
 
   * Case statements with a single branch are plain and efficient.
+  * Add `safeDiv` and `safeMod` to `prelude/arith.kmp`
 
 ## 0.1.1.1
 
