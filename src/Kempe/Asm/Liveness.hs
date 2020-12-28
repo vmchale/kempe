@@ -1,11 +1,12 @@
 -- FIXME: this module is slow
 
 -- | Based on the Appel book.
-module Kempe.Asm.X86.Liveness ( Liveness
-                              , reconstruct
-                              ) where
+module Kempe.Asm.Liveness ( Liveness
+                          , reconstruct
+                          ) where
 
 import           Control.Composition (thread)
+import           Data.Copointed
 -- this seems to be faster
 import qualified Data.IntMap.Lazy    as IM
 import qualified Data.IntSet         as IS
@@ -17,8 +18,8 @@ emptyLiveness = Liveness IS.empty IS.empty
 
 -- need: succ for a node
 
-initLiveness :: [X86 reg ControlAnn] -> LivenessMap
-initLiveness = IM.fromList . fmap (\asm -> let x = ann asm in (node x, (x, emptyLiveness)))
+initLiveness :: Copointed p => [p ControlAnn] -> LivenessMap
+initLiveness = IM.fromList . fmap (\asm -> let x = copoint asm in (node x, (x, emptyLiveness)))
 
 type LivenessMap = IM.IntMap (ControlAnn, Liveness)
 
@@ -37,15 +38,15 @@ done :: LivenessMap -> LivenessMap -> Bool
 done n0 n1 = {-# SCC "done" #-} and $ zipWith (\(_, l) (_, l') -> l == l') (IM.elems n0) (IM.elems n1) -- should be safe b/c n0, n1 must have same length
 
 -- order in which to inspect nodes during liveness analysis
-inspectOrder :: [X86 reg ControlAnn] -> [Int]
-inspectOrder = fmap (node . ann) -- don't need to reverse because thread goes in opposite order
+inspectOrder :: Copointed p => [p ControlAnn] -> [Int]
+inspectOrder = fmap (node . copoint) -- don't need to reverse because thread goes in opposite order
 
-reconstruct :: [X86 reg ControlAnn] -> [X86 reg Liveness]
+reconstruct :: (Copointed p, Functor p) => [p ControlAnn] -> [p Liveness]
 reconstruct asms = {-# SCC "reconstructL" #-} fmap (fmap lookupL) asms
     where l = {-# SCC "mkLiveness" #-} mkLiveness asms
           lookupL x = snd $ lookupNode (node x) l
 
-mkLiveness :: [X86 reg ControlAnn] -> LivenessMap
+mkLiveness :: Copointed p => [p ControlAnn] -> LivenessMap
 mkLiveness asms = liveness is (initLiveness asms)
     where is = inspectOrder asms
 

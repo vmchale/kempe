@@ -17,6 +17,7 @@ module Kempe.Asm.X86.Type ( X86 (..)
 import           Control.DeepSeq         (NFData)
 import qualified Data.ByteString         as BS
 import qualified Data.ByteString.Lazy    as BSL
+import           Data.Copointed
 import           Data.Int                (Int64, Int8)
 import qualified Data.IntSet             as IS
 import           Data.Semigroup          ((<>))
@@ -211,6 +212,9 @@ data X86 reg a = PushReg { ann :: a, rSrc :: reg }
                | NegR { ann :: a, rSrc :: reg }
                | NasmMacro0 { ann :: a, macroName :: BS.ByteString }
                deriving (Generic, NFData, Functor)
+
+instance Copointed (X86 reg) where
+    copoint = ann
 
 i4 :: Doc ann -> Doc ann
 i4 = indent 4
