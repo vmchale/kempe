@@ -7,8 +7,6 @@ module Kempe.Asm.X86.Type ( X86 (..)
                           , Addr (..)
                           , AbsReg (..)
                           , X86Reg (..)
-                          , ControlAnn (..)
-                          , Liveness (..)
                           , Label
                           , prettyAsm
                           , prettyDebugAsm
@@ -25,23 +23,11 @@ import           Data.Text.Encoding      (decodeUtf8)
 import qualified Data.Text.Lazy.Encoding as TL
 import           Data.Word               (Word8)
 import           GHC.Generics            (Generic)
+import           Kempe.Asm.Type
 import           Prettyprinter           (Doc, Pretty (pretty), braces, brackets, colon, concatWith, hardline, indent, punctuate, (<+>))
 import           Prettyprinter.Ext
 
 type Label = Word
-
-data Liveness = Liveness { ins :: !IS.IntSet, out :: !IS.IntSet } -- strictness annotations make it perform better
-    deriving (Eq, Generic, NFData)
-
-instance Pretty Liveness where
-    pretty (Liveness is os) = braces (pp is <+> ";" <+> pp os)
-        where pp = mconcat . punctuate "," . fmap pretty . IS.toList
-
-data ControlAnn = ControlAnn { node     :: !Int
-                             , conn     :: [Int]
-                             , usesNode :: IS.IntSet
-                             , defsNode :: IS.IntSet
-                             } deriving (Generic, NFData)
 
 -- currently just has 64-bit and 8-bit registers
 data X86Reg = R8

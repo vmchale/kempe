@@ -11,7 +11,7 @@ import           Data.Copointed
 import qualified Data.IntMap.Lazy    as IM
 import qualified Data.IntSet         as IS
 import           Data.Semigroup      ((<>))
-import           Kempe.Asm.X86.Type
+import           Kempe.Asm.Type
 
 emptyLiveness :: Liveness
 emptyLiveness = Liveness IS.empty IS.empty
