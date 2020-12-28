@@ -12,6 +12,10 @@ BINS := bin/x86_64-linux-kc.lz \
 moddeps.svg: $(HS_SRC)
 	graphmod -i src | dot -Tsvg -o $@
 
+packdeps.svg: kempe.cabal
+	cabal build --disable-benchmarks --disable-tests
+	cabal-plan dot | dot -Tsvg -o $@
+
 bins: $(BINS)
 
 docs: docs/manual.pdf docs/manual.html
@@ -45,7 +49,7 @@ install:
 	strip $$(readlink -f $$(which kc))
 
 clean:
-	rm -rf dist-newstyle *.rlib *.d *.rmeta *.o stack.yaml.lock factorial.S factorial splitmix.S numbertheory.S numbertheory *.so bin moddeps.svg
+	rm -rf dist-newstyle *.rlib *.d *.rmeta *.o stack.yaml.lock factorial.S factorial splitmix.S numbertheory.S numbertheory *.so bin moddeps.svg packdeps.svg
 
 %.zst: %
 	sak compress $< $@ --best

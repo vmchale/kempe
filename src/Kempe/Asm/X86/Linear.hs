@@ -15,6 +15,7 @@ import qualified Data.IntSet                as IS
 import           Data.Maybe                 (fromMaybe)
 import           Data.Semigroup             ((<>))
 import qualified Data.Set                   as S
+import           Kempe.Asm.Type
 import           Kempe.Asm.X86.Type
 import           Lens.Micro                 (Lens')
 import           Lens.Micro.Mtl             (modifying, (.=))

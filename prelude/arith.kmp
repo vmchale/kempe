@@ -1,4 +1,5 @@
 import "prelude/fn.kmp"
+import "lib/maybe.kmp"
 
 succInt : Int -- Int
         =: [ 1 + ]
@@ -15,3 +16,18 @@ maxInt : Int Int -- Int
 
 minInt : Int Int -- Int
        =: [ dup2 < if(drop, nip) ]
+
+; checks for division by zero
+safeDiv : Int Int -- (Maybe Int)
+        =: [ dup isZeroInt
+             if( drop2 Nothing
+               , / Just
+               )
+           ]
+
+safeMod : Int Int -- (Maybe Int)
+        =: [ dup isZeroInt
+             if( drop2 Nothing
+               , % Just
+               )
+           ]
