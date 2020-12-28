@@ -17,14 +17,13 @@ import qualified Data.ByteString         as BS
 import qualified Data.ByteString.Lazy    as BSL
 import           Data.Copointed
 import           Data.Int                (Int64, Int8)
-import qualified Data.IntSet             as IS
 import           Data.Semigroup          ((<>))
 import           Data.Text.Encoding      (decodeUtf8)
 import qualified Data.Text.Lazy.Encoding as TL
 import           Data.Word               (Word8)
 import           GHC.Generics            (Generic)
 import           Kempe.Asm.Type
-import           Prettyprinter           (Doc, Pretty (pretty), braces, brackets, colon, concatWith, hardline, indent, punctuate, (<+>))
+import           Prettyprinter           (Doc, Pretty (pretty), brackets, colon, concatWith, hardline, indent, (<+>))
 import           Prettyprinter.Ext
 
 type Label = Word
