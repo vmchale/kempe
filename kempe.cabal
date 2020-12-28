@@ -56,7 +56,7 @@ library kempe-modules
         Kempe.IR.Opt
         Kempe.Asm.X86
         Kempe.Asm.X86.ControlFlow
-        Kempe.Asm.X86.Liveness
+        Kempe.Asm.Liveness
         Kempe.Asm.X86.Linear
 
     hs-source-dirs:   src
@@ -74,6 +74,7 @@ library kempe-modules
         Kempe.Proc.Nasm
         Prettyprinter.Ext
         Data.Foldable.Ext
+        Data.Copointed
 
     default-language: Haskell2010
     other-extensions:

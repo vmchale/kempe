@@ -2,8 +2,8 @@ module Backend ( backendTests
                ) where
 
 import           Control.DeepSeq           (deepseq)
+import           Kempe.Asm.Liveness
 import           Kempe.Asm.X86.ControlFlow
-import           Kempe.Asm.X86.Liveness
 import           Kempe.Inline
 import           Kempe.Module
 import           Kempe.Monomorphize
