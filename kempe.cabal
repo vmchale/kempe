@@ -70,6 +70,7 @@ library kempe-modules
         Kempe.Error.Warning
         Kempe.AST.Size
         Kempe.Asm.X86.Type
+        Kempe.Asm.Type
         Kempe.IR.Type
         Kempe.Proc.Nasm
         Kempe.Haskell.FFI
