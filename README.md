@@ -36,3 +36,9 @@ eval "$(kc --bash-completion-script kc)"
     This is less of an impediment than it sounds like.
   * Cyclic module imports are not detected
   * Modules (imports) are kind of defective
+
+### Comparison
+
+You may wish to use [Mirth](https://github.com/mirth-lang/mirth/) or
+[Factor](https://factorcode.org/) instead. Mirth is statically typed (similar to
+Kempe) but less mature.
