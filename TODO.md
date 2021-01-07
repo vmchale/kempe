@@ -22,6 +22,7 @@
 - [ ] Liveness analysis on a per-decl basis? (basic blocks)
 - [ ] Use `cmov` for storing bools
 - [ ] `lea`, `xchg`? `test`?
+- [ ] https://hackage.haskell.org/package/hashtables
 ## Data Structures
 - [ ] Difference lists when laying down atoms/IR
 - [ ] Do sets actually help?
@@ -63,6 +64,7 @@
   - [x]  Mutually recursive function optimization (what ATS does?)
 - [ ] tail recursion modulo cons ?
 - [ ] `.intel_syntax noprefix` for arm
+- [ ] RCL/RCR/ROL/ROR
 ## Builtins
 - [ ] `rem` builtin or the like? (basically functions in library)
   - [ ] `sal`, `sar`?
