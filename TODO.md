@@ -24,6 +24,7 @@
 - [ ] `lea`, `xchg`? `test`?
 - [ ] `11111` could be True, everything else is false (then could use `xor` for
   int eq?) -> alternately `8` could be `True`, all else false `xor + popcnt`?
+- [ ] https://hackage.haskell.org/package/hashtables
 ## Data Structures
 - [ ] Difference lists when laying down atoms/IR
 - [ ] Do sets actually help?
@@ -65,6 +66,7 @@
   - [x]  Mutually recursive function optimization (what ATS does?)
 - [ ] tail recursion modulo cons ?
 - [ ] `.intel_syntax noprefix` for arm
+- [ ] RCL/RCR/ROL/ROR
 ## Builtins
 - [ ] `rem` builtin or the like? (basically functions in library)
   - [ ] `sal`, `sar`?
