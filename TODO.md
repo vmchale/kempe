@@ -22,6 +22,8 @@
 - [ ] Liveness analysis on a per-decl basis? (basic blocks)
 - [ ] Use `cmov` for storing bools
 - [ ] `lea`, `xchg`? `test`?
+- [ ] `11111` could be True, everything else is false (then could use `xor` for
+  int eq?) -> alternately `8` could be `True`, all else false `xor + popcnt`?
 ## Data Structures
 - [ ] Difference lists when laying down atoms/IR
 - [ ] Do sets actually help?
