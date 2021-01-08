@@ -20,7 +20,6 @@
 # Performance
 - [ ] look at http://hackage.haskell.org/package/linearscan-hoopl
 - [ ] Liveness analysis on a per-decl basis? (basic blocks)
-- [ ] Use `cmov` for storing bools
 - [ ] `lea`, `xchg`? `test`?
 - [ ] https://hackage.haskell.org/package/hashtables
 ## Data Structures
