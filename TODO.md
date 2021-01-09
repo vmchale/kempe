@@ -21,6 +21,8 @@
 - [ ] look at http://hackage.haskell.org/package/linearscan-hoopl
 - [ ] Liveness analysis on a per-decl basis? (basic blocks)
 - [ ] `lea`, `xchg`? `test`?
+- [ ] `11111` could be True, everything else is false (then could use `xor` for
+  int eq?) -> alternately `8` could be `True`, all else false `xor + popcnt`?
 - [ ] https://hackage.haskell.org/package/hashtables
 ## Data Structures
 - [ ] Difference lists when laying down atoms/IR
