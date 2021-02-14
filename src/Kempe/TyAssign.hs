@@ -503,7 +503,7 @@ tyPattern PatternWildcard{} = do
     pure $ StackType (S.singleton aN) [TyVar () aN] []
 tyPattern PatternInt{} = pure $ StackType S.empty [TyBuiltin () TyInt] []
 tyPattern PatternBool{} = pure $ StackType S.empty [TyBuiltin () TyBool] []
-tyPattern (PatternCons _ tn) = renameStack =<< (flipStackType <$> consLookup (void tn))
+tyPattern (PatternCons _ tn) = renameStack . flipStackType =<< consLookup (void tn)
 
 assignPattern :: Pattern b a -> TypeM () (StackType (), Pattern (StackType ()) (StackType ()))
 assignPattern (PatternInt _ i) =
@@ -512,7 +512,7 @@ assignPattern (PatternInt _ i) =
 assignPattern (PatternBool _ i) =
     let sTy = StackType S.empty [TyBuiltin () TyBool] []
         in pure (sTy, PatternBool sTy i)
-assignPattern (PatternCons _ tn) = do { ty <- renameStack =<< (flipStackType <$> consLookup (void tn)) ; pure (ty, PatternCons ty (tn $> ty)) }
+assignPattern (PatternCons _ tn) = do { ty <- renameStack . flipStackType =<< consLookup (void tn) ; pure (ty, PatternCons ty (tn $> ty)) }
 assignPattern PatternWildcard{} = do
     aN <- dummyName "a"
     let resType = StackType (S.singleton aN) [TyVar () aN] []

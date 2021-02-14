@@ -20,9 +20,11 @@
 # Performance
 - [ ] look at http://hackage.haskell.org/package/linearscan-hoopl
 - [ ] Liveness analysis on a per-decl basis? (basic blocks)
-- [ ] Use `cmov` for storing bools
 - [ ] `lea`, `xchg`? `test`?
 - [ ] Last leaf in a case statement should not check tag
+- [ ] `11111` could be True, everything else is false (then could use `xor` for
+  int eq?) -> alternately `8` could be `True`, all else false `xor + popcnt`?
+- [ ] https://hackage.haskell.org/package/hashtables
 ## Data Structures
 - [ ] Difference lists when laying down atoms/IR
 - [ ] Do sets actually help?
@@ -46,6 +48,7 @@
 - [x] Inliner (all non-recursive?)
 - [ ] https://www.cs.princeton.edu/courses/archive/spr19/cos217/lectures/13_Assembly1.pdf (von neumann -> c where int ptrs, ATS & such are useful...)
 # Features
+- [ ] Only save registers that get clobbered
 - [ ] Aarch64 backend
 - [ ] Arithmetic and patterns for `i8`
 - [ ] Patterns for words?
@@ -65,6 +68,7 @@
 - [ ] tail recursion modulo cons ?
 - [ ] `.intel_syntax noprefix` for arm
 - [ ] Repl - Haskell interop? (function to put Kempe stack in some pointer)
+- [ ] RCL/RCR/ROL/ROR
 ## Builtins
 - [ ] `rem` builtin or the like? (basically functions in library)
   - [ ] `sal`, `sar`?

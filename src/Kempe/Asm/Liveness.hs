@@ -16,8 +16,6 @@ import           Kempe.Asm.Type
 emptyLiveness :: Liveness
 emptyLiveness = Liveness IS.empty IS.empty
 
--- need: succ for a node
-
 initLiveness :: Copointed p => [p ControlAnn] -> LivenessMap
 initLiveness = IM.fromList . fmap (\asm -> let x = copoint asm in (node x, (x, emptyLiveness)))
 
