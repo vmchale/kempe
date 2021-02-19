@@ -17,6 +17,8 @@
 # Backends
 - [x] Linear scan register allocator
 - [ ] Graph (?) register allocator
+# Code
+- [ ] `typed-process`?
 # Performance
 - [ ] look at http://hackage.haskell.org/package/linearscan-hoopl
 - [ ] Liveness analysis on a per-decl basis? (basic blocks)
@@ -35,11 +37,11 @@
 - [ ] Throw error when return value in C ABI is too big
 - [x] Constructors aren't monomorphized
   - [ ] http://mlton.org/Monomorphise
-  - [ ] Constructors that call constructors don't dispatch/monomorphize
+  - [x] Constructors that call constructors don't dispatch/monomorphize
     properly?
 - [x] Correctly restore registers (C ABI)
 - [ ] Warn on >256 constructors
-- [ ] Constructors not inlined; need type specializations when one calls
+- [x] Constructors not inlined; need type specializations when one calls
   a constructor on a constructor!
 - [x] Save callee-save registers on C call
   - [ ] caller-save registers (`popa`?)
