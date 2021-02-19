@@ -46,7 +46,7 @@
 - [x] Save callee-save registers on C call
   - [ ] caller-save registers (`popa`?)
 # Pipeline
-- [ ] Inliner (all non-recursive?)
+- [x] Inliner (all non-recursive?)
 - [ ] https://www.cs.princeton.edu/courses/archive/spr19/cos217/lectures/13_Assembly1.pdf (von neumann -> c where int ptrs, ATS & such are useful...)
 # Features
 - [ ] Only save registers that get clobbered
