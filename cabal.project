@@ -7,3 +7,9 @@ program-options
   happy-options: -gcsa
 
 constraints: kempe -no-par
+
+allow-newer:
+  vector-th-unbox:base
+  vector-th-unbox:template-haskell
+  hsc2hs:base
+  cassava:base
