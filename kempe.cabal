@@ -111,8 +111,9 @@ library kempe-modules
 
     if impl(ghc >=8.10)
         ghc-options: -Wunused-packages
+
     if !flag(cross)
-        build-tool-depends: alex:alex -any, happy:happy -any
+        build-tool-depends: alex:alex, happy:happy
 
     if impl(ghc >=8.0)
         ghc-options:
@@ -136,11 +137,11 @@ executable kc
     default-language: Haskell2010
     ghc-options:      -Wall
     build-depends:
-        base -any,
-        optparse-applicative -any,
-        kempe-modules -any,
+        base,
+        optparse-applicative,
+        kempe-modules,
         prettyprinter >=1.7.0,
-        bytestring -any
+        bytestring
 
     if impl(ghc >=8.0)
         ghc-options:
@@ -169,16 +170,16 @@ test-suite kempe-test
     default-language: Haskell2010
     ghc-options:      -threaded -rtsopts "-with-rtsopts=-N -K1K" -Wall
     build-depends:
-        base -any,
-        kempe-modules -any,
-        tasty -any,
-        tasty-hunit -any,
-        bytestring -any,
+        base,
+        kempe-modules,
+        tasty,
+        tasty-hunit,
+        bytestring,
         prettyprinter >=1.7.0,
-        deepseq -any,
-        tasty-golden -any,
-        text -any,
-        composition-prelude -any
+        deepseq,
+        tasty-golden,
+        text,
+        composition-prelude
 
     if impl(ghc >=8.0)
         ghc-options:
