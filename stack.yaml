@@ -1,7 +1,7 @@
 ---
 packages:
   - ./
-resolver: lts-16.20
+resolver: lts-16.31
 extra-deps:
   - composition-prelude-3.0.0.0@sha256:7407835ce8c1e0e2fd6febd25391b12989b216773e685e3cf95bd89072af0ecc,1149
   - prettyprinter-1.7.0@sha256:6a9569e21fa61163a7f066d23d701e23e917893e8f39733d6e617ec72787ae5f,6007
