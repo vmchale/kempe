@@ -45,7 +45,7 @@ rts.o: rts.S
 	nasm $^ -f elf64 -o $@
 
 install:
-	cabal install exe:kc --overwrite-policy=always -w ghc-9.0
+	cabal install exe:kc --overwrite-policy=always -w ghc-9.0.1
 	strip $$(readlink -f $$(which kc))
 
 clean:

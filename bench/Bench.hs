@@ -95,6 +95,7 @@ main =
                         , bench "Generate assembly (examples/factorial.kmp)" $ nfIO (writeAsm "examples/factorial.kmp")
                         , bench "Generate assembly (examples/splitmix.kmp)" $ nfIO (writeAsm "examples/splitmix.kmp")
                         , bench "Generate assembly (lib/numbertheory.kmp)" $ nfIO (writeAsm "lib/numbertheory.kmp")
+                        , bench "Generate assembly (lib/gaussian.kmp)" $ nfIO (writeAsm "lib/gaussian.kmp")
                         -- , bench "Generate assembly (lib/rational.kmp)" $ nfIO (writeAsm "lib/rational.kmp")
                         , bench "Object file (examples/factorial.kmp)" $ nfIO (compile "examples/factorial.kmp" "/tmp/factorial.o" False)
                         , bench "Object file (lib/numbertheory.kmp)" $ nfIO (compile "lib/numbertheory.kmp" "/tmp/numbertheory.o" False)
