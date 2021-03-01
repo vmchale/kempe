@@ -2,8 +2,8 @@
 
 -- | Started out trying to implement maximal munch but ended with something
 -- "flatter" that works with Kempe IR and my shitty register allocator.
-module Kempe.Asm.X86 ( irToX86
-                     ) where
+module Kempe.Asm.X86.Trans ( irToX86
+                           ) where
 
 import           Control.Monad.State.Strict (State, evalState, gets, modify)
 import           Data.Foldable.Ext

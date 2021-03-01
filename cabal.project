@@ -7,3 +7,6 @@ program-options
   happy-options: -gcsa
 
 constraints: kempe -no-par
+
+allow-newer:
+  cassava:base

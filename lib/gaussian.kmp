@@ -1,4 +1,5 @@
 ; Gaussian integers
+import"prelude/fn.kmp"
 
 type Gaussian { Gaussian Int Int }
 
@@ -16,8 +17,18 @@ grp : a b c -- b a c
 add : Gaussian Gaussian -- Gaussian
     =: [ dip(unGaussian) unGaussian grp + dip(+) Gaussian ]
 
+multRe : Gaussian Gaussian -- Int
+       =: [ dip(unGaussian) unGaussian dip(swap) * dip(*) - ]
+
+multIm : Gaussian Gaussian -- Int
+       =: [ dip(unGaussian) unGaussian dip(*) swap dip(*) + ]
+
+mult : Gaussian Gaussian -- Gaussian
+     =: [ dup2 multIm dip(multRe) Gaussian ]
+
 conjugate : Gaussian -- Gaussian
           =: [ unGaussian ~ Gaussian ]
 
 %foreign kabi add
 %foreign kabi conjugate
+%foreign kabi mult

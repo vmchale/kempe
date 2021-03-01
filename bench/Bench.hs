@@ -6,9 +6,9 @@ import           Data.Bifunctor            (Bifunctor, bimap)
 import qualified Data.ByteString.Lazy      as BSL
 import qualified Data.Text                 as T
 import           Kempe.Asm.Liveness
-import           Kempe.Asm.X86
 import           Kempe.Asm.X86.ControlFlow
 import           Kempe.Asm.X86.Linear
+import           Kempe.Asm.X86.Trans
 import           Kempe.Check.Pattern
 import           Kempe.File
 import           Kempe.IR
@@ -95,6 +95,7 @@ main =
                         , bench "Generate assembly (examples/factorial.kmp)" $ nfIO (writeAsm "examples/factorial.kmp")
                         , bench "Generate assembly (examples/splitmix.kmp)" $ nfIO (writeAsm "examples/splitmix.kmp")
                         , bench "Generate assembly (lib/numbertheory.kmp)" $ nfIO (writeAsm "lib/numbertheory.kmp")
+                        , bench "Generate assembly (lib/gaussian.kmp)" $ nfIO (writeAsm "lib/gaussian.kmp")
                         -- , bench "Generate assembly (lib/rational.kmp)" $ nfIO (writeAsm "lib/rational.kmp")
                         , bench "Object file (examples/factorial.kmp)" $ nfIO (compile "examples/factorial.kmp" "/tmp/factorial.o" False)
                         , bench "Object file (lib/numbertheory.kmp)" $ nfIO (compile "lib/numbertheory.kmp" "/tmp/numbertheory.o" False)
