@@ -31,3 +31,4 @@ conjugate : Gaussian -- Gaussian
 
 %foreign kabi add
 %foreign kabi conjugate
+%foreign kabi mult

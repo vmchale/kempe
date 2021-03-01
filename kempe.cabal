@@ -30,10 +30,6 @@ source-repository head
     type:     git
     location: https://github.com/vmchale/kempe
 
-flag no-par
-    description: Disable concurrent build
-    manual:      True
-
 flag cross
     description: Enable to ease cross-compiling
     default:     False
@@ -54,7 +50,7 @@ library kempe-modules
         Kempe.Check.Pattern
         Kempe.IR
         Kempe.IR.Opt
-        Kempe.Asm.X86
+        Kempe.Asm.X86.Trans
         Kempe.Asm.X86.ControlFlow
         Kempe.Asm.Liveness
         Kempe.Asm.X86.Linear
@@ -86,24 +82,34 @@ library kempe-modules
     ghc-options:      -Wall
     build-depends:
         base >=4.9 && <5,
-        array -any,
-        bytestring -any,
+        array,
+        bytestring,
         containers >=0.6.0.0,
-        deepseq -any,
-        text -any,
-        mtl -any,
-        microlens -any,
-        transformers -any,
+        deepseq,
+        text,
+        mtl,
+        microlens,
+        transformers,
         extra >=1.7.4,
         prettyprinter >=1.7.0,
         composition-prelude >=2.0.2.0,
-        microlens-mtl -any,
+        microlens-mtl,
         process >=1.2.3.0,
-        temporary -any
+        temporary
 
-    if !flag(no-par)
-        ghc-options: -j +RTS -A32m -RTS
+    if impl(ghc >=8.0)
+        ghc-options:
+            -Wincomplete-uni-patterns -Wincomplete-record-updates
+            -Wredundant-constraints -Widentities
 
+    if impl(ghc >=8.4)
+        ghc-options: -Wmissing-export-lists
+
+    if impl(ghc >=8.2)
+        ghc-options: -Wcpp-undef
+
+    if impl(ghc >=8.10)
+        ghc-options: -Wunused-packages
     if !flag(cross)
         build-tool-depends: alex:alex -any, happy:happy -any
 
@@ -173,9 +179,6 @@ test-suite kempe-test
         text -any,
         composition-prelude -any
 
-    if !flag(no-par)
-        ghc-options: -j +RTS -A32m -RTS
-
     if impl(ghc >=8.0)
         ghc-options:
             -Wincomplete-uni-patterns -Wincomplete-record-updates
@@ -198,14 +201,14 @@ test-suite kempe-golden
     default-language: Haskell2010
     ghc-options:      -threaded -rtsopts "-with-rtsopts=-N -K1K" -Wall
     build-depends:
-        base -any,
-        kempe-modules -any,
-        tasty -any,
-        bytestring -any,
-        process -any,
-        temporary -any,
-        filepath -any,
-        tasty-golden -any
+        base,
+        kempe-modules,
+        tasty,
+        bytestring,
+        process,
+        temporary,
+        filepath,
+        tasty-golden
 
     if impl(ghc >=8.0)
         ghc-options:
@@ -228,12 +231,12 @@ benchmark kempe-bench
     default-language: Haskell2010
     ghc-options:      -Wall
     build-depends:
-        base -any,
-        kempe-modules -any,
-        bytestring -any,
-        criterion -any,
-        prettyprinter -any,
-        text -any
+        base,
+        kempe-modules,
+        bytestring,
+        criterion,
+        prettyprinter,
+        text
 
     if impl(ghc >=8.0)
         ghc-options:

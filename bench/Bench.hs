@@ -6,9 +6,9 @@ import           Data.Bifunctor            (Bifunctor, bimap)
 import qualified Data.ByteString.Lazy      as BSL
 import qualified Data.Text                 as T
 import           Kempe.Asm.Liveness
-import           Kempe.Asm.X86
 import           Kempe.Asm.X86.ControlFlow
 import           Kempe.Asm.X86.Linear
+import           Kempe.Asm.X86.Trans
 import           Kempe.Check.Pattern
 import           Kempe.File
 import           Kempe.IR
