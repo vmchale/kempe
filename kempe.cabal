@@ -133,7 +133,7 @@ executable kc
     other-modules:    Paths_kempe
     autogen-modules:  Paths_kempe
     default-language: Haskell2010
-    ghc-options:      -Wall
+    ghc-options:      -Wall -rtsopts -with-rtsopts=-A4m
     build-depends:
         base -any,
         optparse-applicative -any,
@@ -229,7 +229,7 @@ benchmark kempe-bench
     main-is:          Bench.hs
     hs-source-dirs:   bench
     default-language: Haskell2010
-    ghc-options:      -Wall
+    ghc-options:      -Wall -rtsopts -with-rtsopts=-A4m
     build-depends:
         base,
         kempe-modules,
