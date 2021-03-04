@@ -1,5 +1,11 @@
 # kempe
 
+## 0.1.1.3
+
+  * Tweak some RTS flags for faster performance
+  * `lib/gaussian.kmp` has `mult` function
+  * A couple inefficiencies under the hood
+
 ## 0.1.1.2
 
   * Case statements with a single branch are plain and efficient.

@@ -1,9 +1,9 @@
 cabal-version:   3.0
 name:            kempe
-version:         0.1.1.2
+version:         0.1.1.3
 license:         BSD-3-Clause
 license-file:    LICENSE
-copyright:       Copyright: (c) 2020 Vanessa McHale
+copyright:       Copyright: (c) 2020-2021 Vanessa McHale
 maintainer:      vamchale@gmail.com
 author:          Vanessa McHale
 synopsis:        Kempe compiler
@@ -135,7 +135,7 @@ executable kc
     other-modules:    Paths_kempe
     autogen-modules:  Paths_kempe
     default-language: Haskell2010
-    ghc-options:      -Wall
+    ghc-options:      -Wall -rtsopts -with-rtsopts=-A4m
     build-depends:
         base,
         optparse-applicative,
@@ -231,7 +231,7 @@ benchmark kempe-bench
     main-is:          Bench.hs
     hs-source-dirs:   bench
     default-language: Haskell2010
-    ghc-options:      -Wall
+    ghc-options:      -Wall -rtsopts -with-rtsopts=-A4m
     build-depends:
         base,
         kempe-modules,
