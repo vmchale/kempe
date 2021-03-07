@@ -68,6 +68,7 @@ library kempe-modules
         Kempe.Asm.Arm.Type
         Kempe.Asm.X86.Type
         Kempe.Asm.Type
+        Kempe.Asm.Pretty
         Kempe.IR.Type
         Kempe.Proc.Nasm
         Prettyprinter.Ext

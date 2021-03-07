@@ -22,8 +22,9 @@ import           Data.Text.Encoding      (decodeUtf8)
 import qualified Data.Text.Lazy.Encoding as TL
 import           Data.Word               (Word8)
 import           GHC.Generics            (Generic)
+import           Kempe.Asm.Pretty
 import           Kempe.Asm.Type
-import           Prettyprinter           (Doc, Pretty (pretty), brackets, colon, concatWith, hardline, indent, (<+>))
+import           Prettyprinter           (Doc, Pretty (pretty), brackets, colon, concatWith, hardline, (<+>))
 import           Prettyprinter.Ext
 
 type Label = Word
@@ -201,18 +202,12 @@ data X86 reg a = PushReg { ann :: a, rSrc :: reg }
 instance Copointed (X86 reg) where
     copoint = ann
 
-i4 :: Doc ann -> Doc ann
-i4 = indent 4
-
 instance Pretty reg => Pretty (Addr reg) where
     pretty (Reg r)               = brackets (pretty r)
     pretty (AddrRRPlus r0 r1)    = brackets (pretty r0 <> "+" <> pretty r1)
     pretty (AddrRCPlus r c)      = brackets (pretty r <> "+" <> pretty c)
     pretty (AddrRCMinus r c)     = brackets (pretty r <> "-" <> pretty c)
     pretty (AddrRRScale r0 r1 c) = brackets (pretty r0 <> "+" <> pretty r1 <> "*" <> pretty c)
-
-prettyLabel :: Label -> Doc ann
-prettyLabel l = "kmp_" <> pretty l
 
 prettyLive :: Pretty reg => X86 reg Liveness -> Doc ann
 prettyLive r = pretty r <+> pretty (ann r)
