@@ -1,5 +1,5 @@
-module Kempe.Proc.Armasm ( writeO
-                         ) where
+module Kempe.Proc.As ( writeO
+                     ) where
 
 import           Data.Functor                (void)
 import           Prettyprinter               (Doc, defaultLayoutOptions, layoutPretty)
@@ -14,5 +14,5 @@ writeO :: Doc ann
 writeO p fpO dbg = do
     let inp = renderString (layoutPretty defaultLayoutOptions p)
         debugFlag = if dbg then ("-g":) else id
-    void $ readCreateProcess ((proc "armasm" (debugFlag ["-o", fpO, "-"])) { std_err = Inherit }) inp
+    void $ readCreateProcess ((proc "as" (debugFlag ["--", "-o", fpO])) { std_err = Inherit }) inp
 
