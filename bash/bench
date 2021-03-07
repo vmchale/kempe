@@ -2,11 +2,11 @@
 
 bench 'gcc-8 -fsyntax-only benchmarks/splitmix64.c' \
     'clang-11 -fsyntax-only benchmarks/splitmix64.c' \
+    'icc -fsyntax-only benchmarks/splitmix64.c' \
     'kc typecheck examples/splitmix.kmp' \
-    'ghc -fno-code benchmarks/Splitmix.hs' \
+    'icc -O0 -c benchmarks/splitmix64.c' \
     'gcc-8 -O0 -c benchmarks/splitmix64.c' \
     'clang-11 -O0 -c benchmarks/splitmix64.c' \
-    'ghc -O0 benchmarks/Splitmix.hs' \
     'rustc --crate-type=lib --emit=dep-info,metadata benchmarks/splitmix.rs' \
     'rustc --crate-type=lib benchmarks/splitmix.rs' \
     'rustc --crate-type=cdylib benchmarks/splitmix.rs' \

@@ -7,7 +7,7 @@ module Kempe.Asm.Arm.Type ( Label
 
 import           Data.Int         (Int64)
 import           Kempe.Asm.Pretty
-import           Prettyprinter    (Doc, Pretty (..), brackets, (<+>))
+import           Prettyprinter    (Pretty (..), brackets, (<+>))
 
 -- r19-r28 calle-saved
 -- r0-r7 result registers
@@ -59,11 +59,24 @@ instance Pretty ArmReg where
     pretty X9  = "x9"
     pretty X10 = "x10"
     pretty X11 = "x11"
+    pretty X12 = "x12"
+    pretty X13 = "x13"
+    pretty X14 = "x14"
+    pretty X15 = "x15"
 
 newtype Addr reg = Reg reg
 
 instance (Pretty reg) => Pretty (Addr reg) where
     pretty (Reg reg) = brackets (pretty reg)
+
+data Cond = Eq
+          | Neq
+          | Leq
+
+instance Pretty Cond where
+    pretty Eq  = "EQ"
+    pretty Neq = "NE"
+    pretty Leq = "LS"
 
 -- see: https://developer.arm.com/documentation/dui0068/b/arm-instruction-reference
 data Arm reg a = Branch { ann :: a, label :: Label } -- like "
@@ -73,6 +86,9 @@ data Arm reg a = Branch { ann :: a, label :: Label } -- like "
                | MovRR { ann :: a, dest :: reg, src :: reg }
                | AndRR { ann :: a, dest :: reg, inp1 :: reg, inp2 :: reg }
                | Load { ann :: a, dest :: reg, addrSrc :: Addr reg }
+               | Store { ann :: a, src :: reg, addrDest :: Addr reg }
+               | CmpRR { ann :: a, inp1 :: reg, inp2 :: reg }
+               | CSet { ann :: a, dest :: reg, cond :: Cond }
 
 instance Pretty reg => Pretty (Arm reg a) where
     pretty (Branch _ l) = "B" <+> prettyLabel l
