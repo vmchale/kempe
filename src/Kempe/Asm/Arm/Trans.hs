@@ -13,5 +13,8 @@ irToAarch64 env w = runWriteM w . foldMapA (irEmit env)
 allocReg :: WriteM AbsReg
 allocReg = AllocReg <$> getInt
 
+-- example function call (arm) https://www.cs.princeton.edu/courses/archive/spr19/cos217/lectures/15_AssemblyFunctions.pdf
+
 irEmit :: SizeEnv -> IR.Stmt -> WriteM [Arm AbsReg ()]
 irEmit _ (IR.Jump l) = pure [Branch () l]
+irEmit _ IR.Ret      = pure [Ret ()]

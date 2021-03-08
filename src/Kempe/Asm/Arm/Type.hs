@@ -20,6 +20,14 @@ import           Prettyprinter    (Pretty (..), brackets, (<+>))
 
 data AbsReg = DataPointer
             | AllocReg !Int
+            | CArg0 -- x0
+            | CArg1
+            | CArg2
+            | CArg3
+            | CArg4
+            | CArg5
+            | CArg6
+            | CArg7 -- x7
             | CRet -- x0
             deriving (Generic, NFData)
 
@@ -97,6 +105,7 @@ data Addr reg = Reg reg
 instance (Pretty reg) => Pretty (Addr reg) where
     pretty (Reg reg) = brackets (pretty reg)
 
+-- | See: https://developer.arm.com/documentation/dui0068/b/arm-instruction-reference/conditional-execution?lang=en
 data Cond = Eq
           | Neq
           | Leq
@@ -108,7 +117,7 @@ instance Pretty Cond where
     pretty Leq = "LS"
 
 -- see: https://developer.arm.com/documentation/dui0068/b/arm-instruction-reference
-data Arm reg a = Branch { ann :: a, label :: Label } -- like "
+data Arm reg a = Branch { ann :: a, label :: Label } -- like
                | AddRR { ann :: a, res :: reg, inp1 :: reg, inp2 :: reg }
                | SubRR { ann :: a, res :: reg, inp1 :: reg, inp2 :: reg }
                | MovRC { ann :: a, dest :: reg, iSrc :: Int64 }
@@ -118,10 +127,12 @@ data Arm reg a = Branch { ann :: a, label :: Label } -- like "
                | Store { ann :: a, src :: reg, addrDest :: Addr reg }
                | CmpRR { ann :: a, inp1 :: reg, inp2 :: reg }
                | CSet { ann :: a, dest :: reg, cond :: Cond }
+               | Ret { ann :: a }
                deriving (Generic, NFData)
 
 instance Pretty reg => Pretty (Arm reg a) where
-    pretty (Branch _ l) = "B" <+> prettyLabel l
+    pretty (Branch _ l) = "b" <+> prettyLabel l
+    pretty Ret{}        = "ret"
 
 instance Copointed (Arm reg) where
     copoint = ann
