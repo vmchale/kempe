@@ -13,6 +13,10 @@ import           Prettyprinter    (Pretty (..), brackets, (<+>))
 -- r19-r28 calle-saved
 -- r0-r7 result registers
 
+data AbsReg = DataPointer
+            | AllocReg !Int
+            | CRet -- x0
+
 type Label = Word
 
 data ArmReg = X0
@@ -64,6 +68,21 @@ instance Pretty ArmReg where
     pretty X13 = "x13"
     pretty X14 = "x14"
     pretty X15 = "x15"
+    pretty X16 = "x16"
+    pretty X17 = "x17"
+    pretty X18 = "x18"
+    pretty X19 = "x19"
+    pretty X20 = "x20"
+    pretty X21 = "x21"
+    pretty X22 = "x22"
+    pretty X23 = "x23"
+    pretty X24 = "x24"
+    pretty X25 = "x25"
+    pretty X26 = "x26"
+    pretty X27 = "x27"
+    pretty X28 = "x28"
+    pretty X29 = "x29"
+    pretty X30 = "x30"
 
 newtype Addr reg = Reg reg
 

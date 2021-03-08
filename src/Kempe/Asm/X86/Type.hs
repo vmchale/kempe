@@ -113,7 +113,7 @@ data AbsReg = DataPointer
             | CArg4
             | CArg5
             | CArg6
-            | CRet -- x0 on aarch64
+            | CRet
             | ShiftExponent
             | QuotRes -- quotient register for idiv, rax
             | RemRes -- remainder register for idiv, rdx
