@@ -34,8 +34,8 @@ eval "$(kc --bash-completion-script kc)"
     export large arguments (i.e. structs) passed by value.
 
     This is less of an impediment than it sounds like.
-  * Cyclic module imports are not detected
-  * Modules (imports) are kind of defective
+  * Cyclic imports are not detected
+  * Imports are kind of defective
 
 ### Comparison
 
