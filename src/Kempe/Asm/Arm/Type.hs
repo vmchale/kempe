@@ -8,12 +8,16 @@ module Kempe.Asm.Arm.Type ( Label
                           , Arm (..)
                           ) where
 
-import           Control.DeepSeq  (NFData)
+import           Control.DeepSeq    (NFData)
+import qualified Data.ByteString    as BS
 import           Data.Copointed
-import           Data.Int         (Int64)
-import           GHC.Generics     (Generic)
+import           Data.Int           (Int64)
+import           Data.Text.Encoding (decodeUtf8)
+import           Data.Word          (Word64)
+import           GHC.Generics       (Generic)
 import           Kempe.Asm.Pretty
-import           Prettyprinter    (Pretty (..), brackets, (<+>))
+import           Prettyprinter      (Doc, Pretty (..), brackets, colon, hardline, (<+>))
+import           Prettyprinter.Ext  (prettyHex)
 
 -- r19-r28 calle-saved
 -- r0-r7 result registers
@@ -122,6 +126,7 @@ data Arm reg a = Branch { ann :: a, label :: Label } -- like jump
                | AddRR { ann :: a, res :: reg, inp1 :: reg, inp2 :: reg }
                | SubRR { ann :: a, res :: reg, inp1 :: reg, inp2 :: reg }
                | MovRC { ann :: a, dest :: reg, iSrc :: Int64 }
+               | MovRWord { ann :: a, dest :: reg, wSrc :: Word }
                | MovRR { ann :: a, dest :: reg, src :: reg }
                | AndRR { ann :: a, dest :: reg, inp1 :: reg, inp2 :: reg }
                | Load { ann :: a, dest :: reg, addrSrc :: Addr reg }
@@ -129,12 +134,20 @@ data Arm reg a = Branch { ann :: a, label :: Label } -- like jump
                | CmpRR { ann :: a, inp1 :: reg, inp2 :: reg }
                | CSet { ann :: a, dest :: reg, cond :: Cond }
                | Ret { ann :: a }
+               | BSLabel { ann :: a, bsLabel :: BS.ByteString }
                deriving (Generic, NFData)
+
+-- | Don't call this on a negative number!
+prettyUInt :: (Integral a, Show a) => a -> Doc b
+prettyUInt i | i >= 0 = "#" <> prettyHex i
+             | otherwise = error "Internal error: prettyUInt called on a negative number!"
 
 instance Pretty reg => Pretty (Arm reg a) where
     pretty (Branch _ l)     = "b" <+> prettyLabel l
     pretty (BranchLink _ l) = "bl" <+> prettyLabel l
     pretty Ret{}            = "ret"
+    pretty (BSLabel _ b)    = let pl = pretty (decodeUtf8 b) in ".globl" <+> pl <> hardline <> pl <> colon
+    pretty (MovRWord _ r c) = "mov" <+> pretty r <> ", " <> prettyUInt c
 
 instance Copointed (Arm reg) where
     copoint = ann
