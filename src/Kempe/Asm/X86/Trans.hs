@@ -5,14 +5,13 @@
 module Kempe.Asm.X86.Trans ( irToX86
                            ) where
 
-import           Control.Monad.State.Strict (State, evalState, gets, modify)
 import           Data.Foldable.Ext
-import           Data.List                  (scanl')
-import           Data.Word                  (Word8)
+import           Data.List          (scanl')
+import           Data.Word          (Word8)
 import           Kempe.AST.Size
 import           Kempe.Asm.X86.Type
 import           Kempe.IR.Monad
-import qualified Kempe.IR.Type              as IR
+import qualified Kempe.IR.Type      as IR
 
 toAbsReg :: IR.Temp -> AbsReg
 toAbsReg (IR.Temp8 i)   = AllocReg8 i

@@ -50,10 +50,11 @@ library kempe-modules
         Kempe.Check.Pattern
         Kempe.IR
         Kempe.IR.Opt
+        Kempe.Asm.Liveness
         Kempe.Asm.X86.Trans
         Kempe.Asm.X86.ControlFlow
-        Kempe.Asm.Liveness
         Kempe.Asm.X86.Linear
+        Kempe.Asm.Arm.Trans
 
     hs-source-dirs:   src
     other-modules:

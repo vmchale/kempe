@@ -31,6 +31,7 @@ backendTests =
         , irNoYeet "test/data/maybeC.kmp"
         , x86NoYeet "examples/factorial.kmp"
         , x86NoYeet "examples/splitmix.kmp"
+        , armNoYeet "examples/factorial.kmp"
         , controlFlowGraph "examples/factorial.kmp"
         , controlFlowGraph "examples/splitmix.kmp"
         , liveness "examples/factorial.kmp"
@@ -63,6 +64,13 @@ controlFlowGraph fp = testCase ("Doesn't crash while creating control flow graph
     parsed <- parseProcess fp
     let x86 = uncurry x86Parsed parsed
     assertBool "Worked without exception" (mkControlFlow x86 `deepseq` True)
+
+armNoYeet :: FilePath -> TestTree
+armNoYeet fp = testCase ("Selects instructions for " ++ fp) $ do
+    parsed <- parseProcess fp
+    let arm = uncurry armParsed parsed
+    assertBool "Worked without exception" (arm `deepseq` True)
+
 
 x86NoYeet :: FilePath -> TestTree
 x86NoYeet fp = testCase ("Selects instructions for " ++ fp) $ do

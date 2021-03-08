@@ -1,12 +1,17 @@
+{-# LANGUAGE DeriveAnyClass    #-}
+{-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Kempe.Asm.Arm.Type ( Label
                           , ArmReg (..)
+                          , AbsReg (..)
                           , Arm (..)
                           ) where
 
+import           Control.DeepSeq  (NFData)
 import           Data.Copointed
 import           Data.Int         (Int64)
+import           GHC.Generics     (Generic)
 import           Kempe.Asm.Pretty
 import           Prettyprinter    (Pretty (..), brackets, (<+>))
 
@@ -16,6 +21,7 @@ import           Prettyprinter    (Pretty (..), brackets, (<+>))
 data AbsReg = DataPointer
             | AllocReg !Int
             | CRet -- x0
+            deriving (Generic, NFData)
 
 type Label = Word
 
@@ -84,7 +90,9 @@ instance Pretty ArmReg where
     pretty X29 = "x29"
     pretty X30 = "x30"
 
-newtype Addr reg = Reg reg
+data Addr reg = Reg reg
+              | AddRRPlus reg reg
+              deriving (Generic, NFData)
 
 instance (Pretty reg) => Pretty (Addr reg) where
     pretty (Reg reg) = brackets (pretty reg)
@@ -92,6 +100,7 @@ instance (Pretty reg) => Pretty (Addr reg) where
 data Cond = Eq
           | Neq
           | Leq
+          deriving (Generic, NFData)
 
 instance Pretty Cond where
     pretty Eq  = "EQ"
@@ -109,6 +118,7 @@ data Arm reg a = Branch { ann :: a, label :: Label } -- like "
                | Store { ann :: a, src :: reg, addrDest :: Addr reg }
                | CmpRR { ann :: a, inp1 :: reg, inp2 :: reg }
                | CSet { ann :: a, dest :: reg, cond :: Cond }
+               deriving (Generic, NFData)
 
 instance Pretty reg => Pretty (Arm reg a) where
     pretty (Branch _ l) = "B" <+> prettyLabel l
