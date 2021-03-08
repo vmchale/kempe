@@ -117,7 +117,8 @@ instance Pretty Cond where
     pretty Leq = "LS"
 
 -- see: https://developer.arm.com/documentation/dui0068/b/arm-instruction-reference
-data Arm reg a = Branch { ann :: a, label :: Label } -- like
+data Arm reg a = Branch { ann :: a, label :: Label } -- like jump
+               | BranchLink { ann :: a, label :: Label } -- like @call@
                | AddRR { ann :: a, res :: reg, inp1 :: reg, inp2 :: reg }
                | SubRR { ann :: a, res :: reg, inp1 :: reg, inp2 :: reg }
                | MovRC { ann :: a, dest :: reg, iSrc :: Int64 }
@@ -131,8 +132,9 @@ data Arm reg a = Branch { ann :: a, label :: Label } -- like
                deriving (Generic, NFData)
 
 instance Pretty reg => Pretty (Arm reg a) where
-    pretty (Branch _ l) = "b" <+> prettyLabel l
-    pretty Ret{}        = "ret"
+    pretty (Branch _ l)     = "b" <+> prettyLabel l
+    pretty (BranchLink _ l) = "bl" <+> prettyLabel l
+    pretty Ret{}            = "ret"
 
 instance Copointed (Arm reg) where
     copoint = ann
