@@ -13,7 +13,6 @@ import qualified Data.ByteString    as BS
 import           Data.Copointed
 import           Data.Int           (Int64)
 import           Data.Text.Encoding (decodeUtf8)
-import           Data.Word          (Word64)
 import           GHC.Generics       (Generic)
 import           Kempe.Asm.Pretty
 import           Prettyprinter      (Doc, Pretty (..), brackets, colon, hardline, (<+>))
@@ -112,20 +111,33 @@ instance (Pretty reg) => Pretty (Addr reg) where
 -- | See: https://developer.arm.com/documentation/dui0068/b/arm-instruction-reference/conditional-execution?lang=en
 data Cond = Eq
           | Neq
+          | UnsignedLeq
+          | UnsignedGeq
+          | UnsignedLt
+          | Geq
+          | Lt
+          | Gt
           | Leq
           deriving (Generic, NFData)
 
 instance Pretty Cond where
-    pretty Eq  = "EQ"
-    pretty Neq = "NE"
-    pretty Leq = "LS"
+    pretty Eq          = "EQ"
+    pretty Neq         = "NE"
+    pretty UnsignedLeq = "LS"
+    pretty Geq         = "GE"
+    pretty Lt          = "LT"
+    pretty Gt          = "GT"
+    pretty Leq         = "LE"
 
 -- see: https://developer.arm.com/documentation/dui0068/b/arm-instruction-reference
 data Arm reg a = Branch { ann :: a, label :: Label } -- like jump
                | BranchLink { ann :: a, label :: Label } -- like @call@
                | AddRR { ann :: a, res :: reg, inp1 :: reg, inp2 :: reg }
                | SubRR { ann :: a, res :: reg, inp1 :: reg, inp2 :: reg }
+               | MulRR { ann :: a, res :: reg, inp1 :: reg, inp2 :: reg }
                | MovRC { ann :: a, dest :: reg, iSrc :: Int64 }
+               | SignedDivRR { ann :: a, res :: reg, inp1 :: reg, inp2 :: reg }
+               | UnsignedDivRR { ann :: a, res :: reg, inp1 :: reg, inp2 :: reg }
                | MovRWord { ann :: a, dest :: reg, wSrc :: Word }
                | MovRR { ann :: a, dest :: reg, src :: reg }
                | AndRR { ann :: a, dest :: reg, inp1 :: reg, inp2 :: reg }
@@ -135,6 +147,7 @@ data Arm reg a = Branch { ann :: a, label :: Label } -- like jump
                | CSet { ann :: a, dest :: reg, cond :: Cond }
                | Ret { ann :: a }
                | BSLabel { ann :: a, bsLabel :: BS.ByteString }
+               -- sdiv and udiv are different on aarch64?
                deriving (Generic, NFData)
 
 -- | Don't call this on a negative number!

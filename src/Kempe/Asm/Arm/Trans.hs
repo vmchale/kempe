@@ -6,7 +6,6 @@ import           Kempe.AST.Size
 import           Kempe.Asm.Arm.Type
 import           Kempe.IR.Monad
 import qualified Kempe.IR.Type      as IR
-import           Prettyprinter      (pretty)
 
 irToAarch64 :: SizeEnv -> IR.WriteSt -> [IR.Stmt] -> [Arm AbsReg ()]
 irToAarch64 env w = runWriteM w . foldMapA (irEmit env)
@@ -25,8 +24,12 @@ irEmit :: SizeEnv -> IR.Stmt -> WriteM [Arm AbsReg ()]
 irEmit _ (IR.Jump l)                    = pure [Branch () l]
 irEmit _ IR.Ret                         = pure [Ret ()]
 irEmit _ (IR.WrapKCall Kabi (_, _) n l) = pure [BSLabel () n, BranchLink () l, Ret ()]
-irEmit _ ir                             = error (show $ pretty ir)
 
 evalE :: IR.Exp -> IR.Temp -> WriteM [Arm AbsReg ()]
-evalE (IR.ConstInt i) r  = pure [MovRC () (toAbsReg r) i]
-evalE (IR.ConstWord w) r = pure [MovRWord () (toAbsReg r) w]
+evalE (IR.ConstInt i) r                                         = pure [MovRC () (toAbsReg r) i]
+evalE (IR.ConstWord w) r                                        = pure [MovRWord () (toAbsReg r) w]
+evalE (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r1) (IR.Reg r2)) r  = pure [AddRR () (toAbsReg r) (toAbsReg r1) (toAbsReg r2)]
+evalE (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r1) (IR.Reg r2)) r = pure [SubRR () (toAbsReg r) (toAbsReg r1) (toAbsReg r2)]
+evalE (IR.ExprIntBinOp IR.IntTimesIR (IR.Reg r1) (IR.Reg r2)) r = pure [MulRR () (toAbsReg r) (toAbsReg r1) (toAbsReg r2)]
+evalE (IR.ExprIntBinOp IR.IntDivIR (IR.Reg r1) (IR.Reg r2)) r   = pure [SignedDivRR () (toAbsReg r) (toAbsReg r1) (toAbsReg r2)]
+evalE (IR.ExprIntBinOp IR.WordDivIR (IR.Reg r1) (IR.Reg r2)) r  = pure [UnsignedDivRR () (toAbsReg r) (toAbsReg r1) (toAbsReg r2)]
