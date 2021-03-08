@@ -5,6 +5,7 @@ module Kempe.Asm.Arm.Type ( Label
                           , Arm (..)
                           ) where
 
+import           Data.Copointed
 import           Data.Int         (Int64)
 import           Kempe.Asm.Pretty
 import           Prettyprinter    (Pretty (..), brackets, (<+>))
@@ -92,3 +93,6 @@ data Arm reg a = Branch { ann :: a, label :: Label } -- like "
 
 instance Pretty reg => Pretty (Arm reg a) where
     pretty (Branch _ l) = "B" <+> prettyLabel l
+
+instance Copointed (Arm reg) where
+    copoint = ann

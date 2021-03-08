@@ -70,6 +70,7 @@ library kempe-modules
         Kempe.Asm.Type
         Kempe.Asm.Pretty
         Kempe.IR.Type
+        Kempe.IR.Monad
         Kempe.Proc.Nasm
         Kempe.Proc.As
         Prettyprinter.Ext

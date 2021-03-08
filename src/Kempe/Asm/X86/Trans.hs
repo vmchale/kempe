@@ -11,6 +11,7 @@ import           Data.List                  (scanl')
 import           Data.Word                  (Word8)
 import           Kempe.AST.Size
 import           Kempe.Asm.X86.Type
+import           Kempe.IR.Monad
 import qualified Kempe.IR.Type              as IR
 
 toAbsReg :: IR.Temp -> AbsReg
@@ -18,22 +19,8 @@ toAbsReg (IR.Temp8 i)   = AllocReg8 i
 toAbsReg (IR.Temp64 i)  = AllocReg64 i
 toAbsReg IR.DataPointer = DataPointer
 
-type WriteM = State IR.WriteSt
-
 irToX86 :: SizeEnv -> IR.WriteSt -> [IR.Stmt] -> [X86 AbsReg ()]
 irToX86 env w = runWriteM w . foldMapA (irEmit env)
-
-nextLabels :: IR.WriteSt -> IR.WriteSt
-nextLabels (IR.WriteSt ls ts) = IR.WriteSt (tail ls) ts
-
-nextInt :: IR.WriteSt -> IR.WriteSt
-nextInt (IR.WriteSt ls ts) = IR.WriteSt ls (tail ts)
-
-getInt :: WriteM Int
-getInt = gets (head . IR.temps) <* modify nextInt
-
-getLabel :: WriteM IR.Label
-getLabel = gets (head . IR.wlabels) <* modify nextLabels
 
 allocTemp64 :: WriteM IR.Temp
 allocTemp64 = IR.Temp64 <$> getInt
@@ -46,9 +33,6 @@ allocReg64 = AllocReg64 <$> getInt
 
 allocReg8 :: WriteM AbsReg
 allocReg8 = AllocReg8 <$> getInt
-
-runWriteM :: IR.WriteSt -> WriteM a -> a
-runWriteM = flip evalState
 
 -- | This should handle 'MovMem's of divers sizes but for now it just does
 -- 1 byte or 8 bytes at a time.
