@@ -10,8 +10,8 @@ import qualified Kempe.IR.Type      as IR
 irToAarch64 :: SizeEnv -> IR.WriteSt -> [IR.Stmt] -> [Arm AbsReg ()]
 irToAarch64 env w = runWriteM w . foldMapA (irEmit env)
 
-allocReg64 :: WriteM AbsReg
-allocReg64 = AllocReg <$> getInt
+allocReg :: WriteM AbsReg
+allocReg = AllocReg <$> getInt
 
 irEmit :: SizeEnv -> IR.Stmt -> WriteM [Arm AbsReg ()]
 irEmit _ (IR.Jump l) = pure [Branch () l]
