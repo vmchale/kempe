@@ -22,12 +22,6 @@ toAbsReg IR.DataPointer = DataPointer
 irToX86 :: SizeEnv -> IR.WriteSt -> [IR.Stmt] -> [X86 AbsReg ()]
 irToX86 env w = runWriteM w . foldMapA (irEmit env)
 
-allocTemp64 :: WriteM IR.Temp
-allocTemp64 = IR.Temp64 <$> getInt
-
-allocTemp8 :: WriteM IR.Temp
-allocTemp8 = IR.Temp8 <$> getInt
-
 allocReg64 :: WriteM AbsReg
 allocReg64 = AllocReg64 <$> getInt
 
