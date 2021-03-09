@@ -137,6 +137,7 @@ instance Pretty Cond where
 data Arm reg a = Branch { ann :: a, label :: Label } -- like jump
                | BranchLink { ann :: a, label :: Label } -- like @call@
                | AddRR { ann :: a, res :: reg, inp1 :: reg, inp2 :: reg }
+               | AddRC { ann :: a, res :: reg, inp1 :: reg, int :: Int64 }
                | SubRR { ann :: a, res :: reg, inp1 :: reg, inp2 :: reg }
                | MulRR { ann :: a, res :: reg, inp1 :: reg, inp2 :: reg }
                | MovRC { ann :: a, dest :: reg, iSrc :: Int64 }
@@ -150,6 +151,7 @@ data Arm reg a = Branch { ann :: a, label :: Label } -- like jump
                | CmpRR { ann :: a, inp1 :: reg, inp2 :: reg }
                | CSet { ann :: a, dest :: reg, cond :: Cond }
                | Ret { ann :: a }
+               | Label { ann :: a, label :: Label }
                | BSLabel { ann :: a, bsLabel :: BS.ByteString }
                | LShiftLRR { ann :: a, res :: reg, inp1 :: reg, inp2 :: reg } -- LShift - logical shift
                | LShiftRRR { ann :: a, res :: reg, inp1 :: reg, inp2 :: reg }
@@ -182,6 +184,7 @@ instance Pretty reg => Pretty (Arm reg a) where
     pretty (CSet _ r c)              = "cset" <+> pretty r <~> pretty c
     pretty (MovRC _ r i)             = "mov" <+> pretty r <~> prettyInt i
     pretty (CmpRR _ r0 r1)           = "cmp" <+> pretty r0 <~> pretty r1
+    pretty (Label _ l)               = prettyLabel l <> colon
 
 instance Copointed (Arm reg) where
     copoint = ann
