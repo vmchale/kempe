@@ -18,6 +18,9 @@ toAbsReg IR.DataPointer = DataPointer
 allocReg :: WriteM AbsReg
 allocReg = AllocReg <$> getInt
 
+-- popFrame :: [Arm AbsReg ()]
+-- popFrame =
+
 -- example function call (arm) https://www.cs.princeton.edu/courses/archive/spr19/cos217/lectures/15_AssemblyFunctions.pdf
 
 irEmit :: SizeEnv -> IR.Stmt -> WriteM [Arm AbsReg ()]

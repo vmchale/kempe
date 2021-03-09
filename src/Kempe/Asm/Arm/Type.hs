@@ -32,6 +32,16 @@ data AbsReg = DataPointer
             | CArg6
             | CArg7 -- x7
             | CRet -- x0
+            | CalleeSave1
+            | CalleeSave2
+            | CalleeSave3
+            | CalleeSave4
+            | CalleeSave5
+            | CalleeSave6
+            | CalleeSave7
+            | CalleeSave8
+            | CalleeSave9
+            | CalleeSave10
             deriving (Generic, NFData)
 
 type Label = Word
