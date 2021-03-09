@@ -103,10 +103,13 @@ instance Pretty ArmReg where
 
 data Addr reg = Reg reg
               | AddRRPlus reg reg
+              | AddRCPlus reg Int
               deriving (Generic, NFData)
 
 instance (Pretty reg) => Pretty (Addr reg) where
-    pretty (Reg reg) = brackets (pretty reg)
+    pretty (Reg reg)         = brackets (pretty reg)
+    pretty (AddRRPlus r0 r1) = brackets (pretty r0 <~> pretty r1)
+    pretty (AddRCPlus r i)   = brackets (pretty r <~> prettyInt i)
 
 -- | See: https://developer.arm.com/documentation/dui0068/b/arm-instruction-reference/conditional-execution?lang=en
 data Cond = Eq
@@ -128,6 +131,7 @@ instance Pretty Cond where
     pretty Lt          = "LT"
     pretty Gt          = "GT"
     pretty Leq         = "LE"
+    pretty UnsignedLt  = "LO"
 
 -- | For reference: https://static.docs.arm.com/100898/0100/the_a64_Instruction_set_100898_0100.pdf
 data Arm reg a = Branch { ann :: a, label :: Label } -- like jump
@@ -153,17 +157,31 @@ data Arm reg a = Branch { ann :: a, label :: Label } -- like jump
 
 -- | Don't call this on a negative number!
 prettyUInt :: (Integral a, Show a) => a -> Doc b
-prettyUInt i | i >= 0 = "#" <> prettyHex i
-             | otherwise = error "Internal error: prettyUInt called on a negative number!"
+prettyUInt i = "#" <> prettyHex i
+
+prettyInt :: (Pretty a) => a -> Doc b
+prettyInt = ("#" <>) . pretty
 
 instance Pretty reg => Pretty (Arm reg a) where
-    pretty (Branch _ l)          = "b" <+> prettyLabel l
-    pretty (BranchLink _ l)      = "bl" <+> prettyLabel l
-    pretty Ret{}                 = "ret"
-    pretty (BSLabel _ b)         = let pl = pretty (decodeUtf8 b) in ".globl" <+> pl <> hardline <> pl <> colon
-    pretty (MovRWord _ r c)      = "mov" <+> pretty r <~> prettyUInt c
-    pretty (LShiftLRR _ r r0 r1) = "lsl" <+> pretty r <~> pretty r0 <~> pretty r1
-    pretty (LShiftRRR _ r r0 r1) = "lsr" <+> pretty r <~> pretty r0 <~> pretty r1
+    pretty (Branch _ l)              = "b" <+> prettyLabel l
+    pretty (BranchLink _ l)          = "bl" <+> prettyLabel l
+    pretty Ret{}                     = "ret"
+    pretty (BSLabel _ b)             = let pl = pretty (decodeUtf8 b) in ".globl" <+> pl <> hardline <> pl <> colon
+    pretty (MovRWord _ r c)          = "mov" <+> pretty r <~> prettyUInt c
+    pretty (LShiftLRR _ r r0 r1)     = "lsl" <+> pretty r <~> pretty r0 <~> pretty r1
+    pretty (LShiftRRR _ r r0 r1)     = "lsr" <+> pretty r <~> pretty r0 <~> pretty r1
+    pretty (AddRR _ r r0 r1)         = "add" <+> pretty r <~> pretty r0 <~> pretty r1
+    pretty (SubRR _ r r0 r1)         = "sub" <+> pretty r <~> pretty r0 <~> pretty r1
+    pretty (MulRR _ r r0 r1)         = "mul" <+> pretty r <~> pretty r0 <~> pretty r1
+    pretty (SignedDivRR _ r r0 r1)   = "sdiv" <+> pretty r <~> pretty r0 <~> pretty r1
+    pretty (UnsignedDivRR _ r r0 r1) = "udiv" <+> pretty r <~> pretty r0 <~> pretty r1
+    pretty (Load _ r a)              = "ldr" <+> pretty r <~> pretty a
+    pretty (Store _ r a)             = "str" <+> pretty r <~> pretty a
+    pretty (MovRR _ r0 r1)           = "mov" <+> pretty r0 <~> pretty r1
+    pretty (AndRR _ r r0 r1)         = "and" <+> pretty r <~> pretty r0 <~> pretty r1
+    pretty (CSet _ r c)              = "cset" <+> pretty r <~> pretty c
+    pretty (MovRC _ r i)             = "mov" <+> pretty r <~> prettyInt i
+    pretty (CmpRR _ r0 r1)           = "cmp" <+> pretty r0 <~> pretty r1
 
 instance Copointed (Arm reg) where
     copoint = ann
