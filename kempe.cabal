@@ -69,6 +69,7 @@ library kempe-modules
         Kempe.Asm.Type
         Kempe.IR.Type
         Kempe.Proc.Nasm
+        Kempe.Proc.As
         Prettyprinter.Ext
         Data.Foldable.Ext
         Data.Copointed

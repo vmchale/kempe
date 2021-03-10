@@ -68,7 +68,7 @@ dumpIR :: Typeable a => Int -> Declarations a c b -> Doc ann
 dumpIR = prettyIR . fst3 .* irGen
 
 dumpX86 :: Typeable a => Int -> Declarations a c b -> Doc ann
-dumpX86 = prettyAsm .* x86Alloc
+dumpX86 = prettyNasm .* x86Alloc
 
 irFile :: FilePath -> IO ()
 irFile fp = do

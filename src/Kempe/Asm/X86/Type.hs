@@ -8,7 +8,7 @@ module Kempe.Asm.X86.Type ( X86 (..)
                           , AbsReg (..)
                           , X86Reg (..)
                           , Label
-                          , prettyAsm
+                          , prettyNasm
                           , prettyDebugAsm
                           ) where
 
@@ -273,8 +273,8 @@ instance Pretty reg => Pretty (X86 reg a) where
     pretty (NasmMacro0 _ b)     = i4 (pretty (decodeUtf8 b))
     pretty (CallBS _ b)         = i4 ("call" <+> pretty (TL.decodeUtf8 b))
 
-prettyAsm :: Pretty reg => [X86 reg a] -> Doc ann
-prettyAsm = ((prolegomena <#> macros <#> "section .text" <> hardline) <>) . prettyLines . fmap pretty
+prettyNasm :: Pretty reg => [X86 reg a] -> Doc ann
+prettyNasm = ((prolegomena <#> macrosNasm <#> "section .text" <> hardline) <>) . prettyLines . fmap pretty
 
 prettyDebugAsm :: Pretty reg => [X86 reg Liveness] -> Doc ann
 prettyDebugAsm = concatWith (\x y -> x <> hardline <> y) . fmap prettyLive
@@ -282,42 +282,54 @@ prettyDebugAsm = concatWith (\x y -> x <> hardline <> y) . fmap prettyLive
 prolegomena :: Doc ann
 prolegomena = "section .bss" <> hardline <> "kempe_data: resb 0x8012" -- 32 kb
 
-macros :: Doc ann
-macros = prettyLines
-    [ calleeSave
-    , calleeRestore
-    , callerSave
-    , callerRestore
+macrosNasm :: Doc ann
+macrosNasm = prettyLines
+    [ calleeSaveNasm
+    , calleeRestoreNasm
+    , callerSaveNasm
+    , callerRestoreNasm
     ]
 
 -- rbx, rbp, r12-r15 callee-saved (non-volatile)
 -- rest caller-saved (volatile)
 
 -- | Save non-volatile registers
+calleeSaveNasm :: Doc ann
+calleeSaveNasm = mkNasmMacro "calleesave" calleeSave
+
 calleeSave :: Doc ann
-calleeSave =
-    "%macro calleesave 0"
-    <#> prettyLines (fmap pretty toPush)
-    <#> "%endmacro"
-    where toPush = PushReg () <$> [Rbx, Rbp, R12, R13, R14, R15]
+calleeSave = prettyLines (fmap pretty toPush) where
+    toPush = PushReg () <$> [Rbx, Rbp, R12, R13, R14, R15]
+
+calleeRestoreNasm :: Doc ann
+calleeRestoreNasm = mkNasmMacro "calleerestore" calleeRestore
 
 calleeRestore :: Doc ann
-calleeRestore =
-    "%macro calleerestore 0"
-    <#> prettyLines (fmap pretty toPop)
-    <#> "%endmacro"
-    where toPop = PopReg () <$> [R15, R14, R13, R12, Rbp, Rbx]
+calleeRestore = prettyLines (fmap pretty toPop) where
+    toPop = PopReg () <$> [R15, R14, R13, R12, Rbp, Rbx]
+
+callerSaveNasm :: Doc ann
+callerSaveNasm = mkNasmMacro "callersave" callerSave
 
 callerSave :: Doc ann
-callerSave =
-    "%macro callersave 0"
-    <#> prettyLines (fmap pretty toPush)
-    <#> "%endmacro"
-    where toPush = PushReg () <$> [Rax, Rcx, Rdx, Rsi, Rdi, R8, R9, R10, R11]
+callerSave = prettyLines (fmap pretty toPush) where
+    toPush = PushReg () <$> [Rax, Rcx, Rdx, Rsi, Rdi, R8, R9, R10, R11]
+
+callerRestoreNasm :: Doc ann
+callerRestoreNasm = mkNasmMacro "callerrestore" callerRestore
 
 callerRestore :: Doc ann
-callerRestore =
-    "%macro callerrestore 0"
-    <#> prettyLines (fmap pretty toPop)
+callerRestore = prettyLines (fmap pretty toPop) where
+    toPop = PopReg () <$> [R11, R10, R9, R8, Rdi, Rsi, Rdx, Rcx, Rax]
+
+mkNasmMacro :: Doc ann -> Doc ann -> Doc ann
+mkNasmMacro mn body =
+    "%macro" <+> mn <+> "0"
+    <#> body
     <#> "%endmacro"
-    where toPop = PopReg () <$> [R11, R10, R9, R8, Rdi, Rsi, Rdx, Rcx, Rax]
+
+mkGnuAsMacro :: Doc ann -> Doc ann -> Doc ann
+mkGnuAsMacro mn body =
+    ".macro" <+> mn
+    <#> body
+    <#> ".endm"
