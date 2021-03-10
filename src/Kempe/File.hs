@@ -29,7 +29,7 @@ import           Kempe.IR
 import           Kempe.Lexer
 import           Kempe.Module
 import           Kempe.Pipeline
-import           Kempe.Proc.Nasm
+import qualified Kempe.Proc.Nasm           as Nasm
 import           Kempe.Shuttle
 import           Kempe.TyAssign
 import           Prettyprinter             (Doc, hardline)
@@ -86,4 +86,4 @@ compile :: FilePath
         -> IO ()
 compile fp o dbg = do
     res <- parseProcess fp
-    writeO (uncurry dumpX86 res) o dbg
+    Nasm.writeO (uncurry dumpX86 res) o dbg
