@@ -1,11 +1,15 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Kempe.Asm.Arm.Trans ( irToAarch64
                            ) where
 
 import           Data.Foldable.Ext  (foldMapA)
+import           Data.List          (scanl')
 import           Kempe.AST.Size
 import           Kempe.Asm.Arm.Type
 import           Kempe.IR.Monad
 import qualified Kempe.IR.Type      as IR
+import           Prettyprinter      (pretty)
 
 irToAarch64 :: SizeEnv -> IR.WriteSt -> [IR.Stmt] -> [Arm AbsReg ()]
 irToAarch64 env w = runWriteM w . foldMapA (irEmit env)
@@ -29,6 +33,13 @@ irEmit _ IR.Ret                         = pure [Ret ()]
 irEmit _ (IR.KCall l)                   = pure [BranchLink () l]
 irEmit _ (IR.Labeled l)                 = pure [Label () l]
 irEmit _ (IR.WrapKCall Kabi (_, _) n l) = pure [BSLabel () n, BranchLink () l, Ret ()]
+irEmit env (IR.WrapKCall Cabi (is, [o]) n l) | all (\i -> size' env i <= 8) is && size' env o <= 8 && length is <= 8 = do
+    { let offs = scanl' (+) 0 (fmap (size' env) is)
+    ; let totalSize = sizeStack env is
+    ; let argRegs = [CArg0, CArg1, CArg2, CArg3, CArg4, CArg5, CArg6, CArg7]
+    ; pure $ [BSLabel () n, LoadLabel () DataPointer "kempe_data", GnuMacro () "calleesave"] ++ undefined
+    }
+-- irEmit _ s = error (show $ pretty s)
 
 evalE :: IR.Exp -> IR.Temp -> WriteM [Arm AbsReg ()]
 evalE (IR.ConstInt i) r                                            = pure [MovRC () (toAbsReg r) i]

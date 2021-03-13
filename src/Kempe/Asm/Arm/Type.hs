@@ -31,7 +31,6 @@ data AbsReg = DataPointer
             | CArg5
             | CArg6
             | CArg7 -- x7
-            | CRet -- x0
             deriving (Generic, NFData)
 
 type Label = Word
@@ -150,6 +149,7 @@ data Arm reg a = Branch { ann :: a, label :: Label } -- like jump
                | MovRR { ann :: a, dest :: reg, src :: reg }
                | AndRR { ann :: a, dest :: reg, inp1 :: reg, inp2 :: reg }
                | Load { ann :: a, dest :: reg, addrSrc :: Addr reg }
+               | LoadLabel { ann :: a, dest :: reg, srcLabel :: BS.ByteString }
                | Store { ann :: a, src :: reg, addrDest :: Addr reg }
                | CmpRR { ann :: a, inp1 :: reg, inp2 :: reg }
                | CSet { ann :: a, dest :: reg, cond :: Cond }
@@ -182,6 +182,7 @@ instance Pretty reg => Pretty (Arm reg a) where
     pretty (SignedDivRR _ r r0 r1)   = i4 ("sdiv" <+> pretty r <~> pretty r0 <~> pretty r1)
     pretty (UnsignedDivRR _ r r0 r1) = i4 ("udiv" <+> pretty r <~> pretty r0 <~> pretty r1)
     pretty (Load _ r a)              = i4 ("ldr" <+> pretty r <~> pretty a)
+    pretty (LoadLabel _ r l)         = i4 ("ldr" <+> pretty r <~> pretty (decodeUtf8 l))
     pretty (Store _ r a)             = i4 ("str" <+> pretty r <~> pretty a)
     pretty (MovRR _ r0 r1)           = i4 ("mov" <+> pretty r0 <~> pretty r1)
     pretty (AndRR _ r r0 r1)         = i4 ("and" <+> pretty r <~> pretty r0 <~> pretty r1)
