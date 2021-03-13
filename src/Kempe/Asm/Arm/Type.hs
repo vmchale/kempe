@@ -16,7 +16,7 @@ import           Data.Text.Encoding (decodeUtf8)
 import           GHC.Generics       (Generic)
 import           Kempe.Asm.Pretty
 import           Prettyprinter      (Doc, Pretty (..), brackets, colon, hardline, (<+>))
-import           Prettyprinter.Ext  (prettyHex, (<~>))
+import           Prettyprinter.Ext  (prettyHex, prettyLines, (<#>), (<~>))
 
 -- r19-r28 calle-saved
 -- r0-r7 result registers
@@ -32,16 +32,6 @@ data AbsReg = DataPointer
             | CArg6
             | CArg7 -- x7
             | CRet -- x0
-            | CalleeSave1
-            | CalleeSave2
-            | CalleeSave3
-            | CalleeSave4
-            | CalleeSave5
-            | CalleeSave6
-            | CalleeSave7
-            | CalleeSave8
-            | CalleeSave9
-            | CalleeSave10
             deriving (Generic, NFData)
 
 type Label = Word
@@ -165,6 +155,7 @@ data Arm reg a = Branch { ann :: a, label :: Label } -- like jump
                | BSLabel { ann :: a, bsLabel :: BS.ByteString }
                | LShiftLRR { ann :: a, res :: reg, inp1 :: reg, inp2 :: reg } -- LShift - logical shift
                | LShiftRRR { ann :: a, res :: reg, inp1 :: reg, inp2 :: reg }
+               | GnuMacro { ann :: a, macroName :: BS.ByteString }
                deriving (Generic, NFData)
 
 -- | Don't call this on a negative number!
@@ -175,26 +166,63 @@ prettyInt :: (Pretty a) => a -> Doc b
 prettyInt = ("#" <>) . pretty
 
 instance Pretty reg => Pretty (Arm reg a) where
-    pretty (Branch _ l)              = "b" <+> prettyLabel l
-    pretty (BranchLink _ l)          = "bl" <+> prettyLabel l
-    pretty Ret{}                     = "ret"
+    pretty (Branch _ l)              = i4 ("b" <+> prettyLabel l)
+    pretty (BranchLink _ l)          = i4 ("bl" <+> prettyLabel l)
+    pretty Ret{}                     = i4 "ret"
     pretty (BSLabel _ b)             = let pl = pretty (decodeUtf8 b) in ".globl" <+> pl <> hardline <> pl <> colon
-    pretty (MovRWord _ r c)          = "mov" <+> pretty r <~> prettyUInt c
-    pretty (LShiftLRR _ r r0 r1)     = "lsl" <+> pretty r <~> pretty r0 <~> pretty r1
-    pretty (LShiftRRR _ r r0 r1)     = "lsr" <+> pretty r <~> pretty r0 <~> pretty r1
-    pretty (AddRR _ r r0 r1)         = "add" <+> pretty r <~> pretty r0 <~> pretty r1
-    pretty (SubRR _ r r0 r1)         = "sub" <+> pretty r <~> pretty r0 <~> pretty r1
-    pretty (MulRR _ r r0 r1)         = "mul" <+> pretty r <~> pretty r0 <~> pretty r1
-    pretty (SignedDivRR _ r r0 r1)   = "sdiv" <+> pretty r <~> pretty r0 <~> pretty r1
-    pretty (UnsignedDivRR _ r r0 r1) = "udiv" <+> pretty r <~> pretty r0 <~> pretty r1
-    pretty (Load _ r a)              = "ldr" <+> pretty r <~> pretty a
-    pretty (Store _ r a)             = "str" <+> pretty r <~> pretty a
-    pretty (MovRR _ r0 r1)           = "mov" <+> pretty r0 <~> pretty r1
-    pretty (AndRR _ r r0 r1)         = "and" <+> pretty r <~> pretty r0 <~> pretty r1
-    pretty (CSet _ r c)              = "cset" <+> pretty r <~> pretty c
-    pretty (MovRC _ r i)             = "mov" <+> pretty r <~> prettyInt i
-    pretty (CmpRR _ r0 r1)           = "cmp" <+> pretty r0 <~> pretty r1
+    pretty (MovRWord _ r c)          = i4 ("mov" <+> pretty r <~> prettyUInt c)
+    pretty (LShiftLRR _ r r0 r1)     = i4 ("lsl" <+> pretty r <~> pretty r0 <~> pretty r1)
+    pretty (LShiftRRR _ r r0 r1)     = i4 ("lsr" <+> pretty r <~> pretty r0 <~> pretty r1)
+    pretty (AddRR _ r r0 r1)         = i4 ("add" <+> pretty r <~> pretty r0 <~> pretty r1)
+    pretty (SubRR _ r r0 r1)         = i4 ("sub" <+> pretty r <~> pretty r0 <~> pretty r1)
+    pretty (MulRR _ r r0 r1)         = i4 ("mul" <+> pretty r <~> pretty r0 <~> pretty r1)
+    pretty (SignedDivRR _ r r0 r1)   = i4 ("sdiv" <+> pretty r <~> pretty r0 <~> pretty r1)
+    pretty (UnsignedDivRR _ r r0 r1) = i4 ("udiv" <+> pretty r <~> pretty r0 <~> pretty r1)
+    pretty (Load _ r a)              = i4 ("ldr" <+> pretty r <~> pretty a)
+    pretty (Store _ r a)             = i4 ("str" <+> pretty r <~> pretty a)
+    pretty (MovRR _ r0 r1)           = i4 ("mov" <+> pretty r0 <~> pretty r1)
+    pretty (AndRR _ r r0 r1)         = i4 ("and" <+> pretty r <~> pretty r0 <~> pretty r1)
+    pretty (CSet _ r c)              = i4 ("cset" <+> pretty r <~> pretty c)
+    pretty (MovRC _ r i)             = i4 ("mov" <+> pretty r <~> prettyInt i)
+    pretty (CmpRR _ r0 r1)           = i4 ("cmp" <+> pretty r0 <~> pretty r1)
     pretty (Label _ l)               = prettyLabel l <> colon
+    pretty (GnuMacro _ b)            = i4 (pretty (decodeUtf8 b))
 
 instance Copointed (Arm reg) where
     copoint = ann
+
+macros :: Doc ann
+macros = prettyLines
+    [ calleeSave
+    , calleeRestore
+    , callerSave
+    , callerRestore
+    ]
+
+calleeSave :: Doc ann
+calleeSave =
+    ".macro calleesave"
+    <#> prettyLines (fmap pretty toPush)
+    <#> ".endm"
+    where toPush = PushReg () <$> [X19 .. X28]
+
+calleeRestore :: Doc ann
+calleeRestore =
+    ".macro calleerestore"
+    <#> prettyLines (fmap pretty toPop)
+    <#> ".endm"
+    where toPop = PopReg () <$> [X19 .. X28]
+
+callerSave :: Doc ann
+callerSave =
+    ".macro callersave"
+    <#> prettyLines (fmap pretty toPush)
+    <#> ".endm"
+    where toPush = PushReg () <$> [X9 .. X15]
+
+callerRestore :: Doc ann
+callerRestore =
+    ".macro callerrestore"
+    <#> prettyLines (fmap pretty toPop)
+    <#> ".emd"
+    where toPop = PopReg () <$>  [X9 .. X15]
