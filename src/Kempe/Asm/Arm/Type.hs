@@ -6,6 +6,7 @@ module Kempe.Asm.Arm.Type ( Label
                           , ArmReg (..)
                           , AbsReg (..)
                           , Arm (..)
+                          , prettyAsm
                           ) where
 
 import           Control.DeepSeq    (NFData)
@@ -18,7 +19,6 @@ import           Kempe.Asm.Pretty
 import           Prettyprinter      (Doc, Pretty (..), brackets, colon, hardline, (<+>))
 import           Prettyprinter.Ext  (prettyHex, prettyLines, (<#>), (<~>))
 
--- r19-r28 calle-saved
 -- r0-r7 result registers
 
 data AbsReg = DataPointer
@@ -67,6 +67,8 @@ data ArmReg = X0
             | X28
             | X29
             | X30
+            | SP -- ^ Don't use this
+            deriving Enum
 
 instance Pretty ArmReg where
     pretty X0  = "x0"
@@ -100,6 +102,7 @@ instance Pretty ArmReg where
     pretty X28 = "x28"
     pretty X29 = "x29"
     pretty X30 = "x30"
+    pretty SP  = "sp"
 
 data Addr reg = Reg reg
               | AddRRPlus reg reg
@@ -187,9 +190,17 @@ instance Pretty reg => Pretty (Arm reg a) where
     pretty (CmpRR _ r0 r1)           = i4 ("cmp" <+> pretty r0 <~> pretty r1)
     pretty (Label _ l)               = prettyLabel l <> colon
     pretty (GnuMacro _ b)            = i4 (pretty (decodeUtf8 b))
+    pretty (AddRC _ r r0 i)          = i4 ("add" <+> pretty r <~> pretty r0 <~> "#" <> pretty i)
 
 instance Copointed (Arm reg) where
     copoint = ann
+
+prettyAsm :: Pretty reg => [Arm reg a] -> Doc ann
+prettyAsm = ((prolegomena <#> macros <#> "section .text" <> hardline) <>) . prettyLines . fmap pretty
+
+-- http://www.mathcs.emory.edu/~cheung/Courses/255/Syl-ARM/7-ARM/array-define.html
+prolegomena :: Doc ann
+prolegomena = "section .data" <#> "kempe_data: .skip 32768" -- 32kb
 
 macros :: Doc ann
 macros = prettyLines
@@ -199,30 +210,41 @@ macros = prettyLines
     , callerRestore
     ]
 
+-- see:
+-- https://community.arm.com/developer/ip-products/processors/b/processors-ip-blog/posts/using-the-stack-in-aarch64-implementing-push-and-pop
+
 calleeSave :: Doc ann
 calleeSave =
     ".macro calleesave"
-    <#> prettyLines (fmap pretty toPush)
+    <#> i4 "sub sp, sp, #(8 * 10)" -- allocate space on stack
+    <#> prettyLines (fmap pretty stores)
     <#> ".endm"
-    where toPush = PushReg () <$> [X19 .. X28]
+    where toPush = [X19 .. X28]
+          stores = zipWith (\r o -> Store () r (AddRCPlus SP (8*o))) toPush [0..]
 
 calleeRestore :: Doc ann
 calleeRestore =
     ".macro calleerestore"
-    <#> prettyLines (fmap pretty toPop)
+    <#> prettyLines (fmap pretty loads)
+    <#> i4 "add sp, sp, #(8 * 10)" -- free stack space
     <#> ".endm"
-    where toPop = PopReg () <$> [X19 .. X28]
+    where toPop = [X19 .. X28]
+          loads = zipWith (\r o -> Load () r (AddRCPlus SP (8*o))) toPop [0..]
 
 callerSave :: Doc ann
 callerSave =
     ".macro callersave"
-    <#> prettyLines (fmap pretty toPush)
+    <#> i4 "sub sp, sp, #(8 * 8)" -- only 7 stored, but arm stack is 16-byte aligned
+    <#> prettyLines (fmap pretty stores)
     <#> ".endm"
-    where toPush = PushReg () <$> [X9 .. X15]
+    where toPush = [X9 .. X15]
+          stores = zipWith (\r o -> Store () r (AddRCPlus SP (8*o))) toPush [0..]
 
 callerRestore :: Doc ann
 callerRestore =
     ".macro callerrestore"
-    <#> prettyLines (fmap pretty toPop)
+    <#> prettyLines (fmap pretty loads)
+    <#> i4 "add sp, sp, #(8 * 8)"
     <#> ".emd"
-    where toPop = PopReg () <$>  [X9 .. X15]
+    where toPop = [X9 .. X15]
+          loads = zipWith (\r o -> Load () r (AddRCPlus SP (8*o))) toPop [0..]
