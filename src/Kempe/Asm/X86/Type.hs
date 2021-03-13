@@ -175,8 +175,9 @@ data X86 reg a = PushReg { ann :: a, rSrc :: reg }
                | AddAC { ann :: a, addrAdd1 :: Addr reg, iAdd2 :: Int64 }
                | AddRC { ann :: a, rAdd1 :: reg, iAdd2 :: Int64 }
                | SubRC { ann :: a, rSub1 :: reg, iSub2 :: Int64 }
-               | ShiftLRR { ann :: a, rDest :: reg, rSrc :: reg }
-               | ShiftRRR { ann :: a, rDest :: reg, rSrc :: reg }
+               | LShiftLRR { ann :: a, rDest :: reg, rSrc :: reg }
+               | LShiftRRR { ann :: a, rDest :: reg, rSrc :: reg }
+               | AShiftRRR { ann :: a, rDest :: reg, rSrc :: reg }
                | Label { ann :: a, label :: Label }
                | BSLabel { ann :: a, bsLabel :: BS.ByteString }
                | Je { ann :: a, jLabel :: Label }
@@ -248,8 +249,9 @@ instance Pretty reg => Pretty (X86 reg a) where
     pretty (CmpRegReg _ r0 r1)  = i4 ("cmp" <+> pretty r0 <> "," <+> pretty r1)
     pretty (CmpAddrBool _ a b)  = i4 ("cmp byte" <+> pretty a <> "," <+> pretty b)
     pretty (CmpRegBool _ r b)   = i4 ("cmp" <+> pretty r <> "," <+> pretty b)
-    pretty (ShiftRRR _ r0 r1)   = i4 ("shr" <+> pretty r0 <> "," <+> pretty r1)
-    pretty (ShiftLRR _ r0 r1)   = i4 ("shl" <+> pretty r0 <> "," <+> pretty r1)
+    pretty (LShiftRRR _ r0 r1)  = i4 ("shr" <+> pretty r0 <> "," <+> pretty r1)
+    pretty (LShiftLRR _ r0 r1)  = i4 ("shl" <+> pretty r0 <> "," <+> pretty r1)
+    pretty (AShiftRRR _ r0 r1)  = i4 ("sar" <+> pretty r0 <> "," <+> pretty r1)
     pretty (IdivR _ r)          = i4 ("idiv" <+> pretty r)
     pretty (DivR _ r)           = i4 ("div" <+> pretty r)
     pretty Cqo{}                = i4 "cqo"
