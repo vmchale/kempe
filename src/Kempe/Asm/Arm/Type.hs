@@ -6,6 +6,8 @@ module Kempe.Asm.Arm.Type ( Label
                           , ArmReg (..)
                           , AbsReg (..)
                           , Arm (..)
+                          , Cond (..)
+                          , Addr (..)
                           , prettyAsm
                           ) where
 
@@ -138,8 +140,11 @@ instance Pretty Cond where
 -- | For reference: https://static.docs.arm.com/100898/0100/the_a64_Instruction_set_100898_0100.pdf
 data Arm reg a = Branch { ann :: a, label :: Label } -- like jump
                | BranchLink { ann :: a, label :: Label } -- like @call@
+               | BranchCond { ann :: a, label :: Label, cond :: Cond }
+               | BranchZero { ann :: a, condReg :: reg, label :: Label }
                | AddRR { ann :: a, res :: reg, inp1 :: reg, inp2 :: reg }
                | AddRC { ann :: a, res :: reg, inp1 :: reg, int :: Int64 }
+               | SubRC { ann :: a, res :: reg, inp1 :: reg, int :: Int64 }
                | SubRR { ann :: a, res :: reg, inp1 :: reg, inp2 :: reg }
                | MulRR { ann :: a, res :: reg, inp1 :: reg, inp2 :: reg }
                | MovRC { ann :: a, dest :: reg, iSrc :: Int64 }
@@ -151,6 +156,7 @@ data Arm reg a = Branch { ann :: a, label :: Label } -- like jump
                | Load { ann :: a, dest :: reg, addrSrc :: Addr reg }
                | LoadLabel { ann :: a, dest :: reg, srcLabel :: BS.ByteString }
                | Store { ann :: a, src :: reg, addrDest :: Addr reg }
+               | StoreByte { ann :: a, src :: reg, addrDest :: Addr reg } -- ^ @strb@ in Aarch64 assembly, "store byte"
                | CmpRR { ann :: a, inp1 :: reg, inp2 :: reg }
                | CSet { ann :: a, dest :: reg, cond :: Cond }
                | Ret { ann :: a }
@@ -171,6 +177,8 @@ prettyInt = ("#" <>) . pretty
 instance Pretty reg => Pretty (Arm reg a) where
     pretty (Branch _ l)              = i4 ("b" <+> prettyLabel l)
     pretty (BranchLink _ l)          = i4 ("bl" <+> prettyLabel l)
+    pretty (BranchCond _ l c)        = i4 ("b." <> pretty c <+> prettyLabel l)
+    pretty (BranchZero _ r l)        = i4 ("cbz" <+> pretty r <~> prettyLabel l)
     pretty Ret{}                     = i4 "ret"
     pretty (BSLabel _ b)             = let pl = pretty (decodeUtf8 b) in ".globl" <+> pl <> hardline <> pl <> colon
     pretty (MovRWord _ r c)          = i4 ("mov" <+> pretty r <~> prettyUInt c)
@@ -184,6 +192,7 @@ instance Pretty reg => Pretty (Arm reg a) where
     pretty (Load _ r a)              = i4 ("ldr" <+> pretty r <~> pretty a)
     pretty (LoadLabel _ r l)         = i4 ("ldr" <+> pretty r <~> pretty (decodeUtf8 l))
     pretty (Store _ r a)             = i4 ("str" <+> pretty r <~> pretty a)
+    pretty (StoreByte _ r a)         = i4 ("strb" <+> pretty r <~> pretty a)
     pretty (MovRR _ r0 r1)           = i4 ("mov" <+> pretty r0 <~> pretty r1)
     pretty (AndRR _ r r0 r1)         = i4 ("and" <+> pretty r <~> pretty r0 <~> pretty r1)
     pretty (CSet _ r c)              = i4 ("cset" <+> pretty r <~> pretty c)
@@ -192,6 +201,7 @@ instance Pretty reg => Pretty (Arm reg a) where
     pretty (Label _ l)               = prettyLabel l <> colon
     pretty (GnuMacro _ b)            = i4 (pretty (decodeUtf8 b))
     pretty (AddRC _ r r0 i)          = i4 ("add" <+> pretty r <~> pretty r0 <~> "#" <> pretty i)
+    pretty (SubRC _ r r0 i)          = i4 ("sub" <+> pretty r <~> pretty r0 <~> "#" <> pretty i)
 
 instance Copointed (Arm reg) where
     copoint = ann

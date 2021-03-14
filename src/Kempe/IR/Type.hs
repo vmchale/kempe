@@ -76,7 +76,7 @@ instance Pretty Exp where
 data Stmt = Labeled Label
           | Jump Label
           -- conditional jump for ifs
-          | CJump Exp Label Label
+          | CJump Exp Label Label -- ^ If the 'Exp' evaluates to @1@, go to the first label, otherwise go to the second (if-then-else)
           | MJump Exp Label
           | CCall MonoStackType BSL.ByteString
           | KCall Label -- KCall is a jump to a Kempe procedure

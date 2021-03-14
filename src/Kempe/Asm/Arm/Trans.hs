@@ -39,7 +39,32 @@ irEmit env (IR.WrapKCall Cabi (is, [o]) n l) | all (\i -> size' env i <= 8) is &
     ; let argRegs = [CArg0, CArg1, CArg2, CArg3, CArg4, CArg5, CArg6, CArg7]
     ; pure $ [BSLabel () n, LoadLabel () DataPointer "kempe_data", GnuMacro () "calleesave"] ++ undefined
     }
--- irEmit _ s = error (show $ pretty s)
+irEmit _ (IR.MovMem (IR.Reg r) 8 e) = do
+    { r' <- allocTemp64
+    ; put <- evalE e r'
+    ; pure $ put ++ [Store () (toAbsReg r') (Reg $ toAbsReg r)]
+    }
+irEmit _ (IR.MovMem e 8 e') = do
+    { r <- allocTemp64
+    ; r' <- allocTemp64
+    ; eEval <- evalE e r
+    ; e'Eval <- evalE e' r'
+    ; pure (eEval ++ e'Eval ++ [Store () (toAbsReg r') (Reg $ toAbsReg r)])
+    }
+irEmit _ (IR.MovTemp r e) = evalE e r
+irEmit _ (IR.MovMem e 1 e') = do -- TODO: IR.MovMem (Reg r) sz e' ...
+    { r <- allocTemp64
+    ; r' <- allocTemp64
+    ; eEval <- evalE e r
+    ; e'Eval <- evalE e' r'
+    ; pure (eEval ++ e'Eval ++ [StoreByte () (toAbsReg r') (Reg $ toAbsReg r)])
+    }
+irEmit _ (IR.CJump e l0 l1) = do
+    { r <- allocTemp64
+    ; eEval <- evalE e r
+    ; pure $ eEval ++ [BranchZero () (toAbsReg r) l1, Branch () l0]
+    }
+irEmit _ e = error (show $ pretty e)
 
 evalE :: IR.Exp -> IR.Temp -> WriteM [Arm AbsReg ()]
 evalE (IR.ConstInt i) r                                            = pure [MovRC () (toAbsReg r) i]
@@ -50,3 +75,17 @@ evalE (IR.ExprIntBinOp IR.IntTimesIR (IR.Reg r1) (IR.Reg r2)) r    = pure [MulRR
 evalE (IR.ExprIntBinOp IR.IntDivIR (IR.Reg r1) (IR.Reg r2)) r      = pure [SignedDivRR () (toAbsReg r) (toAbsReg r1) (toAbsReg r2)]
 evalE (IR.ExprIntBinOp IR.WordDivIR (IR.Reg r1) (IR.Reg r2)) r     = pure [UnsignedDivRR () (toAbsReg r) (toAbsReg r1) (toAbsReg r2)]
 evalE (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r1) (IR.ConstInt i)) r = pure [AddRC () (toAbsReg r) (toAbsReg r1) i]
+evalE (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r1) (IR.ConstInt i)) r = pure [SubRC () (toAbsReg r) (toAbsReg r1) i]
+evalE (IR.Mem _ e) r = do
+    { r' <- allocTemp64
+    ; placeE <- evalE e r'
+    ; pure $ placeE ++ [Load () (toAbsReg r) (Reg $ toAbsReg r')]
+    }
+evalE (IR.Reg r) r' = pure [MovRR () (toAbsReg r') (toAbsReg r)]
+evalE (IR.ExprIntRel IR.IntEqIR e e') r = do -- TODO: e or e' a register (IR.ExprIntRel IR.IntEqIR r e' ...
+    { r0 <- allocTemp64
+    ; r1 <- allocTemp64
+    ; eEval <- evalE e r0
+    ; e'Eval <- evalE e' r1
+    ; pure $ eEval ++ e'Eval ++ [CmpRR () (toAbsReg r0) (toAbsReg r1), CSet () (toAbsReg r) Eq]
+    }
