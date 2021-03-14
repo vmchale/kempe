@@ -15,4 +15,3 @@ writeO p fpO dbg = do
     let inp = renderString (layoutPretty defaultLayoutOptions p)
         debugFlag = if dbg then ("-g":) else id
     void $ readCreateProcess ((proc "as" (debugFlag ["--", "-o", fpO])) { std_err = Inherit }) inp
-
