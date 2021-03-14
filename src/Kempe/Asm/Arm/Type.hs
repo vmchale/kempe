@@ -38,6 +38,18 @@ data AbsReg = DataPointer
             | CArg7 -- x7
             deriving (Generic, NFData)
 
+instance Pretty AbsReg where
+    pretty DataPointer  = "datapointer"
+    pretty (AllocReg i) = "Abs" <> pretty i
+    pretty CArg0        = "X0"
+    pretty CArg1        = "X1"
+    pretty CArg2        = "X2"
+    pretty CArg3        = "X3"
+    pretty CArg4        = "X4"
+    pretty CArg5        = "X5"
+    pretty CArg6        = "X6"
+    pretty CArg7        = "X7"
+
 type Label = Word
 
 data ArmReg = X0
