@@ -55,6 +55,8 @@ library kempe-modules
         Kempe.Asm.X86.ControlFlow
         Kempe.Asm.X86.Linear
         Kempe.Asm.Arm.Trans
+        Kempe.Asm.Arm.ControlFlow
+        Kempe.Asm.Arm.Linear
 
     hs-source-dirs:   src
     other-modules:

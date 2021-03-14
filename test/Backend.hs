@@ -44,12 +44,21 @@ backendTests =
         , codegen "test/data/ccall.kmp"
         , codegen "test/data/mutual.kmp"
         , codegen "lib/rational.kmp"
+        , armCodegen "examples/factorial.kmp"
+        -- , armCodegen "lib/numbertheory.kmp"
+        -- , armCodegen "lib/gaussian.kmp"
         ]
 
 codegen :: FilePath -> TestTree
 codegen fp = testCase ("Generates code without throwing an exception (" ++ fp ++ ")") $ do
     parsed <- parseProcess fp
     let code = uncurry x86Alloc parsed
+    assertBool "Doesn't fail" (code `deepseq` True)
+
+armCodegen :: FilePath -> TestTree
+armCodegen fp = testCase ("Generates arm assembly without throwing exception (" ++ fp ++ ")") $ do
+    parsed <- parseProcess fp
+    let code = uncurry armAlloc parsed
     assertBool "Doesn't fail" (code `deepseq` True)
 
 liveness :: FilePath -> TestTree

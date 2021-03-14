@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveAnyClass    #-}
+{-# LANGUAGE DeriveFunctor     #-}
 {-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE OverloadedStrings #-}
 
@@ -69,7 +70,7 @@ data ArmReg = X0
             | X29
             | X30
             | SP -- ^ Don't use this
-            deriving Enum
+            deriving (Enum, Eq, Ord, Generic, NFData)
 
 instance Pretty ArmReg where
     pretty X0  = "x0"
@@ -165,7 +166,7 @@ data Arm reg a = Branch { ann :: a, label :: Label } -- like jump
                | LShiftLRR { ann :: a, res :: reg, inp1 :: reg, inp2 :: reg } -- LShift - logical shift
                | LShiftRRR { ann :: a, res :: reg, inp1 :: reg, inp2 :: reg }
                | GnuMacro { ann :: a, macroName :: BS.ByteString }
-               deriving (Generic, NFData)
+               deriving (Functor, Generic, NFData)
 
 -- | Don't call this on a negative number!
 prettyUInt :: (Integral a, Show a) => a -> Doc b
