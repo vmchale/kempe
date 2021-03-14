@@ -10,6 +10,7 @@ module Kempe.Asm.Arm.Type ( Label
                           , Cond (..)
                           , Addr (..)
                           , prettyAsm
+                          , prettyDebugAsm
                           ) where
 
 import           Control.DeepSeq    (NFData)
@@ -19,7 +20,8 @@ import           Data.Int           (Int64)
 import           Data.Text.Encoding (decodeUtf8)
 import           GHC.Generics       (Generic)
 import           Kempe.Asm.Pretty
-import           Prettyprinter      (Doc, Pretty (..), brackets, colon, hardline, (<+>))
+import           Kempe.Asm.Type
+import           Prettyprinter      (Doc, Pretty (..), brackets, colon, concatWith, hardline, (<+>))
 import           Prettyprinter.Ext  (prettyHex, prettyLines, (<#>), (<~>))
 
 -- r0-r7 result registers
@@ -260,3 +262,9 @@ callerRestore =
     <#> ".emd"
     where toPop = [X9 .. X15]
           loads = zipWith (\r o -> Load () r (AddRCPlus SP (8*o))) toPop [0..]
+
+prettyLive :: Pretty reg => Arm reg Liveness -> Doc ann
+prettyLive r = pretty r <+> pretty (ann r)
+
+prettyDebugAsm :: Pretty reg => [Arm reg Liveness] -> Doc ann
+prettyDebugAsm = concatWith (<#>) . fmap prettyLive
