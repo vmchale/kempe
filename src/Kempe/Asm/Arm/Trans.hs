@@ -45,7 +45,12 @@ irEmit _ (IR.MovMem e 8 e') = do
     ; pure (eEval ++ e'Eval ++ [Store () (toAbsReg r') (Reg $ toAbsReg r)])
     }
 irEmit _ (IR.MovTemp r e) = evalE e r
-irEmit _ (IR.MovMem e 1 e') = do -- TODO: IR.MovMem (Reg r) sz e' ...
+irEmit _ (IR.MovMem (IR.Reg r) 1 e) = do
+    { r' <- allocTemp64
+    ; put <- evalE e r'
+    ; pure $ put ++ [Store () (toAbsReg r') (Reg $ toAbsReg r)]
+    }
+irEmit _ (IR.MovMem e 1 e') = do
     { r <- allocTemp64
     ; r' <- allocTemp64
     ; eEval <- evalE e r
@@ -88,6 +93,7 @@ evalE (IR.ExprIntRel IR.IntEqIR e e') r = do
     ; e'Eval <- evalE e' r1
     ; pure $ eEval ++ e'Eval ++ [CmpRR () (toAbsReg r0) (toAbsReg r1), CSet () (toAbsReg r) Eq]
     }
+evalE (IR.IntNegIR (IR.Reg r')) r = pure [Neg () (toAbsReg r) (toAbsReg r')]
 evalE (IR.IntNegIR e) r = do
     { r' <- allocTemp64
     ; eEval <- evalE e r'
