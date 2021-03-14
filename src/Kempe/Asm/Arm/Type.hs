@@ -162,6 +162,7 @@ data Arm reg a = Branch { ann :: a, label :: Label } -- like jump
                | SubRC { ann :: a, res :: reg, inp1 :: reg, int :: Int64 }
                | SubRR { ann :: a, res :: reg, inp1 :: reg, inp2 :: reg }
                | MulRR { ann :: a, res :: reg, inp1 :: reg, inp2 :: reg }
+               | MulSubRRR { ann :: a, res :: reg, inp1 :: reg, inp2 :: reg, inp3 :: reg }
                | MovRC { ann :: a, dest :: reg, iSrc :: Int64 }
                | SignedDivRR { ann :: a, res :: reg, inp1 :: reg, inp2 :: reg }
                | UnsignedDivRR { ann :: a, res :: reg, inp1 :: reg, inp2 :: reg }
@@ -203,6 +204,7 @@ instance Pretty reg => Pretty (Arm reg a) where
     pretty (AddRR _ r r0 r1)         = i4 ("add" <+> pretty r <~> pretty r0 <~> pretty r1)
     pretty (SubRR _ r r0 r1)         = i4 ("sub" <+> pretty r <~> pretty r0 <~> pretty r1)
     pretty (MulRR _ r r0 r1)         = i4 ("mul" <+> pretty r <~> pretty r0 <~> pretty r1)
+    pretty (MulSubRRR _ r r0 r1 r2)  = i4 ("msub" <+> pretty r <~> pretty r0 <~> pretty r1 <~> pretty r2)
     pretty (SignedDivRR _ r r0 r1)   = i4 ("sdiv" <+> pretty r <~> pretty r0 <~> pretty r1)
     pretty (UnsignedDivRR _ r r0 r1) = i4 ("udiv" <+> pretty r <~> pretty r0 <~> pretty r1)
     pretty (Load _ r a)              = i4 ("ldr" <+> pretty r <~> pretty a)
@@ -218,6 +220,7 @@ instance Pretty reg => Pretty (Arm reg a) where
     pretty (GnuMacro _ b)            = i4 (pretty (decodeUtf8 b))
     pretty (AddRC _ r r0 i)          = i4 ("add" <+> pretty r <~> pretty r0 <~> "#" <> pretty i)
     pretty (SubRC _ r r0 i)          = i4 ("sub" <+> pretty r <~> pretty r0 <~> "#" <> pretty i)
+    pretty (Neg _ r0 r1)             = i4 ("neg" <+> pretty r0 <~> pretty r1)
 
 instance Copointed (Arm reg) where
     copoint = ann

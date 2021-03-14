@@ -4,6 +4,7 @@ module Kempe.Asm.Arm.Trans ( irToAarch64
                            ) where
 
 import           Data.Foldable.Ext  (foldMapA)
+import           Data.Int           (Int64)
 import           Data.List          (scanl')
 import           Kempe.AST.Size
 import           Kempe.Asm.Arm.Type
@@ -76,6 +77,8 @@ evalE (IR.Mem _ e) r                                                = do
     ; pure $ placeE ++ [Load () (toAbsReg r) (Reg $ toAbsReg r')]
     }
 evalE (IR.Reg r) r' = pure [MovRR () (toAbsReg r') (toAbsReg r)]
+evalE (IR.ExprIntRel IR.IntLtIR (IR.Reg r1) (IR.Reg r2)) r =
+    pure [CmpRR () (toAbsReg r1) (toAbsReg r2), CSet () (toAbsReg r) Lt]
 evalE (IR.ExprIntRel IR.IntEqIR e e') r = do -- TODO: e or e' a register (IR.ExprIntRel IR.IntEqIR r e' ...
     { r0 <- allocTemp64
     ; r1 <- allocTemp64
@@ -88,3 +91,12 @@ evalE (IR.IntNegIR e) r = do
     ; eEval <- evalE e r'
     ; pure $ eEval ++ [Neg () (toAbsReg r) (toAbsReg r')]
     }
+evalE (IR.ExprIntBinOp IR.IntModIR (IR.Reg r1) (IR.Reg r2)) r = do
+    { rTrash <- allocTemp64
+    ; pure [ UnsignedDivRR () (toAbsReg rTrash) (toAbsReg r1) (toAbsReg r2), MulSubRRR () (toAbsReg r) (toAbsReg rTrash) (toAbsReg r2) (toAbsReg r1) ]
+    }
+evalE (IR.ConstBool b) r = pure [MovRC () (toAbsReg r) (toInt b)]
+
+toInt :: Bool -> Int64
+toInt False = 0
+toInt True  = 1
