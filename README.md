@@ -1,7 +1,7 @@
 # Kempe
 
-Kempe is a stack-based language and toy compiler for x86_64. It requires the
-[nasm](https://nasm.us/) assembler.
+Kempe is a stack-based language and toy compiler for x86_64 and aarch64. It requires the
+[nasm](https://nasm.us/) assembler when targeting x86_64.
 
 Inspiration is primarily from [Mirth](https://github.com/mirth-lang/mirth).
 

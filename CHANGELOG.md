@@ -1,5 +1,7 @@
 # kempe
 
+  * Add aarch64 backend
+
 ## 0.1.1.3
 
   * Tweak some RTS flags for faster performance

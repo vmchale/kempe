@@ -262,12 +262,12 @@
 </ul>
 </nav>
 <h1 id="introduction">Introduction</h1>
-<p>Kempe is a stack-based language, and <code>kc</code> is a toy compiler for x86_64.</p>
+<p>Kempe is a stack-based language, and <code>kc</code> is a toy compiler for x86_64 and aarch64.</p>
 <h1 id="installing-kc">Installing kc</h1>
 <p>First, install <a href="https://www.haskell.org/cabal/download.html">cabal</a> and <a href="https://www.haskell.org/ghc/download.html">GHC</a>. Then:</p>
 <pre><code>cabal install kempe --constraint=&#39;kempe -no-par&#39;</code></pre>
 <p>This provides <code>kc</code>, the Kempe compiler.</p>
-<p><code>kc</code> requires <a href="https://www.nasm.us/">NASM</a>, an x86_64 assembler.</p>
+<p><code>kc</code> requires <a href="https://www.nasm.us/">NASM</a> when targeting x86_64.</p>
 <h2 id="editor-integration">Editor Integration</h2>
 <p>A <a href="https://github.com/vmchale/kempe/tree/master/vim">vim plugin</a> is available.</p>
 <p>To install with <a href="https://github.com/junegunn/vim-plug">vim-plug</a>:</p>

@@ -3,7 +3,8 @@
 
 # Introduction
 
-Kempe is a stack-based language, and `kc` is a toy compiler for x86_64.
+Kempe is a stack-based language, and `kc` is a toy compiler for x86_64 and
+aarch64.
 
 # Installing kc
 
@@ -16,7 +17,7 @@ cabal install kempe --constraint='kempe -no-par'
 
 This provides `kc`, the Kempe compiler.
 
-`kc` requires [NASM](https://www.nasm.us/), an x86_64 assembler.
+`kc` requires [NASM](https://www.nasm.us/) when targeting x86_64.
 
 ## Editor Integration
 
