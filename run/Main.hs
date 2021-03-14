@@ -72,7 +72,8 @@ archFlag :: Parser Arch
 archFlag = fmap parseArch $ optional $ strOption
     (long "arch"
     <> metavar "ARCH"
-    <> help "Target architecture (x64 or aarch64)")
+    <> help "Target architecture (x64 or aarch64)"
+    <> completer (listCompleter ["x64", "aarch64"]))
     where parseArch :: Maybe String -> Arch
           parseArch str' = case (str', arch) of
             (Nothing, "aarch64") -> Aarch64
