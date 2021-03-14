@@ -101,17 +101,7 @@ uses (CmpRR _ r r')           = fromList [r, r']
 uses (Load _ _ a)             = addrRegs a
 uses (Store _ r a)            = singleton r <> addrRegs a
 uses (StoreByte _ r a)        = singleton r <> addrRegs a
-uses Branch{}                 = mempty
-uses BranchLink{}             = mempty
-uses BranchCond{}             = mempty
-uses MovRC{}                  = mempty
-uses MovRWord{}               = mempty
-uses LoadLabel{}              = mempty
-uses Label{}                  = mempty
-uses BSLabel{}                = mempty
-uses GnuMacro{}               = mempty
-uses CSet{}                   = mempty
-uses Ret{}                    = mempty
+uses _                        = mempty
 
 defs :: Arm AbsReg ann -> IS.IntSet
 defs (MovRR _ r _)           = singleton r
@@ -130,17 +120,7 @@ defs (SignedDivRR _ r _ _)   = singleton r
 defs (UnsignedDivRR _ r _ _) = singleton r
 defs (LoadLabel _ r _)       = singleton r
 defs (CSet _ r _)            = singleton r
-defs Branch{}                = mempty
-defs Label{}                 = mempty
-defs BSLabel{}               = mempty
-defs GnuMacro{}              = mempty
-defs Ret{}                   = mempty
-defs BranchLink{}            = mempty
-defs BranchCond{}            = mempty
-defs BranchZero{}            = mempty
-defs Store{}                 = mempty
-defs StoreByte{}             = mempty
-defs CmpRR{}                 = mempty
+defs _                       = mempty
 
 next :: [Arm AbsReg ()] -> FreshM ([Int] -> [Int], [Arm AbsReg ControlAnn])
 next asms = do
