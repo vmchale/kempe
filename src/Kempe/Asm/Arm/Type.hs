@@ -180,6 +180,7 @@ data Arm reg a = Branch { ann :: a, label :: Label } -- like jump
                | LShiftLRR { ann :: a, res :: reg, inp1 :: reg, inp2 :: reg } -- LShift - logical shift
                | LShiftRRR { ann :: a, res :: reg, inp1 :: reg, inp2 :: reg }
                | GnuMacro { ann :: a, macroName :: BS.ByteString }
+               | Neg { ann :: a, dest :: reg, src :: reg }
                deriving (Functor, Generic, NFData)
 
 -- | Don't call this on a negative number!

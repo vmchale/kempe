@@ -88,7 +88,7 @@ data Stmt = Labeled Label
 
 data Exp = ConstInt Int64
          | ConstInt8 Int8
-         | ConstTag Word8
+         | ConstTag Word8 -- ^ Used to distinguish constructors of a sum type
          | ConstWord Word
          | ConstBool Bool
          | Reg Temp -- TODO: size?

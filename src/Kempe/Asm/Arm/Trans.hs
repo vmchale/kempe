@@ -60,16 +60,17 @@ irEmit _ (IR.CJump e l0 l1) = do
 
 
 evalE :: IR.Exp -> IR.Temp -> WriteM [Arm AbsReg ()]
-evalE (IR.ConstInt i) r                                            = pure [MovRC () (toAbsReg r) i]
-evalE (IR.ConstWord w) r                                           = pure [MovRWord () (toAbsReg r) w]
-evalE (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r1) (IR.Reg r2)) r     = pure [AddRR () (toAbsReg r) (toAbsReg r1) (toAbsReg r2)]
-evalE (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r1) (IR.Reg r2)) r    = pure [SubRR () (toAbsReg r) (toAbsReg r1) (toAbsReg r2)]
-evalE (IR.ExprIntBinOp IR.IntTimesIR (IR.Reg r1) (IR.Reg r2)) r    = pure [MulRR () (toAbsReg r) (toAbsReg r1) (toAbsReg r2)]
-evalE (IR.ExprIntBinOp IR.IntDivIR (IR.Reg r1) (IR.Reg r2)) r      = pure [SignedDivRR () (toAbsReg r) (toAbsReg r1) (toAbsReg r2)]
-evalE (IR.ExprIntBinOp IR.WordDivIR (IR.Reg r1) (IR.Reg r2)) r     = pure [UnsignedDivRR () (toAbsReg r) (toAbsReg r1) (toAbsReg r2)]
-evalE (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r1) (IR.ConstInt i)) r = pure [AddRC () (toAbsReg r) (toAbsReg r1) i]
+evalE (IR.ConstInt i) r                                             = pure [MovRC () (toAbsReg r) i]
+evalE (IR.ConstWord w) r                                            = pure [MovRWord () (toAbsReg r) w]
+evalE (IR.ConstTag b) r                                             = pure [MovRC () (toAbsReg r) (fromIntegral b)]
+evalE (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r1) (IR.Reg r2)) r      = pure [AddRR () (toAbsReg r) (toAbsReg r1) (toAbsReg r2)]
+evalE (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r1) (IR.Reg r2)) r     = pure [SubRR () (toAbsReg r) (toAbsReg r1) (toAbsReg r2)]
+evalE (IR.ExprIntBinOp IR.IntTimesIR (IR.Reg r1) (IR.Reg r2)) r     = pure [MulRR () (toAbsReg r) (toAbsReg r1) (toAbsReg r2)]
+evalE (IR.ExprIntBinOp IR.IntDivIR (IR.Reg r1) (IR.Reg r2)) r       = pure [SignedDivRR () (toAbsReg r) (toAbsReg r1) (toAbsReg r2)]
+evalE (IR.ExprIntBinOp IR.WordDivIR (IR.Reg r1) (IR.Reg r2)) r      = pure [UnsignedDivRR () (toAbsReg r) (toAbsReg r1) (toAbsReg r2)]
+evalE (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r1) (IR.ConstInt i)) r  = pure [AddRC () (toAbsReg r) (toAbsReg r1) i]
 evalE (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r1) (IR.ConstInt i)) r = pure [SubRC () (toAbsReg r) (toAbsReg r1) i]
-evalE (IR.Mem _ e) r = do
+evalE (IR.Mem _ e) r                                                = do
     { r' <- allocTemp64
     ; placeE <- evalE e r'
     ; pure $ placeE ++ [Load () (toAbsReg r) (Reg $ toAbsReg r')]
@@ -81,4 +82,9 @@ evalE (IR.ExprIntRel IR.IntEqIR e e') r = do -- TODO: e or e' a register (IR.Exp
     ; eEval <- evalE e r0
     ; e'Eval <- evalE e' r1
     ; pure $ eEval ++ e'Eval ++ [CmpRR () (toAbsReg r0) (toAbsReg r1), CSet () (toAbsReg r) Eq]
+    }
+evalE (IR.IntNegIR e) r = do
+    { r' <- allocTemp64
+    ; eEval <- evalE e r'
+    ; pure $ eEval ++ [Neg () (toAbsReg r) (toAbsReg r')]
     }
