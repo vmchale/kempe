@@ -8,6 +8,7 @@ import           Data.Functor               (void)
 import           Kempe.File
 import           System.FilePath            ((</>))
 import           System.IO.Temp
+import           System.Info                (arch)
 import           System.Process             (CreateProcess (std_err), StdStream (Inherit), proc, readCreateProcess)
 import           Test.Tasty
 import           Test.Tasty.Golden          (goldenVsString)
@@ -34,7 +35,11 @@ compileOutput fp harness =
     withSystemTempDirectory "kmp" $ \dir -> do
         let oFile = dir </> "kempe.o"
             exe = dir </> "kempe"
-        compile fp oFile False
+            compiler = case arch of
+                "x86_64"  -> compile
+                "aarch64" -> armCompile
+                _         -> error "Internal error in test suite! Must run on either x86_64 or aarch64"
+        compiler fp oFile False
         runGcc [oFile, harness] exe
         readExe exe
     where readExe fp' = ASCII.pack <$> readCreateProcess ((proc fp' []) { std_err = Inherit }) ""
