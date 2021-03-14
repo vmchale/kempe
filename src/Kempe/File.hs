@@ -8,6 +8,7 @@ module Kempe.File ( tcFile
                   , dumpX86
                   , dumpArm
                   , compile
+                  , armCompile
                   , dumpIR
                   ) where
 
@@ -32,6 +33,7 @@ import           Kempe.IR
 import           Kempe.Lexer
 import           Kempe.Module
 import           Kempe.Pipeline
+import           Kempe.Proc.As             as As
 import qualified Kempe.Proc.Nasm           as Nasm
 import           Kempe.Shuttle
 import           Kempe.TyAssign
@@ -98,3 +100,11 @@ compile :: FilePath
 compile fp o dbg = do
     res <- parseProcess fp
     Nasm.writeO (uncurry dumpX86 res) o dbg
+
+armCompile :: FilePath
+           -> FilePath
+           -> Bool -- ^ Debug symbols?
+           -> IO ()
+armCompile fp o dbg = do
+    res <- parseProcess fp
+    As.writeO (uncurry dumpArm res) o dbg
