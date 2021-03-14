@@ -19,14 +19,6 @@ toAbsReg (IR.Temp8 i)   = AllocReg i
 toAbsReg (IR.Temp64 i)  = AllocReg i
 toAbsReg IR.DataPointer = DataPointer
 
-allocReg :: WriteM AbsReg
-allocReg = AllocReg <$> getInt
-
--- popFrame :: [Arm AbsReg ()]
--- popFrame =
-
--- example function call (arm) https://www.cs.princeton.edu/courses/archive/spr19/cos217/lectures/15_AssemblyFunctions.pdf
-
 irEmit :: SizeEnv -> IR.Stmt -> WriteM [Arm AbsReg ()]
 irEmit _ (IR.Jump l)                    = pure [Branch () l]
 irEmit _ IR.Ret                         = pure [Ret ()]
@@ -37,7 +29,7 @@ irEmit env (IR.WrapKCall Cabi (is, [o]) n l) | all (\i -> size' env i <= 8) is &
     { let offs = scanl' (+) 0 (fmap (size' env) is)
     ; let totalSize = sizeStack env is
     ; let argRegs = [CArg0, CArg1, CArg2, CArg3, CArg4, CArg5, CArg6, CArg7]
-    ; pure $ [BSLabel () n, LoadLabel () DataPointer "kempe_data", GnuMacro () "calleesave"] ++ undefined
+    ; pure $ [BSLabel () n, LoadLabel () DataPointer "kempe_data", GnuMacro () "calleesave"] ++ zipWith (\r i -> Load () r (AddRCPlus DataPointer i)) argRegs offs ++ [AddRC () DataPointer DataPointer totalSize, BranchLink () l, Load () CArg0 (AddRCPlus DataPointer (negate $ size' env o)), GnuMacro () "caleerestore", Ret ()]
     }
 irEmit _ (IR.MovMem (IR.Reg r) 8 e) = do
     { r' <- allocTemp64
@@ -64,7 +56,8 @@ irEmit _ (IR.CJump e l0 l1) = do
     ; eEval <- evalE e r
     ; pure $ eEval ++ [BranchZero () (toAbsReg r) l1, Branch () l0]
     }
-irEmit _ e = error (show $ pretty e)
+-- example function call (arm) https://www.cs.princeton.edu/courses/archive/spr19/cos217/lectures/15_AssemblyFunctions.pdf
+
 
 evalE :: IR.Exp -> IR.Temp -> WriteM [Arm AbsReg ()]
 evalE (IR.ConstInt i) r                                            = pure [MovRC () (toAbsReg r) i]
