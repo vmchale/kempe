@@ -30,7 +30,7 @@ irEmit env (IR.WrapKCall Cabi (is, [o]) n l) | all (\i -> size' env i <= 8) is &
     { let offs = scanl' (+) 0 (fmap (size' env) is)
     ; let totalSize = sizeStack env is
     ; let argRegs = [CArg0, CArg1, CArg2, CArg3, CArg4, CArg5, CArg6, CArg7]
-    ; pure $ [BSLabel () n, LoadLabel () DataPointer "kempe_data", GnuMacro () "calleesave"] ++ zipWith (\r i -> Load () r (AddRCPlus DataPointer i)) argRegs offs ++ [AddRC () DataPointer DataPointer totalSize, BranchLink () l, Load () CArg0 (AddRCPlus DataPointer (negate $ size' env o)), GnuMacro () "caleerestore", Ret ()]
+    ; pure $ [BSLabel () n, LoadLabel () DataPointer "kempe_data", GnuMacro () "calleesave"] ++ zipWith (\r i -> Load () r (AddRCPlus DataPointer i)) argRegs offs ++ [AddRC () DataPointer DataPointer totalSize, BranchLink () l, Load () CArg0 (AddRCPlus DataPointer (negate $ size' env o)), GnuMacro () "calleerestore", Ret ()]
     }
 irEmit _ (IR.MovMem (IR.Reg r) 8 e) = do
     { r' <- allocTemp64

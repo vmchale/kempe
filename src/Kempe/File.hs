@@ -4,7 +4,9 @@ module Kempe.File ( tcFile
                   , dumpTyped
                   , irFile
                   , x86File
+                  , armFile
                   , dumpX86
+                  , dumpArm
                   , compile
                   , dumpIR
                   ) where
@@ -20,6 +22,7 @@ import qualified Data.Set                  as S
 import           Data.Tuple.Extra          (fst3)
 import           Data.Typeable             (Typeable)
 import           Kempe.AST
+import qualified Kempe.Asm.Arm.Type        as Arm
 import qualified Kempe.Asm.X86.Type        as X86
 import           Kempe.Check.Lint
 import           Kempe.Check.Pattern
@@ -70,6 +73,9 @@ dumpIR = prettyIR . fst3 .* irGen
 dumpX86 :: Typeable a => Int -> Declarations a c b -> Doc ann
 dumpX86 = X86.prettyAsm .* x86Alloc
 
+dumpArm :: Typeable a => Int -> Declarations a c b -> Doc ann
+dumpArm = Arm.prettyAsm .* armAlloc
+
 irFile :: FilePath -> IO ()
 irFile fp = do
     res <- parseProcess fp
@@ -79,6 +85,11 @@ x86File :: FilePath -> IO ()
 x86File fp = do
     res <- parseProcess fp
     putDoc $ uncurry dumpX86 res <> hardline
+
+armFile :: FilePath -> IO ()
+armFile fp = do
+    res <- parseProcess fp
+    putDoc $ uncurry dumpArm res <> hardline
 
 compile :: FilePath
         -> FilePath

@@ -226,11 +226,11 @@ instance Copointed (Arm reg) where
     copoint = ann
 
 prettyAsm :: Pretty reg => [Arm reg a] -> Doc ann
-prettyAsm = ((prolegomena <#> macros <#> "section .text" <> hardline) <>) . prettyLines . fmap pretty
+prettyAsm = ((prolegomena <#> macros <#> ".text" <> hardline) <>) . prettyLines . fmap pretty
 
 -- http://www.mathcs.emory.edu/~cheung/Courses/255/Syl-ARM/7-ARM/array-define.html
 prolegomena :: Doc ann
-prolegomena = "section .data" <#> "kempe_data: .skip 32768" -- 32kb
+prolegomena = ".data" <#> "kempe_data: .skip 32768" -- 32kb
 
 macros :: Doc ann
 macros = prettyLines
@@ -275,7 +275,7 @@ callerRestore =
     ".macro callerrestore"
     <#> prettyLines (fmap pretty loads)
     <#> i4 "add sp, sp, #(8 * 8)"
-    <#> ".emd"
+    <#> ".endm"
     where toPop = [X9 .. X15]
           loads = zipWith (\r o -> Load () r (AddRCPlus SP (8*o))) toPop [0..]
 
