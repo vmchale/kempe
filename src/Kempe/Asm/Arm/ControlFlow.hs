@@ -12,7 +12,7 @@ import           Kempe.Asm.Arm.Type
 import           Kempe.Asm.Type
 
 -- map of labels by node
-type FreshM = State (Int, M.Map Label Int) -- TODO: map int to asm
+type FreshM = State (Int, M.Map Label Int)
 
 runFreshM :: FreshM a -> a
 runFreshM = flip evalState (0, mempty)
@@ -58,14 +58,14 @@ addControlFlow ((Label _ l):asms) = do
 addControlFlow ((BranchCond _ l c):asms) = do
     { i <- getFresh
     ; (f, asms') <- next asms
-    ; l_i <- lookupLabel l -- TODO: is this what's wanted?
+    ; l_i <- lookupLabel l
     ; pure (BranchCond (ControlAnn i (f [l_i]) IS.empty IS.empty) l c : asms')
     }
 addControlFlow ((BranchZero _ r l):asms) = do
     { i <- getFresh
     ; (f, asms') <- next asms
     ; l_i <- lookupLabel l
-    ; pure (BranchZero (ControlAnn i (f [l_i]) IS.empty IS.empty) r l : asms')
+    ; pure (BranchZero (ControlAnn i (f [l_i]) (singleton r) IS.empty) r l : asms')
     }
 addControlFlow ((BranchLink _ l):asms) = do
     { i <- getFresh
