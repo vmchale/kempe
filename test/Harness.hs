@@ -1,4 +1,5 @@
 module Harness ( goldenOutput
+               , compileArm
                ) where
 
 import qualified Data.ByteString.Lazy       as BSL
@@ -10,6 +11,7 @@ import           System.IO.Temp
 import           System.Process             (CreateProcess (std_err), StdStream (Inherit), proc, readCreateProcess)
 import           Test.Tasty
 import           Test.Tasty.Golden          (goldenVsString)
+import           Test.Tasty.HUnit           (assertBool, testCase)
 
 -- | Assemble using @nasm@, output in some file.
 runGcc :: [FilePath]
@@ -17,6 +19,13 @@ runGcc :: [FilePath]
        -> IO ()
 runGcc fps o =
     void $ readCreateProcess ((proc "cc" (fps ++ ["-o", o])) { std_err = Inherit }) ""
+
+compileArm :: FilePath -> TestTree
+compileArm fp = testCase "Assembles arm" $
+    withSystemTempDirectory "kmp" $ \dir -> do
+        let oFile = dir </> "kempe.o"
+        armCompile fp oFile False
+        assertBool "Doesn't throw exception" True
 
 compileOutput :: FilePath
               -> FilePath

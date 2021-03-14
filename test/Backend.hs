@@ -80,7 +80,6 @@ armNoYeet fp = testCase ("Selects instructions for " ++ fp) $ do
     let arm = uncurry armParsed parsed
     assertBool "Worked without exception" (arm `deepseq` True)
 
-
 x86NoYeet :: FilePath -> TestTree
 x86NoYeet fp = testCase ("Selects instructions for " ++ fp) $ do
     parsed <- parseProcess fp

@@ -23,4 +23,4 @@ writeO :: Doc ann
 writeO p fpO dbg = do
     let inp = renderString (layoutPretty defaultLayoutOptions p)
         debugFlag = if dbg then ("-g":) else id
-    void $ readCreateProcess ((proc assembler (debugFlag ["--", "-o", fpO])) { std_err = Inherit }) inp
+    void $ readCreateProcess ((proc assembler (debugFlag ["-o", fpO, "--"])) { std_err = Inherit }) inp

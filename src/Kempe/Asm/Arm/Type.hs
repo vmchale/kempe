@@ -120,17 +120,6 @@ instance Pretty ArmReg where
     pretty X30 = "x30"
     pretty SP  = "sp"
 
--- | Used for stores/loads of booleans
---
--- For whatever reason GNU as wants them to be addressed as @W0@
-as32b :: ArmReg -> Doc ann
-as32b X0 = "w0"
-as32b X1 = "w1"
-as32b X2 = "w2"
-as32b X3 = "w3"
-as32b X4 = "w4"
-as32b X5 = "w5"
-
 data Addr reg = Reg reg
               | AddRRPlus reg reg
               | AddRCPlus reg Int64
@@ -237,7 +226,7 @@ instance Copointed (Arm reg) where
     copoint = ann
 
 prettyAsm :: Pretty reg => [Arm reg a] -> Doc ann
-prettyAsm = ((prolegomena <#> macros <#> ".text" <> hardline) <>) . prettyLines . fmap pretty
+prettyAsm = (<> hardline) . ((prolegomena <#> macros <#> ".text" <> hardline) <>) . prettyLines . fmap pretty
 
 -- http://www.mathcs.emory.edu/~cheung/Courses/255/Syl-ARM/7-ARM/array-define.html
 prolegomena :: Doc ann

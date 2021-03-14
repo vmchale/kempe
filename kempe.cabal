@@ -216,7 +216,8 @@ test-suite kempe-golden
         process,
         temporary,
         filepath,
-        tasty-golden
+        tasty-golden,
+        tasty-hunit
 
     if impl(ghc >=8.0)
         ghc-options:
