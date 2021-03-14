@@ -21,7 +21,7 @@ import           Kempe.Parser
 import           Kempe.Pipeline
 import           Kempe.Shuttle
 import           Kempe.TyAssign
-import           Prettyprinter             (defaultLayoutOptions, layoutPretty)
+import           Prettyprinter             (Doc, defaultLayoutOptions, layoutPretty)
 import           Prettyprinter.Render.Text (renderStrict)
 
 bivoid :: Bifunctor p => p a b -> p () ()
@@ -96,6 +96,8 @@ main =
                         , bench "Generate assembly (examples/splitmix.kmp)" $ nfIO (writeAsm "examples/splitmix.kmp")
                         , bench "Generate assembly (lib/numbertheory.kmp)" $ nfIO (writeAsm "lib/numbertheory.kmp")
                         , bench "Generate assembly (lib/gaussian.kmp)" $ nfIO (writeAsm "lib/gaussian.kmp")
+                        , bench "Generate arm assembly (examples/factorial.kmp)" $ nfIO (writeArmAsm "examples/factorial.kmp")
+                        , bench "Generate arm assembly (lib/gaussian.kmp)" $ nfIO (writeArmAsm "lib/gaussian.kmp")
                         -- , bench "Generate assembly (lib/rational.kmp)" $ nfIO (writeAsm "lib/rational.kmp")
                         , bench "Object file (examples/factorial.kmp)" $ nfIO (compile "examples/factorial.kmp" "/tmp/factorial.o" False)
                         , bench "Object file (lib/numbertheory.kmp)" $ nfIO (compile "lib/numbertheory.kmp" "/tmp/numbertheory.o" False)
@@ -148,4 +150,12 @@ writeAsm :: FilePath
 writeAsm fp = do
     res <- parseProcess fp
     pure $ renderText $ uncurry dumpX86 res
-    where renderText = renderStrict . layoutPretty defaultLayoutOptions
+
+renderText :: Doc ann -> T.Text
+renderText = renderStrict . layoutPretty defaultLayoutOptions
+
+writeArmAsm :: FilePath
+            -> IO T.Text
+writeArmAsm fp = do
+    res <- parseProcess fp
+    pure $ renderText $ uncurry dumpArm res
