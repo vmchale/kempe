@@ -79,7 +79,9 @@ evalE (IR.Mem _ e) r                                                = do
 evalE (IR.Reg r) r' = pure [MovRR () (toAbsReg r') (toAbsReg r)]
 evalE (IR.ExprIntRel IR.IntLtIR (IR.Reg r1) (IR.Reg r2)) r =
     pure [CmpRR () (toAbsReg r1) (toAbsReg r2), CSet () (toAbsReg r) Lt]
-evalE (IR.ExprIntRel IR.IntEqIR e e') r = do -- TODO: e or e' a register (IR.ExprIntRel IR.IntEqIR r e' ...
+evalE (IR.ExprIntRel IR.IntEqIR (IR.Reg r1) (IR.Reg r2)) r =
+    pure [CmpRR () (toAbsReg r1) (toAbsReg r2), CSet () (toAbsReg r) Eq]
+evalE (IR.ExprIntRel IR.IntEqIR e e') r = do
     { r0 <- allocTemp64
     ; r1 <- allocTemp64
     ; eEval <- evalE e r0
@@ -97,6 +99,7 @@ evalE (IR.ExprIntBinOp IR.IntModIR (IR.Reg r1) (IR.Reg r2)) r = do
     }
 evalE (IR.ConstBool b) r = pure [MovRC () (toAbsReg r) (toInt b)]
 
+-- | Just use 64-bit integers here
 toInt :: Bool -> Int64
 toInt False = 0
 toInt True  = 1
