@@ -25,6 +25,10 @@ import           Kempe.Asm.Type
 import           Prettyprinter      (Doc, Pretty (..), brackets, colon, concatWith, hardline, (<+>))
 import           Prettyprinter.Ext  (prettyHex, prettyLines, (<#>), (<~>))
 
+-- | Sort of silly class that prints the 32-bit equivalent of a register.
+class As32 reg where
+    as32b :: reg -> Doc ann
+
 -- r0-r7 result registers
 
 data AbsReg = DataPointer
@@ -50,6 +54,9 @@ instance Pretty AbsReg where
     pretty CArg5        = "X5"
     pretty CArg6        = "X6"
     pretty CArg7        = "X7"
+
+instance As32 AbsReg where
+    as32b = pretty
 
 type Label = Word
 
@@ -120,6 +127,40 @@ instance Pretty ArmReg where
     pretty X29 = "x29"
     pretty X30 = "x30"
     pretty SP  = "sp"
+
+instance As32 ArmReg where
+    as32b X0  = "w0"
+    as32b X1  = "w1"
+    as32b X2  = "w2"
+    as32b X3  = "w3"
+    as32b X4  = "w4"
+    as32b X5  = "w5"
+    as32b X6  = "w6"
+    as32b X7  = "w7"
+    as32b X8  = "w8"
+    as32b X9  = "w9"
+    as32b X10 = "w10"
+    as32b X11 = "w11"
+    as32b X12 = "w12"
+    as32b X13 = "w13"
+    as32b X14 = "w14"
+    as32b X15 = "w15"
+    as32b X16 = "w16"
+    as32b X17 = "w17"
+    as32b X18 = "w18"
+    as32b X19 = "w19"
+    as32b X20 = "w20"
+    as32b X21 = "w21"
+    as32b X22 = "w22"
+    as32b X23 = "w23"
+    as32b X24 = "w24"
+    as32b X25 = "w25"
+    as32b X26 = "w26"
+    as32b X27 = "w27"
+    as32b X28 = "w28"
+    as32b X29 = "w29"
+    as32b X30 = "w30"
+    as32b SP  = error "Internal error: as32b sp should not happen!!"
 
 data Addr reg = Reg reg
               | AddRRPlus reg reg
@@ -193,7 +234,7 @@ prettyUInt i = "#" <> prettyHex i
 prettyInt :: (Pretty a) => a -> Doc b
 prettyInt = ("#" <>) . pretty
 
-instance Pretty reg => Pretty (Arm reg a) where
+instance (Pretty reg, As32 reg) => Pretty (Arm reg a) where
     pretty (Branch _ l)              = i4 ("b" <+> prettyLabel l)
     pretty (BranchLink _ l)          = i4 ("bl" <+> prettyLabel l)
     pretty (BranchCond _ l c)        = i4 ("b." <> pretty c <+> prettyLabel l)
@@ -210,10 +251,10 @@ instance Pretty reg => Pretty (Arm reg a) where
     pretty (SignedDivRR _ r r0 r1)   = i4 ("sdiv" <+> pretty r <~> pretty r0 <~> pretty r1)
     pretty (UnsignedDivRR _ r r0 r1) = i4 ("udiv" <+> pretty r <~> pretty r0 <~> pretty r1)
     pretty (Load _ r a)              = i4 ("ldr" <+> pretty r <~> pretty a)
-    pretty (LoadByte _ r a)          = i4 ("ldrb" <+> pretty r <~> pretty a)
+    pretty (LoadByte _ r a)          = i4 ("ldrb" <+> as32b r <~> pretty a)
     pretty (LoadLabel _ r l)         = i4 ("ldr" <+> pretty r <~> pretty (decodeUtf8 l))
     pretty (Store _ r a)             = i4 ("str" <+> pretty r <~> pretty a)
-    pretty (StoreByte _ r a)         = i4 ("strb" <+> pretty r <~> pretty a)
+    pretty (StoreByte _ r a)         = i4 ("strb" <+> as32b r <~> pretty a)
     pretty (MovRR _ r0 r1)           = i4 ("mov" <+> pretty r0 <~> pretty r1)
     pretty (AndRR _ r r0 r1)         = i4 ("and" <+> pretty r <~> pretty r0 <~> pretty r1)
     pretty (CSet _ r c)              = i4 ("cset" <+> pretty r <~> pretty c)
@@ -228,7 +269,7 @@ instance Pretty reg => Pretty (Arm reg a) where
 instance Copointed (Arm reg) where
     copoint = ann
 
-prettyAsm :: Pretty reg => [Arm reg a] -> Doc ann
+prettyAsm :: (Pretty reg, As32 reg) => [Arm reg a] -> Doc ann
 prettyAsm = (<> hardline) . ((prolegomena <#> macros <#> ".text" <> hardline) <>) . prettyLines . fmap pretty
 
 -- http://www.mathcs.emory.edu/~cheung/Courses/255/Syl-ARM/7-ARM/array-define.html
@@ -282,8 +323,8 @@ callerRestore =
     where toPop = [X9 .. X15]
           loads = zipWith (\r o -> Load () r (AddRCPlus SP (8*o))) toPop [0..]
 
-prettyLive :: Pretty reg => Arm reg Liveness -> Doc ann
+prettyLive :: (As32 reg, Pretty reg) => Arm reg Liveness -> Doc ann
 prettyLive r = pretty r <+> pretty (ann r)
 
-prettyDebugAsm :: Pretty reg => [Arm reg Liveness] -> Doc ann
+prettyDebugAsm :: (As32 reg, Pretty reg) => [Arm reg Liveness] -> Doc ann
 prettyDebugAsm = concatWith (<#>) . fmap prettyLive
