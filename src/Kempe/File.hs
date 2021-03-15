@@ -91,7 +91,7 @@ x86File fp = do
 armFile :: FilePath -> IO ()
 armFile fp = do
     res <- parseProcess fp
-    putDoc $ uncurry dumpArm res <> hardline
+    putDoc $ uncurry dumpArm res -- don't need hardline b/c arm pp adds it already
 
 compile :: FilePath
         -> FilePath
