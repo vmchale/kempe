@@ -4,7 +4,8 @@ module Kempe.Asm.Pretty ( i4
                         , prettyLabel
                         ) where
 
-import           Prettyprinter (Doc, indent, pretty)
+import           Data.Semigroup ((<>))
+import           Prettyprinter  (Doc, indent, pretty)
 
 i4 :: Doc ann -> Doc ann
 i4 = indent 4

@@ -17,6 +17,7 @@ import           Control.DeepSeq    (NFData)
 import qualified Data.ByteString    as BS
 import           Data.Copointed
 import           Data.Int           (Int64)
+import           Data.Semigroup     ((<>))
 import           Data.Text.Encoding (decodeUtf8)
 import           GHC.Generics       (Generic)
 import           Kempe.Asm.Pretty
