@@ -32,7 +32,7 @@ allFree :: AllocSt
 allFree = AllocSt mempty allReg
 
 allReg :: S.Set ArmReg
-allReg = S.fromList [X0 .. X29]
+allReg = S.fromList [X0 .. X29] S.\\ S.singleton X19 -- don't allocate to x19 (data pointer)
 
 type AllocM = State AllocSt
 
