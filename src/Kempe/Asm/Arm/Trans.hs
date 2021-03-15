@@ -76,10 +76,15 @@ evalE (IR.ExprIntBinOp IR.IntDivIR (IR.Reg r1) (IR.Reg r2)) r       = pure [Sign
 evalE (IR.ExprIntBinOp IR.WordDivIR (IR.Reg r1) (IR.Reg r2)) r      = pure [UnsignedDivRR () (toAbsReg r) (toAbsReg r1) (toAbsReg r2)]
 evalE (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r1) (IR.ConstInt i)) r  = pure [AddRC () (toAbsReg r) (toAbsReg r1) i]
 evalE (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r1) (IR.ConstInt i)) r = pure [SubRC () (toAbsReg r) (toAbsReg r1) i]
-evalE (IR.Mem _ e) r                                                = do
+evalE (IR.Mem 8 e) r                                                = do
     { r' <- allocTemp64
     ; placeE <- evalE e r'
     ; pure $ placeE ++ [Load () (toAbsReg r) (Reg $ toAbsReg r')]
+    }
+evalE (IR.Mem 1 e) r = do
+    { r' <- allocTemp64
+    ; placeE <- evalE e r'
+    ; pure $ placeE ++ [LoadByte () (toAbsReg r) (Reg $ toAbsReg r')]
     }
 evalE (IR.Reg r) r' = pure [MovRR () (toAbsReg r') (toAbsReg r)]
 evalE (IR.ExprIntRel IR.IntLtIR (IR.Reg r1) (IR.Reg r2)) r =
