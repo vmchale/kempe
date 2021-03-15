@@ -48,7 +48,7 @@ irEmit _ (IR.MovTemp r e) = evalE e r
 irEmit _ (IR.MovMem (IR.Reg r) 1 e) = do
     { r' <- allocTemp64
     ; put <- evalE e r'
-    ; pure $ put ++ [Store () (toAbsReg r') (Reg $ toAbsReg r)]
+    ; pure $ put ++ [StoreByte () (toAbsReg r') (Reg $ toAbsReg r)]
     }
 irEmit _ (IR.MovMem e 1 e') = do
     { r <- allocTemp64
