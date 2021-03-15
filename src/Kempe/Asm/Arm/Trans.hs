@@ -20,6 +20,11 @@ toAbsReg (IR.Temp8 i)   = AllocReg i
 toAbsReg (IR.Temp64 i)  = AllocReg i
 toAbsReg IR.DataPointer = DataPointer
 
+loadSize :: Int64 -> (reg -> Addr reg -> Arm reg ())
+loadSize 1 = LoadByte ()
+loadSize 8 = Load ()
+loadSize _ = error "Load not supported or incoherent."
+
 irEmit :: SizeEnv -> IR.Stmt -> WriteM [Arm AbsReg ()]
 irEmit _ (IR.Jump l)                    = pure [Branch () l]
 irEmit _ IR.Ret                         = pure [Ret ()]
@@ -27,10 +32,11 @@ irEmit _ (IR.KCall l)                   = pure [BranchLink () l]
 irEmit _ (IR.Labeled l)                 = pure [Label () l]
 irEmit _ (IR.WrapKCall Kabi (_, _) n l) = pure [BSLabel () n, BranchLink () l, Ret ()]
 irEmit env (IR.WrapKCall Cabi (is, [o]) n l) | all (\i -> size' env i <= 8) is && size' env o <= 8 && length is <= 8 = do
-    { let offs = scanl' (+) 0 (fmap (size' env) is)
+    { let sizes = fmap (size' env) is
+    ; let offs = scanl' (+) 0 sizes
     ; let totalSize = sizeStack env is
     ; let argRegs = [CArg0, CArg1, CArg2, CArg3, CArg4, CArg5, CArg6, CArg7]
-    ; pure $ [BSLabel () n, LoadLabel () DataPointer "kempe_data", GnuMacro () "calleesave"] ++ zipWith (\r i -> Load () r (AddRCPlus DataPointer i)) argRegs offs ++ [AddRC () DataPointer DataPointer totalSize, BranchLink () l, Load () CArg0 (AddRCPlus DataPointer (negate $ size' env o)), GnuMacro () "calleerestore", Ret ()]
+    ; pure $ [BSLabel () n, LoadLabel () DataPointer "kempe_data", GnuMacro () "calleesave"] ++ zipWith3 (\r sz i -> (loadSize sz) r (AddRCPlus DataPointer i)) argRegs sizes offs ++ [AddRC () DataPointer DataPointer totalSize, BranchLink () l, (loadSize $ size' env o) CArg0 (AddRCPlus DataPointer (negate $ size' env o)), GnuMacro () "calleerestore", Ret ()]
     }
 irEmit _ (IR.MovMem (IR.Reg r) 8 e) = do
     { r' <- allocTemp64
