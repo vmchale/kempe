@@ -102,6 +102,7 @@ uses (Load _ _ a)             = addrRegs a
 uses (LoadByte _ _ a)         = addrRegs a
 uses (Neg _ _ r)              = singleton r
 uses (MulSubRRR _ _ r r' r'') = fromList [r, r', r'']
+uses (XorRR _ _ r r')         = fromList [r, r']
 uses (Store _ r a)            = singleton r <> addrRegs a
 uses (StoreByte _ r a)        = singleton r <> addrRegs a
 uses _                        = mempty
@@ -126,6 +127,7 @@ defs (UnsignedDivRR _ r _ _) = singleton r
 defs (LoadLabel _ r _)       = singleton r
 defs (CSet _ r _)            = singleton r
 defs (Neg _ r _)             = singleton r
+defs (XorRR _ r _ _)         = singleton r
 defs _                       = mempty
 
 next :: [Arm AbsReg ()] -> FreshM ([Int] -> [Int], [Arm AbsReg ControlAnn])

@@ -130,3 +130,4 @@ allocReg (CmpRR l r0 r1)            = (CmpRR () <$> useReg l r0 <*> useReg l r1)
 allocReg (Neg l r0 r1)              = (Neg () <$> useReg l r0 <*> useReg l r1) <* freeDone l
 allocReg (MulSubRRR l r0 r1 r2 r3)  = (MulSubRRR () <$> useReg l r0 <*> useReg l r1 <*> useReg l r2 <*> useReg l r3) <* freeDone l
 allocReg (LoadByte l r a)           = (LoadByte () <$> useReg l r <*> useAddr l a) <* freeDone l
+allocReg (XorRR l r0 r1 r2)         = (XorRR () <$> useReg l r0 <*> useReg l r1 <*> useReg l r2) <* freeDone l

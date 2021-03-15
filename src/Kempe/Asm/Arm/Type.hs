@@ -211,6 +211,7 @@ data Arm reg a = Branch { ann :: a, label :: Label } -- like jump
                | MovRWord { ann :: a, dest :: reg, wSrc :: Word }
                | MovRR { ann :: a, dest :: reg, src :: reg }
                | AndRR { ann :: a, dest :: reg, inp1 :: reg, inp2 :: reg }
+               | XorRR { ann :: a, dest :: reg, inp1 :: reg, inp2 :: reg }
                | Load { ann :: a, dest :: reg, addrSrc :: Addr reg }
                | LoadByte { ann :: a, dest :: reg, addrSrc :: Addr reg }
                | LoadLabel { ann :: a, dest :: reg, srcLabel :: BS.ByteString }
@@ -257,6 +258,7 @@ instance (Pretty reg, As32 reg) => Pretty (Arm reg a) where
     pretty (StoreByte _ r a)         = i4 ("strb" <+> as32b r <~> pretty a)
     pretty (MovRR _ r0 r1)           = i4 ("mov" <+> pretty r0 <~> pretty r1)
     pretty (AndRR _ r r0 r1)         = i4 ("and" <+> pretty r <~> pretty r0 <~> pretty r1)
+    pretty (XorRR _ r r0 r1)         = i4 ("eor" <+> pretty r <~> pretty r0 <~> pretty r1)
     pretty (CSet _ r c)              = i4 ("cset" <+> pretty r <~> pretty c)
     pretty (MovRC _ r i)             = i4 ("mov" <+> pretty r <~> prettyInt i)
     pretty (CmpRR _ r0 r1)           = i4 ("cmp" <+> pretty r0 <~> pretty r1)
