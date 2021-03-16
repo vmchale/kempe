@@ -195,6 +195,8 @@ instance Pretty Cond where
     pretty UnsignedLt  = "LO"
 
 -- | For reference: https://static.docs.arm.com/100898/0100/the_a64_Instruction_set_100898_0100.pdf
+--
+-- https://developer.arm.com/documentation/ddi0596/2020-12/Base-Instructions?lang=en
 data Arm reg a = Branch { ann :: a, label :: Label } -- like jump
                | BranchLink { ann :: a, label :: Label } -- like @call@
                | BranchCond { ann :: a, label :: Label, cond :: Cond }
