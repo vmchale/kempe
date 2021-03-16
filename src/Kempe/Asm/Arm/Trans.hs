@@ -84,6 +84,8 @@ evalE (IR.BoolBinOp IR.BoolAnd (IR.Reg r1) (IR.Reg r2)) r           = pure [AndR
 evalE (IR.BoolBinOp IR.BoolOr (IR.Reg r1) (IR.Reg r2)) r            = pure [OrRR () (toAbsReg r) (toAbsReg r1) (toAbsReg r2)]
 evalE (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r1) (IR.ConstInt i)) r  = pure [AddRC () (toAbsReg r) (toAbsReg r1) i]
 evalE (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r1) (IR.ConstInt i)) r = pure [SubRC () (toAbsReg r) (toAbsReg r1) i]
+evalE (IR.Mem 8 (IR.Reg r0)) r = pure [Load () (toAbsReg r) (Reg $ toAbsReg r0)]
+evalE (IR.Mem 1 (IR.Reg r0)) r = pure [LoadByte () (toAbsReg r) (Reg $ toAbsReg r0)]
 evalE (IR.Mem 8 e) r                                                = do
     { r' <- allocTemp64
     ; placeE <- evalE e r'
