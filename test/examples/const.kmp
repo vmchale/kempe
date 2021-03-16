@@ -1,0 +1,4 @@
+id_int : Int -- Int
+       =: [ ]
+
+%foreign cabi id_int

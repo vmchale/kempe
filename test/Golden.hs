@@ -12,6 +12,7 @@ main = defaultMain $
         , goldenOutput "lib/numbertheory.kmp" "test/harness/numbertheory.c" "test/golden/numbertheory.out"
         , goldenOutput "test/examples/hamming.kmp" "test/harness/hamming.c" "test/golden/hamming.out"
         , goldenOutput "test/examples/bool.kmp" "test/harness/bool.c" "test/golden/bool.out"
+        , goldenOutput "test/examples/const.kmp" "test/harness/const.c" "test/golden/const.out"
         ] ++ crossTests
 
 -- These are redundant on arm
