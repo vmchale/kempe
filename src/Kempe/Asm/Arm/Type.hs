@@ -256,7 +256,7 @@ instance (Pretty reg, As32 reg) => Pretty (Arm reg a) where
     pretty (UnsignedDivRR _ r r0 r1) = i4 ("udiv" <+> pretty r <~> pretty r0 <~> pretty r1)
     pretty (Load _ r a)              = i4 ("ldr" <+> pretty r <~> pretty a)
     pretty (LoadByte _ r a)          = i4 ("ldrb" <+> as32b r <~> pretty a)
-    pretty (LoadLabel _ r l)         = i4 ("ldr" <+> pretty r <~> pretty (decodeUtf8 l))
+    pretty (LoadLabel _ r l)         = i4 ("ldr" <+> pretty r <~> "=" <> pretty (decodeUtf8 l))
     pretty (Store _ r a)             = i4 ("str" <+> pretty r <~> pretty a)
     pretty (StoreByte _ r a)         = i4 ("strb" <+> as32b r <~> pretty a)
     pretty (MovRR _ r0 r1)           = i4 ("mov" <+> pretty r0 <~> pretty r1)
