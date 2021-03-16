@@ -6,4 +6,5 @@ program-options
   alex-options: -g
   happy-options: -gcsa
 
-constraints: kempe -no-par
+package kempe
+  ghc-options: -j +RTS -A32m

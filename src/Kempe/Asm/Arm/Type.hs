@@ -90,7 +90,7 @@ data ArmReg = X0
             | X27
             | X28
             | X29
-            | X30
+            | X30 -- ^ This is the link register?
             | SP -- ^ Don't use this
             deriving (Enum, Eq, Ord, Generic, NFData)
 
@@ -195,6 +195,8 @@ instance Pretty Cond where
     pretty UnsignedLt  = "LO"
 
 -- | For reference: https://static.docs.arm.com/100898/0100/the_a64_Instruction_set_100898_0100.pdf
+--
+-- https://developer.arm.com/documentation/ddi0596/2020-12/Base-Instructions?lang=en
 data Arm reg a = Branch { ann :: a, label :: Label } -- like jump
                | BranchLink { ann :: a, label :: Label } -- like @call@
                | BranchCond { ann :: a, label :: Label, cond :: Cond }
