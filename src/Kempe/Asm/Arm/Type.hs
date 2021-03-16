@@ -90,7 +90,7 @@ data ArmReg = X0
             | X27
             | X28
             | X29
-            | X30
+            | X30 -- FIXME: this is the link register? lol
             | SP -- ^ Don't use this
             deriving (Enum, Eq, Ord, Generic, NFData)
 
