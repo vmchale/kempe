@@ -71,6 +71,10 @@ irEmit _ (IR.CJump e l0 l1) = do
     ; pure $ eEval ++ [BranchZero () (toAbsReg r) l1, Branch () l0]
     }
 -- example function call (arm) https://www.cs.princeton.edu/courses/archive/spr19/cos217/lectures/15_AssemblyFunctions.pdf
+--
+-- try https://thinkingeek.com/2017/05/29/exploring-aarch64-assembler-chapter-8/
+--
+-- see https://gitlab.haskell.org/ghc/ghc/-/merge_requests/3641 for a compiler!
 
 evalE :: IR.Exp -> IR.Temp -> WriteM [Arm AbsReg ()]
 evalE (IR.ConstInt i) r                                                        = pure [MovRC () (toAbsReg r) i]
