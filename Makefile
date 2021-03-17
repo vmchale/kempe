@@ -12,6 +12,9 @@ BINS := bin/x86_64-linux-kc.lz \
 const.o: test/examples/const.kmp $(HS_SRC)
 	cabal run -w ghc-9.0.1 exe:kc -- $< $@ -g
 
+const.o: const.S
+	as $< -o $@ -g
+
 const: const.o test/harness/const.c
 	gcc $^ -g -o $@
 
