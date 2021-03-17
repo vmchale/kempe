@@ -38,9 +38,9 @@ popLink = [AddRC () LinkReg LinkReg 16, Load () LinkReg (Reg StackPtr)]
 
 irEmit :: SizeEnv -> IR.Stmt -> WriteM [Arm AbsReg ()]
 irEmit _ (IR.Jump l)                    = pure [Branch () l]
-irEmit _ IR.Ret                         = pure (popLink ++ [Ret ()])
+irEmit _ IR.Ret                         = pure [Ret ()]
 irEmit _ (IR.KCall l)                   = pure [BranchLink () l]
-irEmit _ (IR.Labeled l)                 = pure (Label () l : pushLink)
+irEmit _ (IR.Labeled l)                 = pure [Label () l]
 irEmit _ (IR.WrapKCall Kabi (_, _) n l) = pure $ [BSLabel () n] ++ pushLink ++ [BranchLink () l] ++ popLink ++ [Ret ()]
 irEmit env (IR.WrapKCall Cabi (is, [o]) n l) | all (\i -> size' env i <= 8) is && size' env o <= 8 && length is <= 8 = do
     { let sizes = fmap (size' env) is
