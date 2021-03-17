@@ -9,6 +9,10 @@ BINS := bin/x86_64-linux-kc.lz \
     bin/x86_64-linux-kc.gz \
     bin/x86_64-linux-kc.zst
 
+const: $(HS_SRC) test/examples/const.kmp test/harness/const.c
+	cabal run -w ghc-9.0.1 exe:kc -- test/examples/const.kmp const.o -g
+	gcc const.o test/harness/const.c -g -o $@
+
 moddeps.svg: $(HS_SRC)
 	graphmod -i src | dot -Tsvg -o $@
 
