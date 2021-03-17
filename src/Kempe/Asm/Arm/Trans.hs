@@ -30,18 +30,24 @@ loadSize 1 = LoadByte ()
 loadSize 8 = Load ()
 loadSize _ = error "Load not supported or incoherent."
 
+pushLink :: [Arm AbsReg ()]
+pushLink = [SubRC () LinkReg LinkReg 16, Store () LinkReg (Reg StackPtr)]
+
+popLink :: [Arm AbsReg ()]
+popLink = [AddRC () LinkReg LinkReg 16, Load () LinkReg (Reg StackPtr)]
+
 irEmit :: SizeEnv -> IR.Stmt -> WriteM [Arm AbsReg ()]
 irEmit _ (IR.Jump l)                    = pure [Branch () l]
-irEmit _ IR.Ret                         = pure [Ret ()]
+irEmit _ IR.Ret                         = pure (popLink ++ [Ret ()])
 irEmit _ (IR.KCall l)                   = pure [BranchLink () l]
-irEmit _ (IR.Labeled l)                 = pure [Label () l]
-irEmit _ (IR.WrapKCall Kabi (_, _) n l) = pure [BSLabel () n, BranchLink () l, Ret ()]
+irEmit _ (IR.Labeled l)                 = pure (Label () l : pushLink)
+irEmit _ (IR.WrapKCall Kabi (_, _) n l) = pure $ [BSLabel () n] ++ pushLink ++ [BranchLink () l] ++ popLink ++ [Ret ()]
 irEmit env (IR.WrapKCall Cabi (is, [o]) n l) | all (\i -> size' env i <= 8) is && size' env o <= 8 && length is <= 8 = do
     { let sizes = fmap (size' env) is
     ; let offs = scanl' (+) 0 sizes
     ; let totalSize = sizeStack env is
     ; let argRegs = [CArg0, CArg1, CArg2, CArg3, CArg4, CArg5, CArg6, CArg7]
-    ; pure $ [BSLabel () n, LoadLabel () DataPointer "kempe_data", GnuMacro () "calleesave"] ++ zipWith3 (\r sz i -> storeSize sz r (AddRCPlus DataPointer i)) argRegs sizes offs ++ [AddRC () DataPointer DataPointer totalSize, BranchLink () l, loadSize (size' env o) CArg0 (AddRCPlus DataPointer (negate $ size' env o)), GnuMacro () "calleerestore", Ret ()]
+    ; pure $ [BSLabel () n] ++ pushLink ++ [LoadLabel () DataPointer "kempe_data", GnuMacro () "calleesave"] ++ zipWith3 (\r sz i -> storeSize sz r (AddRCPlus DataPointer i)) argRegs sizes offs ++ [AddRC () DataPointer DataPointer totalSize, BranchLink () l, loadSize (size' env o) CArg0 (AddRCPlus DataPointer (negate $ size' env o)), GnuMacro () "calleerestore"] ++ popLink ++ [Ret ()]
     }
 irEmit _ (IR.MovMem (IR.Reg r) 8 (IR.Reg r')) =
     pure [Store () (toAbsReg r') (Reg $ toAbsReg r)]
