@@ -41,6 +41,8 @@ data AbsReg = DataPointer
             | CArg5
             | CArg6
             | CArg7 -- x7
+            | LinkReg -- so we can save before/after branch-links
+            | StackPtr -- so we can save in translation phase
             deriving (Generic, NFData)
 
 instance Pretty AbsReg where
@@ -54,6 +56,8 @@ instance Pretty AbsReg where
     pretty CArg5        = "X5"
     pretty CArg6        = "X6"
     pretty CArg7        = "X7"
+    pretty LinkReg      = "X30"
+    pretty StackPtr     = "SP"
 
 instance As32 AbsReg where
     as32b = pretty
@@ -314,10 +318,10 @@ calleeRestore =
 callerSave :: Doc ann
 callerSave =
     ".macro callersave"
-    <#> i4 "sub sp, sp, #(8 * 8)" -- only 7 stored, but arm stack is 16-byte aligned
+    <#> i4 "sub sp, sp, #(8 * 8)"
     <#> prettyLines (fmap pretty stores)
     <#> ".endm"
-    where toPush = [X9 .. X15]
+    where toPush = X30 : [X9 .. X15]
           stores = zipWith (\r o -> Store () r (AddRCPlus SP (8*o))) toPush [0..]
 
 callerRestore :: Doc ann
@@ -326,7 +330,7 @@ callerRestore =
     <#> prettyLines (fmap pretty loads)
     <#> i4 "add sp, sp, #(8 * 8)"
     <#> ".endm"
-    where toPop = [X9 .. X15]
+    where toPop = X30 : [X9 .. X15]
           loads = zipWith (\r o -> Load () r (AddRCPlus SP (8*o))) toPop [0..]
 
 prettyLive :: (As32 reg, Pretty reg) => Arm reg Liveness -> Doc ann

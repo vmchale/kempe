@@ -90,6 +90,7 @@ useAddr l (AddRRPlus r0 r1) = AddRRPlus <$> useReg l r0 <*> useReg l r1
 useReg :: Liveness -> AbsReg -> AllocM ArmReg
 useReg l (AllocReg i) = useRegInt l i
 useReg _ DataPointer  = pure X19
+useReg _ LinkReg      = pure X30
 useReg _ CArg0        = pure X0
 useReg _ CArg1        = pure X1 -- shouldn't clobber anything because it's just used in function wrapper to push onto the kempe stack
 useReg _ CArg2        = pure X2
@@ -98,6 +99,7 @@ useReg _ CArg4        = pure X4
 useReg _ CArg5        = pure X5
 useReg _ CArg6        = pure X6
 useReg _ CArg7        = pure X7
+useReg _ StackPtr     = pure SP
 
 allocReg :: Arm AbsReg Liveness -> AllocM (Arm ArmReg ())
 allocReg Ret{}                      = pure $ Ret ()
