@@ -34,7 +34,7 @@ pushLink :: [Arm AbsReg ()]
 pushLink = [SubRC () LinkReg LinkReg 16, Store () LinkReg (Reg StackPtr)]
 
 popLink :: [Arm AbsReg ()]
-popLink = [AddRC () LinkReg LinkReg 16, Load () LinkReg (Reg StackPtr)]
+popLink = [Load () LinkReg (Reg StackPtr), AddRC () LinkReg LinkReg 16]
 
 irEmit :: SizeEnv -> IR.Stmt -> WriteM [Arm AbsReg ()]
 irEmit _ (IR.Jump l)                    = pure [Branch () l]
