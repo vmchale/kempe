@@ -9,9 +9,11 @@ BINS := bin/x86_64-linux-kc.lz \
     bin/x86_64-linux-kc.gz \
     bin/x86_64-linux-kc.zst
 
-const: $(HS_SRC) test/examples/const.kmp test/harness/const.c
-	cabal run -w ghc-9.0.1 exe:kc -- test/examples/const.kmp const.o -g
-	gcc const.o test/harness/const.c -g -o $@
+const.o: test/examples/const.kmp $(HS_SRC)
+	cabal run -w ghc-9.0.1 exe:kc -- $< $@ -g
+
+const: const.o test/harness/const.c
+	gcc $^ -g -o $@
 
 moddeps.svg: $(HS_SRC)
 	graphmod -i src | dot -Tsvg -o $@
@@ -53,7 +55,7 @@ install:
 	strip $$(readlink -f $$(which kc))
 
 clean:
-	rm -rf dist-newstyle *.rlib *.d *.rmeta *.o stack.yaml.lock factorial.S factorial splitmix.S numbertheory.S numbertheory *.so bin moddeps.svg packdeps.svg
+	rm -rf dist-newstyle *.rlib *.d *.rmeta *.o stack.yaml.lock factorial.S factorial splitmix.S numbertheory.S numbertheory *.so bin moddeps.svg packdeps.svg const
 
 %.zst: %
 	sak compress $< $@ --best
