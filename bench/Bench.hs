@@ -6,8 +6,8 @@ import           Data.Bifunctor            (Bifunctor, bimap)
 import qualified Data.ByteString.Lazy      as BSL
 import qualified Data.Text                 as T
 import           Kempe.Asm.Liveness
-import           Kempe.Asm.X86.ControlFlow
-import           Kempe.Asm.X86.Linear
+import qualified Kempe.Asm.X86.ControlFlow as X86
+import qualified Kempe.Asm.X86.Linear      as X86
 import           Kempe.Asm.X86.Trans
 import           Kempe.Check.Pattern
 import           Kempe.File
@@ -72,8 +72,8 @@ main =
                         ]
                   , env x86Env $ \ ~(s, f) ->
                       bgroup "Control flow graph"
-                        [ bench "X86 (examples/factorial.kmp)" $ nf mkControlFlow f
-                        , bench "X86 (examples/splitmix.kmp)" $ nf mkControlFlow s
+                        [ bench "X86 (examples/factorial.kmp)" $ nf X86.mkControlFlow f
+                        , bench "X86 (examples/splitmix.kmp)" $ nf X86.mkControlFlow s
                         ]
                   , env cfEnv $ \ ~(s, f, n, r) ->
                       bgroup "Liveness analysis"
@@ -84,9 +84,9 @@ main =
                         ]
                   , env absX86 $ \ ~(s, f, n) ->
                       bgroup "Register allocation"
-                        [ bench "X86/linear (examples/factorial.kmp)" $ nf allocRegs f
-                        , bench "X86/linear (examples/splitmix.kmp)" $ nf allocRegs s
-                        , bench "X86/linear (lib/numbertheory.kmp)" $ nf allocRegs n
+                        [ bench "X86/linear (examples/factorial.kmp)" $ nf X86.allocRegs f
+                        , bench "X86/linear (examples/splitmix.kmp)" $ nf X86.allocRegs s
+                        , bench "X86/linear (lib/numbertheory.kmp)" $ nf X86.allocRegs n
                         ]
                   , bgroup "Pipeline"
                         [ bench "Validate (examples/factorial.kmp)" $ nfIO (tcFile "examples/factorial.kmp")
@@ -133,10 +133,10 @@ main =
           x86Env = (,) <$> splitmixX86 <*> facX86
           numX86 = uncurry x86Parsed <$> num
           ratX86 = uncurry x86Parsed <$> rat
-          facX86Cf = mkControlFlow <$> facX86
-          splitmixX86Cf = mkControlFlow <$> splitmixX86
-          numX86Cf = mkControlFlow <$> numX86
-          ratX86Cf = mkControlFlow <$> ratX86
+          facX86Cf = X86.mkControlFlow <$> facX86
+          splitmixX86Cf = X86.mkControlFlow <$> splitmixX86
+          numX86Cf = X86.mkControlFlow <$> numX86
+          ratX86Cf = X86.mkControlFlow <$> ratX86
           cfEnv = (,,,) <$> splitmixX86Cf <*> facX86Cf <*> numX86Cf <*> ratX86Cf
           facAbsX86 = reconstruct <$> facX86Cf
           splitmixAbsX86 = reconstruct <$> splitmixX86Cf
