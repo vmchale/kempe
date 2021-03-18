@@ -67,6 +67,12 @@ addControlFlow ((BranchZero _ r l):asms) = do
     ; l_i <- lookupLabel l
     ; pure (BranchZero (ControlAnn i (f [l_i]) (singleton r) IS.empty) r l : asms')
     }
+addControlFlow ((BranchNonzero _ r l):asms) = do
+    { i <- getFresh
+    ; (f, asms') <- next asms
+    ; l_i <- lookupLabel l
+    ; pure (BranchNonzero (ControlAnn i (f [l_i]) (singleton r) IS.empty) r l : asms')
+    }
 addControlFlow ((BranchLink _ l):asms) = do
     { i <- getFresh
     ; nextAsms <- addControlFlow asms
@@ -92,6 +98,7 @@ uses (SubRC _ _ r _)          = singleton r
 uses (LShiftLRR _ _ r r')     = fromList [r, r']
 uses (LShiftRRR _ _ r r')     = fromList [r, r']
 uses (BranchZero _ r _)       = singleton r
+uses (BranchNonzero _ r _)    = singleton r
 uses (AddRC _ _ r _)          = singleton r
 uses (MulRR _ _ r r')         = fromList [r, r']
 uses (AndRR _ _ r r')         = fromList [r, r']
@@ -99,6 +106,7 @@ uses (OrRR _ _ r r')          = fromList [r, r']
 uses (SignedDivRR _ _ r r')   = fromList [r, r']
 uses (UnsignedDivRR _ _ r r') = fromList [r, r']
 uses (CmpRR _ r r')           = fromList [r, r']
+uses (CmpRC _ r _)            = singleton r
 uses (Load _ _ a)             = addrRegs a
 uses (LoadByte _ _ a)         = addrRegs a
 uses (Neg _ _ r)              = singleton r

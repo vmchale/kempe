@@ -134,3 +134,5 @@ allocReg (MulSubRRR l r0 r1 r2 r3)  = (MulSubRRR () <$> useReg l r0 <*> useReg l
 allocReg (LoadByte l r a)           = (LoadByte () <$> useReg l r <*> useAddr l a) <* freeDone l
 allocReg (XorRR l r0 r1 r2)         = (XorRR () <$> useReg l r0 <*> useReg l r1 <*> useReg l r2) <* freeDone l
 allocReg (OrRR l r0 r1 r2)          = (OrRR () <$> useReg l r0 <*> useReg l r1 <*> useReg l r2) <* freeDone l
+allocReg (BranchNonzero l r lbl)    = (BranchNonzero () <$> useReg l r <*> pure lbl) <* freeDone l
+allocReg (CmpRC l r c)              = (CmpRC () <$> useReg l r <*> pure c) <* freeDone l

@@ -205,6 +205,7 @@ data Arm reg a = Branch { ann :: a, label :: Label } -- like jump
                | BranchLink { ann :: a, label :: Label } -- like @call@
                | BranchCond { ann :: a, label :: Label, cond :: Cond }
                | BranchZero { ann :: a, condReg :: reg, label :: Label }
+               | BranchNonzero { ann :: a, condReg :: reg, label :: Label }
                | AddRR { ann :: a, res :: reg, inp1 :: reg, inp2 :: reg }
                | AddRC { ann :: a, res :: reg, inp1 :: reg, int :: Int64 }
                | SubRC { ann :: a, res :: reg, inp1 :: reg, int :: Int64 }
@@ -225,6 +226,7 @@ data Arm reg a = Branch { ann :: a, label :: Label } -- like jump
                | Store { ann :: a, src :: reg, addrDest :: Addr reg }
                | StoreByte { ann :: a, src :: reg, addrDest :: Addr reg } -- ^ @strb@ in Aarch64 assembly, "store byte"
                | CmpRR { ann :: a, inp1 :: reg, inp2 :: reg }
+               | CmpRC { ann :: a, inp1 :: reg, int :: Int64 }
                | CSet { ann :: a, dest :: reg, cond :: Cond }
                | Ret { ann :: a }
                | Label { ann :: a, label :: Label }
@@ -247,6 +249,7 @@ instance (Pretty reg, As32 reg) => Pretty (Arm reg a) where
     pretty (BranchLink _ l)          = i4 ("bl" <+> prettyLabel l)
     pretty (BranchCond _ l c)        = i4 ("b." <> pretty c <+> prettyLabel l)
     pretty (BranchZero _ r l)        = i4 ("cbz" <+> pretty r <~> prettyLabel l)
+    pretty (BranchNonzero _ r l)     = i4 ("cbnz" <+> pretty r <~> prettyLabel l)
     pretty Ret{}                     = i4 "ret"
     pretty (BSLabel _ b)             = let pl = pretty (decodeUtf8 b) in ".globl" <+> pl <> hardline <> pl <> colon
     pretty (MovRWord _ r c)          = i4 ("mov" <+> pretty r <~> prettyUInt c)
@@ -274,6 +277,7 @@ instance (Pretty reg, As32 reg) => Pretty (Arm reg a) where
     pretty (GnuMacro _ b)            = i4 (pretty (decodeUtf8 b))
     pretty (AddRC _ r r0 i)          = i4 ("add" <+> pretty r <~> pretty r0 <~> "#" <> pretty i)
     pretty (SubRC _ r r0 i)          = i4 ("sub" <+> pretty r <~> pretty r0 <~> "#" <> pretty i)
+    pretty (CmpRC _ r0 i)            = i4 ("cmp" <+> pretty r0 <~> "#" <> pretty i)
     pretty (Neg _ r0 r1)             = i4 ("neg" <+> pretty r0 <~> pretty r1)
 
 instance Copointed (Arm reg) where

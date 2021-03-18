@@ -10,7 +10,6 @@ import           Kempe.AST.Size
 import           Kempe.Asm.Arm.Type
 import           Kempe.IR.Monad
 import qualified Kempe.IR.Type      as IR
-import           Prettyprinter      (pretty)
 
 irToAarch64 :: SizeEnv -> IR.WriteSt -> [IR.Stmt] -> [Arm AbsReg ()]
 irToAarch64 env w = runWriteM w . foldMapA (irEmit env)
@@ -81,11 +80,14 @@ irEmit _ (IR.CJump e l0 l1) = do
     ; eEval <- evalE e r
     ; pure $ eEval ++ [BranchZero () (toAbsReg r) l1, Branch () l0]
     }
+irEmit _ (IR.MJump e l) = do
+    { r <- allocTemp64
+    ; eEval <- evalE e r
+    ; pure $ eEval ++ [BranchNonzero () (toAbsReg r) l] -- this is acceptable since in theory e is only 0 or 1
+    }
 -- example function call (arm) https://www.cs.princeton.edu/courses/archive/spr19/cos217/lectures/15_AssemblyFunctions.pdf
 --
 -- try https://thinkingeek.com/2017/05/29/exploring-aarch64-assembler-chapter-8/
---
--- see https://gitlab.haskell.org/ghc/ghc/-/merge_requests/3641 for a compiler!
 
 evalE :: IR.Exp -> IR.Temp -> WriteM [Arm AbsReg ()]
 evalE (IR.ConstInt i) r                                                        = pure [MovRC () (toAbsReg r) i]
@@ -121,6 +123,18 @@ evalE (IR.ExprIntRel IR.IntLtIR (IR.Reg r1) (IR.Reg r2)) r =
 evalE (IR.ExprIntRel IR.IntEqIR (IR.Reg r1) (IR.Reg r2)) r =
     pure [CmpRR () (toAbsReg r1) (toAbsReg r2), CSet () (toAbsReg r) Eq]
 evalE (IR.ExprIntRel IR.IntEqIR e e') r = do
+    { r0 <- allocTemp64
+    ; r1 <- allocTemp64
+    ; eEval <- evalE e r0
+    ; e'Eval <- evalE e' r1
+    ; pure $ eEval ++ e'Eval ++ [CmpRR () (toAbsReg r0) (toAbsReg r1), CSet () (toAbsReg r) Eq]
+    }
+evalE (IR.EqByte e (IR.ConstTag b)) r = do
+    { r0 <- allocTemp64
+    ; eEval <- evalE e r0
+    ; pure $ eEval ++ [CmpRC () (toAbsReg r0) (fromIntegral b), CSet () (toAbsReg r) Eq]
+    }
+evalE (IR.EqByte e e') r = do
     { r0 <- allocTemp64
     ; r1 <- allocTemp64
     ; eEval <- evalE e r0
