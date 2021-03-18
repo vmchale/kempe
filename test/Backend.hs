@@ -50,6 +50,7 @@ backendTests =
         , armCodegen "examples/factorial.kmp"
         , armCodegen "lib/numbertheory.kmp"
         , armCodegen "lib/gaussian.kmp"
+        , armCodegen "lib/rational.kmp"
         ]
 
 codegen :: FilePath -> TestTree
