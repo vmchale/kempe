@@ -29,6 +29,27 @@ import           Prettyprinter.Ext
 
 type Label = Word
 
+-- | Used to implement 'MovRRLower' pretty-printer
+class As8 reg where
+    -- | Return the register for addressing the lower 8 bits given a 64-bit
+    -- register
+    as8 :: reg -> reg
+
+instance As8 X86Reg where
+    as8 R8  = R8b
+    as8 R9  = R9b
+    as8 R10 = R10b
+    as8 R11 = R11b
+    as8 R12 = R12b
+    as8 R13 = R13b
+    as8 R14 = R14b
+    as8 R15 = R15b
+    as8 Rsi = Sil
+    as8 Rdi = Dil
+    as8 Rax = AL
+    as8 Rdx = DL
+    as8 r   = r -- other cases, as8 r8b = r8b, etc.
+
 -- currently just has 64-bit and 8-bit registers
 data X86Reg = R8
             | R9
@@ -159,6 +180,7 @@ data X86 reg a = PushReg { ann :: a, rSrc :: reg }
                | MovAR { ann :: a, addrDest :: Addr reg, rSrc :: reg }
                | MovABool { ann :: a, addrDest :: Addr reg, boolSrc :: Word8 }
                | MovRR { ann :: a, rDest :: reg, rSrc :: reg } -- for convenience
+               | MovRRLower { ann :: a, rDest :: reg, rSrc :: reg } -- ^ Doesn't correspond 1-1 to an instruction, writes a 64-bit register to an 8-bit register
                | MovRC { ann :: a, rDest :: reg, iSrc :: Int64 }
                | MovRL { ann :: a, rDest :: reg, bsLabel :: BS.ByteString }
                | MovAC { ann :: a, addrDest :: Addr reg, iSrc :: Int64 }
@@ -210,11 +232,11 @@ instance Pretty reg => Pretty (Addr reg) where
     pretty (AddrRCMinus r c)     = brackets (pretty r <> "-" <> pretty c)
     pretty (AddrRRScale r0 r1 c) = brackets (pretty r0 <> "+" <> pretty r1 <> "*" <> pretty c)
 
-prettyLive :: Pretty reg => X86 reg Liveness -> Doc ann
+prettyLive :: (As8 reg, Pretty reg) => X86 reg Liveness -> Doc ann
 prettyLive r = pretty r <+> pretty (ann r)
 
 -- intel syntax
-instance Pretty reg => Pretty (X86 reg a) where
+instance (As8 reg, Pretty reg) => Pretty (X86 reg a) where
     pretty (PushReg _ r)        = i4 ("push" <+> pretty r)
     pretty (PushMem _ a)        = i4 ("push" <+> pretty a)
     pretty (PopMem _ a)         = i4 ("pop qword" <+> pretty a)
@@ -230,11 +252,12 @@ instance Pretty reg => Pretty (X86 reg a) where
     pretty (MovRCi8 _ r i)      = i4 ("mov byte" <+> pretty r <> "," <+> pretty i)
     pretty (MovRWord _ r w)     = i4 ("mov qword" <+> pretty r <> "," <+> prettyHex w)
     pretty (MovRR _ r0 r1)      = i4 ("mov" <+> pretty r0 <> "," <+> pretty r1)
+    pretty (MovRRLower _ r0 r1) = i4 ("mov" <+> pretty r0 <> "," <+> pretty (as8 r1))
     pretty (MovRC _ r i)        = i4 ("mov" <+> pretty r <> "," <+> pretty i)
     pretty (MovAC _ a i)        = i4 ("mov qword" <+> pretty a <> "," <+> pretty i)
     pretty (MovRCBool _ r b)    = i4 ("mov" <+> pretty r <> "," <+> pretty b)
     pretty (MovRL _ r bl)       = i4 ("mov" <+> pretty r <> "," <+> pretty (decodeUtf8 bl))
-    pretty (AddRR _ r0 r1)      = i4 ("add" <+> pretty r0 <> "," <> pretty r1)
+    pretty (AddRR _ r0 r1)      = i4 ("add" <+> pretty r0 <> "," <+> pretty r1)
     pretty (AddAC _ a c)        = i4 ("add" <+> pretty a <> "," <+> pretty c)
     pretty (SubRR _ r0 r1)      = i4 ("sub" <+> pretty r0 <> "," <> pretty r1)
     pretty (ImulRR _ r0 r1)     = i4 ("imul" <+> pretty r0 <> "," <+> pretty r1)
@@ -268,10 +291,10 @@ instance Pretty reg => Pretty (X86 reg a) where
     pretty (NasmMacro0 _ b)     = i4 (pretty (decodeUtf8 b))
     pretty (CallBS _ b)         = i4 ("call" <+> pretty (TL.decodeUtf8 b))
 
-prettyAsm :: Pretty reg => [X86 reg a] -> Doc ann
+prettyAsm :: (As8 reg, Pretty reg) => [X86 reg a] -> Doc ann
 prettyAsm = ((prolegomena <#> macros <#> "section .text" <> hardline) <>) . prettyLines . fmap pretty
 
-prettyDebugAsm :: Pretty reg => [X86 reg Liveness] -> Doc ann
+prettyDebugAsm :: (As8 reg, Pretty reg) => [X86 reg Liveness] -> Doc ann
 prettyDebugAsm = concatWith (<#>) . fmap prettyLive
 
 prolegomena :: Doc ann

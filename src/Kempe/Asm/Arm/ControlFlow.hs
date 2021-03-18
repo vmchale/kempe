@@ -98,6 +98,7 @@ uses (SubRC _ _ r _)          = singleton r
 uses (LShiftLRR _ _ r r')     = fromList [r, r']
 uses (LShiftRRR _ _ r r')     = fromList [r, r']
 uses (BranchZero _ r _)       = singleton r
+uses (MovRK _ r _ _)          = singleton r -- since MovRK only affects 16 bits, it depends on the previous r to be live!
 uses (BranchNonzero _ r _)    = singleton r
 uses (AddRC _ _ r _)          = singleton r
 uses (MulRR _ _ r r')         = fromList [r, r']
@@ -120,6 +121,7 @@ defs :: Arm AbsReg ann -> IS.IntSet
 defs (MovRR _ r _)           = singleton r
 defs (MovRC _ r _)           = singleton r
 defs (MovRWord _ r _)        = singleton r
+defs (MovRK _ r _ _)         = singleton r
 defs (AddRR _ r _ _)         = singleton r
 defs (SubRR _ r _ _)         = singleton r
 defs (AddRC _ r _ _)         = singleton r

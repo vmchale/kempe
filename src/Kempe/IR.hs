@@ -118,10 +118,10 @@ writeAtoms env l stmts =
 
 intShift :: IntBinOp -> TempM [Stmt]
 intShift cons = do
-    t0 <- getTemp8
+    t0 <- getTemp64
     t1 <- getTemp64
     pure $
-        pop 1 t0 ++ pop 8 t1 ++ push 8 (ExprIntBinOp cons (Reg t1) (Reg t0))
+        pop 8 t0 ++ pop 8 t1 ++ push 8 (ExprIntBinOp cons (Reg t1) (Reg t0))
 
 boolOp :: BoolBinOp -> TempM [Stmt]
 boolOp op = do

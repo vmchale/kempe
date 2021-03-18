@@ -1,6 +1,9 @@
 # kempe
 
+## 0.2.0.0
+
   * Add aarch64 backend
+  * Change type of shifts, they no longer take an `Int8` as the second argument.
 
 ## 0.1.1.3
 

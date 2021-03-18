@@ -51,6 +51,7 @@ backendTests =
         , armCodegen "lib/numbertheory.kmp"
         , armCodegen "lib/gaussian.kmp"
         , armCodegen "lib/rational.kmp"
+        , armCodegen "examples/splitmix.kmp"
         ]
 
 codegen :: FilePath -> TestTree

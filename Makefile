@@ -68,7 +68,7 @@ clean:
 
 bin/x86_64-linux-kc: $(HS_SRC)
 	@mkdir -p $(dir $@)
-	cabal build exe:kc --enable-executable-static
+	cabal build exe:kc -w ghc-9.0.1
 	export BIN=$$(fd 'x86_64-linux.*kc$$' dist-newstyle -t x -p -I); \
 	    cp $$BIN $@ ; \
 	    strip $@

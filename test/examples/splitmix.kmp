@@ -1,8 +1,8 @@
 next : Word -- Word Word
      =: [ 0x9e3779b97f4a7c15u +~ dup
-          dup 30i8 >>~ xoru 0xbf58476d1ce4e5b9u *~
-          dup 27i8 >>~ xoru 0x94d049bb133111ebu *~
-          dup 31i8 >>~ xoru
+          dup 30u >>~ xoru 0xbf58476d1ce4e5b9u *~
+          dup 27u >>~ xoru 0x94d049bb133111ebu *~
+          dup 31u >>~ xoru
         ]
 
 from_seed : Word -- Word

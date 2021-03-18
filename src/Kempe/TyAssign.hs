@@ -205,13 +205,13 @@ intBinOp :: StackType ()
 intBinOp = StackType S.empty [TyBuiltin () TyInt, TyBuiltin () TyInt] [TyBuiltin () TyInt]
 
 intShift :: StackType ()
-intShift = StackType S.empty [TyBuiltin () TyInt, TyBuiltin () TyInt8] [TyBuiltin () TyInt]
+intShift = StackType S.empty [TyBuiltin () TyInt, TyBuiltin () TyInt] [TyBuiltin () TyInt]
 
 wordBinOp :: StackType ()
 wordBinOp = StackType S.empty [TyBuiltin () TyWord, TyBuiltin () TyWord] [TyBuiltin () TyWord]
 
 wordShift :: StackType ()
-wordShift = StackType S.empty [TyBuiltin () TyWord, TyBuiltin () TyInt8] [TyBuiltin () TyWord]
+wordShift = StackType S.empty [TyBuiltin () TyWord, TyBuiltin () TyWord] [TyBuiltin () TyWord]
 
 tyLookup :: Name a -> TypeM a (StackType a)
 tyLookup n@(Name _ (Unique i) l) = do

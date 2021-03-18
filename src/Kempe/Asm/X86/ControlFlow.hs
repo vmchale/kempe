@@ -127,6 +127,7 @@ uses (PopMem _ a)        = addrRegs a
 uses (MovRA _ _ a)       = addrRegs a
 uses (MovAR _ a r)       = singleton r <> addrRegs a
 uses (MovRR _ _ r)       = singleton r
+uses (MovRRLower _ _ r)  = singleton r
 uses (AddRR _ r r')      = fromList [r, r']
 uses (SubRR _ r r')      = fromList [r, r']
 uses (ImulRR _ r r')     = fromList [r, r']
@@ -158,6 +159,7 @@ uses _                   = IS.empty
 defs :: X86 AbsReg ann -> IS.IntSet
 defs (MovRA _ r _)      = singleton r
 defs (MovRR _ r _)      = singleton r
+defs (MovRRLower _ r _) = singleton r
 defs (MovRC _ r _)      = singleton r
 defs (MovRCBool _ r _)  = singleton r
 defs (MovRCi8 _ r _)    = singleton r

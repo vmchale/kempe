@@ -15,6 +15,8 @@ infixr 6 <#>
 infixr 6 <##>
 infixr 6 <~>
 
+--- ₀₁₂₃₄₅₆₇₈₉
+
 (<#>) :: Doc a -> Doc a -> Doc a
 (<#>) x y = x <> hardline <> y
 
