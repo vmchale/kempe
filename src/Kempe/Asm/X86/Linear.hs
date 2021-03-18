@@ -221,6 +221,7 @@ allocReg (SubRR l r0 r1)                       = (SubRR () <$> useReg l r0 <*> u
 allocReg (MovAR l a r)                         = (MovAR () <$> useAddr l a <*> useReg l r) <* freeDone l
 allocReg (MovAC _ (Reg DataPointer) i)         = pure $ MovAC () (Reg Rbx) i
 allocReg (MovRR l r0 r1)                       = (MovRR () <$> useReg l r0 <*> useReg l r1) <* freeDone l
+allocReg (MovRRLower l r0 r1)                  = (MovRRLower () <$> useReg l r0 <*> useReg l r1) <* freeDone l
 allocReg (MovRA l r a)                         = (MovRA () <$> useReg l r <*> useAddr l a) <* freeDone l
 allocReg (CmpRegReg l r0 r1)                   = (CmpRegReg () <$> useReg l r0 <*> useReg l r1) <* freeDone l
 allocReg (CmpRegBool l r b)                    = (CmpRegBool () <$> useReg l r <*> pure b) <* freeDone l
