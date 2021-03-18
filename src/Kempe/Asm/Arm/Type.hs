@@ -169,7 +169,7 @@ instance As32 ArmReg where
 data Addr reg = Reg reg
               | AddRRPlus reg reg
               | AddRCPlus reg Int64
-              deriving (Generic, NFData)
+              deriving (Eq, Generic, NFData)
 
 instance (Pretty reg) => Pretty (Addr reg) where
     pretty (Reg reg)         = brackets (pretty reg)

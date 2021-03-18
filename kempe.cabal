@@ -69,6 +69,7 @@ library kempe-modules
         Kempe.Error.Warning
         Kempe.AST.Size
         Kempe.Asm.Arm.Type
+        Kempe.Asm.Arm.Opt
         Kempe.Asm.X86.Type
         Kempe.Asm.Type
         Kempe.Asm.Pretty
