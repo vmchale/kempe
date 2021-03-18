@@ -9,6 +9,10 @@ BINS := bin/x86_64-linux-kc.lz \
     bin/x86_64-linux-kc.gz \
     bin/x86_64-linux-kc.zst
 
+install:
+	cabal install exe:kc --overwrite-policy=always -w ghc-9.0.1
+	strip $$(readlink -f $$(which kc))
+
 const.o: test/examples/const.kmp $(HS_SRC)
 	cabal run -w ghc-9.0.1 exe:kc -- $< $@ -g
 
@@ -49,10 +53,6 @@ factorial: factorial.o test/harness/factorial.c
 
 rts.o: rts.S
 	nasm $^ -f elf64 -o $@
-
-install:
-	cabal install exe:kc --overwrite-policy=always -w ghc-9.0.1
-	strip $$(readlink -f $$(which kc))
 
 clean:
 	rm -rf dist-newstyle *.rlib *.d *.rmeta *.o stack.yaml.lock factorial.S factorial splitmix.S numbertheory.S numbertheory *.so bin moddeps.svg packdeps.svg const
