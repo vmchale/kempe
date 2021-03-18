@@ -4,8 +4,11 @@ module Kempe.File ( tcFile
                   , dumpTyped
                   , irFile
                   , x86File
+                  , armFile
                   , dumpX86
+                  , dumpArm
                   , compile
+                  , armCompile
                   , dumpIR
                   ) where
 
@@ -20,7 +23,8 @@ import qualified Data.Set                  as S
 import           Data.Tuple.Extra          (fst3)
 import           Data.Typeable             (Typeable)
 import           Kempe.AST
-import           Kempe.Asm.X86.Type
+import qualified Kempe.Asm.Arm.Type        as Arm
+import qualified Kempe.Asm.X86.Type        as X86
 import           Kempe.Check.Lint
 import           Kempe.Check.Pattern
 import           Kempe.Check.TopLevel
@@ -29,7 +33,8 @@ import           Kempe.IR
 import           Kempe.Lexer
 import           Kempe.Module
 import           Kempe.Pipeline
-import           Kempe.Proc.Nasm
+import           Kempe.Proc.As             as As
+import qualified Kempe.Proc.Nasm           as Nasm
 import           Kempe.Shuttle
 import           Kempe.TyAssign
 import           Prettyprinter             (Doc, hardline)
@@ -68,7 +73,10 @@ dumpIR :: Typeable a => Int -> Declarations a c b -> Doc ann
 dumpIR = prettyIR . fst3 .* irGen
 
 dumpX86 :: Typeable a => Int -> Declarations a c b -> Doc ann
-dumpX86 = prettyAsm .* x86Alloc
+dumpX86 = X86.prettyAsm .* x86Alloc
+
+dumpArm :: Typeable a => Int -> Declarations a c b -> Doc ann
+dumpArm = Arm.prettyAsm .* armAlloc
 
 irFile :: FilePath -> IO ()
 irFile fp = do
@@ -80,10 +88,23 @@ x86File fp = do
     res <- parseProcess fp
     putDoc $ uncurry dumpX86 res <> hardline
 
+armFile :: FilePath -> IO ()
+armFile fp = do
+    res <- parseProcess fp
+    putDoc $ uncurry dumpArm res -- don't need hardline b/c arm pp adds it already
+
 compile :: FilePath
         -> FilePath
         -> Bool -- ^ Debug symbols?
         -> IO ()
 compile fp o dbg = do
     res <- parseProcess fp
-    writeO (uncurry dumpX86 res) o dbg
+    Nasm.writeO (uncurry dumpX86 res) o dbg
+
+armCompile :: FilePath
+           -> FilePath
+           -> Bool -- ^ Debug symbols?
+           -> IO ()
+armCompile fp o dbg = do
+    res <- parseProcess fp
+    As.writeO (uncurry dumpArm res) o dbg

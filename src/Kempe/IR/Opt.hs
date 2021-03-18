@@ -4,7 +4,7 @@ module Kempe.IR.Opt ( optimize
 import           Kempe.IR.Type
 
 optimize :: [Stmt] -> [Stmt]
-optimize = sameTarget . successiveBumps . successiveBumps . removeNop
+optimize = sameTarget . successiveBumps . successiveBumps . removeNop . liftOptE
 
 -- | Often IR generation will leave us with something like
 --
@@ -70,10 +70,20 @@ sameTarget
         :ss) | k == k' && e0 == e0' = st : sameTarget ss
 sameTarget (s:ss) = s : sameTarget ss
 
+liftOptE :: [Stmt] -> [Stmt]
+liftOptE []                       = []
+liftOptE ((MovMem e0 sz e1) : ss) = MovMem (optE e0) sz (optE e1) : liftOptE ss
+liftOptE ((MovTemp t e) : ss)     = MovTemp t (optE e) : liftOptE ss
+liftOptE (s:ss)                   = s : liftOptE ss
+
+optE :: Exp -> Exp
+optE (ExprIntBinOp IntPlusIR e (ConstInt 0))  = optE e
+optE (ExprIntBinOp IntMinusIR e (ConstInt 0)) = optE e
+optE e                                        = e
+
 removeNop :: [Stmt] -> [Stmt]
 removeNop = filter (not . isNop)
     where
-        isNop (MovTemp e (ExprIntBinOp IntPlusIR (Reg e') (ConstInt 0))) | e == e' = True
-        isNop (MovTemp e (ExprIntBinOp IntMinusIR (Reg e') (ConstInt 0))) | e == e' = True
+        isNop (MovTemp e (Reg e')) | e == e' = True
         isNop (MovMem e _ (Mem _ e')) | e == e' = True -- the Eq on Exp is kinda weird, but if the syntax trees are the same then they're certainly equivalent semantically
         isNop _ = False

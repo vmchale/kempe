@@ -3,7 +3,8 @@
 
 # Introduction
 
-Kempe is a stack-based language, and `kc` is a toy compiler for x86_64.
+Kempe is a stack-based language, and `kc` is a toy compiler for x86_64 and
+aarch64.
 
 # Installing kc
 
@@ -11,12 +12,12 @@ First, install [cabal](https://www.haskell.org/cabal/download.html) and
 [GHC](https://www.haskell.org/ghc/download.html). Then:
 
 ```
-cabal install kempe --constraint='kempe -no-par'
+cabal install kempe
 ```
 
 This provides `kc`, the Kempe compiler.
 
-`kc` requires [NASM](https://www.nasm.us/), an x86_64 assembler.
+`kc` requires [NASM](https://www.nasm.us/) when targeting x86_64.
 
 ## Editor Integration
 
@@ -252,9 +253,18 @@ int main(int argc, char *argv[]) {
 
 Unlike the frontend and type checker, the backend is dodgy.
 
+### Cross-Compilation
+
+`kc` is a cross-compiler;, the target architecture can be set by passing one of
+`x64` or `aarch64` to `--arch`. By default `kc` targets the architecture of the
+host machine.
+
+You will need the appropriate assembler installed.
+
 ## Internals
 
-Kempe maintains its own stack and stores the pointer in `rbp`.
+Kempe maintains its own stack and stores the pointer in `rbp` (x86) or `x19`
+(aarch64).
 
 Kempe procedures
 do not require any registers to be preserved across function calls.

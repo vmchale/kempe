@@ -2,8 +2,9 @@ module Backend ( backendTests
                ) where
 
 import           Control.DeepSeq           (deepseq)
+import qualified Kempe.Asm.Arm.ControlFlow as Arm
 import           Kempe.Asm.Liveness
-import           Kempe.Asm.X86.ControlFlow
+import qualified Kempe.Asm.X86.ControlFlow as X86
 import           Kempe.Inline
 import           Kempe.Module
 import           Kempe.Monomorphize
@@ -31,10 +32,13 @@ backendTests =
         , irNoYeet "test/data/maybeC.kmp"
         , x86NoYeet "examples/factorial.kmp"
         , x86NoYeet "examples/splitmix.kmp"
+        , armNoYeet "examples/factorial.kmp"
         , controlFlowGraph "examples/factorial.kmp"
         , controlFlowGraph "examples/splitmix.kmp"
+        , controlFlowGraphArm "lib/gaussian.kmp"
         , liveness "examples/factorial.kmp"
         , liveness "examples/splitmix.kmp"
+        , livenessArm "lib/gaussian.kmp"
         , codegen "examples/factorial.kmp"
         , codegen "examples/splitmix.kmp"
         , codegen "lib/numbertheory.kmp"
@@ -43,6 +47,10 @@ backendTests =
         , codegen "test/data/ccall.kmp"
         , codegen "test/data/mutual.kmp"
         , codegen "lib/rational.kmp"
+        , armCodegen "examples/factorial.kmp"
+        , armCodegen "lib/numbertheory.kmp"
+        , armCodegen "lib/gaussian.kmp"
+        , armCodegen "lib/rational.kmp"
         ]
 
 codegen :: FilePath -> TestTree
@@ -51,18 +59,43 @@ codegen fp = testCase ("Generates code without throwing an exception (" ++ fp ++
     let code = uncurry x86Alloc parsed
     assertBool "Doesn't fail" (code `deepseq` True)
 
+armCodegen :: FilePath -> TestTree
+armCodegen fp = testCase ("Generates arm assembly without throwing exception (" ++ fp ++ ")") $ do
+    parsed <- parseProcess fp
+    let code = uncurry armAlloc parsed
+    assertBool "Doesn't fail" (code `deepseq` True)
+
+livenessArm :: FilePath -> TestTree
+livenessArm fp = testCase ("Aarch64 liveness analysis terminates (" ++ fp ++ ")") $ do
+    parsed <- parseProcess fp
+    let arm = uncurry armParsed parsed
+        cf = Arm.mkControlFlow arm
+    assertBool "Doesn't bottom" (reconstruct cf `deepseq` True)
+
 liveness :: FilePath -> TestTree
 liveness fp = testCase ("Liveness analysis terminates (" ++ fp ++ ")") $ do
     parsed <- parseProcess fp
     let x86 = uncurry x86Parsed parsed
-        cf = mkControlFlow x86
+        cf = X86.mkControlFlow x86
     assertBool "Doesn't bottom" (reconstruct cf `deepseq` True)
 
 controlFlowGraph :: FilePath -> TestTree
 controlFlowGraph fp = testCase ("Doesn't crash while creating control flow graph for " ++ fp) $ do
     parsed <- parseProcess fp
     let x86 = uncurry x86Parsed parsed
-    assertBool "Worked without exception" (mkControlFlow x86 `deepseq` True)
+    assertBool "Worked without exception" (X86.mkControlFlow x86 `deepseq` True)
+
+controlFlowGraphArm :: FilePath -> TestTree
+controlFlowGraphArm fp = testCase ("Doesn't crash while creating control flow graph for aarch64 assembly " ++ fp) $ do
+    parsed <- parseProcess fp
+    let arm = uncurry armParsed parsed
+    assertBool "Worked without exception" (Arm.mkControlFlow arm `deepseq` True)
+
+armNoYeet :: FilePath -> TestTree
+armNoYeet fp = testCase ("Selects instructions for " ++ fp) $ do
+    parsed <- parseProcess fp
+    let arm = uncurry armParsed parsed
+    assertBool "Worked without exception" (arm `deepseq` True)
 
 x86NoYeet :: FilePath -> TestTree
 x86NoYeet fp = testCase ("Selects instructions for " ++ fp) $ do

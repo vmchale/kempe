@@ -1,7 +1,7 @@
 # Kempe
 
-Kempe is a stack-based language and toy compiler for x86_64. It requires the
-[nasm](https://nasm.us/) assembler.
+Kempe is a stack-based language and toy compiler for x86_64 and aarch64. It requires the
+[nasm](https://nasm.us/) assembler when targeting x86_64.
 
 Inspiration is primarily from [Mirth](https://github.com/mirth-lang/mirth).
 
@@ -34,8 +34,8 @@ eval "$(kc --bash-completion-script kc)"
     export large arguments (i.e. structs) passed by value.
 
     This is less of an impediment than it sounds like.
-  * Cyclic module imports are not detected
-  * Modules (imports) are kind of defective
+  * Cyclic imports are not detected
+  * Imports are kind of defective
 
 ### Comparison
 

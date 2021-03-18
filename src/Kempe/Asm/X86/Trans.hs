@@ -5,50 +5,27 @@
 module Kempe.Asm.X86.Trans ( irToX86
                            ) where
 
-import           Control.Monad.State.Strict (State, evalState, gets, modify)
 import           Data.Foldable.Ext
-import           Data.List                  (scanl')
-import           Data.Word                  (Word8)
+import           Data.List          (scanl')
+import           Data.Word          (Word8)
 import           Kempe.AST.Size
 import           Kempe.Asm.X86.Type
-import qualified Kempe.IR.Type              as IR
+import           Kempe.IR.Monad
+import qualified Kempe.IR.Type      as IR
 
 toAbsReg :: IR.Temp -> AbsReg
 toAbsReg (IR.Temp8 i)   = AllocReg8 i
 toAbsReg (IR.Temp64 i)  = AllocReg64 i
 toAbsReg IR.DataPointer = DataPointer
 
-type WriteM = State IR.WriteSt
-
 irToX86 :: SizeEnv -> IR.WriteSt -> [IR.Stmt] -> [X86 AbsReg ()]
 irToX86 env w = runWriteM w . foldMapA (irEmit env)
-
-nextLabels :: IR.WriteSt -> IR.WriteSt
-nextLabels (IR.WriteSt ls ts) = IR.WriteSt (tail ls) ts
-
-nextInt :: IR.WriteSt -> IR.WriteSt
-nextInt (IR.WriteSt ls ts) = IR.WriteSt ls (tail ts)
-
-getInt :: WriteM Int
-getInt = gets (head . IR.temps) <* modify nextInt
-
-getLabel :: WriteM IR.Label
-getLabel = gets (head . IR.wlabels) <* modify nextLabels
-
-allocTemp64 :: WriteM IR.Temp
-allocTemp64 = IR.Temp64 <$> getInt
-
-allocTemp8 :: WriteM IR.Temp
-allocTemp8 = IR.Temp8 <$> getInt
 
 allocReg64 :: WriteM AbsReg
 allocReg64 = AllocReg64 <$> getInt
 
 allocReg8 :: WriteM AbsReg
 allocReg8 = AllocReg8 <$> getInt
-
-runWriteM :: IR.WriteSt -> WriteM a -> a
-runWriteM = flip evalState
 
 -- | This should handle 'MovMem's of divers sizes but for now it just does
 -- 1 byte or 8 bytes at a time.
@@ -167,11 +144,11 @@ irEmit _ (IR.MovMem (IR.Reg r) _ (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r1) (IR.R
     }
 irEmit _ (IR.MovMem (IR.Reg r) _ (IR.ExprIntBinOp IR.WordShiftRIR (IR.Reg r1) (IR.Reg r2))) = do
     { r' <- allocReg64
-    ; pure [ MovRR () ShiftExponent (toAbsReg r2), MovRR () r' (toAbsReg r1), ShiftRRR () r' ShiftExponent, MovAR () (Reg $ toAbsReg r) r' ]
+    ; pure [ MovRR () ShiftExponent (toAbsReg r2), MovRR () r' (toAbsReg r1), LShiftRRR () r' ShiftExponent, MovAR () (Reg $ toAbsReg r) r' ]
     }
 irEmit _ (IR.MovMem (IR.Reg r) _ (IR.ExprIntBinOp IR.WordShiftLIR (IR.Reg r1) (IR.Reg r2))) = do
     { r' <- allocReg64
-    ; pure [ MovRR () ShiftExponent (toAbsReg r2), MovRR () r' (toAbsReg r1), ShiftLRR () r' ShiftExponent, MovAR () (Reg $ toAbsReg r) r' ]
+    ; pure [ MovRR () ShiftExponent (toAbsReg r2), MovRR () r' (toAbsReg r1), LShiftLRR () r' ShiftExponent, MovAR () (Reg $ toAbsReg r) r' ]
     }
 irEmit _ (IR.MovMem (IR.Reg r) _ (IR.ExprIntBinOp IR.IntModIR (IR.Reg r1) (IR.Reg r2))) =
     -- QuotRes is rax, so move r1 to rax first
@@ -265,22 +242,22 @@ evalE (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r1) (IR.Reg r2)) r = do
 -- registers across jumps... so evaluating = or < as an expression in
 -- general is hard ?
 evalE (IR.ExprIntBinOp IR.WordShiftLIR (IR.Reg r1) (IR.Reg r2)) r =
-    pure [ MovRR () ShiftExponent (toAbsReg r2), MovRR () (toAbsReg r) (toAbsReg r1), ShiftLRR () (toAbsReg r) ShiftExponent ]
+    pure [ MovRR () ShiftExponent (toAbsReg r2), MovRR () (toAbsReg r) (toAbsReg r1), LShiftLRR () (toAbsReg r) ShiftExponent ]
 evalE (IR.ExprIntBinOp IR.WordShiftRIR (IR.Reg r1) (IR.Reg r2)) r = -- FIXME: maximal munch use evalE recursively
-    pure [ MovRR () ShiftExponent (toAbsReg r2), MovRR () (toAbsReg r) (toAbsReg r1), ShiftRRR () (toAbsReg r) ShiftExponent]
+    pure [ MovRR () ShiftExponent (toAbsReg r2), MovRR () (toAbsReg r) (toAbsReg r1), LShiftRRR () (toAbsReg r) ShiftExponent]
 evalE (IR.ExprIntBinOp IR.WordShiftLIR e0 e1) r = do
     { r0 <- allocTemp64
     ; r1 <- allocTemp8
     ; placeE0 <- evalE e0 r0
     ; placeE1 <- evalE e1 r1
-    ; pure $ placeE0 ++ placeE1 ++ [ MovRR () ShiftExponent (toAbsReg r0), MovRR () (toAbsReg r) (toAbsReg r1), ShiftLRR () (toAbsReg r) ShiftExponent ]
+    ; pure $ placeE0 ++ placeE1 ++ [ MovRR () ShiftExponent (toAbsReg r0), MovRR () (toAbsReg r) (toAbsReg r1), LShiftLRR () (toAbsReg r) ShiftExponent ]
     }
 evalE (IR.ExprIntBinOp IR.WordShiftRIR e0 e1) r = do
     { r0 <- allocTemp64
     ; r1 <- allocTemp8
     ; placeE0 <- evalE e0 r0
     ; placeE1 <- evalE e1 r1
-    ; pure $ placeE0 ++ placeE1 ++ [ MovRR () ShiftExponent (toAbsReg r0), MovRR () (toAbsReg r) (toAbsReg r1), ShiftRRR () (toAbsReg r) ShiftExponent ]
+    ; pure $ placeE0 ++ placeE1 ++ [ MovRR () ShiftExponent (toAbsReg r0), MovRR () (toAbsReg r) (toAbsReg r1), LShiftRRR () (toAbsReg r) ShiftExponent ]
     }
 evalE (IR.ExprIntBinOp IR.IntModIR e0 e1) r = do
     { r0 <- allocTemp64

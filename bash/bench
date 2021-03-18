@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
 
-bench 'gcc-8 -fsyntax-only benchmarks/splitmix64.c' \
-    'clang-11 -fsyntax-only benchmarks/splitmix64.c' \
+bench 'gcc-10 -fsyntax-only benchmarks/splitmix64.c' \
+    'clang-12 -fsyntax-only benchmarks/splitmix64.c' \
     'kc typecheck examples/splitmix.kmp' \
+    'icc -fsyntax-only benchmarks/splitmix64.c' \
     'ghc -fno-code benchmarks/Splitmix.hs' \
-    'gcc-8 -O0 -c benchmarks/splitmix64.c' \
-    'clang-11 -O0 -c benchmarks/splitmix64.c' \
+    'gcc-10 -O0 -c benchmarks/splitmix64.c' \
+    'clang-12 -O0 -c benchmarks/splitmix64.c' \
+    'icc -O0 -c benchmarks/splitmix64.c' \
     'ghc -O0 benchmarks/Splitmix.hs' \
     'rustc --crate-type=lib --emit=dep-info,metadata benchmarks/splitmix.rs' \
     'rustc --crate-type=lib benchmarks/splitmix.rs' \

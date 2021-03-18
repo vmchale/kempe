@@ -22,8 +22,9 @@ import           Data.Text.Encoding      (decodeUtf8)
 import qualified Data.Text.Lazy.Encoding as TL
 import           Data.Word               (Word8)
 import           GHC.Generics            (Generic)
+import           Kempe.Asm.Pretty
 import           Kempe.Asm.Type
-import           Prettyprinter           (Doc, Pretty (pretty), brackets, colon, concatWith, hardline, indent, (<+>))
+import           Prettyprinter           (Doc, Pretty (pretty), brackets, colon, concatWith, hardline, (<+>))
 import           Prettyprinter.Ext
 
 type Label = Word
@@ -112,7 +113,7 @@ data AbsReg = DataPointer
             | CArg4
             | CArg5
             | CArg6
-            | CRet -- x0 on aarch64
+            | CRet
             | ShiftExponent
             | QuotRes -- quotient register for idiv, rax
             | RemRes -- remainder register for idiv, rdx
@@ -174,8 +175,9 @@ data X86 reg a = PushReg { ann :: a, rSrc :: reg }
                | AddAC { ann :: a, addrAdd1 :: Addr reg, iAdd2 :: Int64 }
                | AddRC { ann :: a, rAdd1 :: reg, iAdd2 :: Int64 }
                | SubRC { ann :: a, rSub1 :: reg, iSub2 :: Int64 }
-               | ShiftLRR { ann :: a, rDest :: reg, rSrc :: reg }
-               | ShiftRRR { ann :: a, rDest :: reg, rSrc :: reg }
+               | LShiftLRR { ann :: a, rDest :: reg, rSrc :: reg }
+               | LShiftRRR { ann :: a, rDest :: reg, rSrc :: reg }
+               | AShiftRRR { ann :: a, rDest :: reg, rSrc :: reg }
                | Label { ann :: a, label :: Label }
                | BSLabel { ann :: a, bsLabel :: BS.ByteString }
                | Je { ann :: a, jLabel :: Label }
@@ -201,18 +203,12 @@ data X86 reg a = PushReg { ann :: a, rSrc :: reg }
 instance Copointed (X86 reg) where
     copoint = ann
 
-i4 :: Doc ann -> Doc ann
-i4 = indent 4
-
 instance Pretty reg => Pretty (Addr reg) where
     pretty (Reg r)               = brackets (pretty r)
     pretty (AddrRRPlus r0 r1)    = brackets (pretty r0 <> "+" <> pretty r1)
     pretty (AddrRCPlus r c)      = brackets (pretty r <> "+" <> pretty c)
     pretty (AddrRCMinus r c)     = brackets (pretty r <> "-" <> pretty c)
     pretty (AddrRRScale r0 r1 c) = brackets (pretty r0 <> "+" <> pretty r1 <> "*" <> pretty c)
-
-prettyLabel :: Label -> Doc ann
-prettyLabel l = "kmp_" <> pretty l
 
 prettyLive :: Pretty reg => X86 reg Liveness -> Doc ann
 prettyLive r = pretty r <+> pretty (ann r)
@@ -253,8 +249,9 @@ instance Pretty reg => Pretty (X86 reg a) where
     pretty (CmpRegReg _ r0 r1)  = i4 ("cmp" <+> pretty r0 <> "," <+> pretty r1)
     pretty (CmpAddrBool _ a b)  = i4 ("cmp byte" <+> pretty a <> "," <+> pretty b)
     pretty (CmpRegBool _ r b)   = i4 ("cmp" <+> pretty r <> "," <+> pretty b)
-    pretty (ShiftRRR _ r0 r1)   = i4 ("shr" <+> pretty r0 <> "," <+> pretty r1)
-    pretty (ShiftLRR _ r0 r1)   = i4 ("shl" <+> pretty r0 <> "," <+> pretty r1)
+    pretty (LShiftRRR _ r0 r1)  = i4 ("shr" <+> pretty r0 <> "," <+> pretty r1)
+    pretty (LShiftLRR _ r0 r1)  = i4 ("shl" <+> pretty r0 <> "," <+> pretty r1)
+    pretty (AShiftRRR _ r0 r1)  = i4 ("sar" <+> pretty r0 <> "," <+> pretty r1)
     pretty (IdivR _ r)          = i4 ("idiv" <+> pretty r)
     pretty (DivR _ r)           = i4 ("div" <+> pretty r)
     pretty Cqo{}                = i4 "cqo"
@@ -275,7 +272,7 @@ prettyAsm :: Pretty reg => [X86 reg a] -> Doc ann
 prettyAsm = ((prolegomena <#> macros <#> "section .text" <> hardline) <>) . prettyLines . fmap pretty
 
 prettyDebugAsm :: Pretty reg => [X86 reg Liveness] -> Doc ann
-prettyDebugAsm = concatWith (\x y -> x <> hardline <> y) . fmap prettyLive
+prettyDebugAsm = concatWith (<#>) . fmap prettyLive
 
 prolegomena :: Doc ann
 prolegomena = "BITS 64" <#> "section .bss" <#> "kempe_data: resb 0x8012" -- 32 kb

@@ -50,10 +50,13 @@ library kempe-modules
         Kempe.Check.Pattern
         Kempe.IR
         Kempe.IR.Opt
+        Kempe.Asm.Liveness
         Kempe.Asm.X86.Trans
         Kempe.Asm.X86.ControlFlow
-        Kempe.Asm.Liveness
         Kempe.Asm.X86.Linear
+        Kempe.Asm.Arm.Trans
+        Kempe.Asm.Arm.ControlFlow
+        Kempe.Asm.Arm.Linear
 
     hs-source-dirs:   src
     other-modules:
@@ -65,10 +68,14 @@ library kempe-modules
         Kempe.Error
         Kempe.Error.Warning
         Kempe.AST.Size
+        Kempe.Asm.Arm.Type
         Kempe.Asm.X86.Type
         Kempe.Asm.Type
+        Kempe.Asm.Pretty
         Kempe.IR.Type
+        Kempe.IR.Monad
         Kempe.Proc.Nasm
+        Kempe.Proc.As
         Kempe.Haskell.FFI
         Prettyprinter.Ext
         Data.Foldable.Ext
@@ -210,7 +217,8 @@ test-suite kempe-golden
         process,
         temporary,
         filepath,
-        tasty-golden
+        tasty-golden,
+        tasty-hunit
 
     if impl(ghc >=8.0)
         ghc-options:

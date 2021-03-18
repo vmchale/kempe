@@ -13,16 +13,17 @@ module Kempe.IR.Type ( Stmt (..)
                      , WriteSt (..)
                      ) where
 
-import           Control.DeepSeq      (NFData)
-import qualified Data.ByteString      as BS
-import qualified Data.ByteString.Lazy as BSL
-import           Data.Int             (Int64, Int8)
-import           Data.Semigroup       ((<>))
-import           Data.Text.Encoding   (decodeUtf8)
-import           Data.Word            (Word8)
-import           GHC.Generics         (Generic)
+import           Control.DeepSeq            (NFData)
+import           Control.Monad.State.Strict (State)
+import qualified Data.ByteString            as BS
+import qualified Data.ByteString.Lazy       as BSL
+import           Data.Int                   (Int64, Int8)
+import           Data.Semigroup             ((<>))
+import           Data.Text.Encoding         (decodeUtf8)
+import           Data.Word                  (Word8)
+import           GHC.Generics               (Generic)
 import           Kempe.AST.Size
-import           Prettyprinter        (Doc, Pretty (pretty), braces, brackets, colon, hardline, parens, (<+>))
+import           Prettyprinter              (Doc, Pretty (pretty), braces, brackets, colon, hardline, parens, (<+>))
 import           Prettyprinter.Ext
 
 data WriteSt = WriteSt { wlabels :: [Label]
@@ -75,7 +76,7 @@ instance Pretty Exp where
 data Stmt = Labeled Label
           | Jump Label
           -- conditional jump for ifs
-          | CJump Exp Label Label
+          | CJump Exp Label Label -- ^ If the 'Exp' evaluates to @1@, go to the first label, otherwise go to the second (if-then-else)
           | MJump Exp Label
           | CCall MonoStackType BSL.ByteString
           | KCall Label -- KCall is a jump to a Kempe procedure
@@ -87,7 +88,7 @@ data Stmt = Labeled Label
 
 data Exp = ConstInt Int64
          | ConstInt8 Int8
-         | ConstTag Word8
+         | ConstTag Word8 -- ^ Used to distinguish constructors of a sum type
          | ConstWord Word
          | ConstBool Bool
          | Reg Temp -- TODO: size?

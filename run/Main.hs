@@ -15,9 +15,13 @@ import           Prettyprinter             (LayoutOptions (LayoutOptions), PageW
 import           Prettyprinter.Render.Text (renderIO)
 import           System.Exit               (ExitCode (ExitFailure), exitWith)
 import           System.IO                 (stdout)
+import           System.Info               (arch)
+
+data Arch = Aarch64
+          | X64
 
 data Command = TypeCheck !FilePath
-             | Compile !FilePath !(Maybe FilePath) !Bool !Bool !Bool -- TODO: take arch on cli
+             | Compile !FilePath !(Maybe FilePath) !Arch !Bool !Bool !Bool
              | Format !FilePath
              | Lint !FilePath
 
@@ -35,14 +39,16 @@ yeetIO :: Exception e => Either e a -> IO a
 yeetIO = either throwIO pure
 
 run :: Command -> IO ()
-run (TypeCheck fp)                        = either throwIO pure =<< tcFile fp
-run (Lint fp)                             = maybe (pure ()) throwIO =<< warnFile fp
-run (Compile _ Nothing _ False False)     = putStrLn "No output file specified!"
-run (Compile fp (Just o) dbg False False) = compile fp o dbg
-run (Compile fp Nothing False True False) = irFile fp
-run (Compile fp Nothing False False True) = x86File fp
-run (Format fp)                           = fmt fp
-run _                                     = putStrLn "Invalid combination of CLI options. Try kc --help" *> exitWith (ExitFailure 1)
+run (TypeCheck fp)                                = either throwIO pure =<< tcFile fp
+run (Lint fp)                                     = maybe (pure ()) throwIO =<< warnFile fp
+run (Compile _ Nothing _ _ False False)           = putStrLn "No output file specified!"
+run (Compile fp (Just o) X64 dbg False False)     = compile fp o dbg
+run (Compile fp (Just o) Aarch64 dbg False False) = armCompile fp o dbg
+run (Compile fp Nothing _ False True False)       = irFile fp
+run (Compile fp Nothing X64 False False True)     = x86File fp
+run (Compile fp Nothing Aarch64 False False True) = armFile fp
+run (Format fp)                                   = fmt fp
+run _                                             = putStrLn "Invalid combination of CLI options. Try kc --help" *> exitWith (ExitFailure 1)
 
 kmpFile :: Parser FilePath
 kmpFile = argument str
@@ -61,6 +67,20 @@ debugSwitch = switch
     (long "debug"
     <> short 'g'
     <> help "Include debug symbols")
+
+archFlag :: Parser Arch
+archFlag = fmap parseArch $ optional $ strOption
+    (long "arch"
+    <> metavar "ARCH"
+    <> help "Target architecture (x64 or aarch64)"
+    <> completer (listCompleter ["x64", "aarch64"]))
+    where parseArch :: Maybe String -> Arch
+          parseArch str' = case (str', arch) of
+            (Nothing, "aarch64") -> Aarch64
+            (Nothing, "x86_64")  -> X64
+            (Just "aarch64", _)  -> Aarch64
+            (Just "x64", _)      -> X64
+            _                    -> error "Failed to parse architecture! Try one of x64, aarch64"
 
 irSwitch :: Parser Bool
 irSwitch = switch
@@ -88,12 +108,12 @@ commandP = hsubparser
     <|> compileP
     where
         tcP = TypeCheck <$> kmpFile
-        compileP = Compile <$> kmpFile <*> exeFile <*> debugSwitch <*> irSwitch <*> asmSwitch
+        compileP = Compile <$> kmpFile <*> exeFile <*> archFlag <*> debugSwitch <*> irSwitch <*> asmSwitch
 
 wrapper :: ParserInfo Command
 wrapper = info (helper <*> versionMod <*> commandP)
     (fullDesc
-    <> progDesc "Kempe language compiler, x86_64 backend"
+    <> progDesc "Kempe language compiler for X86_64 and Aarch64"
     <> header "Kempe - a stack-based language")
 
 versionMod :: Parser (a -> a)
