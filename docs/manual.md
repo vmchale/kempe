@@ -81,15 +81,15 @@ For arithmetic:
   * `- : Int Int -- Int`
   * `/ : Int Int -- Int`
   * `% : Int Int -- Int`
-  * `>> : Int Int8 -- Int`
-  * `<< : Int Int8 -- Int`
+  * `>> : Int Int -- Int`
+  * `<< : Int Int -- Int`
   * `xori : Int Int -- Int`
   * `+~ : Word Word -- Word`
   * `*~ : Word Word -- Word`
   * `/~ : Word Word -- Word`
   * `%~ : Word Word -- Word`
-  * `>>~ : Word Int8 -- Word`
-  * `<<~ : Word Int8 -- Word`
+  * `>>~ : Word Word -- Word`
+  * `<<~ : Word Word -- Word`
   * `xoru : Word Word -- Word`
   * `popcount : Word -- Int`
   * `= : Int Int -- Bool`
