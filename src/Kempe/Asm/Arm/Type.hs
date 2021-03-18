@@ -47,7 +47,7 @@ data AbsReg = DataPointer
 
 instance Pretty AbsReg where
     pretty DataPointer  = "datapointer"
-    pretty (AllocReg i) = "Abs" <> pretty i -- ₀₁₂₃₄₅₆₇₈₉
+    pretty (AllocReg i) = "Abs" <> pretty i
     pretty CArg0        = "X0"
     pretty CArg1        = "X1"
     pretty CArg2        = "X2"
