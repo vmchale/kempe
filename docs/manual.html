@@ -246,7 +246,10 @@
 </ul></li>
 <li><a href="#programming-in-kempe">Programming in Kempe</a>
 <ul>
-<li><a href="#invoking-the-compiler">Invoking the Compiler</a></li>
+<li><a href="#invoking-the-compiler">Invoking the Compiler</a>
+<ul>
+<li><a href="#cross-compilation">Cross-Compilation</a></li>
+</ul></li>
 <li><a href="#internals">Internals</a>
 <ul>
 <li><a href="#c-calls">C Calls</a></li>
@@ -265,7 +268,7 @@
 <p>Kempe is a stack-based language, and <code>kc</code> is a toy compiler for x86_64 and aarch64.</p>
 <h1 id="installing-kc">Installing kc</h1>
 <p>First, install <a href="https://www.haskell.org/cabal/download.html">cabal</a> and <a href="https://www.haskell.org/ghc/download.html">GHC</a>. Then:</p>
-<pre><code>cabal install kempe --constraint=&#39;kempe -no-par&#39;</code></pre>
+<pre><code>cabal install kempe</code></pre>
 <p>This provides <code>kc</code>, the Kempe compiler.</p>
 <p><code>kc</code> requires <a href="https://www.nasm.us/">NASM</a> when targeting x86_64.</p>
 <h2 id="editor-integration">Editor Integration</h2>
@@ -409,8 +412,11 @@ nip : a b -- b
 <span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>    printf<span class="op">(</span><span class="st">&quot;%d&quot;</span><span class="op">,</span> fac<span class="op">(</span><span class="dv">3</span><span class="op">));</span></span>
 <span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
 <p>Unlike the frontend and type checker, the backend is dodgy.</p>
+<h3 id="cross-compilation">Cross-Compilation</h3>
+<p><code>kc</code> is a cross-compiler;, the target architecture can be set by passing one of <code>x64</code> or <code>aarch64</code> to <code>--arch</code>. By default <code>kc</code> targets the architecture of the host machine.</p>
+<p>You will need the appropriate assembler installed.</p>
 <h2 id="internals">Internals</h2>
-<p>Kempe maintains its own stack and stores the pointer in <code>rbp</code>.</p>
+<p>Kempe maintains its own stack and stores the pointer in <code>rbp</code> (x86) or <code>x19</code> (aarch64).</p>
 <p>Kempe procedures do not require any registers to be preserved across function calls.</p>
 <h3 id="c-calls">C Calls</h3>
 <p>When exporting to C, <code>kc</code> generates code that initializes the Kempe data pointer (<code>rbx</code>). Thus, one should avoid calling into Kempe code too often!</p>

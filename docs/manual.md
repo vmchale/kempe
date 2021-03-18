@@ -12,7 +12,7 @@ First, install [cabal](https://www.haskell.org/cabal/download.html) and
 [GHC](https://www.haskell.org/ghc/download.html). Then:
 
 ```
-cabal install kempe --constraint='kempe -no-par'
+cabal install kempe
 ```
 
 This provides `kc`, the Kempe compiler.
@@ -263,7 +263,8 @@ You will need the appropriate assembler installed.
 
 ## Internals
 
-Kempe maintains its own stack and stores the pointer in `rbp`.
+Kempe maintains its own stack and stores the pointer in `rbp` (x86) or `x19`
+(aarch64).
 
 Kempe procedures
 do not require any registers to be preserved across function calls.
