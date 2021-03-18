@@ -31,15 +31,15 @@ loadSize 8 = Load ()
 loadSize _ = error "Load not supported or incoherent."
 
 pushLink :: [Arm AbsReg ()]
-pushLink = [SubRC () LinkReg LinkReg 16, Store () LinkReg (Reg StackPtr)]
+pushLink = [SubRC () StackPtr StackPtr 16, Store () LinkReg (Reg StackPtr)]
 
 popLink :: [Arm AbsReg ()]
-popLink = [Load () LinkReg (Reg StackPtr), AddRC () LinkReg LinkReg 16]
+popLink = [Load () LinkReg (Reg StackPtr), AddRC () StackPtr StackPtr 16]
 
 irEmit :: SizeEnv -> IR.Stmt -> WriteM [Arm AbsReg ()]
 irEmit _ (IR.Jump l)                    = pure [Branch () l]
 irEmit _ IR.Ret                         = pure [Ret ()]
-irEmit _ (IR.KCall l)                   = pure [BranchLink () l]
+irEmit _ (IR.KCall l)                   = pure (pushLink ++ BranchLink () l : popLink) -- TODO: think more?
 irEmit _ (IR.Labeled l)                 = pure [Label () l]
 irEmit _ (IR.WrapKCall Kabi (_, _) n l) = pure $ [BSLabel () n] ++ pushLink ++ [BranchLink () l] ++ popLink ++ [Ret ()]
 irEmit env (IR.WrapKCall Cabi (is, [o]) n l) | all (\i -> size' env i <= 8) is && size' env o <= 8 && length is <= 8 = do
