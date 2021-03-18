@@ -3,6 +3,7 @@
 module Kempe.Asm.Arm.Trans ( irToAarch64
                            ) where
 
+import           Data.Bits          (shiftL, (.&.))
 import           Data.Foldable.Ext  (foldMapA)
 import           Data.Int           (Int64)
 import           Data.List          (scanl')
@@ -89,9 +90,23 @@ irEmit _ (IR.MJump e l) = do
 --
 -- try https://thinkingeek.com/2017/05/29/exploring-aarch64-assembler-chapter-8/
 
+-- see here:
+-- https://stackoverflow.com/questions/27938768/moving-a-32-bit-constant-in-arm-arch64-register
+-- and here:
+-- https://developer.arm.com/documentation/dui0802/a/A64-General-Instructions/MOVK
+--
+-- Basically, arm only allows 16-bit immediates so when we load a 64-bit value
+-- into a register we have to split it into 4 16-bit loads (shifted)
+movRWord :: AbsReg -> Word -> [Arm AbsReg ()]
+movRWord r w = [MovRWord () r (fromIntegral b0), MovRK () r (fromIntegral b1) 16, MovRK () r (fromIntegral b2) 32, MovRK () r (fromIntegral b3) 48]
+    where b0 = w .&. 0xFFFF
+          b1 = (w .&. 0xFFFF0000) `shiftL` 16
+          b2 = (w .&. 0xFFFF00000000) `shiftL` 32
+          b3 = (w .&. 0xFFFF000000000000) `shiftL` 48
+
 evalE :: IR.Exp -> IR.Temp -> WriteM [Arm AbsReg ()]
 evalE (IR.ConstInt i) r                                                        = pure [MovRC () (toAbsReg r) i]
-evalE (IR.ConstWord w) r                                                       = pure [MovRWord () (toAbsReg r) w]
+evalE (IR.ConstWord w) r                                                       = pure $ movRWord (toAbsReg r) w
 evalE (IR.ConstTag b) r                                                        = pure [MovRC () (toAbsReg r) (fromIntegral b)]
 evalE (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r1) (IR.Reg r2)) r                 = pure [AddRR () (toAbsReg r) (toAbsReg r1) (toAbsReg r2)]
 evalE (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r1) (IR.Reg r2)) r                = pure [SubRR () (toAbsReg r) (toAbsReg r1) (toAbsReg r2)]

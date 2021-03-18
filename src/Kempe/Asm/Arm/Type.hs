@@ -16,9 +16,10 @@ module Kempe.Asm.Arm.Type ( Label
 import           Control.DeepSeq    (NFData)
 import qualified Data.ByteString    as BS
 import           Data.Copointed
-import           Data.Int           (Int64)
+import           Data.Int           (Int64, Int8)
 import           Data.Semigroup     ((<>))
 import           Data.Text.Encoding (decodeUtf8)
+import           Data.Word          (Word16)
 import           GHC.Generics       (Generic)
 import           Kempe.Asm.Pretty
 import           Kempe.Asm.Type
@@ -212,10 +213,11 @@ data Arm reg a = Branch { ann :: a, label :: Label } -- like jump
                | SubRR { ann :: a, res :: reg, inp1 :: reg, inp2 :: reg }
                | MulRR { ann :: a, res :: reg, inp1 :: reg, inp2 :: reg }
                | MulSubRRR { ann :: a, res :: reg, inp1 :: reg, inp2 :: reg, inp3 :: reg }
-               | MovRC { ann :: a, dest :: reg, iSrc :: Int64 }
+               | MovRC { ann :: a, dest :: reg, iSrc :: Int64 } -- TODO: change this to a Word16
                | SignedDivRR { ann :: a, res :: reg, inp1 :: reg, inp2 :: reg }
                | UnsignedDivRR { ann :: a, res :: reg, inp1 :: reg, inp2 :: reg }
-               | MovRWord { ann :: a, dest :: reg, wSrc :: Word }
+               | MovRWord { ann :: a, dest :: reg, wSrc :: Word16 }
+               | MovRK { ann :: a, dest :: reg, wSrc :: Word16, lShift :: Int8 }
                | MovRR { ann :: a, dest :: reg, src :: reg }
                | AndRR { ann :: a, dest :: reg, inp1 :: reg, inp2 :: reg }
                | OrRR { ann :: a, dest :: reg, inp1 :: reg, inp2 :: reg }
@@ -253,6 +255,7 @@ instance (Pretty reg, As32 reg) => Pretty (Arm reg a) where
     pretty Ret{}                     = i4 "ret"
     pretty (BSLabel _ b)             = let pl = pretty (decodeUtf8 b) in ".globl" <+> pl <> hardline <> pl <> colon
     pretty (MovRWord _ r c)          = i4 ("mov" <+> pretty r <~> prettyUInt c)
+    pretty (MovRK _ r c l)           = i4 ("movk" <+> pretty r <~> prettyInt c <~> "lsl" <+> pretty l)
     pretty (LShiftLRR _ r r0 r1)     = i4 ("lsl" <+> pretty r <~> pretty r0 <~> pretty r1)
     pretty (LShiftRRR _ r r0 r1)     = i4 ("lsr" <+> pretty r <~> pretty r0 <~> pretty r1)
     pretty (AddRR _ r r0 r1)         = i4 ("add" <+> pretty r <~> pretty r0 <~> pretty r1)
