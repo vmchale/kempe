@@ -21,6 +21,7 @@ crossTests = case arch of
     "x86_64" -> [ compileArm "examples/factorial.kmp"
                 , compileArm "lib/numbertheory.kmp"
                 , compileArm "test/examples/bool.kmp"
+                , compileArm "examples/splitmix.kmp"
                 -- , compileArm "lib/gaussian.kmp"
                 ]
     "aarch64" -> []
