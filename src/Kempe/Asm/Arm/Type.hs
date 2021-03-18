@@ -255,7 +255,7 @@ instance (Pretty reg, As32 reg) => Pretty (Arm reg a) where
     pretty Ret{}                     = i4 "ret"
     pretty (BSLabel _ b)             = let pl = pretty (decodeUtf8 b) in ".globl" <+> pl <> hardline <> pl <> colon
     pretty (MovRWord _ r c)          = i4 ("mov" <+> pretty r <~> prettyUInt c)
-    pretty (MovRK _ r c l)           = i4 ("movk" <+> pretty r <~> prettyInt c <~> "lsl" <+> pretty l)
+    pretty (MovRK _ r c l)           = i4 ("movk" <+> pretty r <~> prettyUInt c <~> "lsl" <+> pretty l)
     pretty (LShiftLRR _ r r0 r1)     = i4 ("lsl" <+> pretty r <~> pretty r0 <~> pretty r1)
     pretty (LShiftRRR _ r r0 r1)     = i4 ("lsr" <+> pretty r <~> pretty r0 <~> pretty r1)
     pretty (AddRR _ r r0 r1)         = i4 ("add" <+> pretty r <~> pretty r0 <~> pretty r1)
