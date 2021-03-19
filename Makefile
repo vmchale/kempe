@@ -7,7 +7,10 @@ HS_SRC := $(shell find src -type f) kempe.cabal
 
 BINS := bin/x86_64-linux-kc.lz \
     bin/x86_64-linux-kc.gz \
-    bin/x86_64-linux-kc.zst
+    bin/x86_64-linux-kc.zst \
+    bin/aarch64-linux-kc.lz \
+    bin/aarch64-linux-kc.gz \
+    bin/aarch64-linux-kc.zst
 
 install:
 	cabal install exe:kc --overwrite-policy=always -w ghc-9.0.1
@@ -65,6 +68,13 @@ clean:
 
 %.gz: %
 	sak compress $^ $@ --best
+
+bin/aarch64-linux-kc: $(HS_SRC)
+	@mkdir -p $(dir $@)
+	cabal build exe:kc --with-ghc=aarch64-linux-gnu-ghc --with-ghc-pkg=aarch64-linux-gnu-ghc-pkg --constraint='kempe +cross' --enable-executable-static
+	export BIN=$$(fd 'aarch64-linux.*kc$$' dist-newstyle -t x -p -I); \
+	    cp $$BIN $@ ; \
+	    aarch64-linux-gnu-strip $@
 
 bin/x86_64-linux-kc: $(HS_SRC)
 	@mkdir -p $(dir $@)
