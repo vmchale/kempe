@@ -22,7 +22,9 @@ import           Kempe.Pipeline
 import           Kempe.Shuttle
 import           Kempe.TyAssign
 import           Prettyprinter             (Doc, defaultLayoutOptions, layoutPretty)
-import           Prettyprinter.Render.Text (renderStrict)
+import           Prettyprinter.Render.Text (renderIO, renderStrict)
+import           System.IO                 (hFlush)
+import           System.IO.Temp            (withSystemTempFile)
 
 bivoid :: Bifunctor p => p a b -> p () ()
 bivoid = bimap (const ()) (const ())
@@ -96,6 +98,7 @@ main =
                         , bench "Generate assembly (examples/splitmix.kmp)" $ nfIO (writeAsm "examples/splitmix.kmp")
                         , bench "Generate assembly (lib/numbertheory.kmp)" $ nfIO (writeAsm "lib/numbertheory.kmp")
                         , bench "Generate assembly (lib/gaussian.kmp)" $ nfIO (writeAsm "lib/gaussian.kmp")
+                        , bench "Write assembly to file (lib/gaussian.kmp)" $ nfIO (writeAsmToFile "lib/gaussian.kmp")
                         , bench "Generate arm assembly (examples/factorial.kmp)" $ nfIO (writeArmAsm "examples/factorial.kmp")
                         , bench "Generate arm assembly (lib/gaussian.kmp)" $ nfIO (writeArmAsm "lib/gaussian.kmp")
                         -- , bench "Generate assembly (lib/rational.kmp)" $ nfIO (writeAsm "lib/rational.kmp")
@@ -144,6 +147,14 @@ main =
           absX86 = (,,) <$> splitmixAbsX86 <*> facAbsX86 <*> numAbsX86
           -- not even gonna justify this
           yrrucnu f (y, x) = f x y
+
+writeAsmToFile :: FilePath
+               -> IO ()
+writeAsmToFile inp = withSystemTempFile "unassembled.kmp" $ \_ h -> do
+    res <- parseProcess inp
+    -- TODO: is renderIO slow?
+    renderIO h (layoutPretty defaultLayoutOptions $ uncurry dumpX86 res)
+    hFlush h
 
 writeAsm :: FilePath
          -> IO T.Text

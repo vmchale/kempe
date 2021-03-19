@@ -247,7 +247,8 @@ benchmark kempe-bench
         bytestring,
         criterion,
         prettyprinter,
-        text
+        text,
+        temporary
 
     if impl(ghc >=8.0)
         ghc-options:
