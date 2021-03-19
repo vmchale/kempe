@@ -20,6 +20,7 @@
 # Code
 - [ ] `typed-process`?
 # Performance
+- [ ] DList for arm backend? laying down asm...
 - [ ] look at http://hackage.haskell.org/package/linearscan-hoopl
 - [ ] Liveness analysis on a per-decl basis? (basic blocks)
 - [ ] `lea`, `xchg`? `test`?
