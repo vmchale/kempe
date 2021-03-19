@@ -1,5 +1,7 @@
 # kempe
 
+  * Performance improvements when assembling x86
+
 ## 0.2.0.0
 
   * Add aarch64 backend
