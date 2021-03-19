@@ -5,6 +5,7 @@ import           Criterion.Main
 import           Data.Bifunctor            (Bifunctor, bimap)
 import qualified Data.ByteString.Lazy      as BSL
 import qualified Data.Text                 as T
+import qualified Data.Text.Lazy.IO         as TLIO
 import           Kempe.Asm.Liveness
 import qualified Kempe.Asm.X86.ControlFlow as X86
 import qualified Kempe.Asm.X86.Linear      as X86
@@ -22,8 +23,7 @@ import           Kempe.Pipeline
 import           Kempe.Shuttle
 import           Kempe.TyAssign
 import           Prettyprinter             (Doc, defaultLayoutOptions, layoutPretty)
-import           Prettyprinter.Render.Text (renderIO, renderStrict)
-import           System.IO                 (hFlush)
+import           Prettyprinter.Render.Text (renderLazy, renderStrict)
 import           System.IO.Temp            (withSystemTempFile)
 
 bivoid :: Bifunctor p => p a b -> p () ()
@@ -101,7 +101,6 @@ main =
                         , bench "Write assembly to file (lib/gaussian.kmp)" $ nfIO (writeAsmToFile "lib/gaussian.kmp")
                         , bench "Generate arm assembly (examples/factorial.kmp)" $ nfIO (writeArmAsm "examples/factorial.kmp")
                         , bench "Generate arm assembly (lib/gaussian.kmp)" $ nfIO (writeArmAsm "lib/gaussian.kmp")
-                        -- , bench "Generate assembly (lib/rational.kmp)" $ nfIO (writeAsm "lib/rational.kmp")
                         , bench "Object file (examples/factorial.kmp)" $ nfIO (compile "examples/factorial.kmp" "/tmp/factorial.o" False)
                         , bench "Object file (lib/numbertheory.kmp)" $ nfIO (compile "lib/numbertheory.kmp" "/tmp/numbertheory.o" False)
                         , bench "Object file (examples/splitmix.kmp)" $ nfIO (compile "examples/splitmix.kmp" "/tmp/splitmix.o" False)
@@ -152,9 +151,7 @@ writeAsmToFile :: FilePath
                -> IO ()
 writeAsmToFile inp = withSystemTempFile "unassembled.kmp" $ \_ h -> do
     res <- parseProcess inp
-    -- TODO: is renderIO slow?
-    renderIO h (layoutPretty defaultLayoutOptions $ uncurry dumpX86 res)
-    hFlush h
+    TLIO.hPutStr h $ renderLazy $ layoutPretty defaultLayoutOptions $ uncurry dumpX86 res
 
 writeAsm :: FilePath
          -> IO T.Text
