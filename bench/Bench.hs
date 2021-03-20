@@ -22,7 +22,7 @@ import           Kempe.Parser
 import           Kempe.Pipeline
 import           Kempe.Shuttle
 import           Kempe.TyAssign
-import           Prettyprinter             (Doc, defaultLayoutOptions, layoutPretty)
+import           Prettyprinter             (Doc, defaultLayoutOptions, layoutCompact, layoutPretty)
 import           Prettyprinter.Render.Text (renderLazy, renderStrict)
 import           System.IO                 (hFlush)
 import           System.IO.Temp            (withSystemTempFile)
@@ -152,7 +152,7 @@ writeAsmToFile :: FilePath
                -> IO ()
 writeAsmToFile inp = withSystemTempFile "unassembled.kmp" $ \_ h -> do
     res <- parseProcess inp
-    TLIO.hPutStr h $ renderLazy $ layoutPretty defaultLayoutOptions $ uncurry dumpX86 res
+    TLIO.hPutStr h $ renderLazy $ layoutCompact $ uncurry dumpX86 res
     hFlush h
 
 writeAsm :: FilePath

@@ -3,7 +3,7 @@ module Kempe.Proc.Nasm ( writeO
 
 import           Data.Functor              (void)
 import qualified Data.Text.Lazy.IO         as TLIO
-import           Prettyprinter             (Doc, defaultLayoutOptions, layoutPretty)
+import           Prettyprinter             (Doc, layoutCompact)
 import           Prettyprinter.Render.Text (renderLazy)
 import           System.IO                 (hFlush)
 import           System.IO.Temp            (withSystemTempFile)
@@ -15,7 +15,7 @@ writeO :: Doc ann
        -> Bool -- ^ Debug symbols?
        -> IO ()
 writeO p fpO dbg = withSystemTempFile "kmp.S" $ \fp h -> do
-    let txt = renderLazy $ layoutPretty defaultLayoutOptions p
+    let txt = renderLazy $ layoutCompact p
     TLIO.hPutStr h txt
     hFlush h
     let debugFlag = if dbg then ("-g":) else id
