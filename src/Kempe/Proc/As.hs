@@ -2,7 +2,7 @@ module Kempe.Proc.As ( writeO
                      ) where
 
 import           Data.Functor                (void)
-import           Prettyprinter               (Doc, laoutCompact)
+import           Prettyprinter               (Doc, layoutCompact)
 import           Prettyprinter.Render.String (renderString)
 import           System.Info                 (arch)
 import           System.Process              (CreateProcess (..), StdStream (Inherit), proc, readCreateProcess)
@@ -21,6 +21,6 @@ writeO :: Doc ann
        -> Bool -- ^ Debug symbols?
        -> IO ()
 writeO p fpO dbg = do
-    let inp = renderString (laoutCompact p)
+    let inp = renderString (layoutCompact p)
         debugFlag = if dbg then ("-g":) else id
     void $ readCreateProcess ((proc assembler (debugFlag ["-o", fpO, "--"])) { std_err = Inherit }) inp
