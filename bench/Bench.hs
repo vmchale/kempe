@@ -24,6 +24,7 @@ import           Kempe.Shuttle
 import           Kempe.TyAssign
 import           Prettyprinter             (Doc, defaultLayoutOptions, layoutPretty)
 import           Prettyprinter.Render.Text (renderLazy, renderStrict)
+import           System.IO                 (hFlush)
 import           System.IO.Temp            (withSystemTempFile)
 
 bivoid :: Bifunctor p => p a b -> p () ()
@@ -152,6 +153,7 @@ writeAsmToFile :: FilePath
 writeAsmToFile inp = withSystemTempFile "unassembled.kmp" $ \_ h -> do
     res <- parseProcess inp
     TLIO.hPutStr h $ renderLazy $ layoutPretty defaultLayoutOptions $ uncurry dumpX86 res
+    hFlush h
 
 writeAsm :: FilePath
          -> IO T.Text
