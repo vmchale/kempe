@@ -1,5 +1,6 @@
 type Element { E | A | B | C }
 
+; see: https://mathworld.wolfram.com/Vierergruppe.html
 mult : Element Element -- Element
      =: [
         { case
