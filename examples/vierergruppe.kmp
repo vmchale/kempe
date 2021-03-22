@@ -8,6 +8,20 @@ mult : Element Element -- Element
             | A -> { case
                         | E -> A
                         | A -> E
+                        | B -> C
+                        | C -> B
+                   }
+            | B -> { case
+                        | E -> B
+                        | A -> C
+                        | B -> E
+                        | C -> A
+                   }
+            | C -> { case
+                        | E -> C
+                        | A -> B
+                        | B -> A
+                        | C -> E
                    }
         }
 ]
