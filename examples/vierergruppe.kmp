@@ -1,0 +1,12 @@
+type Element { E | A | B | C }
+
+mult : Element Element -- Element
+     =: [
+        { case
+            | E ->
+            | A -> { case
+                        | E -> A
+                        | A -> E
+                    }
+        }
+]
