@@ -8,6 +8,6 @@ mult : Element Element -- Element
             | A -> { case
                         | E -> A
                         | A -> E
-                    }
+                   }
         }
 ]
