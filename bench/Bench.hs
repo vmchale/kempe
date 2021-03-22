@@ -51,6 +51,7 @@ main =
                 , env eitherMod $ \ e ->
                     bgroup "Pattern match exhaustiveness checker"
                         [ bench "lib/either.kmp" $ nf checkModuleExhaustive e
+                        , bench "examples/vierergruppe.kmp" $ nf checkModuleExhaustive e
                         ]
                   , env parsedInteresting $ \ ~(f, n) ->
                       bgroup "Inliner"
