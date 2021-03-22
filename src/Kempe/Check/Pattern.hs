@@ -16,6 +16,7 @@ import           Data.Foldable.Ext
 import qualified Data.IntMap.Strict         as IM
 import qualified Data.IntSet                as IS
 import           Data.List.NonEmpty         (NonEmpty (..))
+import qualified Data.List.NonEmpty         as NE
 import           Kempe.AST
 import           Kempe.Error
 import           Kempe.Name
@@ -25,8 +26,9 @@ import           Lens.Micro.Mtl             (modifying)
 
 checkAtom :: PatternEnv -> Atom c b -> Maybe (Error b)
 checkAtom env (Case l ls) =
-    if isExhaustive env $ fmap fst ls
-        then Nothing
+    let (ps, as) = NE.unzip ls in
+    if isExhaustive env ps
+        then foldMapAlternative (foldMapAlternative (checkAtom env)) as
         else Just (InexhaustiveMatch l)
 checkAtom _ _ = Nothing
 
