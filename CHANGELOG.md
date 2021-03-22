@@ -1,6 +1,7 @@
 # kempe
 
   * Performance improvements when assembling x86
+  * Fix pattern match exhaustiveness checker
 
 ## 0.2.0.0
 
