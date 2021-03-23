@@ -124,6 +124,8 @@ evalE (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r1) (IR.ConstInt i)) r             =
 evalE (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r1) (IR.ConstInt i)) r            = pure [SubRC () (toAbsReg r) (toAbsReg r1) i]
 evalE (IR.Mem 8 (IR.Reg r0)) r                                                 = pure [Load () (toAbsReg r) (Reg $ toAbsReg r0)]
 evalE (IR.Mem 1 (IR.Reg r0)) r                                                 = pure [LoadByte () (toAbsReg r) (Reg $ toAbsReg r0)]
+evalE (IR.Mem 1 (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r0) (IR.ConstInt i))) r  = pure [LoadByte () (toAbsReg r) (AddRCPlus (toAbsReg r0) i)]
+evalE (IR.Mem 1 (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r0) (IR.ConstInt i))) r = pure [LoadByte () (toAbsReg r) (AddRCPlus (toAbsReg r0) (negate i))]
 evalE (IR.Mem 8 (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r0) (IR.ConstInt i))) r  = pure [Load () (toAbsReg r) (AddRCPlus (toAbsReg r0) i)]
 evalE (IR.Mem 8 (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r0) (IR.ConstInt i))) r = pure [Load () (toAbsReg r) (AddRCPlus (toAbsReg r0) (negate i))]
 evalE (IR.Mem 8 e) r                                                           = do
@@ -141,15 +143,18 @@ evalE (IR.ExprIntRel IR.IntLeqIR (IR.Reg r1) (IR.Reg r2)) r =
     pure [CmpRR () (toAbsReg r1) (toAbsReg r2), CSet () (toAbsReg r) Leq]
 evalE (IR.ExprIntRel IR.IntLtIR (IR.Reg r1) (IR.Reg r2)) r =
     pure [CmpRR () (toAbsReg r1) (toAbsReg r2), CSet () (toAbsReg r) Lt]
+evalE (IR.ExprIntRel IR.IntGtIR (IR.Reg r1) (IR.Reg r2)) r =
+    pure [CmpRR () (toAbsReg r1) (toAbsReg r2), CSet () (toAbsReg r) Gt]
 evalE (IR.ExprIntRel IR.IntEqIR (IR.Reg r1) (IR.Reg r2)) r =
     pure [CmpRR () (toAbsReg r1) (toAbsReg r2), CSet () (toAbsReg r) Eq]
-evalE (IR.ExprIntRel IR.IntEqIR e e') r = do
-    { r0 <- allocTemp64
-    ; r1 <- allocTemp64
-    ; eEval <- evalE e r0
-    ; e'Eval <- evalE e' r1
-    ; pure $ eEval ++ e'Eval ++ [CmpRR () (toAbsReg r0) (toAbsReg r1), CSet () (toAbsReg r) Eq]
-    }
+evalE (IR.ExprIntRel IR.IntNeqIR (IR.Reg r1) (IR.Reg r2)) r =
+    pure [CmpRR () (toAbsReg r1) (toAbsReg r2), CSet () (toAbsReg r) Neq]
+evalE (IR.ExprIntRel IR.IntEqIR e e') r = cmpE e e' r Eq
+evalE (IR.ExprIntRel IR.IntNeqIR e e') r = cmpE e e' r Neq
+evalE (IR.ExprIntRel IR.IntLtIR e e') r = cmpE e e' r Lt
+evalE (IR.ExprIntRel IR.IntGtIR e e') r = cmpE e e' r Gt
+evalE (IR.ExprIntRel IR.IntLeqIR e e') r = cmpE e e' r Leq
+evalE (IR.ExprIntRel IR.IntGeqIR e e') r = cmpE e e' r Geq
 evalE (IR.EqByte e (IR.ConstTag b)) r = do
     { r0 <- allocTemp64
     ; eEval <- evalE e r0
@@ -181,6 +186,16 @@ evalE (IR.ExprIntBinOp IR.IntModIR e e') r = do
     ; pure $ eEval ++ e'Eval ++ [ UnsignedDivRR () (toAbsReg rTrash) (toAbsReg r0) (toAbsReg r1), MulSubRRR () (toAbsReg r) (toAbsReg rTrash) (toAbsReg r1) (toAbsReg r0) ]
     }
 evalE (IR.ConstBool b) r = pure [MovRC () (toAbsReg r) (toInt b)]
+
+-- | Helper for <, >, etc. used by 'evalE'
+cmpE :: IR.Exp -> IR.Exp -> IR.Temp -> Cond -> WriteM [Arm AbsReg ()]
+cmpE e e' r c = do
+    { r0 <- allocTemp64
+    ; r1 <- allocTemp64
+    ; eEval <- evalE e r0
+    ; e'Eval <- evalE e' r1
+    ; pure $ eEval ++ e'Eval ++ [CmpRR () (toAbsReg r0) (toAbsReg r1), CSet () (toAbsReg r) c]
+    }
 
 -- | Just use 64-bit integers here
 toInt :: Bool -> Int64
