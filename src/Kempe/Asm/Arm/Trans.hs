@@ -81,6 +81,12 @@ irEmit _ (IR.CJump e l0 l1) = do
     ; eEval <- evalE e r
     ; pure $ eEval ++ [BranchZero () (toAbsReg r) l1, Branch () l0]
     }
+-- handles e.g. (mjump (=b (mem [1] (+ (reg datapointer) (int 0))) (tag 0x0)) kmp2)
+irEmit _ (IR.MJump (IR.EqByte e (IR.ConstTag 0)) l) = do
+    { r <- allocTemp64
+    ; eEval <- evalE e r
+    ; pure $ eEval ++ [BranchZero () (toAbsReg r) l]
+    }
 irEmit _ (IR.MJump e l) = do
     { r <- allocTemp64
     ; eEval <- evalE e r
