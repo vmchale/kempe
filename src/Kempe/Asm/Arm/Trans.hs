@@ -103,6 +103,7 @@ movRWord r w = [MovRWord () r (fromIntegral b0), MovRK () r (fromIntegral b1) 16
           b1 = (w .&. 0xFFFF0000) `shiftR` 16
           b2 = (w .&. 0xFFFF00000000) `shiftR` 32
           b3 = (w .&. 0xFFFF000000000000) `shiftR` 48
+          -- TODO: only MovRK if nonzero
 
 evalE :: IR.Exp -> IR.Temp -> WriteM [Arm AbsReg ()]
 evalE (IR.ConstInt i) r                                                        = pure [MovRC () (toAbsReg r) i]
@@ -136,6 +137,8 @@ evalE (IR.Mem 1 e) r = do
     ; pure $ placeE ++ [LoadByte () (toAbsReg r) (Reg $ toAbsReg r')]
     }
 evalE (IR.Reg r) r' = pure [MovRR () (toAbsReg r') (toAbsReg r)]
+evalE (IR.ExprIntRel IR.IntLeqIR (IR.Reg r1) (IR.Reg r2)) r =
+    pure [CmpRR () (toAbsReg r1) (toAbsReg r2), CSet () (toAbsReg r) Leq]
 evalE (IR.ExprIntRel IR.IntLtIR (IR.Reg r1) (IR.Reg r2)) r =
     pure [CmpRR () (toAbsReg r1) (toAbsReg r2), CSet () (toAbsReg r) Lt]
 evalE (IR.ExprIntRel IR.IntEqIR (IR.Reg r1) (IR.Reg r2)) r =
@@ -168,6 +171,14 @@ evalE (IR.IntNegIR e) r = do
 evalE (IR.ExprIntBinOp IR.IntModIR (IR.Reg r1) (IR.Reg r2)) r = do
     { rTrash <- allocTemp64
     ; pure [ UnsignedDivRR () (toAbsReg rTrash) (toAbsReg r1) (toAbsReg r2), MulSubRRR () (toAbsReg r) (toAbsReg rTrash) (toAbsReg r2) (toAbsReg r1) ]
+    }
+evalE (IR.ExprIntBinOp IR.IntModIR e e') r = do
+    { rTrash <- allocTemp64
+    ; r0 <- allocTemp64
+    ; r1 <- allocTemp64
+    ; eEval <- evalE e r0
+    ; e'Eval <- evalE e' r1
+    ; pure $ eEval ++ e'Eval ++ [ UnsignedDivRR () (toAbsReg rTrash) (toAbsReg r0) (toAbsReg r1), MulSubRRR () (toAbsReg r) (toAbsReg rTrash) (toAbsReg r1) (toAbsReg r0) ]
     }
 evalE (IR.ConstBool b) r = pure [MovRC () (toAbsReg r) (toInt b)]
 
