@@ -3,11 +3,9 @@
 bench 'gcc-10 -fsyntax-only benchmarks/splitmix64.c' \
     'clang-11 -fsyntax-only benchmarks/splitmix64.c' \
     'kc typecheck examples/splitmix.kmp' \
-    'icc -fsyntax-only benchmarks/splitmix64.c' \
     'ghc -fno-code benchmarks/Splitmix.hs' \
     'gcc-10 -O0 -c benchmarks/splitmix64.c' \
     'clang-11 -O0 -c benchmarks/splitmix64.c' \
-    'icc -O0 -c benchmarks/splitmix64.c' \
     'ghc -O0 benchmarks/Splitmix.hs' \
     'rustc --crate-type=lib --emit=dep-info,metadata benchmarks/splitmix.rs' \
     'rustc --crate-type=lib benchmarks/splitmix.rs' \
