@@ -12,4 +12,8 @@ bench 'gcc-10 -fsyntax-only benchmarks/splitmix64.c' \
     'rustc --crate-type=lib --emit=dep-info,metadata benchmarks/splitmix.rs' \
     'rustc --crate-type=lib benchmarks/splitmix.rs' \
     'rustc --crate-type=cdylib benchmarks/splitmix.rs' \
-    'kc examples/splitmix.kmp splitmix.o'
+    'kc examples/splitmix.kmp splitmix.o' \
+    'kc examples/splitmix.kmp splitmix.o --arch aarch64' \
+    'aarch64-linux-gnu-gcc -O0 -c benchmarks/splitmix64.c'  \
+    'clang-11 -c benchmarks/splitmix64.c --target=aarch64-linux-gnu' \
+    'aarch64-linux-gnu-ghc -O0 benchmarks/Splitmix.hs'

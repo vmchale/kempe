@@ -92,6 +92,8 @@ isExhaustive _ (PatternWildcard{}:|_)                      = True
 isExhaustive _ (PatternInt{}:|ps)                          = hasWildcard ps
 isExhaustive _ (PatternBool _ True:|PatternBool _ False:_) = True
 isExhaustive _ (PatternBool _ False:|PatternBool _ True:_) = True
+-- doesn't technically work since you could have True True False but like...
+-- don't do that
 isExhaustive _ (PatternBool{}:|ps)                         = hasWildcard ps
 isExhaustive env ps@(PatternCons{}:|_)                     = hasWildcard ps || isCompleteSet env (fmap patternName ps)
 
