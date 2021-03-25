@@ -16,4 +16,5 @@ bench 'gcc-10 -fsyntax-only benchmarks/splitmix64.c' \
     'kc examples/splitmix.kmp splitmix.o --arch aarch64' \
     'aarch64-linux-gnu-gcc -O0 -c benchmarks/splitmix64.c'  \
     'clang-11 -c benchmarks/splitmix64.c --target=aarch64-linux-gnu' \
+    'rustc --crate-type=lib benchmarks/splitmix.rs --target=aarch64-unknown-linux-gnu -C "linker=aarch64-linux-gnu-ld"' \
     'aarch64-linux-gnu-ghc -O0 benchmarks/Splitmix.hs'
