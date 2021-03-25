@@ -2,6 +2,6 @@
 
 set -e pipefail
 
-cabal build exe:kc --enable-profiling -w ghc-9.0.1
+cabal build exe:kc --enable-profiling
 bin="$(fd -t x '^kc$' -I | tail -n1)"
 cp "$bin" "$HOME"/.local/bin/kc-prof
