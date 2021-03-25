@@ -10,3 +10,5 @@ mult : Element Element -- Element
             | C -> { case | E -> C | A -> B | B -> A | C -> E }
         }
 ]
+
+%foreign kabi mult
