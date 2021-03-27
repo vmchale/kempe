@@ -22,7 +22,7 @@ crossTests = case arch of
                 , compileArm "lib/numbertheory.kmp"
                 , compileArm "test/examples/bool.kmp"
                 , compileArm "examples/splitmix.kmp"
-                -- , compileArm "lib/gaussian.kmp"
+                , compileArm "lib/gaussian.kmp"
                 ]
     "aarch64" -> []
     _ -> error "Test suite must be run on x86_64 or aarch64"
