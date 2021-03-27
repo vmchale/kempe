@@ -3,7 +3,7 @@
 # ABI support
 - [ ] Kempe ABI proper
 - [ ] Fortran?
-# Documentatio
+# Documentation
 - [ ] http://texdoc.net/texmf-dist/doc/latex/bytefield/bytefield.pdf
 # Examples
 - [ ] delink?
