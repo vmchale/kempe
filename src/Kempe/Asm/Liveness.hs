@@ -56,6 +56,7 @@ liveness is nSt =
     where nSt' = {-# SCC "iterNodes" #-} iterNodes is nSt
 
 iterNodes :: [Int] -> LivenessMap -> LivenessMap
+-- this is fickle, thread will seemingly thunk leak (??) if optimizations aren't on
 iterNodes is = thread (fmap stepNode is)
 
 stepNode :: Int -> LivenessMap -> LivenessMap
