@@ -16,12 +16,6 @@ install:
 	cabal install exe:kc --overwrite-policy=always -w ghc-9.0.1
 	strip $$(readlink -f $$(which kc))
 
-const.o: test/examples/const.kmp $(HS_SRC)
-	cabal run -w ghc-9.0.1 exe:kc -- $< $@ -g
-
-const: const.o test/harness/const.c
-	gcc $^ -g -o $@
-
 moddeps.svg: $(HS_SRC)
 	graphmod -i src | dot -Tsvg -o $@
 
@@ -58,7 +52,7 @@ rts.o: rts.S
 	nasm $^ -f elf64 -o $@
 
 clean:
-	rm -rf dist-newstyle *.rlib *.d *.rmeta *.o stack.yaml.lock factorial.S factorial splitmix.S numbertheory.S numbertheory *.so bin moddeps.svg packdeps.svg const
+	rm -rf dist-newstyle *.rlib *.d *.rmeta *.o stack.yaml.lock factorial.S factorial splitmix.S numbertheory.S numbertheory *.so bin moddeps.svg packdeps.svg benchmarks/*_stub.h benchmarks/*.hi benchmarks/*.o
 
 %.zst: %
 	sak compress $< $@ --best
