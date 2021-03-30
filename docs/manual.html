@@ -465,15 +465,7 @@ next : Word -- Word Word
        ]</code></pre>
 <h2 id="mutual-recursion">Mutual Recursion</h2>
 <p><code>kc</code> supports mutual recursion:</p>
-<pre><code>not : Bool -- Bool
-    =: [
-    { case
-        | True -&gt; False
-        | _    -&gt; True
-    }
-]
-
-odd : Int -- Bool
+<pre><code>odd : Int -- Bool
     =: [ dup 0 =
             if( drop False
               , - 1 even )

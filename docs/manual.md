@@ -356,14 +356,6 @@ gcd : Int Int -- Int
 `kc` supports mutual recursion:
 
 ```
-not : Bool -- Bool
-    =: [
-    { case
-        | True -> False
-        | _    -> True
-    }
-]
-
 odd : Int -- Bool
     =: [ dup 0 =
             if( drop False
