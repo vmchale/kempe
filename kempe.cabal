@@ -21,6 +21,7 @@ data-files:
     prelude/*.kmp
     lib/*.kmp
     docs/manual.pdf
+    .ctags
 
 extra-doc-files:
     README.md
