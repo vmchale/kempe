@@ -415,13 +415,23 @@ copyBytes :: Int64 -- ^ dest offset
           -> Int64 -- ^ src offset
           -> Int64 -- ^ Number of bytes to copy
           -> [Stmt]
-copyBytes off1 off2 b
-    | b `mod` 8 == 0 =
-        let is = fmap (8*) [0..(b `div` 8 - 1)] in
-            [ MovMem (dataPointerPlus (i + off1)) 8 (Mem 8 $ dataPointerPlus (i + off2)) | i <- is ]
-    -- TODO: 4 byte chunks, &c. (would require more registers).
-    | otherwise =
-        [ MovMem (dataPointerPlus (i + off1)) 1 (Mem 1 $ dataPointerPlus (i + off2)) | i <- [0..(b-1)] ]
+copyBytes off1 off2 b =
+    let (b8, b1) = b `quotRem` 8
+        in copyBytes8 off1 off2 b8 ++ copyBytes1 (off1 + b8 * 8) (off2 + b8 * 8) b1
+        -- copyBytesPlain
+
+-- | Copy bytes 8 at a time. Note that @b@ must be divisible by 8.
+copyBytes8 :: Int64
+           -> Int64
+           -> Int64 -- ^ @b@ (number 8-byte chunks to copy)
+           -> [Stmt]
+copyBytes8 off1 off2 b =
+    let is = fmap (8*) [0..(b - 1)] in
+        [ MovMem (dataPointerPlus (i + off1)) 8 (Mem 8 $ dataPointerPlus (i + off2)) | i <- is ]
+
+copyBytes1 :: Int64 -> Int64 -> Int64 -> [Stmt]
+copyBytes1 off1 off2 b =
+    [ MovMem (dataPointerPlus (i + off1)) 1 (Mem 1 $ dataPointerPlus (i + off2)) | i <- [0..(b-1)] ]
 
 dataPointerDec :: Int64 -> Stmt
 dataPointerDec i = MovTemp DataPointer (ExprIntBinOp IntMinusIR (Reg DataPointer) (ConstInt i))
