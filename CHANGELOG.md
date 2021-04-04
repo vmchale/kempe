@@ -1,5 +1,7 @@
 # kempe
 
+  * Improve performance + generated code
+
 ## 0.2.0.1
 
   * Performance improvements when assembling x86
