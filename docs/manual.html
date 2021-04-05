@@ -284,7 +284,6 @@
 <p>Kempe allows polymorphic functions. So we can define:</p>
 <pre><code>id : a -- a
    =: [ ]</code></pre>
-<p>The Kempe typechecker basically works.</p>
 <h2 id="literals">Literals</h2>
 <p>Integer literals have type <code>-- Int</code>.</p>
 <p>Positive literals followed by a <code>u</code> have type <code>-- Word</code>, e.g. <code>1u</code>.</p>
@@ -341,17 +340,17 @@ fac_tailrec : Int -- Int
             =: [ 1 loop ]</code></pre>
 <h2 id="sum-types">Sum Types</h2>
 <p>Kempe supports sum types, for instance:</p>
-<pre><code>type Either a b { Left a | Right b }</code></pre>
+<pre><code>type Maybe a { Just a | Nothing }</code></pre>
 <p>Note that empty sum types such as</p>
 <pre><code>type Void {}</code></pre>
 <p>are not really supported.</p>
 <h3 id="pattern-matching">Pattern Matching</h3>
 <p>Sum types are taken apart with pattern matching, viz.</p>
-<pre><code>isRight : ((Either a) b) -- Bool
-        =: [
+<pre><code>isJust : (Maybe a) -- Bool
+       =: [
     { case
-        | Right -&gt; drop True
-        | Left  -&gt; drop False
+        | Just -&gt; drop True
+        | Nothing -&gt; False
     }
 ]</code></pre>
 <p>Note that pattern matches in Kempe must be exhaustive.</p>
@@ -372,7 +371,7 @@ nip : a b -- b
     =: [ dip(drop) ]
 
 ...</code></pre>
-<p>The import system is sort of defective at this stage.</p>
+<p>The import system is sort of defective.</p>
 <h2 id="ffi">FFI</h2>
 <p>Kempe can call into C functions. Suppose we have</p>
 <div class="sourceCode" id="cb12"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> rand<span class="op">(</span><span class="dt">void</span><span class="op">);</span></span></code></pre></div>
