@@ -75,14 +75,13 @@ instance Pretty Exp where
 
 data Stmt = Labeled Label
           | Jump Label
-          -- conditional jump for ifs
-          | CJump Exp Label Label -- ^ If the 'Exp' evaluates to @1@, go to the first label, otherwise go to the second (if-then-else)
+          | CJump Exp Label Label -- ^ If the 'Exp' evaluates to @1@, go to the first label, otherwise go to the second (if-then-else). Used to implement ifs.
           | MJump Exp Label
           | CCall MonoStackType BSL.ByteString
-          | KCall Label -- KCall is a jump to a Kempe procedure
+          | KCall Label -- ^ a 'KCall' is a jump to a Kempe procedure
           | WrapKCall ABI MonoStackType BS.ByteString Label
-          | MovTemp Temp Exp -- put e in temp
-          | MovMem Exp Int64 Exp -- store e2 at address given by e1
+          | MovTemp Temp Exp -- ^ Put @e@ in temp
+          | MovMem Exp Int64 Exp -- ^ Store @e2@ at address given by @e1@, with sizing information
           | Ret
           deriving (Generic, NFData)
 
@@ -92,7 +91,7 @@ data Exp = ConstInt Int64
          | ConstWord Word
          | ConstBool Bool
          | Reg Temp -- TODO: size?
-         | Mem Int64 Exp -- fetch from address
+         | Mem Int64 Exp -- ^ Fetch from address
          | ExprIntBinOp IntBinOp Exp Exp
          | ExprIntRel RelBinOp Exp Exp
          | BoolBinOp BoolBinOp Exp Exp
@@ -134,7 +133,7 @@ data IntBinOp = IntPlusIR
               | IntMinusIR
               | IntModIR -- rem?
               | IntXorIR
-              | WordShiftRIR -- compiles to shr on x86
+              | WordShiftRIR -- ^ compiles to @shr@ on x86
               | WordShiftLIR
               -- int/word mod are different, see: https://stackoverflow.com/questions/8231882/how-to-implement-the-mod-operator-in-assembly
               | WordModIR

@@ -79,7 +79,11 @@ archFlag = fmap parseArch $ optional $ strOption
             (Nothing, "aarch64") -> Aarch64
             (Nothing, "x86_64")  -> X64
             (Just "aarch64", _)  -> Aarch64
+            (Just "arm64", _)    -> Aarch64
             (Just "x64", _)      -> X64
+            (Just "x86_64", _)   -> X64
+            (Just "x86-64", _)   -> X64
+            (Just "amd64", _)    -> X64
             _                    -> error "Failed to parse architecture! Try one of x64, aarch64"
 
 irSwitch :: Parser Bool

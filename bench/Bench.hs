@@ -5,6 +5,7 @@ import           Criterion.Main
 import           Data.Bifunctor            (Bifunctor, bimap)
 import qualified Data.ByteString.Lazy      as BSL
 import qualified Data.Text                 as T
+import qualified Data.Text.Lazy.IO         as TLIO
 import           Kempe.Asm.Liveness
 import qualified Kempe.Asm.X86.ControlFlow as X86
 import qualified Kempe.Asm.X86.Linear      as X86
@@ -21,8 +22,10 @@ import           Kempe.Parser
 import           Kempe.Pipeline
 import           Kempe.Shuttle
 import           Kempe.TyAssign
-import           Prettyprinter             (Doc, defaultLayoutOptions, layoutPretty)
-import           Prettyprinter.Render.Text (renderStrict)
+import           Prettyprinter             (Doc, defaultLayoutOptions, layoutCompact, layoutPretty)
+import           Prettyprinter.Render.Text (renderLazy, renderStrict)
+import           System.IO                 (hFlush)
+import           System.IO.Temp            (withSystemTempFile)
 
 bivoid :: Bifunctor p => p a b -> p () ()
 bivoid = bimap (const ()) (const ())
@@ -48,6 +51,7 @@ main =
                 , env eitherMod $ \ e ->
                     bgroup "Pattern match exhaustiveness checker"
                         [ bench "lib/either.kmp" $ nf checkModuleExhaustive e
+                        , bench "examples/vierergruppe.kmp" $ nf checkModuleExhaustive e
                         ]
                   , env parsedInteresting $ \ ~(f, n) ->
                       bgroup "Inliner"
@@ -96,9 +100,9 @@ main =
                         , bench "Generate assembly (examples/splitmix.kmp)" $ nfIO (writeAsm "examples/splitmix.kmp")
                         , bench "Generate assembly (lib/numbertheory.kmp)" $ nfIO (writeAsm "lib/numbertheory.kmp")
                         , bench "Generate assembly (lib/gaussian.kmp)" $ nfIO (writeAsm "lib/gaussian.kmp")
+                        , bench "Write assembly to file (lib/gaussian.kmp)" $ nfIO (writeAsmToFile "lib/gaussian.kmp")
                         , bench "Generate arm assembly (examples/factorial.kmp)" $ nfIO (writeArmAsm "examples/factorial.kmp")
                         , bench "Generate arm assembly (lib/gaussian.kmp)" $ nfIO (writeArmAsm "lib/gaussian.kmp")
-                        -- , bench "Generate assembly (lib/rational.kmp)" $ nfIO (writeAsm "lib/rational.kmp")
                         , bench "Object file (examples/factorial.kmp)" $ nfIO (compile "examples/factorial.kmp" "/tmp/factorial.o" False)
                         , bench "Object file (lib/numbertheory.kmp)" $ nfIO (compile "lib/numbertheory.kmp" "/tmp/numbertheory.o" False)
                         , bench "Object file (examples/splitmix.kmp)" $ nfIO (compile "examples/splitmix.kmp" "/tmp/splitmix.o" False)
@@ -144,6 +148,13 @@ main =
           absX86 = (,,) <$> splitmixAbsX86 <*> facAbsX86 <*> numAbsX86
           -- not even gonna justify this
           yrrucnu f (y, x) = f x y
+
+writeAsmToFile :: FilePath
+               -> IO ()
+writeAsmToFile inp = withSystemTempFile "unassembled.kmp" $ \_ h -> do
+    res <- parseProcess inp
+    TLIO.hPutStr h $ renderLazy $ layoutCompact $ uncurry dumpX86 res
+    hFlush h
 
 writeAsm :: FilePath
          -> IO T.Text

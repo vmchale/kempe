@@ -1,15 +1,20 @@
 #!/usr/bin/env bash
 
 bench 'gcc-10 -fsyntax-only benchmarks/splitmix64.c' \
-    'clang-12 -fsyntax-only benchmarks/splitmix64.c' \
+    'clang-11 -fsyntax-only benchmarks/splitmix64.c' \
     'kc typecheck examples/splitmix.kmp' \
     'icc -fsyntax-only benchmarks/splitmix64.c' \
     'ghc -fno-code benchmarks/Splitmix.hs' \
     'gcc-10 -O0 -c benchmarks/splitmix64.c' \
-    'clang-12 -O0 -c benchmarks/splitmix64.c' \
+    'clang-11 -O0 -c benchmarks/splitmix64.c' \
     'icc -O0 -c benchmarks/splitmix64.c' \
     'ghc -O0 benchmarks/Splitmix.hs' \
     'rustc --crate-type=lib --emit=dep-info,metadata benchmarks/splitmix.rs' \
     'rustc --crate-type=lib benchmarks/splitmix.rs' \
     'rustc --crate-type=cdylib benchmarks/splitmix.rs' \
-    'kc examples/splitmix.kmp splitmix.o'
+    'kc examples/splitmix.kmp splitmix.o' \
+    'kc examples/splitmix.kmp splitmix.o --arch aarch64' \
+    'aarch64-linux-gnu-gcc -O0 -c benchmarks/splitmix64.c'  \
+    'clang-11 -c benchmarks/splitmix64.c --target=aarch64-linux-gnu' \
+    'rustc --crate-type=cdylib benchmarks/splitmix.rs --target=aarch64-unknown-linux-gnu -C "linker=aarch64-linux-gnu-ld"' \
+    'aarch64-linux-gnu-ghc -O0 benchmarks/Splitmix.hs'

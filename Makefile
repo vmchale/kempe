@@ -7,17 +7,14 @@ HS_SRC := $(shell find src -type f) kempe.cabal
 
 BINS := bin/x86_64-linux-kc.lz \
     bin/x86_64-linux-kc.gz \
-    bin/x86_64-linux-kc.zst
+    bin/x86_64-linux-kc.zst \
+    bin/aarch64-linux-kc.lz \
+    bin/aarch64-linux-kc.gz \
+    bin/aarch64-linux-kc.zst
 
 install:
 	cabal install exe:kc --overwrite-policy=always -w ghc-9.0.1
 	strip $$(readlink -f $$(which kc))
-
-const.o: test/examples/const.kmp $(HS_SRC)
-	cabal run -w ghc-9.0.1 exe:kc -- $< $@ -g
-
-const: const.o test/harness/const.c
-	gcc $^ -g -o $@
 
 moddeps.svg: $(HS_SRC)
 	graphmod -i src | dot -Tsvg -o $@
@@ -55,7 +52,7 @@ rts.o: rts.S
 	nasm $^ -f elf64 -o $@
 
 clean:
-	rm -rf dist-newstyle *.rlib *.d *.rmeta *.o stack.yaml.lock factorial.S factorial splitmix.S numbertheory.S numbertheory *.so bin moddeps.svg packdeps.svg const
+	rm -rf dist-newstyle *.rlib *.d *.rmeta *.o stack.yaml.lock factorial.S factorial splitmix.S numbertheory.S numbertheory *.so bin moddeps.svg packdeps.svg benchmarks/*_stub.h benchmarks/*.hi benchmarks/*.o
 
 %.zst: %
 	sak compress $< $@ --best
@@ -65,6 +62,13 @@ clean:
 
 %.gz: %
 	sak compress $^ $@ --best
+
+bin/aarch64-linux-kc: $(HS_SRC)
+	@mkdir -p $(dir $@)
+	cabal build exe:kc --with-ghc=aarch64-linux-gnu-ghc --with-ghc-pkg=aarch64-linux-gnu-ghc-pkg --constraint='kempe +cross' --enable-executable-static
+	export BIN=$$(fd 'aarch64-linux.*kc$$' dist-newstyle -t x -p -I); \
+	    cp $$BIN $@ ; \
+	    aarch64-linux-gnu-strip $@
 
 bin/x86_64-linux-kc: $(HS_SRC)
 	@mkdir -p $(dir $@)

@@ -16,6 +16,7 @@ import           Data.Foldable.Ext
 import qualified Data.IntMap.Strict         as IM
 import qualified Data.IntSet                as IS
 import           Data.List.NonEmpty         (NonEmpty (..))
+import qualified Data.List.NonEmpty         as NE
 import           Kempe.AST
 import           Kempe.Error
 import           Kempe.Name
@@ -25,8 +26,9 @@ import           Lens.Micro.Mtl             (modifying)
 
 checkAtom :: PatternEnv -> Atom c b -> Maybe (Error b)
 checkAtom env (Case l ls) =
-    if isExhaustive env $ fmap fst ls
-        then Nothing
+    let (ps, as) = NE.unzip ls in
+    if isExhaustive env ps
+        then foldMapAlternative (foldMapAlternative (checkAtom env)) as
         else Just (InexhaustiveMatch l)
 checkAtom _ _ = Nothing
 
@@ -90,8 +92,10 @@ isExhaustive _ (PatternWildcard{}:|_)                      = True
 isExhaustive _ (PatternInt{}:|ps)                          = hasWildcard ps
 isExhaustive _ (PatternBool _ True:|PatternBool _ False:_) = True
 isExhaustive _ (PatternBool _ False:|PatternBool _ True:_) = True
+-- doesn't technically work since you could have True True False but like...
+-- don't do that
 isExhaustive _ (PatternBool{}:|ps)                         = hasWildcard ps
-isExhaustive env ps@(PatternCons{}:|_)                     = isCompleteSet env (fmap patternName ps)
+isExhaustive env ps@(PatternCons{}:|_)                     = hasWildcard ps || isCompleteSet env (fmap patternName ps)
 
 isCompleteSet :: PatternEnv -> NonEmpty (TyName a) -> Bool
 isCompleteSet env ns@(n:|_) =

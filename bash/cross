@@ -2,7 +2,7 @@
 
 set -e
 
-cabal build --with-ghc=aarch64-linux-gnu-ghc --with-ghc-pkg=aarch64-linux-gnu-ghc-pkg --constraint='kempe +cross'
-cabal build --with-ghc=powerpc64le-linux-gnu-ghc --with-ghc-pkg=powerpc64le-linux-gnu-ghc-pkg --constraint='kempe +cross'
-cabal build --with-ghc=sparc64-linux-gnu-ghc --with-ghc-pkg=sparc64-linux-gnu-ghc-pkg --constraint='kempe +cross'
-cabal build --with-ghc=arm-linux-gnueabihf-ghc --with-ghc-pkg=arm-linux-gnueabihf-ghc-pkg --constraint='kempe +cross'
+cabal build --with-ghc=aarch64-linux-gnu-ghc --with-ghc-pkg=aarch64-linux-gnu-ghc-pkg --constraint='kempe +cross' --enable-executable-static
+cabal build --with-ghc=powerpc64le-linux-gnu-ghc --with-ghc-pkg=powerpc64le-linux-gnu-ghc-pkg --constraint='kempe +cross' --enable-executable-static
+cabal build --with-ghc=sparc64-linux-gnu-ghc --with-ghc-pkg=sparc64-linux-gnu-ghc-pkg --constraint='kempe +cross' --enable-executable-static
+cabal build --with-ghc=arm-linux-gnueabihf-ghc --with-ghc-pkg=arm-linux-gnueabihf-ghc-pkg --constraint='kempe +cross' --enable-executable-static

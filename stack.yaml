@@ -1,8 +1,0 @@
----
-packages:
-  - ./
-resolver: lts-16.31
-extra-deps:
-  - composition-prelude-3.0.0.0@sha256:7407835ce8c1e0e2fd6febd25391b12989b216773e685e3cf95bd89072af0ecc,1149
-  - prettyprinter-1.7.0@sha256:6a9569e21fa61163a7f066d23d701e23e917893e8f39733d6e617ec72787ae5f,6007
-  - recursion-2.2.4.2@sha256:393b021db63af064471b3996390c5e699ee8fee8d9f5f417b8ca200de0fe2d5d,1675

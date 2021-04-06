@@ -53,8 +53,6 @@ id : a -- a
 ```
 
 
-The Kempe typechecker basically works.
-
 ## Literals
 
 Integer literals have type `-- Int`.
@@ -133,7 +131,7 @@ fac_tailrec : Int -- Int
 Kempe supports sum types, for instance:
 
 ```
-type Either a b { Left a | Right b }
+type Maybe a { Just a | Nothing }
 ```
 
 Note that empty sum types such as
@@ -149,11 +147,11 @@ are not really supported.
 Sum types are taken apart with pattern matching, viz.
 
 ```
-isRight : ((Either a) b) -- Bool
-        =: [
+isJust : (Maybe a) -- Bool
+       =: [
     { case
-        | Right -> drop True
-        | Left  -> drop False
+        | Just -> drop True
+        | Nothing -> False
     }
 ]
 ```
@@ -186,7 +184,7 @@ nip : a b -- b
 ...
 ```
 
-The import system is sort of defective at this stage.
+The import system is sort of defective.
 
 ## FFI
 
@@ -356,14 +354,6 @@ gcd : Int Int -- Int
 `kc` supports mutual recursion:
 
 ```
-not : Bool -- Bool
-    =: [
-    { case
-        | True -> False
-        | _    -> True
-    }
-]
-
 odd : Int -- Bool
     =: [ dup 0 =
             if( drop False
