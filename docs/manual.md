@@ -101,7 +101,9 @@ For arithmetic:
   * `xor : Bool Bool -- Bool`
   * `~ : Int -- Int`
 
-`%` is like Haskell's `rem` and `/` is like Haskell's `quot`.
+`%` is like Haskell's `rem` and `/` is like Haskell's `quot`. `>>`, `<<`, `>>~`,
+and `<<~` are like Haskell's `rotate`; i.e. they are logical shifts (not
+arithmetic shifts).
 
 There is one higher-order construct, `dip`, which we illustrate by example:
 

@@ -324,7 +324,7 @@
 <li><code>xor : Bool Bool -- Bool</code></li>
 <li><code>~ : Int -- Int</code></li>
 </ul>
-<p><code>%</code> is like Haskell’s <code>rem</code> and <code>/</code> is like Haskell’s <code>quot</code>.</p>
+<p><code>%</code> is like Haskell’s <code>rem</code> and <code>/</code> is like Haskell’s <code>quot</code>. <code>&gt;&gt;</code>, <code>&lt;&lt;</code>, <code>&gt;&gt;~</code>, and <code>&lt;&lt;~</code> are like Haskell’s <code>rotate</code>; i.e. they are logical shifts (not arithmetic shifts).</p>
 <p>There is one higher-order construct, <code>dip</code>, which we illustrate by example:</p>
 <pre><code>nip : a b -- b
     =: [ dip(drop) ]</code></pre>
