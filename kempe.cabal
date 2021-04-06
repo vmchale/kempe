@@ -79,6 +79,7 @@ library kempe-modules
         Kempe.Proc.Nasm
         Kempe.Proc.As
         Kempe.Haskell.FFI
+        Kempe.Haskell.Print
         Kempe.Debug
         Prettyprinter.Ext
         Data.Foldable.Ext
