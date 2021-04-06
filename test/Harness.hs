@@ -1,5 +1,5 @@
 module Harness ( goldenOutput
-               , compileArm
+               , crossGolden
                ) where
 
 import qualified Data.ByteString.Lazy       as BSL
@@ -9,24 +9,25 @@ import           Kempe.File
 import           System.FilePath            ((</>))
 import           System.IO.Temp
 import           System.Info                (arch)
-import           System.Process             (CreateProcess (std_err), StdStream (Inherit), proc, readCreateProcess)
+import           System.Process             (CreateProcess (env, std_err), StdStream (Inherit), proc, readCreateProcess)
 import           Test.Tasty
 import           Test.Tasty.Golden          (goldenVsString)
 import           Test.Tasty.HUnit           (assertBool, testCase)
 
+data CC = CC
+        | ArmCC
+
+instance Show CC where
+    show CC    = "cc"
+    show ArmCC = "aarch64-linux-gnu-gcc"
+
 -- | Assemble using @nasm@, output in some file.
-runGcc :: [FilePath]
+runGcc :: CC
+       -> [FilePath]
        -> FilePath
        -> IO ()
-runGcc fps o =
-    void $ readCreateProcess ((proc "cc" (fps ++ ["-o", o])) { std_err = Inherit }) ""
-
-compileArm :: FilePath -> TestTree
-compileArm fp = testCase "Assembles arm" $
-    withSystemTempDirectory "kmp" $ \dir -> do
-        let oFile = dir </> "kempe.o"
-        armCompile fp oFile False
-        assertBool "Doesn't throw exception" True
+runGcc cc fps o =
+    void $ readCreateProcess ((proc (show cc) (fps ++ ["-o", o])) { std_err = Inherit }) ""
 
 compileOutput :: FilePath
               -> FilePath
@@ -40,9 +41,22 @@ compileOutput fp harness =
                 "aarch64" -> armCompile
                 _         -> error "Internal error in test suite! Must run on either x86_64 or aarch64"
         compiler fp oFile False
-        runGcc [oFile, harness] exe
+        runGcc CC [oFile, harness] exe
         readExe exe
     where readExe fp' = ASCII.pack <$> readCreateProcess ((proc fp' []) { std_err = Inherit }) ""
+
+crossCompileOutput :: FilePath
+                   -> FilePath
+                   -> IO BSL.ByteString
+crossCompileOutput fp harness =
+    withSystemTempDirectory "kmp" $ \dir -> do
+        let oFile = dir </> "kempe.o"
+            exe = dir </> "kempe"
+        armCompile fp oFile False
+        runGcc ArmCC [oFile, harness] exe
+        readExe exe
+    where readExe fp' = ASCII.pack <$> readCreateProcess ((proc "qemu-aarch64-static" [fp']) { std_err = Inherit, env = qemuEnv }) ""
+          qemuEnv = Just [("QEMU_LD_PREFIX", "/usr/aarch64-linux-gnu/")]
 
 goldenOutput :: FilePath -- ^ Kempe file
              -> FilePath -- ^ C test harness
@@ -50,3 +64,11 @@ goldenOutput :: FilePath -- ^ Kempe file
              -> TestTree
 goldenOutput kFp cFp golden =
     goldenVsString kFp golden (compileOutput kFp cFp)
+
+
+crossGolden :: FilePath -- ^ Kempe file
+            -> FilePath -- ^ C test harness
+            -> FilePath -- ^ Golden file path
+            -> TestTree
+crossGolden kFp cFp golden =
+    goldenVsString kFp golden (crossCompileOutput kFp cFp)

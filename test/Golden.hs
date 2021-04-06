@@ -18,11 +18,12 @@ main = defaultMain $
 -- These are redundant on arm
 crossTests :: [TestTree]
 crossTests = case arch of
-    "x86_64" -> [ compileArm "examples/factorial.kmp"
-                , compileArm "lib/numbertheory.kmp"
-                , compileArm "test/examples/bool.kmp"
-                , compileArm "examples/splitmix.kmp"
-                , compileArm "lib/gaussian.kmp"
+    "x86_64" -> [ crossGolden "examples/factorial.kmp" "test/harness/factorial.c" "test/golden/factorial.out"
+                , crossGolden "test/examples/splitmix.kmp" "test/harness/splitmix.c" "test/golden/splitmix.out"
+                , crossGolden "lib/numbertheory.kmp" "test/harness/numbertheory.c" "test/golden/numbertheory.out"
+                , crossGolden "test/examples/hamming.kmp" "test/harness/hamming.c" "test/golden/hamming.out"
+                , crossGolden "test/examples/bool.kmp" "test/harness/bool.c" "test/golden/bool.out"
+                , crossGolden "test/examples/const.kmp" "test/harness/const.c" "test/golden/const.out"
                 ]
     "aarch64" -> []
     _ -> error "Test suite must be run on x86_64 or aarch64"

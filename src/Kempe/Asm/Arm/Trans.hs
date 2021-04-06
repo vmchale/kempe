@@ -3,7 +3,7 @@
 module Kempe.Asm.Arm.Trans ( irToAarch64
                            ) where
 
-import           Data.Bits          (shiftR, (.&.))
+import           Data.Bits          (rotateR, (.&.))
 import           Data.Foldable.Ext  (foldMapA)
 import           Data.Int           (Int64)
 import           Data.List          (scanl')
@@ -106,9 +106,9 @@ irEmit _ (IR.MJump e l) = do
 movRWord :: AbsReg -> Word -> [Arm AbsReg ()]
 movRWord r w = [MovRWord () r (fromIntegral b0), MovRK () r (fromIntegral b1) 16, MovRK () r (fromIntegral b2) 32, MovRK () r (fromIntegral b3) 48]
     where b0 = w .&. 0xFFFF
-          b1 = (w .&. 0xFFFF0000) `shiftR` 16
-          b2 = (w .&. 0xFFFF00000000) `shiftR` 32
-          b3 = (w .&. 0xFFFF000000000000) `shiftR` 48
+          b1 = (w .&. 0xFFFF0000) `rotateR` 16
+          b2 = (w .&. 0xFFFF00000000) `rotateR` 32
+          b3 = (w .&. 0xFFFF000000000000) `rotateR` 48
           -- TODO: only MovRK if nonzero
 
 evalE :: IR.Exp -> IR.Temp -> WriteM [Arm AbsReg ()]
