@@ -21,7 +21,6 @@ instance Show CC where
     show CC    = "cc"
     show ArmCC = "aarch64-linux-gnu-gcc"
 
--- | Assemble using @nasm@, output in some file.
 runGcc :: CC
        -> [FilePath]
        -> FilePath

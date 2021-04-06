@@ -1,29 +1,28 @@
 module Main (main) where
 
+import           Data.Tuple.Extra (uncurry3)
 import           Harness
-import           System.Info (arch)
+import           System.Info      (arch)
 import           Test.Tasty
 
 main :: IO ()
 main = defaultMain $
     testGroup "Golden output tests" $
-        [ goldenOutput "examples/factorial.kmp" "test/harness/factorial.c" "test/golden/factorial.out"
-        , goldenOutput "test/examples/splitmix.kmp" "test/harness/splitmix.c" "test/golden/splitmix.out"
-        , goldenOutput "lib/numbertheory.kmp" "test/harness/numbertheory.c" "test/golden/numbertheory.out"
-        , goldenOutput "test/examples/hamming.kmp" "test/harness/hamming.c" "test/golden/hamming.out"
-        , goldenOutput "test/examples/bool.kmp" "test/harness/bool.c" "test/golden/bool.out"
-        , goldenOutput "test/examples/const.kmp" "test/harness/const.c" "test/golden/const.out"
-        ] ++ crossTests
+        fmap (uncurry3 goldenOutput) allGoldens ++ crossTests
 
 -- These are redundant on arm
 crossTests :: [TestTree]
 crossTests = case arch of
-    "x86_64" -> [ crossGolden "examples/factorial.kmp" "test/harness/factorial.c" "test/golden/factorial.out"
-                , crossGolden "test/examples/splitmix.kmp" "test/harness/splitmix.c" "test/golden/splitmix.out"
-                , crossGolden "lib/numbertheory.kmp" "test/harness/numbertheory.c" "test/golden/numbertheory.out"
-                , crossGolden "test/examples/hamming.kmp" "test/harness/hamming.c" "test/golden/hamming.out"
-                , crossGolden "test/examples/bool.kmp" "test/harness/bool.c" "test/golden/bool.out"
-                , crossGolden "test/examples/const.kmp" "test/harness/const.c" "test/golden/const.out"
-                ]
+    "x86_64"  -> fmap (uncurry3 crossGolden) allGoldens
     "aarch64" -> []
-    _ -> error "Test suite must be run on x86_64 or aarch64"
+    _         -> error "Test suite must be run on x86_64 or aarch64"
+
+allGoldens :: [(FilePath, FilePath, FilePath)]
+allGoldens =
+    [ ("examples/factorial.kmp", "test/harness/factorial.c", "test/golden/factorial.out")
+    , ("test/examples/splitmix.kmp", "test/harness/splitmix.c", "test/golden/splitmix.out")
+    , ("lib/numbertheory.kmp", "test/harness/numbertheory.c", "test/golden/numbertheory.out")
+    , ("test/examples/hamming.kmp", "test/harness/hamming.c", "test/golden/hamming.out")
+    , ("test/examples/bool.kmp", "test/harness/bool.c", "test/golden/bool.out")
+    , ("test/examples/const.kmp", "test/harness/const.c", "test/golden/const.out")
+    ]
