@@ -65,7 +65,6 @@ goldenOutput :: FilePath -- ^ Kempe file
 goldenOutput kFp cFp golden =
     goldenVsString kFp golden (compileOutput kFp cFp)
 
-
 crossGolden :: FilePath -- ^ Kempe file
             -> FilePath -- ^ C test harness
             -> FilePath -- ^ Golden file path
