@@ -110,6 +110,7 @@ movRWord r w = [MovRWord () r (fromIntegral b0), MovRK () r (fromIntegral b1) 16
           b2 = (w .&. 0xFFFF00000000) `shiftR` 32
           b3 = (w .&. 0xFFFF000000000000) `shiftR` 48
           -- TODO: only MovRK if nonzero
+          -- TODO: use rotateR here for more generality
 
 evalE :: IR.Exp -> IR.Temp -> WriteM [Arm AbsReg ()]
 evalE (IR.ConstInt i) r                                                        = pure [MovRC () (toAbsReg r) i]
