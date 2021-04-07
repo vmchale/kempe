@@ -29,6 +29,6 @@ showAtom (TyBuiltin _ TyInt) b  = showText (mkWord64 (BS.unpack b) :: Int64)
 showText :: Show a => a -> T.Text
 showText = T.pack . show
 
--- I guess this is big-endian
+-- | Big-endian (I think works for Aarch64 and x86-64)
 mkWord64 :: (Bits a, Num a) => [Word8] -> a
 mkWord64 = snd . foldl' (\(exp', b) b' -> (exp'-8, b .|. fromIntegral b' `rotateL` exp')) (56, 0)
