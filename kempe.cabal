@@ -72,6 +72,7 @@ library kempe-modules
         Kempe.Asm.Arm.Type
         Kempe.Asm.Arm.Opt
         Kempe.Asm.X86.Type
+        Kempe.Asm.X86.Keystone
         Kempe.Asm.Type
         Kempe.Asm.Pretty
         Kempe.IR.Type
@@ -107,7 +108,8 @@ library kempe-modules
         composition-prelude >=2.0.2.0,
         microlens-mtl,
         process >=1.2.3.0,
-        temporary
+        temporary,
+        keystone
 
     if impl(ghc >=8.0)
         ghc-options:
