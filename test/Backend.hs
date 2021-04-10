@@ -6,7 +6,6 @@ import qualified Data.ByteString           as BS
 import qualified Kempe.Asm.Arm.ControlFlow as Arm
 import           Kempe.Asm.Liveness
 import qualified Kempe.Asm.X86.ControlFlow as X86
-import           Kempe.Asm.X86.Keystone
 import           Kempe.Inline
 import           Kempe.Module
 import           Kempe.Monomorphize
@@ -55,7 +54,6 @@ backendTests =
         , armCodegen "lib/gaussian.kmp"
         , armCodegen "lib/rational.kmp"
         , armCodegen "examples/splitmix.kmp"
-        , keystoneX86 "examples/factorial.kmp"
         ]
 
 codegen :: FilePath -> TestTree

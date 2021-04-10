@@ -36,6 +36,11 @@ flag cross
     default:     False
     manual:      True
 
+flag dev
+    description: Build debug modules (for GHCi)
+    default:     False
+    manual:      True
+
 library kempe-modules
     exposed-modules:
         Kempe.File
@@ -75,7 +80,6 @@ library kempe-modules
         Kempe.Asm.Arm.Opt
         Kempe.Asm.X86.Type
         Kempe.Asm.Pretty
-        Kempe.Asm.KeystoneDebug
         Kempe.Asm.Type
         Kempe.IR.Type
         Kempe.IR.Monad
@@ -83,7 +87,6 @@ library kempe-modules
         Kempe.Proc.As
         Kempe.Haskell.FFI
         Kempe.Haskell.Print
-        Kempe.Debug
         Prettyprinter.Ext
         Data.Foldable.Ext
         Data.Copointed
@@ -112,6 +115,11 @@ library kempe-modules
         process >=1.2.3.0,
         temporary,
         keystone
+
+    if flag(dev)
+        other-modules:
+            Kempe.Debug
+            Kempe.Asm.KeystoneDebug
 
     if impl(ghc >=8.0)
         ghc-options:
