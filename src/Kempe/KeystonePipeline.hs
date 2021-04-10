@@ -1,4 +1,4 @@
-module Kempe.KeystonePipeline ( assembleAtomX86
+module Kempe.KeystonePipeline ( assembleTypedAtomX86
                               ) where
 
 import qualified Data.ByteString           as BS
@@ -12,10 +12,10 @@ import           Kempe.Asm.X86.Trans
 import           Kempe.IR
 
 -- throws error
-assembleAtomX86 :: SizeEnv
-                -> Atom (ConsAnn MonoStackType) MonoStackType
-                -> BS.ByteString
-assembleAtomX86 sz a =
+assembleTypedAtomX86 :: SizeEnv
+                     -> Atom (ConsAnn MonoStackType) MonoStackType
+                     -> BS.ByteString
+assembleTypedAtomX86 sz a =
     let (stmts, st) = runTempM (writeAtom sz True a)
         in handleErr $ assembleX86 $ X86.allocRegs $ reconstruct $ X86.mkControlFlow $ irToX86 sz st stmts
     where handleErr = either (error . show) id

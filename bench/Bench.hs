@@ -22,7 +22,7 @@ import           Kempe.Parser
 import           Kempe.Pipeline
 import           Kempe.Shuttle
 import           Kempe.TyAssign
-import           Prettyprinter             (Doc, defaultLayoutOptions, layoutCompact, layoutPretty)
+import           Prettyprinter             (Doc, layoutCompact)
 import           Prettyprinter.Render.Text (renderLazy, renderStrict)
 import           System.IO                 (hFlush)
 import           System.IO.Temp            (withSystemTempFile)
@@ -163,7 +163,7 @@ writeAsm fp = do
     pure $ renderText $ uncurry dumpX86 res
 
 renderText :: Doc ann -> T.Text
-renderText = renderStrict . layoutPretty defaultLayoutOptions
+renderText = renderStrict . layoutCompact
 
 writeArmAsm :: FilePath
             -> IO T.Text
