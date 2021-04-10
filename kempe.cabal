@@ -74,8 +74,9 @@ library kempe-modules
         Kempe.Asm.Arm.Type
         Kempe.Asm.Arm.Opt
         Kempe.Asm.X86.Type
-        Kempe.Asm.Type
         Kempe.Asm.Pretty
+        Kempe.Asm.KeystoneDebug
+        Kempe.Asm.Type
         Kempe.IR.Type
         Kempe.IR.Monad
         Kempe.Proc.Nasm
