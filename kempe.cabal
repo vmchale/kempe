@@ -53,6 +53,7 @@ library kempe-modules
         Kempe.Shuttle
         Kempe.Inline
         Kempe.Module
+        Kempe.KeystonePipeline
         Kempe.Check.Pattern
         Kempe.IR
         Kempe.IR.Opt
@@ -119,7 +120,6 @@ library kempe-modules
     if flag(dev)
         other-modules:
             Kempe.Debug
-            Kempe.Asm.KeystoneDebug
 
     if impl(ghc >=8.0)
         ghc-options:

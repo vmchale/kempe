@@ -1,4 +1,5 @@
 module Kempe.IR ( writeModule
+                , writeAtom
                 , runTempM
                 , TempM
                 , prettyIR
