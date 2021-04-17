@@ -9,7 +9,5 @@ program-options
 package kempe
   ghc-options: -j +RTS -A32m
 
-constraints: composition-prelude >= 3.0.0.2
-
 allow-newer:
   tagged:template-haskell
