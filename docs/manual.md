@@ -251,6 +251,8 @@ int main(int argc, char *argv[]) {
 }
 ```
 
+The C ABI should work on Unix; it does not target Windows.
+
 Unlike the frontend and type checker, the backend is dodgy.
 
 ### Cross-Compilation
