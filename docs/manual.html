@@ -410,9 +410,10 @@ nip : a b -- b
 <span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> main<span class="op">(</span><span class="dt">int</span> argc<span class="op">,</span> <span class="dt">char</span> <span class="op">*</span>argv<span class="op">[])</span> <span class="op">{</span></span>
 <span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>    printf<span class="op">(</span><span class="st">&quot;%d&quot;</span><span class="op">,</span> fac<span class="op">(</span><span class="dv">3</span><span class="op">));</span></span>
 <span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>The C ABI should work on Unix; it does not target Windows.</p>
 <p>Unlike the frontend and type checker, the backend is dodgy.</p>
 <h3 id="cross-compilation">Cross-Compilation</h3>
-<p><code>kc</code> is a cross-compiler;, the target architecture can be set by passing one of <code>x64</code> or <code>aarch64</code> to <code>--arch</code>. By default <code>kc</code> targets the architecture of the host machine.</p>
+<p><code>kc</code> is a cross-compiler; the target architecture can be set by passing one of <code>x64</code> or <code>aarch64</code> to <code>--arch</code>. By default <code>kc</code> targets the architecture of the host machine.</p>
 <p>You will need the appropriate assembler installed.</p>
 <h2 id="internals">Internals</h2>
 <p>Kempe maintains its own stack and stores the pointer in <code>rbp</code> (x86) or <code>x19</code> (aarch64).</p>
