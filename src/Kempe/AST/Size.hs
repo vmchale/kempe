@@ -44,7 +44,7 @@ data StackType b = StackType { quantify :: S.Set (Name b)
 
 type MonoStackType = ([KempeTy ()], [KempeTy ()])
 
-prettyMonoStackType :: MonoStackType -> Doc a
+prettyMonoStackType :: ([KempeTy a], [KempeTy a]) -> Doc ann
 prettyMonoStackType (is, os) = sep (fmap pretty is) <+> "--" <+> sep (fmap pretty os)
 
 data BuiltinTy = TyInt
