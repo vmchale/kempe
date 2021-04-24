@@ -263,7 +263,7 @@ renamed (Name t i _) sty@(is, os) = do
     modifying fnEnvLens (M.insert (i, newStackType) j)
     pure (Name t' j newStackType)
 
-closure :: Ord b => (Declarations a b b, ModuleMap a b b) -> S.Set (Name b, b)
+closure :: (Declarations a (StackType ()) (StackType ()), ModuleMap a (StackType ()) (StackType ())) -> S.Set (Name (StackType ()), StackType ())
 closure (m, key) = loop roots S.empty
     where roots = S.fromList (exports m)
           loop ns avoid =
@@ -276,13 +276,13 @@ closure (m, key) = loop roots S.empty
                 Just decl -> namesInDecl decl
                 Nothing   -> error "Internal error! module map should contain all names."
 
-namesInDecl :: Ord b => KempeDecl a b b -> S.Set (Name b, b)
+namesInDecl :: KempeDecl a (StackType ()) (StackType ()) -> S.Set (Name (StackType ()), StackType ())
 namesInDecl TyDecl{}             = S.empty
 namesInDecl ExtFnDecl{}          = S.empty
 namesInDecl Export{}             = S.empty
 namesInDecl (FunDecl _ _ _ _ as) = foldMap namesInAtom as
 
-namesInAtom :: Ord a => Atom a a -> S.Set (Name a, a)
+namesInAtom :: Atom (StackType ()) (StackType ()) -> S.Set (Name (StackType ()), StackType ())
 namesInAtom AtBuiltin{}                = S.empty
 namesInAtom (If _ as as')              = foldMap namesInAtom as <> foldMap namesInAtom as'
 namesInAtom (Dip _ as)                 = foldMap namesInAtom as
@@ -294,8 +294,8 @@ namesInAtom Int8Lit{}                  = S.empty
 namesInAtom WordLit{}                  = S.empty
 namesInAtom (Case _ as)                = foldMap namesInAtom (foldMap snd as) <> foldMap (namesInPattern . fst) as
 
-namesInPattern :: Pattern a a -> S.Set (Name a, a)
-namesInPattern (PatternCons _ tn@(Name _ _ l)) = S.singleton (tn, l)
+namesInPattern :: Pattern (StackType ()) (StackType ()) -> S.Set (Name (StackType ()), StackType ())
+namesInPattern (PatternCons _ tn@(Name _ _ l)) = S.singleton (tn, flipStackType l) -- we have to flipStackType here because the type is the reverse of the constructor that we want to look up
 namesInPattern _                               = S.empty
 
 exports :: Declarations a c b -> [(Name b, b)]
