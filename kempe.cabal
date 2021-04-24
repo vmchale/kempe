@@ -80,6 +80,7 @@ library kempe-modules
         Kempe.Proc.As
         Kempe.Debug
         Prettyprinter.Ext
+        Prettyprinter.Debug
         Data.Foldable.Ext
         Data.Copointed
 
