@@ -1,0 +1,10 @@
+type Maybe a { Just a | Nothing }
+
+return0 : (Maybe a) -- Int
+       =: [
+    { case
+        | _ -> 2
+    }
+]
+
+%foreign kabi return0
