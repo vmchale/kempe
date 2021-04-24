@@ -410,7 +410,7 @@ tyInsert (FunDecl _ _ ins out as) = do
     traverse_ kindOf (void <$> ins ++ out) -- FIXME: this gives sketchy results?
     sig <- renameStack $ voidStackType $ StackType (freeVars (ins ++ out)) ins out
     inferred <- tyAtoms as
-    _ <- mergeStackTypes sig inferred -- FIXME: need to verify the merged type is as general as the signature?
+    _ <- mergeStackTypes sig inferred
     when (inferred `lessGeneral` sig) $
         throwError $ LessGeneral () sig inferred
 tyInsert ExtFnDecl{} = pure () -- TODO: kind-check
