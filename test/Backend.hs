@@ -30,6 +30,7 @@ backendTests =
         , irNoYeet "examples/splitmix.kmp"
         , irNoYeet "examples/factorial.kmp"
         , irNoYeet "test/data/maybeC.kmp"
+        , irNoYeet "examples/os.kmp"
         , x86NoYeet "examples/factorial.kmp"
         , x86NoYeet "examples/splitmix.kmp"
         , armNoYeet "examples/factorial.kmp"
