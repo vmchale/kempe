@@ -29,6 +29,7 @@ import           Kempe.Unique
 import           Lens.Micro                 (Lens', over)
 import           Lens.Micro.Mtl             (modifying, (.=))
 import           Prettyprinter              (Doc, Pretty (pretty), hardline, indent, vsep, (<+>))
+import           Prettyprinter.Debug
 import           Prettyprinter.Ext
 
 type TyEnv a = IM.IntMap (StackType a)
@@ -41,9 +42,6 @@ data TyState a = TyState { maxU             :: Int -- ^ For renamer
                          , constraints      :: S.Set (KempeTy a, KempeTy a) -- Just need equality between simple types? (do have tyapp but yeah)
                          }
 
-(<#*>) :: Doc a -> Doc a -> Doc a
-(<#*>) x y = x <> hardline <> indent 2 y
-
 instance Pretty (TyState a) where
     pretty (TyState _ te _ r _ cs) =
         "type environment:" <#> vsep (prettyBound <$> IM.toList te)
@@ -53,17 +51,11 @@ instance Pretty (TyState a) where
 prettyConstraints :: S.Set (KempeTy a, KempeTy a) -> Doc ann
 prettyConstraints cs = vsep (prettyEq <$> S.toList cs)
 
-prettyBound :: (Int, StackType a) -> Doc b
-prettyBound (i, e) = pretty i <+> "←" <#*> pretty e
-
 prettyEq :: (KempeTy a, KempeTy a) -> Doc ann
 prettyEq (ty, ty') = pretty ty <+> "≡" <+> pretty ty'
 
 prettyDumpBinds :: Pretty b => IM.IntMap b -> Doc a
 prettyDumpBinds b = vsep (prettyBind <$> IM.toList b)
-
-prettyBind :: Pretty b => (Int, b) -> Doc a
-prettyBind (i, j) = pretty i <+> "→" <+> pretty j
 
 emptyStackType :: StackType a
 emptyStackType = StackType mempty [] []

@@ -2,6 +2,7 @@
 
 module Prettyprinter.Debug ( prettyBind
                            , prettyBound
+                           , (<#*>)
                            ) where
 
 import           Prettyprinter (Doc, Pretty (pretty), hardline, indent, (<+>))
