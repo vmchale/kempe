@@ -1,5 +1,7 @@
 # kempe
 
+## 0.2.0.2
+
   * Improve performance + generated code
   * Fix bug in monomorphization of patterns
 
