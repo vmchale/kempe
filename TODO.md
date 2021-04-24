@@ -33,6 +33,7 @@
   - [ ] https://hackage.haskell.org/package/hoopl (may be faster)
 - [ ] https://hackage.haskell.org/package/fmlist
 # Bugs
+- [ ] Better error for mismatched pattern wildcards
 - [x] The current setup ignores extern imports -> no it doesn't
 - [x] Exported functions w/ C ABI should be there (so it can link)
 - [ ] Throw error when return value in C ABI is too big
