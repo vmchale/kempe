@@ -40,6 +40,8 @@ import           Kempe.Name
 import           Kempe.Unique
 import           Lens.Micro                 (Lens')
 import           Lens.Micro.Mtl             (modifying)
+import           Prettyprinter              (Doc, Pretty, vsep)
+import           Prettyprinter.Debug
 
 -- | New function names, keyed by name + specialized type
 --
@@ -51,6 +53,9 @@ data RenameEnv = RenameEnv { maxState :: Int
                            }
 
 type MonoM = StateT RenameEnv (Either (Error ()))
+
+prettyDumpBinds :: (Pretty b, Pretty k) => M.Map k b -> Doc a
+prettyDumpBinds b = vsep (prettyBind <$> M.toList b)
 
 maxStateLens :: Lens' RenameEnv Int
 maxStateLens f s = fmap (\x -> s { maxState = x }) (f (maxState s))
@@ -287,7 +292,11 @@ namesInAtom IntLit{}                   = S.empty
 namesInAtom BoolLit{}                  = S.empty
 namesInAtom Int8Lit{}                  = S.empty
 namesInAtom WordLit{}                  = S.empty
-namesInAtom (Case _ as)                = foldMap namesInAtom (foldMap snd as) -- FIXME: patterns too
+namesInAtom (Case _ as)                = foldMap namesInAtom (foldMap snd as) <> foldMap (namesInPattern . fst) as
+
+namesInPattern :: Pattern a a -> S.Set (Name a, a)
+namesInPattern (PatternCons _ tn@(Name _ _ l)) = S.singleton (tn, l)
+namesInPattern _                               = S.empty
 
 exports :: Declarations a c b -> [(Name b, b)]
 exports = mapMaybe exportsDecl

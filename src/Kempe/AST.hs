@@ -240,6 +240,9 @@ prettyModuleGeneral :: (Atom c b -> Doc ann) -> Module a c b -> Doc ann
 prettyModuleGeneral atomizer (Module [] ds) = prettyDeclarationsGeneral atomizer ds
 prettyModuleGeneral atomizer (Module is ds) = prettyLines (fmap prettyImport is) <##> prettyDeclarationsGeneral atomizer ds
 
+prettyDecls :: Declarations a c b -> Doc ann
+prettyDecls = prettyDeclarationsGeneral pretty
+
 prettyFancyModule :: Declarations () (ConsAnn (StackType ())) (StackType ()) -> Doc ann
 prettyFancyModule = prettyTypedModule . fmap (first consTy)
 
