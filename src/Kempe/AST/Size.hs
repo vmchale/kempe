@@ -82,7 +82,7 @@ instance Pretty ABI where
 type Size = [Int64] -> Int64
 type SizeEnv = IM.IntMap Size
 
--- the kempe sizing system is kind of fucked (it mostly works tho)
+-- the kempe sizing system is kind of fucked (it works tho)
 
 -- | Don't call this on ill-kinded types; it won't throw any error.
 size :: SizeEnv -> KempeTy a -> Size
