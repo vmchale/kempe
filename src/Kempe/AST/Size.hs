@@ -15,7 +15,6 @@ module Kempe.AST.Size ( KempeTy (..)
                       -- * Sizing bits
                       , SizeEnv
                       , Size
-                      , cSize
                       , size
                       , size'
                       , sizeStack
@@ -94,11 +93,8 @@ size _ TyVar{}                             = error "Internal error: type variabl
 size env (TyNamed _ (Name _ (Unique k) _)) = IM.findWithDefault (error "Size not in map!") k env
 size env (TyApp _ ty ty')                  = \tys -> size env ty (size env ty' [] : tys)
 
-cSize :: Size -> Int64
-cSize = ($ [])
-
 size' :: SizeEnv -> KempeTy a -> Int64
-size' env = cSize . size env
+size' env = ($ []) . size env
 
 sizeStack :: SizeEnv -> [KempeTy a] -> Int64
 sizeStack env = getSum . foldMap (Sum . size' env)
