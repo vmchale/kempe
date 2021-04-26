@@ -28,7 +28,7 @@ import           Kempe.Name
 import           Kempe.Unique
 import           Lens.Micro                 (Lens', over)
 import           Lens.Micro.Mtl             (modifying, (.=))
-import           Prettyprinter              (Doc, Pretty (pretty), hardline, indent, vsep, (<+>))
+import           Prettyprinter              (Doc, Pretty (pretty), vsep, (<+>))
 import           Prettyprinter.Debug
 import           Prettyprinter.Ext
 
