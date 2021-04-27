@@ -52,7 +52,7 @@
 - [ ] https://www.cs.princeton.edu/courses/archive/spr19/cos217/lectures/13_Assembly1.pdf (von neumann -> c where int ptrs, ATS & such are useful...)
 # Features
 - [ ] Only save registers that get clobbered
-- [ ] Aarch64 backend
+- [x] Aarch64 backend
 - [ ] Arithmetic and patterns for `i8`
 - [ ] Patterns for words?
 - [ ] `divMod` builtin?
@@ -71,6 +71,7 @@
 - [ ] tail recursion modulo cons ?
 - [ ] `.intel_syntax noprefix` for arm
 - [ ] RCL/RCR/ROL/ROR
+- [ ] real backend? https://github.com/AjayMT/nanoc
 ## Builtins
 - [ ] `rem` builtin or the like? (basically functions in library)
   - [ ] `sal`, `sar`?
