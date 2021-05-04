@@ -113,11 +113,11 @@ unifyPrep um ((ty, ty'):tys) =
     in unifyMatch um $ (ty'', ty'''):tys
 
 unifyMatch :: UnifyMap -> [(KempeTy (), KempeTy ())] -> Either (Error ()) (IM.IntMap (KempeTy ()))
-unifyMatch _ []                                                             = Right mempty
+unifyMatch _ []                                                              = Right mempty
 unifyMatch um ((ty@(TyBuiltin _ b0), ty'@(TyBuiltin _ b1)):tys) | b0 == b1   = unifyPrep um tys
                                                                 | otherwise  = Left (UnificationFailed () ty ty')
 unifyMatch um ((ty@(TyNamed _ n0), ty'@(TyNamed _ n1)):tys) | n0 == n1       = unifyPrep um tys
-                                                    | otherwise      = Left (UnificationFailed () (void ty) (void ty'))
+                                                            | otherwise      = Left (UnificationFailed () (void ty) (void ty'))
 unifyMatch um ((ty@(TyNamed _ _), TyVar  _ (Name _ (Unique k) _)):tys)       = IM.insert k ty <$> unifyPrep (IM.insert k ty um) tys
 unifyMatch um ((TyVar _ (Name _ (Unique k) _), ty@(TyNamed _ _)):tys)        = IM.insert k ty <$> unifyPrep (IM.insert k ty um) tys
 unifyMatch um ((ty@TyBuiltin{}, TyVar  _ (Name _ (Unique k) _)):tys)         = IM.insert k ty <$> unifyPrep (IM.insert k ty um) tys
