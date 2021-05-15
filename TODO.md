@@ -33,7 +33,7 @@
   - [ ] https://hackage.haskell.org/package/hoopl (may be faster)
 - [ ] https://hackage.haskell.org/package/fmlist
 # Bugs
-- [ ] Better error for mismatched pattern wildcards
+- [ ] Specific error for mismatched pattern wildcards
 - [x] The current setup ignores extern imports -> no it doesn't
 - [x] Exported functions w/ C ABI should be there (so it can link)
 - [ ] Throw error when return value in C ABI is too big
@@ -42,14 +42,15 @@
   - [x] Constructors that call constructors don't dispatch/monomorphize
     properly?
 - [x] Correctly restore registers (C ABI)
-- [ ] Warn on >256 constructors
+- [x] Warn on >256 constructors
+  - [ ] Error on >256 constructors?
 - [x] Constructors not inlined; need type specializations when one calls
   a constructor on a constructor!
 - [x] Save callee-save registers on C call
-  - [ ] caller-save registers (`popa`?)
+  - [x] caller-save registers (`popa`?)
+  - [ ] Something block-like that only saves registers that are actually used
 # Pipeline
 - [x] Inliner (all non-recursive?)
-- [ ] https://www.cs.princeton.edu/courses/archive/spr19/cos217/lectures/13_Assembly1.pdf (von neumann -> c where int ptrs, ATS & such are useful...)
 # Features
 - [ ] Only save registers that get clobbered
 - [x] Aarch64 backend
