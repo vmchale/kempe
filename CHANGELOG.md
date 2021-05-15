@@ -1,5 +1,7 @@
 # kempe
 
+  * Kind-check external function declarations
+
 ## 0.2.0.3
 
   * GHC 8.0.2 and 8.2.2
