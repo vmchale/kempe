@@ -413,7 +413,7 @@ tyInsert (FunDecl _ _ ins out as) = do
     _ <- mergeStackTypes sig inferred
     when (inferred `lessGeneral` sig) $
         throwError $ LessGeneral () sig inferred
-tyInsert ExtFnDecl{} = pure () -- TODO: kind-check
+tyInsert (ExtFnDecl _ _ ins outs _) = traverse_ kindOf (void <$> ins ++ outs)
 tyInsert Export{} = pure ()
 
 tyModule :: Declarations a c b -> TypeM () ()
