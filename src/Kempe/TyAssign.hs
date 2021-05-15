@@ -130,7 +130,7 @@ unifyMatch _ ((ty@TyNamed{}, ty'@TyApp{}):_)                                 = L
 unifyMatch _ ((ty@TyApp{}, ty'@TyBuiltin{}):_)                               = Left (UnificationFailed () ty ty')
 unifyMatch um ((TyVar _ (Name _ (Unique k) _), ty@TyApp{}):tys)              = IM.insert k ty <$> unifyPrep (IM.insert k ty um) tys
 unifyMatch um ((ty@TyApp{}, TyVar  _ (Name _ (Unique k) _)):tys)             = IM.insert k ty <$> unifyPrep (IM.insert k ty um) tys
-unifyMatch um ((TyApp _ ty ty', TyApp _ ty'' ty'''):tys)                     = unifyMatch um ((ty, ty'') : (ty', ty''') : tys) -- TODO: I think this is right?
+unifyMatch um ((TyApp _ ty ty', TyApp _ ty'' ty'''):tys)                     = unifyMatch um ((ty, ty'') : (ty', ty''') : tys)
 unifyMatch _ ((ty@TyApp{}, ty'@TyNamed{}):_)                                 = Left (UnificationFailed () (void ty) (void ty'))
 
 unify :: [(KempeTy (), KempeTy ())] -> Either (Error ()) (IM.IntMap (KempeTy ()))
