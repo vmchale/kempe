@@ -97,8 +97,6 @@ assignName (ExtFnDecl _ (Name _ u _) _ _ _) = broadcastName u
 assignName Export{}                         = pure ()
 assignName TyDecl{}                         = error "Internal error: type declarations should not exist at this stage"
 
-
--- FIXME: Current broadcast + write approach fails mutually recursive functions
 writeDecl :: SizeEnv -> KempeDecl () (ConsAnn MonoStackType) MonoStackType -> TempM [Stmt]
 writeDecl env (FunDecl _ n _ _ as) = do
     bl <- lookupName n
