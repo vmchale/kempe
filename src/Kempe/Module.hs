@@ -22,7 +22,6 @@ parseProcess fp = do
 yeetIO :: Exception e => Either e a -> IO a
 yeetIO = either throwIO pure
 
--- TODO: if module is imported, discard its exports
 loopFps :: Bool -> [FilePath] -> AlexUserState -> IO (AlexUserState, [FilePath], Declarations AlexPosn AlexPosn AlexPosn)
 loopFps _ [] st = pure (st, [], [])
 loopFps isInit (fp:fps) st = do
