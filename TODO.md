@@ -52,6 +52,7 @@
 # Pipeline
 - [x] Inliner (all non-recursive?)
 # Features
+- [ ] Interfaces/typeclasses basically
 - [ ] Only save registers that get clobbered
 - [x] Aarch64 backend
 - [ ] Arithmetic and patterns for `i8`
