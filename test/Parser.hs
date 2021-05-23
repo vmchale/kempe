@@ -30,4 +30,5 @@ parserTests =
         , lexNoError "examples/splitmix.kmp"
         , parseNoError "test/data/lex.kmp"
         , parseNoError "examples/splitmix.kmp"
+        , parseNoError "prelude/num.kmp"
         ]

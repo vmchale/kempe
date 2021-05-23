@@ -1,0 +1,6 @@
+interface Integral a
+    add : a a -- a,
+    mult : a a -- a,
+    div : a a -- a,
+    mod : a a -- a
+end

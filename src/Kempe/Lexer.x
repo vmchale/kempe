@@ -77,6 +77,7 @@ tokens :-
         "->"                     { mkSym CaseArr }
         ","                      { mkSym Comma }
         \_                       { mkSym Underscore }
+        -- ":=>"                    { mkSym Constraint }
 
         -- symbols/operators
         "%"                      { mkSym Percent }
@@ -112,6 +113,7 @@ tokens :-
         "cabi"                   { mkKw KwCabi }
         "kabi"                   { mkKw KwKabi }
         interface                { mkKw KwInterface }
+        end                      { mkKw KwEnd }
 
         -- builtin
         dip                      { mkBuiltin BuiltinDip }
@@ -290,6 +292,7 @@ data Keyword = KwType
              | KwCabi
              | KwKabi
              | KwInterface
+             | KwEnd
              deriving (Generic, NFData)
 
 instance Pretty Keyword where
@@ -302,6 +305,7 @@ instance Pretty Keyword where
     pretty KwCabi      = "cabi"
     pretty KwKabi      = "kabi"
     pretty KwInterface = "interface"
+    pretty KwEnd       = "end"
 
 data Builtin = BuiltinBool
              | BuiltinBoolLit { bool :: !Bool }

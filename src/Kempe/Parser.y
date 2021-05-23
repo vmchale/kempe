@@ -90,6 +90,8 @@ import Prettyprinter (Pretty (pretty), (<+>))
     cabi { TokKeyword $$ KwCabi }
     kabi { TokKeyword $$ KwKabi }
     import { TokKeyword $$ KwImport }
+    interface { TokKeyword $$ KwInterface }
+    end { TokKeyword $$ KwEnd }
 
     dip { TokBuiltin $$ BuiltinDip }
     boolLit { $$@(TokBuiltin _ (BuiltinBoolLit _)) }
@@ -118,6 +120,9 @@ sepBy(p,q)
     : sepBy(p,q) q p { $3 : $1 }
     | p q p { $3 : [$1] }
 
+commaSep(p)
+    : sepBy(p,comma) { $1 }
+
 braces(p)
     : lbrace p rbrace { $2 }
 
@@ -144,6 +149,7 @@ Decl :: { KempeDecl AlexPosn AlexPosn AlexPosn }
      : TyDecl { $1 }
      | FunDecl { $1 }
      | foreign ABI name { Export $1 $2 $3 }
+     | interface tyName name commaSep(FunSig) end { Interface $1 $2 $3 (fmap (\(_, x, y, z) -> (x, y, z)) (reverse $4)) }
 
 TyDecl :: { KempeDecl AlexPosn AlexPosn AlexPosn }
        : type tyName many(name) braces(sepBy(TyLeaf, vbar)) { TyDecl $1 $2 (reverse $3) (reverse $4) }
@@ -162,7 +168,6 @@ Type :: { KempeTy AlexPosn }
 FunDecl :: { KempeDecl AlexPosn AlexPosn AlexPosn }
         : FunSig FunBody { uncurry4 FunDecl $1 $2 }
         | FunSig defEq cfun foreignName { uncurry4 ExtFnDecl $1 $4 }
-
 
 FunSig :: { (AlexPosn, Name AlexPosn, [KempeTy AlexPosn], [KempeTy AlexPosn]) }
        : name colon many(Type) arrow many(Type) { ($2, $1, reverse $3, reverse $5) }

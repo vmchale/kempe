@@ -221,6 +221,7 @@ data KempeDecl a c b = TyDecl a (TyName a) [Name a] [(TyName b, [KempeTy a])]
                      | FunDecl b (Name b) [KempeTy a] [KempeTy a] [Atom c b]
                      | ExtFnDecl b (Name b) [KempeTy a] [KempeTy a] BSL.ByteString -- ShortByteString?
                      | Export b ABI (Name b)
+                     | Interface a (TyName a) (Name a) [(Name b, [KempeTy a], [KempeTy a])]
                      deriving (Eq, Ord, Generic, NFData, Functor, Foldable, Traversable)
 
 instance Bifunctor (KempeDecl a) where
