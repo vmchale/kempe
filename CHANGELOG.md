@@ -1,6 +1,7 @@
 # kempe
 
   * Kind-check external function declarations
+  * Fix bug in inliner where functions within `dip(...)`s were not inlined
 
 ## 0.2.0.3
 
