@@ -79,7 +79,7 @@ instance Pretty (Pattern c a) where
     pretty PatternWildcard{}  = "_"
     pretty (PatternCons _ tn) = pretty tn
 
-prettyTypedPattern :: Pattern (StackType ()) (StackType ()) -> Doc ann
+prettyTypedPattern :: (Pretty a) => Pattern a b -> Doc ann
 prettyTypedPattern (PatternCons ty tn) = parens (pretty tn <+> ":" <+> pretty ty)
 prettyTypedPattern p                   = pretty p
 
@@ -98,10 +98,10 @@ instance Pretty (Atom c a) where
 prettyLeaf :: Pattern c a -> [Atom c a] -> Doc ann
 prettyLeaf p as = pipe <+> pretty p <+> "->" <+> align (fillSep (fmap pretty as))
 
-prettyTypedLeaf :: Pattern (StackType ()) (StackType ()) -> [Atom (StackType ()) (StackType ())] -> Doc ann
+prettyTypedLeaf :: (Pretty a, Pretty b) => Pattern a b -> [Atom a b] -> Doc ann
 prettyTypedLeaf p as = pipe <+> prettyTypedPattern p <+> "->" <+> align (fillSep (fmap prettyTyped as))
 
-prettyTyped :: Atom (StackType ()) (StackType ()) -> Doc ann
+prettyTyped :: (Pretty a, Pretty b) => Atom a b -> Doc ann
 prettyTyped (AtName ty n)    = parens (pretty n <+> ":" <+> pretty ty)
 prettyTyped (Dip _ as)       = "dip(" <> fillSep (prettyTyped <$> as) <> ")"
 prettyTyped (AtBuiltin ty b) = parens (pretty b <+> ":" <+> pretty ty)
@@ -243,10 +243,10 @@ prettyModuleGeneral atomizer (Module is ds) = prettyLines (fmap prettyImport is)
 prettyDecls :: Declarations a c b -> Doc ann
 prettyDecls = prettyDeclarationsGeneral pretty
 
-prettyFancyModule :: Declarations () (ConsAnn (StackType ())) (StackType ()) -> Doc ann
+prettyFancyModule :: (Pretty a, Pretty b) => Declarations () (ConsAnn a) b -> Doc ann
 prettyFancyModule = prettyTypedModule . fmap (first consTy)
 
-prettyTypedModule :: Declarations () (StackType ()) (StackType ()) -> Doc ann
+prettyTypedModule :: (Pretty a, Pretty b) => Declarations () a b -> Doc ann
 prettyTypedModule = prettyDeclarationsGeneral prettyTyped
 
 prettyModule :: Module a c b -> Doc ann
