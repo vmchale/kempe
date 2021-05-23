@@ -38,6 +38,7 @@
 - [x] Exported functions w/ C ABI should be there (so it can link)
 - [ ] Throw error when return value in C ABI is too big
 - [x] Constructors aren't monomorphized
+  - [ ] Tries to monomorphize constructors that aren't exported
   - [ ] http://mlton.org/Monomorphise
   - [x] Constructors that call constructors don't dispatch/monomorphize
     properly?
