@@ -1,5 +1,7 @@
 # kempe
 
+## 0.2.0.4
+
   * Kind-check external function declarations
   * Fix bug in inliner where functions within `dip(...)`s were not inlined
   * Fix unification bug where solved constraints were not back-substituted correctly.
