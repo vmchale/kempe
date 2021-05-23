@@ -25,6 +25,7 @@ module Kempe.AST ( ConsAnn (..)
                  , prettyFancyModule
                  , prettyModule
                  , flipStackType
+                 , prettyTypedDecl
                  -- * I resent this...
                  , voidStackType
                  ) where
@@ -243,10 +244,13 @@ prettyModuleGeneral atomizer (Module is ds) = prettyLines (fmap prettyImport is)
 prettyDecls :: Declarations a c b -> Doc ann
 prettyDecls = prettyDeclarationsGeneral pretty
 
-prettyFancyModule :: (Pretty a, Pretty b) => Declarations () (ConsAnn a) b -> Doc ann
+prettyFancyModule :: (Pretty a, Pretty b) => Declarations c (ConsAnn a) b -> Doc ann
 prettyFancyModule = prettyTypedModule . fmap (first consTy)
 
-prettyTypedModule :: (Pretty a, Pretty b) => Declarations () a b -> Doc ann
+prettyTypedDecl :: (Pretty a, Pretty b) => KempeDecl c a b -> Doc ann
+prettyTypedDecl = prettyKempeDecl prettyTyped
+
+prettyTypedModule :: (Pretty a, Pretty b) => Declarations c a b -> Doc ann
 prettyTypedModule = prettyDeclarationsGeneral prettyTyped
 
 prettyModule :: Module a c b -> Doc ann
