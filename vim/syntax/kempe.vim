@@ -4,6 +4,7 @@ if exists('b:current_syntax')
     finish
 endif
 
+syntax match kempeSymbol ","
 syntax match kempeSymbol "--"
 syntax match kempeSymbol "->"
 
