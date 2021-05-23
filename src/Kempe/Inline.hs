@@ -29,6 +29,8 @@ inline m = fmap inlineDecl m
                 else foldMap (inlineAtom declName) $ findDecl a n
           inlineAtom declName (If l as as') =
             [If l (inlineAtoms declName as) (inlineAtoms declName as')]
+          inlineAtom declName (Dip l as) =
+            [Dip l (inlineAtoms declName as)]
           inlineAtom declName (Case l ls) =
             let (ps, ass) = NE.unzip ls
                 in [Case l (NE.zip ps $ fmap (inlineAtoms declName) ass)]

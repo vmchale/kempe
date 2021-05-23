@@ -2,18 +2,18 @@ import"prelude/fn.kmp"
 import"lib/numbertheory.kmp"
 
 ; Slightly suspect rational based on 'Int' type
-type Rational { Rational Int Int }
+type Rational a { Rational a a }
 
-unRational : Rational -- Int Int
+unRational : (Rational a) -- a a
            =: [ { case | Rational -> } ]
 
-multRat : Rational Rational -- Rational
+multRat : (Rational Int) (Rational Int) -- (Rational Int)
         =: [ dip(unRational) unRational dip(swap *) * Rational reduce ]
 
-reduce : Rational -- Rational
+reduce : (Rational Int) -- (Rational Int)
        =: [ unRational dup2 gcd dup dip(swap dip(/)) / Rational ]
 
-addRat : Rational Rational -- Rational
+addRat : (Rational Int) (Rational Int) -- (Rational Int)
        =: [ dip(unRational) unRational dip(swap)
             dup2 * dip(swap dip(swap) * dip(*) +)
             Rational reduce

@@ -529,9 +529,10 @@ substConstraints _ ty@TyNamed{}                         = ty
 substConstraints _ ty@TyBuiltin{}                       = ty
 substConstraints tys ty@(TyVar _ (Name _ (Unique k) _)) =
     case IM.lookup k tys of
-        Just ty'@TyVar{} -> substConstraints (IM.delete k tys) ty' -- TODO: this is to prevent cyclic lookups: is it right?
-        Just ty'         -> ty'
-        Nothing          -> ty
+        Just ty'@TyVar{}       -> substConstraints (IM.delete k tys) ty' -- TODO: this is to prevent cyclic lookups: is it right?
+        Just (TyApp l ty0 ty1) -> TyApp l (substConstraints tys ty0) (substConstraints tys ty1)
+        Just ty'               -> ty'
+        Nothing                -> ty
 substConstraints tys (TyApp l ty ty')                   =
     TyApp l (substConstraints tys ty) (substConstraints tys ty')
 
