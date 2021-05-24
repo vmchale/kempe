@@ -114,6 +114,7 @@ tokens :-
         "kabi"                   { mkKw KwKabi }
         interface                { mkKw KwInterface }
         end                      { mkKw KwEnd }
+        impl                     { mkKw KwImpl }
 
         -- builtin
         dip                      { mkBuiltin BuiltinDip }
@@ -293,6 +294,7 @@ data Keyword = KwType
              | KwKabi
              | KwInterface
              | KwEnd
+             | KwImpl
              deriving (Generic, NFData)
 
 instance Pretty Keyword where
@@ -306,6 +308,7 @@ instance Pretty Keyword where
     pretty KwKabi      = "kabi"
     pretty KwInterface = "interface"
     pretty KwEnd       = "end"
+    pretty KwImpl      = "impl"
 
 data Builtin = BuiltinBool
              | BuiltinBoolLit { bool :: !Bool }

@@ -30,6 +30,7 @@ syntax match kempeKeyword "case"
 syntax match kempeKeyword "import"
 syntax match kempeKeyword "interface"
 syntax match kempeKeyword "end"
+syntax match kempeKeyword "impl"
 
 syntax match kempeIdentifier "$cfun"
 syntax match kempeSymbol "cabi"

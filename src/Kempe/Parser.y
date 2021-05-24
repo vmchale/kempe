@@ -16,6 +16,7 @@ import Control.Monad.Except (ExceptT, runExceptT, throwError)
 import Control.Monad.Trans.Class (lift)
 import Data.Bifunctor (first)
 import qualified Data.ByteString.Lazy as BSL
+import Data.Foldable (toList)
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Text as T
@@ -92,6 +93,7 @@ import Prettyprinter (Pretty (pretty), (<+>))
     import { TokKeyword $$ KwImport }
     interface { TokKeyword $$ KwInterface }
     end { TokKeyword $$ KwEnd }
+    impl { TokKeyword $$ KwImpl }
 
     dip { TokBuiltin $$ BuiltinDip }
     boolLit { $$@(TokBuiltin _ (BuiltinBoolLit _)) }
@@ -145,11 +147,15 @@ ABI :: { ABI }
     : cabi { Cabi }
     | kabi { Kabi }
 
+Impl :: { (Name AlexPosn, [Atom AlexPosn AlexPosn]) }
+     : name defEq brackets(many(Atom)) { ($1, reverse $3) }
+
 Decl :: { KempeDecl AlexPosn AlexPosn AlexPosn }
      : TyDecl { $1 }
      | FunDecl { $1 }
      | foreign ABI name { Export $1 $2 $3 }
      | interface tyName name commaSep(FunSig) end { Interface $1 $2 $3 (fmap (\(_, x, y, z) -> (x, y, z)) (reverse $4)) }
+     | impl tyName Type some(Impl) end { Impl $1 $2 $3 (toList $4) }
 
 TyDecl :: { KempeDecl AlexPosn AlexPosn AlexPosn }
        : type tyName many(name) braces(sepBy(TyLeaf, vbar)) { TyDecl $1 $2 (reverse $3) (reverse $4) }

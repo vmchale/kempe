@@ -4,3 +4,10 @@ interface Integral a
     div : a a -- a,
     mod : a a -- a
 end
+
+impl Integral Int
+    add =: [ + ]
+    mult =: [ * ]
+    div =: [ / ]
+    mod =: [ % ]
+end

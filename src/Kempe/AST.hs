@@ -223,6 +223,7 @@ data KempeDecl a c b = TyDecl a (TyName a) [Name a] [(TyName b, [KempeTy a])]
                      | ExtFnDecl b (Name b) [KempeTy a] [KempeTy a] BSL.ByteString -- ShortByteString?
                      | Export b ABI (Name b)
                      | Interface a (TyName a) (Name a) [(Name b, [KempeTy a], [KempeTy a])]
+                     | Impl a (TyName a) (KempeTy a) [(Name b, [Atom c b])]
                      deriving (Eq, Ord, Generic, NFData, Functor, Foldable, Traversable)
 
 instance Bifunctor (KempeDecl a) where
@@ -230,6 +231,8 @@ instance Bifunctor (KempeDecl a) where
     first f (FunDecl l n tys tys' as)  = FunDecl l n tys tys' (fmap (first f) as)
     first _ (ExtFnDecl l n tys tys' b) = ExtFnDecl l n tys tys' b
     first _ (Export l abi n)           = Export l abi n
+    first _ (Interface l tn n brs)     = Interface l tn n brs
+    first f (Impl l tn ty brs)         = Impl l tn ty (fmap (second (fmap (first f))) brs)
     second = fmap
 
 prettyDeclarationsGeneral :: (Atom c b -> Doc ann) -> Declarations a c b -> Doc ann
