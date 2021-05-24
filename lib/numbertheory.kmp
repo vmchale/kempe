@@ -1,4 +1,5 @@
 import "prelude/fn.kmp"
+; import "prelude/num.kmp"
 
 ; tail recursive!
 gcd : Int Int -- Int
