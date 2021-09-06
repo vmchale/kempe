@@ -4,7 +4,7 @@ mapMaybe : [a -- b] (Maybe a) -- (Maybe b)
          =: [
     { case
         | Just -> apply Just
-        | Nothing -> dropp Nothing
+        | Nothing -> drop Nothing
     }
 ]
 

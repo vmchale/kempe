@@ -101,6 +101,7 @@ inContext um ty'@(TyVar _ (Name _ (Unique i) _)) =
 inContext _ ty'@TyBuiltin{} = ty'
 inContext _ ty'@TyNamed{} = ty'
 inContext um (TyApp l ty ty') = TyApp l (inContext um ty) (inContext um ty')
+inContext um (QuotTy l tys tys') = QuotTy l (inContext um <$> tys) (inContext um <$> tys')
 
 -- | Perform substitutions before handing off to 'unifyMatch'
 unifyPrep :: UnifyMap
@@ -121,17 +122,26 @@ unifyMatch um ((ty@(TyNamed _ n0), ty'@(TyNamed _ n1)):tys) | n0 == n1       = u
 unifyMatch um ((ty@(TyNamed _ _), TyVar  _ (Name _ (Unique k) _)):tys)       = IM.insert k ty <$> unifyPrep (IM.insert k ty um) tys
 unifyMatch um ((TyVar _ (Name _ (Unique k) _), ty@(TyNamed _ _)):tys)        = IM.insert k ty <$> unifyPrep (IM.insert k ty um) tys
 unifyMatch um ((ty@TyBuiltin{}, TyVar  _ (Name _ (Unique k) _)):tys)         = IM.insert k ty <$> unifyPrep (IM.insert k ty um) tys
-unifyMatch um ((TyVar _ (Name _ (Unique k) _), ty@(TyBuiltin _ _)):tys)      = IM.insert k ty <$> unifyPrep (IM.insert k ty um) tys
-unifyMatch um ((TyVar _ (Name _ (Unique k) _), ty@(TyVar _ _)):tys)          = IM.insert k ty <$> unifyPrep (IM.insert k ty um) tys
+unifyMatch um ((TyVar _ (Name _ (Unique k) _), ty@TyBuiltin{}):tys)          = IM.insert k ty <$> unifyPrep (IM.insert k ty um) tys
+unifyMatch um ((TyVar _ (Name _ (Unique k) _), ty@TyVar{}):tys)              = IM.insert k ty <$> unifyPrep (IM.insert k ty um) tys
 unifyMatch _ ((ty@TyBuiltin{}, ty'@TyNamed{}):_)                             = Left (UnificationFailed () ty ty')
 unifyMatch _ ((ty@TyNamed{}, ty'@TyBuiltin{}):_)                             = Left (UnificationFailed () ty ty')
 unifyMatch _ ((ty@TyBuiltin{}, ty'@TyApp{}):_)                               = Left (UnificationFailed () ty ty')
 unifyMatch _ ((ty@TyNamed{}, ty'@TyApp{}):_)                                 = Left (UnificationFailed () ty ty')
 unifyMatch _ ((ty@TyApp{}, ty'@TyBuiltin{}):_)                               = Left (UnificationFailed () ty ty')
+unifyMatch _ ((ty@TyBuiltin{}, ty'@QuotTy{}):_)                              = Left (UnificationFailed () ty ty')
+unifyMatch _ ((ty@TyNamed{}, ty'@QuotTy{}):_)                                = Left (UnificationFailed () ty ty')
 unifyMatch um ((TyVar _ (Name _ (Unique k) _), ty@TyApp{}):tys)              = IM.insert k ty <$> unifyPrep (IM.insert k ty um) tys
 unifyMatch um ((ty@TyApp{}, TyVar  _ (Name _ (Unique k) _)):tys)             = IM.insert k ty <$> unifyPrep (IM.insert k ty um) tys
+unifyMatch um ((TyVar _ (Name _ (Unique k) _), ty@QuotTy{}):tys)             = IM.insert k ty <$> unifyPrep (IM.insert k ty um) tys
+unifyMatch um ((ty@QuotTy{}, TyVar  _ (Name _ (Unique k) _)):tys)            = IM.insert k ty <$> unifyPrep (IM.insert k ty um) tys
 unifyMatch um ((TyApp _ ty ty', TyApp _ ty'' ty'''):tys)                     = unifyMatch um ((ty, ty'') : (ty', ty''') : tys)
 unifyMatch _ ((ty@TyApp{}, ty'@TyNamed{}):_)                                 = Left (UnificationFailed () (void ty) (void ty'))
+unifyMatch _ ((ty@QuotTy{}, ty'@TyNamed{}):_)                                = Left (UnificationFailed () (void ty) (void ty'))
+unifyMatch _ ((ty@QuotTy{}, ty'@TyBuiltin{}):_)                              = Left (UnificationFailed () (void ty) (void ty'))
+unifyMatch _ ((ty@QuotTy{}, ty'@TyApp{}):_)                                  = Left (UnificationFailed () (void ty) (void ty'))
+unifyMatch _ ((ty@TyApp{}, ty'@QuotTy{}):_)                                  = Left (UnificationFailed () ty ty')
+unifyMatch um ((QuotTy _ tys tys', QuotTy _ tys'' tys'''):tysU)              = unifyMatch um (zip tys tys'' ++ zip tys' tys''' ++ tysU)
 
 unify :: [(KempeTy (), KempeTy ())] -> Either (Error ()) (IM.IntMap (KempeTy ()))
 unify = unifyPrep IM.empty
@@ -156,6 +166,10 @@ typeOfBuiltin Swap = do
     aN <- dummyName "a"
     bN <- dummyName "b"
     pure $ StackType (S.fromList [aN, bN]) [TyVar () aN, TyVar () bN] [TyVar () bN, TyVar () aN]
+typeOfBuiltin Apply = do
+    aN <- dummyName "a"
+    bN <- dummyName "b"
+    pure $ StackType (S.fromList [aN, bN]) [QuotTy () [TyVar () aN] [TyVar () bN], TyVar () aN] [TyVar () bN]
 typeOfBuiltin Dup = do
     aN <- dummyName "a"
     pure $ StackType (S.singleton aN) [TyVar () aN] [TyVar () aN, TyVar () aN]
@@ -255,6 +269,9 @@ tyAtom (Case _ ls) = do
     tyLs <- traverse tyLeaf ls
     -- TODO: one-pass fold?
     mergeMany tyLs
+tyAtom (Quot _ as) = do
+    (StackType _ tys tys') <- tyAtoms as
+    pure $ StackType mempty [] [QuotTy () tys tys']
 
 assignAtom :: Atom b a -> TypeM () (StackType (), Atom (StackType ()) (StackType ()))
 assignAtom (AtBuiltin _ b) = do { ty <- typeOfBuiltin b ; pure (ty, AtBuiltin ty b) }
@@ -340,16 +357,30 @@ kindLookup n@(Name _ (Unique i) l) = do
         Just k  -> pure k
         Nothing -> throwError $ PoorScope l n
 
+guardStarKind :: KempeTy a -> TypeM a ()
+guardStarKind ty = do
+    k <- kindOf ty
+    unless (isStar k) $ throwError (IllKinded (tyLoc ty) ty)
+
+isStar :: Kind -> Bool
+isStar Star = True
+isStar _    = False
+
 kindOf :: KempeTy a -> TypeM a Kind
 kindOf TyBuiltin{}        = pure Star
 kindOf (TyNamed _ tn)     = kindLookup tn
-kindOf TyVar{}            = pure Star
+kindOf TyVar{}            = pure Star -- FIXME: should unify vars, can't have higher-order vars atm...
 kindOf tyErr@(TyApp l ty ty') = do
     k <- kindOf ty
     k' <- kindOf ty'
     case k of
         TyCons k'' k''' -> unless (k' == k''') (throwError (IllKinded l tyErr)) $> k''
         _               -> throwError (IllKinded l tyErr)
+kindOf (QuotTy _ tys tys') = do
+    traverse_ guardStarKind tys
+    traverse_ guardStarKind tys'
+    pure Star
+
 
 assignDecl :: KempeDecl a c b -> TypeM () (KempeDecl () (StackType ()) (StackType ()))
 assignDecl (TyDecl _ tn ns ls) = TyDecl () (void tn) (void <$> ns) <$> traverse (assignTyLeaf tn (S.fromList ns)) ls
@@ -438,9 +469,10 @@ replaceUnique u@(Unique i) = do
         Just j  -> replaceUnique (Unique j)
 
 renameIn :: KempeTy a -> TypeM a (KempeTy a)
-renameIn b@TyBuiltin{}    = pure b
-renameIn n@TyNamed{}      = pure n
-renameIn (TyApp l ty ty') = TyApp l <$> renameIn ty <*> renameIn ty'
+renameIn b@TyBuiltin{}           = pure b
+renameIn n@TyNamed{}             = pure n
+renameIn (TyApp l ty ty')        = TyApp l <$> renameIn ty <*> renameIn ty'
+renameIn (QuotTy l tys tys')     = QuotTy l <$> traverse renameIn tys <*> traverse renameIn tys'
 renameIn (TyVar l (Name t u l')) = do
     u' <- replaceUnique u
     pure $ TyVar l (Name t u' l')
@@ -535,6 +567,8 @@ substConstraints tys ty@(TyVar _ (Name _ (Unique k) _)) =
         Nothing                -> ty
 substConstraints tys (TyApp l ty ty')                   =
     TyApp l (substConstraints tys ty) (substConstraints tys ty')
+substConstraints tys (QuotTy l tys' tys'')              =
+    QuotTy l (substConstraints tys <$> tys') (substConstraints tys <$> tys'')
 
 substConstraintsStack :: IM.IntMap (KempeTy a) -> StackType a -> StackType a
 substConstraintsStack tys (StackType _ is os) = {-# SCC "substConstraintsStack" #-}

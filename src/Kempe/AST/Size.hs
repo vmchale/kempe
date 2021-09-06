@@ -30,11 +30,11 @@ import           Kempe.Name
 import           Kempe.Unique
 import           Prettyprinter   (Doc, Pretty (pretty), brackets, parens, sep, (<+>))
 
-data KempeTy a = TyBuiltin a BuiltinTy
-               | TyNamed a (TyName a)
-               | TyVar a (Name a)
-               | TyApp a (KempeTy a) (KempeTy a) -- type applied to another, e.g. Just Int
-               | QuotTy a [KempeTy a] [KempeTy a]
+data KempeTy a = TyBuiltin { tyLoc :: a, tyBuiltin :: BuiltinTy }
+               | TyNamed { tyLoc :: a, tyName :: TyName a }
+               | TyVar { tyLoc :: a, var :: Name a }
+               | TyApp { tyLoc :: a, tyCons :: KempeTy a, tyApp :: KempeTy a } -- type applied to another, e.g. Just Int
+               | QuotTy { tyLoc :: a, quotIn :: [KempeTy a], quotOut :: [KempeTy a] }
                deriving (Generic, NFData, Functor, Eq, Ord) -- questionable eq instance but eh
 
 data StackType b = StackType { quantify :: S.Set (Name b)
