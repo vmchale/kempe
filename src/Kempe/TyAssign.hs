@@ -167,9 +167,7 @@ typeOfBuiltin Swap = do
     bN <- dummyName "b"
     pure $ StackType (S.fromList [aN, bN]) [TyVar () aN, TyVar () bN] [TyVar () bN, TyVar () aN]
 typeOfBuiltin Apply = do
-    aN <- dummyName "a"
-    bN <- dummyName "b"
-    pure $ StackType (S.fromList [aN, bN]) [QuotTy () [TyVar () aN] [TyVar () bN], TyVar () aN] [TyVar () bN]
+    pure $ StackType mempty [QuotTy () [] []] []
 typeOfBuiltin Dup = do
     aN <- dummyName "a"
     pure $ StackType (S.singleton aN) [TyVar () aN] [TyVar () aN, TyVar () aN]
@@ -233,7 +231,7 @@ consLookup tn@(Name _ (Unique i) l) = do
         Just ty -> pure ty
         Nothing -> throwError $ PoorScope l tn
 
--- expandType 1
+-- xpandType 1
 dipify :: StackType () -> TypeM () (StackType ())
 dipify (StackType fvrs is os) = do
     n <- dummyName "a"
