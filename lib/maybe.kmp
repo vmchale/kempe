@@ -1,5 +1,13 @@
 type Maybe a { Just a | Nothing }
 
+fromMaybe : a (Maybe a) -- a
+          =: [
+    { case
+        | Just -> dip(drop)
+        | Nothing ->
+    }
+]
+
 isJust : (Maybe a) -- Bool
        =: [
     { case
