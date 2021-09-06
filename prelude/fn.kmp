@@ -36,8 +36,5 @@ drop3 : a b c --
 compose : [a -- b] [b -- c] a -- c
         =: [ dip(swap) apply apply ]
 
-fdip : [a -- b] a c -- b c
-     =: [ dip(apply) ]
-
 flip : [a b -- c] b a -- c
      =: [ swap apply ]
