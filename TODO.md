@@ -53,6 +53,7 @@
 # Pipeline
 - [x] Inliner (all non-recursive?)
 # Features
+- [ ] quotation (stack-allocated closures)
 - [ ] Only save registers that get clobbered
 - [x] Aarch64 backend
 - [ ] Arithmetic and patterns for `i8`
