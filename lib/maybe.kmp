@@ -3,7 +3,7 @@ type Maybe a { Just a | Nothing }
 fromMaybe : a (Maybe a) -- a
           =: [
     { case
-        | Just -> dip(drop)
+        | Just    -> dip(drop)
         | Nothing ->
     }
 ]
