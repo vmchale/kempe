@@ -122,6 +122,7 @@ tokens :-
         False                    { mkBuiltin (BuiltinBoolLit False) }
         dup                      { mkBuiltin BuiltinDup }
         drop                     { mkBuiltin BuiltinDrop }
+        apply                    { mkBuiltin BuiltinApply }
 
         swap                     { mkBuiltin BuiltinSwap }
         xori                     { mkBuiltin BuiltinIntXor }
@@ -309,6 +310,7 @@ data Builtin = BuiltinBool
              | BuiltinDrop
              | BuiltinSwap
              | BuiltinDup
+             | BuiltinApply
              | BuiltinIntXor
              | BuiltinWordXor
              | BuiltinBoolXor
@@ -325,6 +327,7 @@ instance Pretty Builtin where
     pretty BuiltinDrop        = "drop"
     pretty BuiltinSwap        = "swap"
     pretty BuiltinDup         = "dup"
+    pretty BuiltinApply       = "apply"
     pretty BuiltinIntXor      = "xori"
     pretty BuiltinWordXor     = "xoru"
     pretty BuiltinBoolXor     = "xor"

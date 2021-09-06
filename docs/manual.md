@@ -112,6 +112,12 @@ nip : a b -- b
     =: [ dip(drop) ]
 ```
 
+### Quotation
+
+Kempe supports higher-order functions; we have
+
+  * `apply : [a -- b] a -- b`
+
 ### If Blocks
 
 If-blocks are atoms which contain two blocks of atoms on each arm. If the next

@@ -3,6 +3,14 @@
 
 type Either a b { Left a | Right b }
 
+either : [a -- c] [b -- c] ((Either a) b) -- c
+       =: [
+    { case
+        | Left -> drop apply
+        | Right -> apply drop
+    }
+]
+
 isLeft : ((Either a) b) -- Bool
        =: [
     { case

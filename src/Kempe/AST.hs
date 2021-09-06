@@ -124,6 +124,7 @@ data Atom c b = AtName b (Name b)
               | BoolLit b Bool
               | AtBuiltin b BuiltinFn
               | AtCons c (TyName c)
+              | Quot b [Atom c b]
               deriving (Eq, Ord, Generic, NFData, Functor, Foldable, Traversable)
 
 instance Bifunctor Atom where
@@ -140,10 +141,12 @@ instance Bifunctor Atom where
     first f (Case l ls)     =
         let (ps, aLs) = NE.unzip ls
             in Case l $ NE.zip (fmap (first f) ps) (fmap (fmap (first f)) aLs)
+    first f (Quot l as)     = Quot l (fmap (first f) as)
 
 data BuiltinFn = Drop
                | Swap
                | Dup
+               | Apply
                | IntPlus
                | IntMinus
                | IntTimes
@@ -177,6 +180,7 @@ instance Pretty BuiltinFn where
     pretty Drop       = "drop"
     pretty Swap       = "swap"
     pretty Dup        = "dup"
+    pretty Apply      = "apply"
     pretty IntPlus    = "+"
     pretty IntMinus   = "-"
     pretty IntTimes   = "*"
@@ -263,10 +267,11 @@ data Module a c b = Module { importFps :: [BSL.ByteString]
                            } deriving (Generic, NFData)
 
 extrVars :: KempeTy a -> [Name a]
-extrVars TyBuiltin{}      = []
-extrVars TyNamed{}        = []
-extrVars (TyVar _ n)      = [n]
-extrVars (TyApp _ ty ty') = extrVars ty ++ extrVars ty'
+extrVars TyBuiltin{}         = []
+extrVars TyNamed{}           = []
+extrVars (TyVar _ n)         = [n]
+extrVars (TyApp _ ty ty')    = extrVars ty ++ extrVars ty'
+extrVars (QuotTy _ tys tys') = concatMap extrVars tys ++ concatMap extrVars tys'
 
 freeVars :: [KempeTy a] -> S.Set (Name a)
 freeVars tys = S.fromList (concatMap extrVars tys)

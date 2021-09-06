@@ -100,6 +100,7 @@ import Prettyprinter (Pretty (pretty), (<+>))
     dup { TokBuiltin $$ BuiltinDup }
     swap { TokBuiltin $$ BuiltinSwap }
     drop { TokBuiltin $$ BuiltinDrop }
+    apply { TokBuiltin $$ BuiltinApply }
     intXor { TokBuiltin $$ BuiltinIntXor }
     wordXor { TokBuiltin $$ BuiltinWordXor }
     boolXor { TokBuiltin $$ BuiltinBoolXor }
@@ -158,6 +159,7 @@ Type :: { KempeTy AlexPosn }
      | int8 { TyBuiltin $1 TyInt8 }
      | word { TyBuiltin $1 TyWord }
      | lparen Type Type rparen { TyApp $1 $2 $3 }
+     | lsqbracket many(Type) arrow many(Type) rsqbracket { QuotTy $1 (reverse $2) (reverse $4) }
 
 FunDecl :: { KempeDecl AlexPosn AlexPosn AlexPosn }
         : FunSig FunBody { uncurry4 FunDecl $1 $2 }
@@ -180,9 +182,11 @@ Atom :: { Atom AlexPosn AlexPosn }
      | dip parens(many(Atom)) { Dip $1 (reverse $2) }
      | if lparen many(Atom) comma many(Atom) rparen { If $1 (reverse $3) (reverse $5) }
      | boolLit { BoolLit (loc $1) (bool $ builtin $1) }
+     | lsqbracket many(Atom) rsqbracket { Quot $1 (reverse $2) }
      | dup { AtBuiltin $1 Dup }
      | drop { AtBuiltin $1 Drop }
      | swap { AtBuiltin $1 Swap }
+     | apply { AtBuiltin $1 Apply }
      | plus { AtBuiltin $1 IntPlus }
      | plusU { AtBuiltin $1 WordPlus }
      | minus { AtBuiltin $1 IntMinus }

@@ -28,12 +28,13 @@ import qualified Data.Set        as S
 import           GHC.Generics    (Generic)
 import           Kempe.Name
 import           Kempe.Unique
-import           Prettyprinter   (Doc, Pretty (pretty), parens, sep, (<+>))
+import           Prettyprinter   (Doc, Pretty (pretty), brackets, parens, sep, (<+>))
 
-data KempeTy a = TyBuiltin a BuiltinTy
-               | TyNamed a (TyName a)
-               | TyVar a (Name a)
-               | TyApp a (KempeTy a) (KempeTy a) -- type applied to another, e.g. Just Int
+data KempeTy a = TyBuiltin { tyLoc :: a, tyBuiltin :: BuiltinTy }
+               | TyNamed { tyLoc :: a, tyName :: TyName a }
+               | TyVar { tyLoc :: a, var :: Name a }
+               | TyApp { tyLoc :: a, tyCons :: KempeTy a, tyApp :: KempeTy a } -- type applied to another, e.g. Just Int
+               | QuotTy { tyLoc :: a, quotIn :: [KempeTy a], quotOut :: [KempeTy a] }
                deriving (Generic, NFData, Functor, Eq, Ord) -- questionable eq instance but eh
 
 data StackType b = StackType { quantify :: S.Set (Name b)
@@ -59,10 +60,11 @@ instance Pretty BuiltinTy where
     pretty TyWord = "Word"
 
 instance Pretty (KempeTy a) where
-    pretty (TyBuiltin _ b)  = pretty b
-    pretty (TyNamed _ tn)   = pretty tn
-    pretty (TyVar _ n)      = pretty n
-    pretty (TyApp _ ty ty') = parens (pretty ty <+> pretty ty')
+    pretty (TyBuiltin _ b)     = pretty b
+    pretty (TyNamed _ tn)      = pretty tn
+    pretty (TyVar _ n)         = pretty n
+    pretty (TyApp _ ty ty')    = parens (pretty ty <+> pretty ty')
+    pretty (QuotTy _ tys tys') = brackets (curry prettyMonoStackType tys tys')
 
 instance Pretty (StackType a) where
     pretty (StackType _ ins outs) = sep (fmap pretty ins) <+> "--" <+> sep (fmap pretty outs)
@@ -92,6 +94,7 @@ size _ (TyBuiltin _ TyWord)                = const 8
 size _ TyVar{}                             = error "Internal error: type variables should not be present at this stage."
 size env (TyNamed _ (Name _ (Unique k) _)) = IM.findWithDefault (error "Size not in map!") k env
 size env (TyApp _ ty ty')                  = \tys -> size env ty (size env ty' [] : tys)
+-- TODO: size of quot is 1 pointer? plus its input variables idk
 
 size' :: SizeEnv -> KempeTy a -> Int64
 size' env = ($ []) . size env
