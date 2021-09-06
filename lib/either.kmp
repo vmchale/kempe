@@ -3,8 +3,6 @@
 
 type Either a b { Left a | Right b }
 
-; fromRight :: b -> Either a b -> b
-
 fromRight : b ((Either a) b) -- b
           =: [
     { case
