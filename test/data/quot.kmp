@@ -1,2 +1,2 @@
-simple : [a -- b] a -- b
+apply2 : [a b -- c] a b -- c
        =: [ apply ]
