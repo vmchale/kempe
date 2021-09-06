@@ -186,7 +186,7 @@ Atom :: { Atom AlexPosn AlexPosn }
      | dup { AtBuiltin $1 Dup }
      | drop { AtBuiltin $1 Drop }
      | swap { AtBuiltin $1 Swap }
-     | apply { AtBuiltin $1 Apply }
+     | apply { Apply }
      | plus { AtBuiltin $1 IntPlus }
      | plusU { AtBuiltin $1 WordPlus }
      | minus { AtBuiltin $1 IntMinus }

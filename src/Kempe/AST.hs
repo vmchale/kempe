@@ -95,6 +95,8 @@ instance Pretty (Atom c a) where
     pretty (WordLit _ w)   = pretty w <> "u"
     pretty (Int8Lit _ i)   = pretty i <> "i8"
     pretty (Case _ ls)     = "case" <+> braces (align (vsep (toList $ fmap (uncurry prettyLeaf) ls)))
+    pretty Apply           = "apply"
+    pretty (Quot _ as)     = brackets (fillSep (fmap pretty as))
 
 prettyLeaf :: Pattern c a -> [Atom c a] -> Doc ann
 prettyLeaf p as = pipe <+> pretty p <+> "->" <+> align (fillSep (fmap pretty as))
@@ -113,6 +115,8 @@ prettyTyped (BoolLit _ b)    = pretty b
 prettyTyped (Int8Lit _ i)    = pretty i <> "i8"
 prettyTyped (WordLit _ n)    = pretty n <> "u"
 prettyTyped (Case _ ls)      = braces ("case" <+> vsep (toList $ fmap (uncurry prettyTypedLeaf) ls))
+prettyTyped Apply            = "apply"
+prettyTyped (Quot _ as)      = brackets (fillSep (prettyTyped <$> as))
 
 data Atom c b = AtName b (Name b)
               | Case b (NonEmpty (Pattern c b, [Atom c b]))
@@ -125,6 +129,7 @@ data Atom c b = AtName b (Name b)
               | AtBuiltin b BuiltinFn
               | AtCons c (TyName c)
               | Quot b [Atom c b]
+              | Apply
               deriving (Eq, Ord, Generic, NFData, Functor, Foldable, Traversable)
 
 instance Bifunctor Atom where
@@ -142,11 +147,11 @@ instance Bifunctor Atom where
         let (ps, aLs) = NE.unzip ls
             in Case l $ NE.zip (fmap (first f) ps) (fmap (fmap (first f)) aLs)
     first f (Quot l as)     = Quot l (fmap (first f) as)
+    first _ Apply           = Apply
 
 data BuiltinFn = Drop
                | Swap
                | Dup
-               | Apply
                | IntPlus
                | IntMinus
                | IntTimes
@@ -180,7 +185,6 @@ instance Pretty BuiltinFn where
     pretty Drop       = "drop"
     pretty Swap       = "swap"
     pretty Dup        = "dup"
-    pretty Apply      = "apply"
     pretty IntPlus    = "+"
     pretty IntMinus   = "-"
     pretty IntTimes   = "*"
