@@ -234,6 +234,7 @@
 <li><a href="#literals">Literals</a></li>
 <li><a href="#builtins">Builtins</a>
 <ul>
+<li><a href="#quotation">Quotation</a></li>
 <li><a href="#if-blocks">If Blocks</a></li>
 </ul></li>
 <li><a href="#sum-types">Sum Types</a>
@@ -329,6 +330,11 @@
 <p>There is one higher-order construct, <code>dip</code>, which we illustrate by example:</p>
 <pre><code>nip : a b -- b
     =: [ dip(drop) ]</code></pre>
+<h3 id="quotation">Quotation</h3>
+<p>Kempe supports higher-order functions; we have</p>
+<ul>
+<li><code>apply : [a -- b] a -- b</code></li>
+</ul>
 <h3 id="if-blocks">If Blocks</h3>
 <p>If-blocks are atoms which contain two blocks of atoms on each arm. If the next item on the stack is <code>True</code>, the first will be executed, otherwise the second.</p>
 <pre><code>loop : Int Int -- Int

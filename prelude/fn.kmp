@@ -32,3 +32,6 @@ drop2 : a b --
 
 drop3 : a b c --
       =: [ drop drop drop ]
+
+flip : [a b -- c] b a -- c
+     =: [ swap apply ]
