@@ -166,8 +166,9 @@ typeOfBuiltin Swap = do
     aN <- dummyName "a"
     bN <- dummyName "b"
     pure $ StackType (S.fromList [aN, bN]) [TyVar () aN, TyVar () bN] [TyVar () bN, TyVar () aN]
-typeOfBuiltin Apply = do
+typeOfBuiltin Apply =
     pure $ StackType mempty [QuotTy () [] []] []
+    -- FIXME: consider infinitely many dummy names...?
 typeOfBuiltin Dup = do
     aN <- dummyName "a"
     pure $ StackType (S.singleton aN) [TyVar () aN] [TyVar () aN, TyVar () aN]
