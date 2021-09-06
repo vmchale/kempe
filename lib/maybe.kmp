@@ -1,5 +1,13 @@
 type Maybe a { Just a | Nothing }
 
+mapMaybe : [a -- b] (Maybe a) -- (Maybe b)
+         =: [
+    { case
+        | Just -> apply Just
+        | Nothing -> dropp Nothing
+    }
+]
+
 isJust : (Maybe a) -- Bool
        =: [
     { case
