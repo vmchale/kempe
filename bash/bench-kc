@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+bench 'kc typecheck examples/splitmix.kmp' \
+    'kc examples/splitmix.kmp splitmix.o --arch x64' \
+    'kc examples/splitmix.kmp splitmix.o --arch aarch64' \
