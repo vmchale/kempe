@@ -11,6 +11,14 @@ either : [a -- c] [b -- c] ((Either a) b) -- c
     }
 ]
 
+fromRight : b ((Either a) b) -- b
+          =: [
+    { case
+        | Left  -> drop
+        | Right -> dip(drop)
+    }
+]
+
 isLeft : ((Either a) b) -- Bool
        =: [
     { case
