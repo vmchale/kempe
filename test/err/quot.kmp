@@ -1,2 +1,2 @@
 badFlip : [a b -- c] b -- c
-        =: [ swap apply ]
+        =: [ swap apply(2, 1) ]

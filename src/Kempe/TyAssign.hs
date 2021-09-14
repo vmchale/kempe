@@ -166,9 +166,6 @@ typeOfBuiltin Swap = do
     aN <- dummyName "a"
     bN <- dummyName "b"
     pure $ StackType (S.fromList [aN, bN]) [TyVar () aN, TyVar () bN] [TyVar () bN, TyVar () aN]
-typeOfBuiltin Apply =
-    pure $ StackType mempty [QuotTy () [] []] []
-    -- FIXME: consider infinitely many dummy names...?
 typeOfBuiltin Dup = do
     aN <- dummyName "a"
     pure $ StackType (S.singleton aN) [TyVar () aN] [TyVar () aN, TyVar () aN]
@@ -271,6 +268,14 @@ tyAtom (Case _ ls) = do
 tyAtom (Quot _ as) = do
     (StackType _ tys tys') <- tyAtoms as
     pure $ StackType mempty [] [QuotTy () tys tys']
+tyAtom (Apply _ i j) = do
+    -- TODO: consider infinitely many dummy names... (unification)?
+    aNs <- replicateM (fromIntegral i) (dummyName "a")
+    bNs <- replicateM (fromIntegral j) (dummyName "b")
+    let quotTy = QuotTy () (asVars aNs) (asVars bNs)
+        vars = S.fromList (aNs ++ bNs)
+    pure $ StackType vars (quotTy : asVars aNs) (asVars bNs)
+    where asVars = fmap (TyVar ())
 
 assignAtom :: Atom b a -> TypeM () (StackType (), Atom (StackType ()) (StackType ()))
 assignAtom (AtBuiltin _ b) = do { ty <- typeOfBuiltin b ; pure (ty, AtBuiltin ty b) }
@@ -305,6 +310,20 @@ assignAtom (Case _ ls) = do
     let newLeaves = fmap dropFst lRes
     pure (resType, Case resType newLeaves)
     where dropFst (_, y, z) = (y, z)
+assignAtom (Quot _ as) = do
+    (as', StackType _ tys tys') <- assignAtoms as
+    let resType = StackType mempty [] [QuotTy () tys tys']
+    pure (resType, Quot resType as')
+assignAtom (Apply _ i j) = do
+    -- TODO: consider infinitely many dummy names... (unification)?
+    aNs <- replicateM (fromIntegral i) (dummyName "a")
+    bNs <- replicateM (fromIntegral j) (dummyName "b")
+    let quotTy = QuotTy () (asVars aNs) (asVars bNs)
+        vars = S.fromList (aNs ++ bNs)
+        resType = StackType vars (quotTy : asVars aNs) (asVars bNs)
+    pure (resType, Apply resType i j)
+    where asVars = fmap (TyVar ())
+
 
 assignAtoms :: [Atom b a] -> TypeM () ([Atom (StackType ()) (StackType ())], StackType ())
 assignAtoms = foldM

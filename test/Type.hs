@@ -31,7 +31,7 @@ typeTests =
         , badType "test/err/merge.kmp" "Type a_5 -- Int a_4 is not as general as type a_3 -- a_3 a_3"
         , badType "test/err/kind.kmp" "Ill-kinded type: '(Maybe_1 Maybe_1)'. Note that type variables have kind \11089 in Kempe."
         , badType "test/err/patternMatch.kmp" "Inexhaustive pattern match."
-        , badType "test/err/quot.kmp" "mismatched type lengths"
+        , badType "test/err/quot.kmp" "mismatched type lengths [a_5 b_6 -- c_7] b_6 -- c_7, a_15 a_10 a_11 -- b_14"
         , detectsWarn "test/err/stupid.kmp" "4:1 'rand_1' is defined more than once."
         , detectsWarn "test/err/questionable.kmp" "3:19 'Some_3' is defined more than once."
         , testAssignment "test/data/ty.kmp"

@@ -34,7 +34,7 @@ drop3 : a b c --
       =: [ drop drop drop ]
 
 compose : [a -- b] [b -- c] a -- c
-        =: [ dip(swap) apply apply ]
+        =: [ dip(swap) apply(1, 1) apply(1, 1) ]
 
 flip : [a b -- c] b a -- c
-     =: [ swap apply ]
+     =: [ swap apply(2, 1) ]

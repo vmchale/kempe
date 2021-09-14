@@ -1,2 +1,2 @@
 apply2 : [a b -- c] a b -- c
-       =: [ apply ]
+       =: [ apply(2, 1) ]

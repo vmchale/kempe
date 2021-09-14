@@ -89,3 +89,5 @@ namesInAtom BoolLit{}     = []
 namesInAtom Int8Lit{}     = []
 namesInAtom WordLit{}     = []
 namesInAtom (Case _ as)   = foldMap namesInAtom (foldMap snd as)
+namesInAtom Apply{}       = []
+namesInAtom (Quot _ as)   = foldMap namesInAtom as

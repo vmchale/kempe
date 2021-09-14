@@ -180,13 +180,13 @@ Atom :: { Atom AlexPosn AlexPosn }
      | wordLit { WordLit (loc $1) (word $1) }
      | int8Lit { Int8Lit (loc $1) (int8 $1) }
      | dip parens(many(Atom)) { Dip $1 (reverse $2) }
+     | apply lparen intLit comma intLit rparen { Apply $1 (int $3) (int $5) }
      | if lparen many(Atom) comma many(Atom) rparen { If $1 (reverse $3) (reverse $5) }
      | boolLit { BoolLit (loc $1) (bool $ builtin $1) }
      | lsqbracket many(Atom) rsqbracket { Quot $1 (reverse $2) }
      | dup { AtBuiltin $1 Dup }
      | drop { AtBuiltin $1 Drop }
      | swap { AtBuiltin $1 Swap }
-     | apply { AtBuiltin $1 Apply }
      | plus { AtBuiltin $1 IntPlus }
      | plusU { AtBuiltin $1 WordPlus }
      | minus { AtBuiltin $1 IntMinus }

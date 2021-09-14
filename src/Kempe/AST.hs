@@ -125,6 +125,7 @@ data Atom c b = AtName b (Name b)
               | AtBuiltin b BuiltinFn
               | AtCons c (TyName c)
               | Quot b [Atom c b]
+              | Apply b Integer Integer -- order in, order out
               deriving (Eq, Ord, Generic, NFData, Functor, Foldable, Traversable)
 
 instance Bifunctor Atom where
@@ -142,11 +143,11 @@ instance Bifunctor Atom where
         let (ps, aLs) = NE.unzip ls
             in Case l $ NE.zip (fmap (first f) ps) (fmap (fmap (first f)) aLs)
     first f (Quot l as)     = Quot l (fmap (first f) as)
+    first _ (Apply l i j)   = Apply l i j
 
 data BuiltinFn = Drop
                | Swap
                | Dup
-               | Apply
                | IntPlus
                | IntMinus
                | IntTimes
@@ -180,7 +181,6 @@ instance Pretty BuiltinFn where
     pretty Drop       = "drop"
     pretty Swap       = "swap"
     pretty Dup        = "dup"
-    pretty Apply      = "apply"
     pretty IntPlus    = "+"
     pretty IntMinus   = "-"
     pretty IntTimes   = "*"
