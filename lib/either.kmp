@@ -3,13 +3,13 @@
 
 type Either a b { Left a | Right b }
 
-; either : [a -- c] [b -- c] ((Either a) b) -- c
-       ; =: [
-    ; { case
-        ; | Left -> dip(drop) apply(1, 1)
-        ; | Right -> apply(1, 1) drop
-    ; }
-; ]
+either : [a -- c] [b -- c] ((Either a) b) -- c
+       =: [
+    { case
+        | Left -> dip(drop) apply(1, 1)
+        | Right -> apply(1, 1) drop
+    }
+]
 
 fromRight : b ((Either a) b) -- b
           =: [
