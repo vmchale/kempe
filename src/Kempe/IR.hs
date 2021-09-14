@@ -254,6 +254,29 @@ writeAtom env l (Case (is, _) ls) =
             ret <- newLabel
             let meat' = (++ [Jump ret]) . toList <$> meat
             pure $ dataPointerDec decSz : concatMap toList switches ++ concat meat' ++ [Labeled ret]
+writeAtom env _ (Quot _ as) = do
+    self <- newLabel
+    continue <- newLabel
+    retAddr <- getTemp64
+    -- (assembly to do stuff w/ kempe stack)
+    stmts <- writeAtoms env False as
+    pure $
+        -- two interwoven phases: first push address to body, and move on
+        push 8 (LabelE self)
+            ++ [Jump continue, Labeled self] -- this is the actual procedure
+            ++ pop 8 retAddr -- pop return address
+            ++ stmts -- assembly for quotation body
+            ++ [JumpReg retAddr, Labeled continue] -- jump back to popped address
+writeAtom _ _ Apply{} = do
+    continue <- newLabel
+    jAddr <- getTemp64
+    pure $
+        -- pop pointer given by quotation
+        pop 8 jAddr
+            -- push label for where to continue after
+            ++ push 8 (LabelE continue)
+            -- jump to address given by quotation
+            ++ [JumpReg jAddr, Labeled continue]
 
 zipWithM :: (Applicative m) => (a -> b -> m c) -> NonEmpty a -> NonEmpty b -> m (NonEmpty c)
 zipWithM f xs ys = sequenceA (NE.zipWith f xs ys)

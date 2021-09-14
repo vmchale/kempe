@@ -48,6 +48,7 @@ instance Pretty Temp where
 instance Pretty Stmt where
     pretty (Labeled l)           = hardline <> prettyLabel l <> colon
     pretty (Jump l)              = parens ("j" <+> prettyLabel l)
+    pretty (JumpReg t)           = parens ("jr" <+> pretty t)
     pretty (CCall ty bs)         = parens ("C" <+> pretty (decodeUtf8 (BSL.toStrict bs)) <+> braces (prettyMonoStackType  ty))
     pretty (KCall l)             = parens ("call" <+> prettyLabel l)
     pretty Ret                   = parens "ret"
@@ -72,9 +73,11 @@ instance Pretty Exp where
     pretty (IntNegIR e)           = parens ("~" <+> pretty e)
     pretty (PopcountIR e)         = parens ("popcount" <+> pretty e)
     pretty (EqByte e e')          = parens ("=b" <+> pretty e <+> pretty e')
+    pretty (LabelE t)             = prettyLabel t
 
 data Stmt = Labeled Label
           | Jump Label
+          | JumpReg Temp
           | CJump Exp Label Label -- ^ If the 'Exp' evaluates to @1@, go to the first label, otherwise go to the second (if-then-else). Used to implement ifs.
           | MJump Exp Label
           | CCall MonoStackType BSL.ByteString
@@ -98,6 +101,7 @@ data Exp = ConstInt Int64
          | IntNegIR Exp
          | PopcountIR Exp
          | EqByte Exp Exp
+         | LabelE Label
          deriving (Eq, Generic, NFData)
            -- TODO: one for data, one for C ABI
 
