@@ -38,6 +38,7 @@ popLink = [Load () LinkReg (Reg StackPtr), AddRC () StackPtr StackPtr 16]
 
 irEmit :: SizeEnv -> IR.Stmt -> WriteM [Arm AbsReg ()]
 irEmit _ (IR.Jump l)                    = pure [Branch () l]
+irEmit _ (IR.JumpReg r)                 = pure [Bx () (toAbsReg r)]
 irEmit _ IR.Ret                         = pure [Ret ()]
 irEmit _ (IR.KCall l)                   = pure (pushLink ++ BranchLink () l : popLink) -- TODO: think more?
 irEmit _ (IR.Labeled l)                 = pure [Label () l]
@@ -115,6 +116,7 @@ evalE :: IR.Exp -> IR.Temp -> WriteM [Arm AbsReg ()]
 evalE (IR.ConstInt i) r                                                        = pure [MovRC () (toAbsReg r) i]
 evalE (IR.ConstWord w) r                                                       = pure $ movRWord (toAbsReg r) w
 evalE (IR.ConstTag b) r                                                        = pure [MovRC () (toAbsReg r) (fromIntegral b)]
+evalE (IR.LabelE l) r                                                          = pure [LoadLabelK () (toAbsReg r) l]
 evalE (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r1) (IR.Reg r2)) r                 = pure [AddRR () (toAbsReg r) (toAbsReg r1) (toAbsReg r2)]
 evalE (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r1) (IR.Reg r2)) r                = pure [SubRR () (toAbsReg r) (toAbsReg r1) (toAbsReg r2)]
 evalE (IR.ExprIntBinOp IR.IntTimesIR (IR.Reg r1) (IR.Reg r2)) r                = pure [MulRR () (toAbsReg r) (toAbsReg r1) (toAbsReg r2)]

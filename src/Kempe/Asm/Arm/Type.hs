@@ -206,6 +206,7 @@ data Arm reg a = Branch { ann :: a, label :: Label } -- like jump
                | BranchLink { ann :: a, label :: Label } -- like @call@
                | BranchCond { ann :: a, label :: Label, cond :: Cond }
                | BranchZero { ann :: a, condReg :: reg, label :: Label }
+               | Bx { ann :: a, regDest :: reg }
                | BranchNonzero { ann :: a, condReg :: reg, label :: Label }
                | AddRR { ann :: a, res :: reg, inp1 :: reg, inp2 :: reg }
                | AddRC { ann :: a, res :: reg, inp1 :: reg, int :: Int64 }
@@ -225,6 +226,7 @@ data Arm reg a = Branch { ann :: a, label :: Label } -- like jump
                | Load { ann :: a, dest :: reg, addrSrc :: Addr reg }
                | LoadByte { ann :: a, dest :: reg, addrSrc :: Addr reg }
                | LoadLabel { ann :: a, dest :: reg, srcLabel :: BS.ByteString }
+               | LoadLabelK { ann :: a, dest :: reg, kempeSrcLabel :: Label }
                | Store { ann :: a, src :: reg, addrDest :: Addr reg }
                | StoreByte { ann :: a, src :: reg, addrDest :: Addr reg } -- ^ @strb@ in Aarch64 assembly, "store byte"
                | CmpRR { ann :: a, inp1 :: reg, inp2 :: reg }
@@ -252,6 +254,7 @@ instance (Pretty reg, As32 reg) => Pretty (Arm reg a) where
     pretty (BranchCond _ l c)        = i4 ("b." <> pretty c <+> prettyLabel l)
     pretty (BranchZero _ r l)        = i4 ("cbz" <+> pretty r <~> prettyLabel l)
     pretty (BranchNonzero _ r l)     = i4 ("cbnz" <+> pretty r <~> prettyLabel l)
+    pretty (Bx _ r)                  = i4 ("bx" <+> pretty r)
     pretty Ret{}                     = i4 "ret"
     pretty (BSLabel _ b)             = let pl = pretty (decodeUtf8 b) in ".globl" <+> pl <> hardline <> pl <> colon
     pretty (MovRWord _ r c)          = i4 ("mov" <+> pretty r <~> prettyUInt c)
@@ -267,6 +270,7 @@ instance (Pretty reg, As32 reg) => Pretty (Arm reg a) where
     pretty (Load _ r a)              = i4 ("ldr" <+> pretty r <~> pretty a)
     pretty (LoadByte _ r a)          = i4 ("ldrb" <+> as32b r <~> pretty a)
     pretty (LoadLabel _ r l)         = i4 ("ldr" <+> pretty r <~> "=" <> pretty (decodeUtf8 l))
+    pretty (LoadLabelK _ r l)        = i4 ("ldr" <+> pretty r <~> "=" <> prettyLabel l)
     pretty (Store _ r a)             = i4 ("str" <+> pretty r <~> pretty a)
     pretty (StoreByte _ r a)         = i4 ("strb" <+> as32b r <~> pretty a)
     pretty (MovRR _ r0 r1)           = i4 ("mov" <+> pretty r0 <~> pretty r1)
