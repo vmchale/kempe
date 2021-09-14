@@ -12,6 +12,7 @@ category:        Language, Compilers
 build-type:      Simple
 data-files:
     test/data/*.kmp
+    test/data/diamond/*.kmp
     test/err/*.kmp
     test/examples/*.kmp
     test/golden/*.out
