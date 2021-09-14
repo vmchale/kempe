@@ -19,6 +19,7 @@ import           Prettyprinter     (Pretty (pretty), comma, squotes, (<+>))
 data Error a = PoorScope a (Name a)
              | MismatchedLengths a (StackType a) (StackType a)
              | UnificationFailed a (KempeTy a) (KempeTy a) -- TODO: include atom expression?
+             | SelfReference a (TyName a) (KempeTy a)
              | TyVarExt a (Name a)
              | MonoFailed a
              | LessGeneral a (StackType a) (StackType a)
@@ -50,5 +51,6 @@ instance Pretty (Error a) where
     pretty (BadType _)                   = "All types appearing in a signature must have kind ⭑"
     pretty (FatSumType _ tn)             = "Sum type" <+> pretty tn <+> "has too many constructors! Sum types are limited to 256 constructors in Kempe."
     pretty InexhaustiveMatch{}           = "Inexhaustive pattern match."
+    pretty (SelfReference _ tn ty)       = "Cannot construct infinite type" <+> pretty ty <+> "~" <+> pretty tn
 
 instance (Typeable a) => Exception (Error a)

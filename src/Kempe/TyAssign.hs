@@ -22,6 +22,7 @@ import           Data.Semigroup             ((<>))
 import qualified Data.Set                   as S
 import qualified Data.Text                  as T
 import           Data.Tuple.Extra           (fst3)
+import           Debug.Trace
 import           Kempe.AST
 import           Kempe.Error
 import           Kempe.Name
@@ -105,13 +106,17 @@ inContext um (QuotTy l tys tys') = QuotTy l (inContext um <$> tys) (inContext um
 
 -- | Perform substitutions before handing off to 'unifyMatch'
 unifyPrep :: UnifyMap
-           -> [(KempeTy (), KempeTy ())]
-           -> Either (Error ()) (IM.IntMap (KempeTy ()))
+          -> [(KempeTy (), KempeTy ())]
+          -> Either (Error ()) (IM.IntMap (KempeTy ()))
 unifyPrep _ [] = Right mempty
 unifyPrep um ((ty, ty'):tys) =
     let ty'' = inContext um ty
         ty''' = inContext um ty'
     in unifyMatch um $ (ty'', ty'''):tys
+
+mentioned :: TyName a -> [KempeTy a] -> Bool
+mentioned n = any m
+    where m (TyVar _ n') = n' == n
 
 unifyMatch :: UnifyMap -> [(KempeTy (), KempeTy ())] -> Either (Error ()) (IM.IntMap (KempeTy ()))
 unifyMatch _ []                                                              = Right mempty
@@ -133,15 +138,25 @@ unifyMatch _ ((ty@TyBuiltin{}, ty'@QuotTy{}):_)                              = L
 unifyMatch _ ((ty@TyNamed{}, ty'@QuotTy{}):_)                                = Left (UnificationFailed () ty ty')
 unifyMatch um ((TyVar _ (Name _ (Unique k) _), ty@TyApp{}):tys)              = IM.insert k ty <$> unifyPrep (IM.insert k ty um) tys
 unifyMatch um ((ty@TyApp{}, TyVar  _ (Name _ (Unique k) _)):tys)             = IM.insert k ty <$> unifyPrep (IM.insert k ty um) tys
-unifyMatch um ((TyVar _ (Name _ (Unique k) _), ty@QuotTy{}):tys)             = IM.insert k ty <$> unifyPrep (IM.insert k ty um) tys
-unifyMatch um ((ty@QuotTy{}, TyVar  _ (Name _ (Unique k) _)):tys)            = IM.insert k ty <$> unifyPrep (IM.insert k ty um) tys
+-- FIXME: check that
 unifyMatch um ((TyApp _ ty ty', TyApp _ ty'' ty'''):tys)                     = unifyMatch um ((ty, ty'') : (ty', ty''') : tys)
 unifyMatch _ ((ty@TyApp{}, ty'@TyNamed{}):_)                                 = Left (UnificationFailed () (void ty) (void ty'))
 unifyMatch _ ((ty@QuotTy{}, ty'@TyNamed{}):_)                                = Left (UnificationFailed () (void ty) (void ty'))
 unifyMatch _ ((ty@QuotTy{}, ty'@TyBuiltin{}):_)                              = Left (UnificationFailed () (void ty) (void ty'))
 unifyMatch _ ((ty@QuotTy{}, ty'@TyApp{}):_)                                  = Left (UnificationFailed () (void ty) (void ty'))
 unifyMatch _ ((ty@TyApp{}, ty'@QuotTy{}):_)                                  = Left (UnificationFailed () ty ty')
-unifyMatch um ((QuotTy _ tys tys', QuotTy _ tys'' tys'''):tysU)              = unifyMatch um (zip tys tys'' ++ zip tys' tys''' ++ tysU)
+unifyMatch um ((TyVar _ n@(Name _ (Unique k) _), ty@(QuotTy _ ls rs)):tys)
+    | not (n `mentioned` (ls ++ rs))
+        = IM.insert k ty <$> unifyPrep (IM.insert k ty um) tys
+    | otherwise = Left (SelfReference () n ty)
+unifyMatch um ((ty@(QuotTy _ ls rs), TyVar  _ n@(Name _ (Unique k) _)):tys)
+    | not (n `mentioned` (ls ++ rs))
+        = IM.insert k ty <$> unifyPrep (IM.insert k ty um) tys
+    | otherwise = Left (SelfReference () n ty)
+unifyMatch um ((QuotTy _ tys tys', QuotTy _ tys'' tys'''):tysU)
+    | length tys == length tys'' && length tys' == length tys''' -- TODO: is the check redundant?
+        = unifyMatch um (zip tys tys'' ++ zip tys' tys''' ++ tysU)
+    | otherwise = Left $ MismatchedLengths () (StackType undefined tys tys') (StackType undefined tys'' tys''')
 
 unify :: [(KempeTy (), KempeTy ())] -> Either (Error ()) (IM.IntMap (KempeTy ()))
 unify = unifyPrep IM.empty
@@ -315,7 +330,6 @@ assignAtom (Quot _ as) = do
     let resType = StackType mempty [] [QuotTy () tys tys']
     pure (resType, Quot resType as')
 assignAtom (Apply _ i j) = do
-    -- TODO: consider infinitely many dummy names... (unification)?
     aNs <- replicateM (fromIntegral i) (dummyName "a")
     bNs <- replicateM (fromIntegral j) (dummyName "b")
     let quotTy = QuotTy () (asVars aNs) (asVars bNs)
