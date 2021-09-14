@@ -140,6 +140,8 @@ renameAtom (AtCons ty (Name t u _)) = do
     cSt <- gets consEnv
     let (u', ann) = M.findWithDefault (error "Internal error? unfound constructor") (u, ty) cSt
     pure $ AtCons ann (Name t u' ann)
+renameAtom (Quot ty as)             = Quot ty <$> traverse renameAtom as
+renameAtom (Apply ty i j)           = pure $ Apply ty i j
 
 renameDecl :: KempeDecl () (StackType ()) (StackType ()) -> MonoM (KempeDecl () (ConsAnn MonoStackType) (StackType ()))
 renameDecl (FunDecl l n is os as) = FunDecl l n is os <$> traverse renameAtom as
@@ -293,6 +295,8 @@ namesInAtom BoolLit{}                  = S.empty
 namesInAtom Int8Lit{}                  = S.empty
 namesInAtom WordLit{}                  = S.empty
 namesInAtom (Case _ as)                = foldMap namesInAtom (foldMap snd as) <> foldMap (namesInPattern . fst) as
+namesInAtom (Quot _ as)                = foldMap namesInAtom as
+namesInAtom Apply{}                    = S.empty
 
 namesInPattern :: Pattern (StackType ()) (StackType ()) -> S.Set (Name (StackType ()), StackType ())
 namesInPattern (PatternCons _ tn@(Name _ _ l)) = S.singleton (tn, flipStackType l) -- we have to flipStackType here because the type is the reverse of the constructor that we want to look up
