@@ -280,8 +280,8 @@ tyAtom (Case _ ls) = do
     -- TODO: one-pass fold?
     mergeMany tyLs
 tyAtom (Quot _ as) = do
-    (StackType _ tys tys') <- tyAtoms as
-    pure $ StackType mempty [] [QuotTy () tys tys']
+    (StackType free tys tys') <- tyAtoms as
+    pure $ StackType free [] [QuotTy () tys tys']
 tyAtom (Apply _ i j) = do
     -- TODO: consider infinitely many dummy names... (unification)?
     aNs <- replicateM (fromIntegral i) (dummyName "a")
@@ -325,8 +325,8 @@ assignAtom (Case _ ls) = do
     pure (resType, Case resType newLeaves)
     where dropFst (_, y, z) = (y, z)
 assignAtom (Quot _ as) = do
-    (as', StackType _ tys tys') <- assignAtoms as
-    let resType = StackType mempty [] [QuotTy () tys tys']
+    (as', StackType free tys tys') <- assignAtoms as
+    let resType = StackType free [] [QuotTy () tys tys']
     pure (resType, Quot resType as')
 assignAtom (Apply _ i j) = do
     aNs <- replicateM (fromIntegral i) (dummyName "a")
