@@ -31,6 +31,7 @@ allocReg8 = AllocReg8 <$> getInt
 -- 1 byte or 8 bytes at a time.
 irEmit :: SizeEnv -> IR.Stmt -> WriteM [X86 AbsReg ()]
 irEmit _ (IR.Jump l) = pure [Jump () l]
+irEmit _ (IR.JumpReg r) = pure [JumpReg () (toAbsReg r)]
 irEmit _ (IR.Labeled l) = pure [Label () l]
 irEmit _ (IR.KCall l) = pure [Call () l]
 irEmit _ IR.Ret = pure [Ret ()]
@@ -212,6 +213,7 @@ evalE (IR.ConstBool b) r                                            = pure [MovR
 evalE (IR.ConstInt8 i) r                                            = pure [MovRCi8 () (toAbsReg r) i]
 evalE (IR.ConstWord w) r                                            = pure [MovRWord () (toAbsReg r) w]
 evalE (IR.ConstTag b) r                                             = pure [MovRCTag () (toAbsReg r) b]
+evalE (IR.LabelE l) r                                               = pure [MovRLK () (toAbsReg r) l]
 evalE (IR.Reg r') r                                                 = pure [MovRR () (toAbsReg r) (toAbsReg r')]
 evalE (IR.Mem _ (IR.Reg r1)) r                                      = pure [MovRA () (toAbsReg r) (Reg $ toAbsReg r1) ] -- TODO: sanity check reg/mem access size?
 evalE (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r1) (IR.ConstInt i)) r | r == r1 = pure [SubRC () (toAbsReg r) i]

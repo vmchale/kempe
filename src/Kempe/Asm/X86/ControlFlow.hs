@@ -114,6 +114,7 @@ addControlFlow (Ret{}:asms) = do
     ; nextAsms <- addControlFlow asms
     ; pure (Ret (ControlAnn i [] IS.empty IS.empty) : nextAsms)
     }
+-- FIXME: JumpReg
 addControlFlow (asm:asms) = do
     { i <- getFresh
     ; (f, asms') <- next asms
@@ -121,6 +122,7 @@ addControlFlow (asm:asms) = do
     }
 
 uses :: X86 AbsReg ann -> IS.IntSet
+uses (JumpReg _ r)       = singleton r
 uses (PushReg _ r)       = singleton r
 uses (PushMem _ a)       = addrRegs a
 uses (PopMem _ a)        = addrRegs a
@@ -171,6 +173,7 @@ defs (AddRC _ r _)      = singleton r
 defs (SubRC _ r _)      = singleton r
 defs (XorRR _ r _)      = singleton r
 defs (MovRL _ r _)      = singleton r
+defs (MovRLK _ r _)     = singleton r
 defs (LShiftRRR _ r _)  = singleton r
 defs (PopReg _ r)       = singleton r
 defs (LShiftLRR _ r _)  = singleton r
