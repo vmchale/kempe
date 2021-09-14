@@ -84,6 +84,7 @@ addControlFlow (Ret{}:asms) = do
     ; nextAsms <- addControlFlow asms
     ; pure (Ret (ControlAnn i [] IS.empty IS.empty) : nextAsms)
     }
+-- FIXME: BR (branch register)
 addControlFlow (asm:asms) = do
     { i <- getFresh
     ; (f, asms') <- next asms
