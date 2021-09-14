@@ -38,7 +38,7 @@ popLink = [Load () LinkReg (Reg StackPtr), AddRC () StackPtr StackPtr 16]
 
 irEmit :: SizeEnv -> IR.Stmt -> WriteM [Arm AbsReg ()]
 irEmit _ (IR.Jump l)                    = pure [Branch () l]
-irEmit _ (IR.JumpReg r)                 = pure [Bx () (toAbsReg r)]
+irEmit _ (IR.JumpReg r)                 = pure [Br () (toAbsReg r)]
 irEmit _ IR.Ret                         = pure [Ret ()]
 irEmit _ (IR.KCall l)                   = pure (pushLink ++ BranchLink () l : popLink) -- TODO: think more?
 irEmit _ (IR.Labeled l)                 = pure [Label () l]

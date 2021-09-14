@@ -138,4 +138,4 @@ allocReg (BranchNonzero l r lbl)    = (BranchNonzero () <$> useReg l r <*> pure 
 allocReg (CmpRC l r c)              = (CmpRC () <$> useReg l r <*> pure c) <* freeDone l
 allocReg (MovRK l r0 c s)           = (MovRK () <$> useReg l r0 <*> pure c <*> pure s) <* freeDone l
 allocReg (LoadLabelK l r lbl)       = (LoadLabelK () <$> useReg l r <*> pure lbl) <* freeDone l
-allocReg (Bx l r)                   = (Bx () <$> useReg l r) <* freeDone l
+allocReg (Br l r)                   = (Br () <$> useReg l r) <* freeDone l

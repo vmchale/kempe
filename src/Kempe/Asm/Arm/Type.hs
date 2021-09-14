@@ -206,7 +206,7 @@ data Arm reg a = Branch { ann :: a, label :: Label } -- like jump
                | BranchLink { ann :: a, label :: Label } -- like @call@
                | BranchCond { ann :: a, label :: Label, cond :: Cond }
                | BranchZero { ann :: a, condReg :: reg, label :: Label }
-               | Bx { ann :: a, regDest :: reg }
+               | Br { ann :: a, regDest :: reg }
                | BranchNonzero { ann :: a, condReg :: reg, label :: Label }
                | AddRR { ann :: a, res :: reg, inp1 :: reg, inp2 :: reg }
                | AddRC { ann :: a, res :: reg, inp1 :: reg, int :: Int64 }
@@ -254,7 +254,7 @@ instance (Pretty reg, As32 reg) => Pretty (Arm reg a) where
     pretty (BranchCond _ l c)        = i4 ("b." <> pretty c <+> prettyLabel l)
     pretty (BranchZero _ r l)        = i4 ("cbz" <+> pretty r <~> prettyLabel l)
     pretty (BranchNonzero _ r l)     = i4 ("cbnz" <+> pretty r <~> prettyLabel l)
-    pretty (Bx _ r)                  = i4 ("bx" <+> pretty r)
+    pretty (Br _ r)                  = i4 ("br" <+> pretty r)
     pretty Ret{}                     = i4 "ret"
     pretty (BSLabel _ b)             = let pl = pretty (decodeUtf8 b) in ".globl" <+> pl <> hardline <> pl <> colon
     pretty (MovRWord _ r c)          = i4 ("mov" <+> pretty r <~> prettyUInt c)
