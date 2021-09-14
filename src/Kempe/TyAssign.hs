@@ -594,6 +594,7 @@ substConstraints tys ty@(TyVar _ (Name _ (Unique k) _)) =
     case IM.lookup k tys of
         Just ty'@TyVar{}       -> substConstraints (IM.delete k tys) ty' -- TODO: this is to prevent cyclic lookups: is it right?
         Just (TyApp l ty0 ty1) -> TyApp l (substConstraints tys ty0) (substConstraints tys ty1)
+        Just (QuotTy l ls rs)  -> QuotTy l (substConstraints tys <$> ls) (substConstraints tys <$> rs)
         Just ty'               -> ty'
         Nothing                -> ty
 substConstraints tys (TyApp l ty ty')                   =
