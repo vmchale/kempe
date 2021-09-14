@@ -22,7 +22,6 @@ import           Data.Semigroup             ((<>))
 import qualified Data.Set                   as S
 import qualified Data.Text                  as T
 import           Data.Tuple.Extra           (fst3)
-import           Debug.Trace
 import           Kempe.AST
 import           Kempe.Error
 import           Kempe.Name
@@ -117,6 +116,7 @@ unifyPrep um ((ty, ty'):tys) =
 mentioned :: TyName a -> [KempeTy a] -> Bool
 mentioned n = any m
     where m (TyVar _ n') = n' == n
+          m _            = False
 
 unifyMatch :: UnifyMap -> [(KempeTy (), KempeTy ())] -> Either (Error ()) (IM.IntMap (KempeTy ()))
 unifyMatch _ []                                                              = Right mempty
@@ -138,7 +138,6 @@ unifyMatch _ ((ty@TyBuiltin{}, ty'@QuotTy{}):_)                              = L
 unifyMatch _ ((ty@TyNamed{}, ty'@QuotTy{}):_)                                = Left (UnificationFailed () ty ty')
 unifyMatch um ((TyVar _ (Name _ (Unique k) _), ty@TyApp{}):tys)              = IM.insert k ty <$> unifyPrep (IM.insert k ty um) tys
 unifyMatch um ((ty@TyApp{}, TyVar  _ (Name _ (Unique k) _)):tys)             = IM.insert k ty <$> unifyPrep (IM.insert k ty um) tys
--- FIXME: check that
 unifyMatch um ((TyApp _ ty ty', TyApp _ ty'' ty'''):tys)                     = unifyMatch um ((ty, ty'') : (ty', ty''') : tys)
 unifyMatch _ ((ty@TyApp{}, ty'@TyNamed{}):_)                                 = Left (UnificationFailed () (void ty) (void ty'))
 unifyMatch _ ((ty@QuotTy{}, ty'@TyNamed{}):_)                                = Left (UnificationFailed () (void ty) (void ty'))
