@@ -94,7 +94,8 @@ size _ (TyBuiltin _ TyWord)                = const 8
 size _ TyVar{}                             = error "Internal error: type variables should not be present at this stage."
 size env (TyNamed _ (Name _ (Unique k) _)) = IM.findWithDefault (error "Size not in map!") k env
 size env (TyApp _ ty ty')                  = \tys -> size env ty (size env ty' [] : tys)
--- TODO: size of quot is 1 pointer? plus its input variables idk
+size env (QuotTy _ ls _)                   = const (1 + sizeStack env ls) -- size of quot is 1 pointer plus its input variables
+-- TODO: do quotes &c. need like a return address?
 
 size' :: SizeEnv -> KempeTy a -> Int64
 size' env = ($ []) . size env
