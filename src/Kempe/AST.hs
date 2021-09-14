@@ -46,7 +46,7 @@ import           GHC.Generics            (Generic)
 import           Kempe.AST.Size
 import           Kempe.Name
 import           Numeric.Natural
-import           Prettyprinter           (Doc, Pretty (pretty), align, braces, brackets, colon, concatWith, dquotes, fillSep, hsep, parens, pipe, sep, vsep, (<+>))
+import           Prettyprinter           (Doc, Pretty (pretty), align, braces, brackets, colon, concatWith, dquotes, fillSep, hsep, parens, pipe, sep, tupled, vsep, (<+>))
 import           Prettyprinter.Ext
 
 
@@ -95,6 +95,8 @@ instance Pretty (Atom c a) where
     pretty (WordLit _ w)   = pretty w <> "u"
     pretty (Int8Lit _ i)   = pretty i <> "i8"
     pretty (Case _ ls)     = "case" <+> braces (align (vsep (toList $ fmap (uncurry prettyLeaf) ls)))
+    pretty (Quot _ as)     = brackets (fillSep (fmap pretty as))
+    pretty (Apply _ i j)   = "apply" <> tupled [pretty i, pretty j]
 
 prettyLeaf :: Pattern c a -> [Atom c a] -> Doc ann
 prettyLeaf p as = pipe <+> pretty p <+> "->" <+> align (fillSep (fmap pretty as))
