@@ -72,6 +72,7 @@ import Prettyprinter (Pretty (pretty), (<+>))
     neg { TokSym $$ NegTok }
     and { TokSym $$ AndTok }
     or { TokSym $$ OrTok }
+    dollar { TokSym $$ Dollar }
 
     name { TokName _ $$ }
     tyName { TokTyName  _ $$ }
@@ -181,6 +182,7 @@ Atom :: { Atom AlexPosn AlexPosn }
      | int8Lit { Int8Lit (loc $1) (int8 $1) }
      | dip parens(many(Atom)) { Dip $1 (reverse $2) }
      | apply lparen intLit comma intLit rparen { Apply $1 (int $3) (int $5) }
+     | dollar lparen intLit comma intLit rparen { Apply $1 (int $3) (int $5) }
      | if lparen many(Atom) comma many(Atom) rparen { If $1 (reverse $3) (reverse $5) }
      | boolLit { BoolLit (loc $1) (bool $ builtin $1) }
      | lsqbracket many(Atom) rsqbracket { Quot $1 (reverse $2) }

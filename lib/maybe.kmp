@@ -3,7 +3,7 @@ type Maybe a { Just a | Nothing }
 mapMaybe : [a -- b] (Maybe a) -- (Maybe b)
          =: [
     { case
-        | Just -> apply(1, 1) Just
+        | Just -> $(1, 1) Just
         | Nothing -> drop Nothing
     }
 ]

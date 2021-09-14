@@ -102,6 +102,7 @@ tokens :-
         "&"                      { mkSym AndTok }
         "||"                     { mkSym OrTok }
         "~"                      { mkSym NegTok }
+        "$"                      { mkSym Dollar }
 
         type                     { mkKw KwType }
         import                   { mkKw KwImport }
@@ -240,6 +241,7 @@ data Sym = Arrow
          | AndTok
          | OrTok
          | NegTok
+         | Dollar
          deriving (Generic, NFData)
 
 instance Pretty Sym where
@@ -280,6 +282,7 @@ instance Pretty Sym where
     pretty AndTok     = "&"
     pretty OrTok      = "||"
     pretty NegTok     = "~"
+    pretty Dollar     = "$"
 
 data Keyword = KwType
              | KwImport
