@@ -50,10 +50,12 @@
 - [x] Save callee-save registers on C call
   - [x] caller-save registers (`popa`?)
   - [ ] Something block-like that only saves registers that are actually used
+- [ ] Figure out unification + `lib/either.kmp`
 # Pipeline
 - [x] Inliner (all non-recursive?)
 # Features
 - [ ] quotation (stack-allocated closures)
+  - [ ] quotation without types specified at use site
 - [ ] Only save registers that get clobbered
 - [x] Aarch64 backend
 - [ ] Arithmetic and patterns for `i8`

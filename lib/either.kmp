@@ -1,21 +1,23 @@
 ; I'm not sure how useful this module is but I have it as a test for the
 ; typechecker and I guess to show how pattern matching works.
 
+import"prelude/fn.kmp"
+
 type Either a b { Left a | Right b }
 
-either : [a -- c] [b -- c] ((Either a) b) -- c
-       =: [
-    { case
-        | Left -> drop apply(1, 1)
-        | Right -> apply(1, 1) drop
-    }
-]
+; either : [a -- c] [b -- c] ((Either a) b) -- c
+       ; =: [
+    ; { case
+        ; | Left -> nip apply(1, 1)
+        ; | Right -> apply(1, 1) drop
+    ; }
+; ]
 
 fromRight : b ((Either a) b) -- b
           =: [
     { case
         | Left  -> drop
-        | Right -> dip(drop)
+        | Right -> nip
     }
 ]
 
