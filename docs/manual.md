@@ -114,9 +114,9 @@ nip : a b -- b
 
 ### Quotation
 
-Kempe supports higher-order functions; we have
+Kempe supports quotation, but the `apply` needs extra type information, viz.
 
-  * `apply : [a -- b] a -- b`
+  * `apply(1, 1)`
 
 ### If Blocks
 
