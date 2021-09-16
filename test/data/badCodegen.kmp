@@ -4,7 +4,7 @@ id0 : Int -- Int
       =: [ Just dip(0) fromMaybe ]
 
 id1 : Int -- Int
-     =: [ Just 0 swap fromMaybe ]
+     =: [ Just {case | Just -> | Nothing -> 0} ]
 
 %foreign cabi id0
 %foreign cabi id1
