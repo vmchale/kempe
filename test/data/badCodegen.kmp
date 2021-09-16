@@ -1,6 +1,10 @@
 import "lib/maybe.kmp"
 
-succ : Int -- Int
-     =: [ Just 0 swap fromMaybe ] ; Just [1 +] swap mapMaybe 0 swap fromMaybe ]
+id0 : Int -- Int
+      =: [ Just dip(0) fromMaybe ]
 
-%foreign cabi succ
+id1 : Int -- Int
+     =: [ Just 0 swap fromMaybe ]
+
+%foreign cabi id0
+%foreign cabi id1
