@@ -1,6 +1,7 @@
 # kempe
 
   * Fix bug in arm control-flow analysis
+  * Add `fromMaybe` and `fromRight` functions
 
 ## 0.2.0.4
 
