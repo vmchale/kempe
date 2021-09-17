@@ -2,6 +2,7 @@
 
   * Fix bug in arm control-flow analysis
   * Add `fromMaybe` and `fromRight` functions
+  * Fix bugs in IR optimization pass
 
 ## 0.2.0.4
 
