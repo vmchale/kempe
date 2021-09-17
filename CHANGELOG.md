@@ -1,5 +1,7 @@
 # kempe
 
+  * Fix bug in arm control-flow analysis
+
 ## 0.2.0.4
 
   * Kind-check external function declarations
