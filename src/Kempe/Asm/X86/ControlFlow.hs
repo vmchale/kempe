@@ -27,6 +27,9 @@ getFresh = gets fst <* modify (first (+1))
 lookupLabel :: Label -> FreshM Int
 lookupLabel l = gets (M.findWithDefault (error "Internal error in control-flow graph: node label not in map.") l . snd)
 
+allLabels :: FreshM [Int]
+allLabels = gets (M.elems . snd)
+
 broadcast :: Int -> Label -> FreshM ()
 broadcast i l = modify (second (M.insert l i))
 
@@ -114,7 +117,12 @@ addControlFlow (Ret{}:asms) = do
     ; nextAsms <- addControlFlow asms
     ; pure (Ret (ControlAnn i [] IS.empty IS.empty) : nextAsms)
     }
--- FIXME: JumpReg
+addControlFlow ((JumpReg _ r):asms) = do
+    { i <- getFresh
+    ; nextAsms <- addControlFlow asms
+    ; ls <- allLabels
+    ; pure (JumpReg (ControlAnn i ls (singleton r) IS.empty) r : nextAsms)
+    }
 addControlFlow (asm:asms) = do
     { i <- getFresh
     ; (f, asms') <- next asms
