@@ -79,6 +79,12 @@ addControlFlow ((BranchLink _ l):asms) = do
     ; l_i <- lookupLabel l
     ; pure (BranchLink (ControlAnn i [l_i] IS.empty IS.empty) l : nextAsms)
     }
+addControlFlow ((Branch _ l):asms) = do
+    { i <- getFresh
+    ; nextAsms <- addControlFlow asms
+    ; l_i <- lookupLabel l
+    ; pure (Branch (ControlAnn i [l_i] IS.empty IS.empty) l : nextAsms)
+    }
 addControlFlow (Ret{}:asms) = do
     { i <- getFresh
     ; nextAsms <- addControlFlow asms

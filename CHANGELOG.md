@@ -1,5 +1,8 @@
 # kempe
 
+  * Fix bug in arm control-flow analysis
+  * Fix bugs in IR optimization pass
+
 ## 0.2.0.4
 
   * Kind-check external function declarations
