@@ -8,6 +8,8 @@ import           Kempe.Error.Warning
 lint :: Declarations a b b -> Maybe (Warning b)
 lint = foldMapAlternative lintDecl
 
+-- TODO: lint for something like dip(0) -> replace with 0 swap
+
 lintDecl :: KempeDecl a b b -> Maybe (Warning b)
 lintDecl Export{}             = Nothing
 lintDecl TyDecl{}             = Nothing
