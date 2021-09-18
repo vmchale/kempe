@@ -8,6 +8,7 @@ id1 : Int -- Int
 
 id2 : Int -- Int
     =: [ Just 0 swap {case | Just -> dip(drop) | Nothing ->} ]
+    ; Just 0 swap drop swap works
 
 %foreign cabi id0
 %foreign cabi id1
