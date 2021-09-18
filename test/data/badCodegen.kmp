@@ -6,5 +6,9 @@ id0 : Int -- Int
 id1 : Int -- Int
      =: [ Just {case | Just -> | Nothing -> 0} ]
 
+id2 : Int -- Int
+    =: [ Just 0 swap {case | Just -> dip(drop) | Nothing ->} ]
+
 %foreign cabi id0
 %foreign cabi id1
+%foreign cabi id2
