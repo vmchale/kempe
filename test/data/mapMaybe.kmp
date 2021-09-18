@@ -4,7 +4,7 @@ succ0 : Int -- Int
      =: [ Just [1 +] swap mapMaybe 0 swap fromMaybe ]
 
 succ2 : Int -- Int
-     =: [ Just 0 swap fromMaybe ]
+     =: [ Just 0 swap {case | Just -> dip(drop) | Nothing ->} ]
 
 succ1 : Int -- Int
      =: [ [1 +] swap apply(1, 1) ]
