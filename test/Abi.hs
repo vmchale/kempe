@@ -20,7 +20,7 @@ backendGolden =
         [ goldenIR "test/data/abi.kmp" "test/golden/abi.ir"
         , goldenIR "lib/gaussian.kmp" "test/golden/gaussian.ir"
         -- not for ABI, to test it imports the right thing (transitively)
-        -- FIXME: pending test , goldenIR "test/data/diamond/a.kmp" "test/golden/a.ir"
+        , goldenIR "test/data/diamond/a.kmp" "test/golden/a.ir"
         ]
 
 dumpIRLazyText :: Typeable a => Int -> Declarations a c b -> TL.Text
