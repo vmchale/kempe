@@ -492,7 +492,7 @@ mergeStackTypes st0@(StackType _ i0 o0) st1@(StackType _ i1 o1) = do
 tyPattern :: Pattern b a -> TypeM () (StackType ())
 tyPattern PatternWildcard{} = do
     aN <- dummyName "a"
-    pure $ StackType (S.singleton aN) [TyVar () aN] []
+    pure $ StackType (S.singleton aN) [TyVar () aN] [] -- FIXME: this is wrong for constructors, could be a -- b c (for instance)
 tyPattern PatternInt{} = pure $ StackType S.empty [TyBuiltin () TyInt] []
 tyPattern PatternBool{} = pure $ StackType S.empty [TyBuiltin () TyBool] []
 tyPattern (PatternCons _ tn) = renameStack . flipStackType =<< consLookup (void tn)
