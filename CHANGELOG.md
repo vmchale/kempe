@@ -3,7 +3,6 @@
   * Fix bug in arm control-flow analysis
   * Fix bugs in IR optimization pass
   * Improve IR optimization
-  * Fix bug in `case` statements involving sum types
   * Add `fromMaybe` and `fromRight` functions
 
 ## 0.2.0.4
