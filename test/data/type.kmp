@@ -1,4 +1,0 @@
-import"lib/maybe.kmp"
-
-id1 : Int -- Int
-     =: [ Just {case | Nothing -> 0 | _ ->} ]
