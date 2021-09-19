@@ -4,7 +4,10 @@ succ0 : Int -- Int
      =: [ Just [1 +] swap mapMaybe 0 swap fromMaybe ]
 
 succ1 : Int -- Int
-     =: [ [1 +] swap apply(1, 1) ]
+     =: [ dip([1 +]) apply(1, 1) ]
+
+; succ1 : Int -- Int
+     ; =: [ [1 +] swap apply(1, 1) ]
 
 %foreign cabi succ0
 %foreign cabi succ1

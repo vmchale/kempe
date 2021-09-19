@@ -378,6 +378,8 @@ dipify env sz (AtName sty n) =
     dipSupp env sz sty . pure . KCall <$> lookupName n
 dipify env sz a@(Case sty _) =
     dipSupp env sz sty <$> writeAtom env False a
+dipify env sz a@(Quot sty _) =
+    dipSupp env sz sty <$> writeAtom env False a -- hopefully this works
 
 dipSupp :: SizeEnv -> Int64 -> MonoStackType -> [Stmt] -> [Stmt]
 dipSupp env sz (is, os) stmts =
