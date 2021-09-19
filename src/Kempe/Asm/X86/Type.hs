@@ -185,6 +185,7 @@ data X86 reg a = PushReg { ann :: a, rSrc :: reg }
                | MovRC { ann :: a, rDest :: reg, iSrc :: Int64 }
                | MovRL { ann :: a, rDest :: reg, bsLabel :: BS.ByteString }
                | MovRLK { ann :: a, rDest :: reg, kLabel :: Label }
+               | MovALK { ann :: a, addrDest :: Addr reg, kLabel :: Label }
                | MovAC { ann :: a, addrDest :: Addr reg, iSrc :: Int64 }
                | MovACi8 { ann :: a, addrDest :: Addr reg, i8Src :: Int8 }
                | MovACTag { ann :: a, addrDest :: Addr reg, tagSrc :: Word8 }
@@ -261,6 +262,7 @@ instance (As8 reg, Pretty reg) => Pretty (X86 reg a) where
     pretty (MovRCBool _ r b)    = i4 ("mov" <+> pretty r <> "," <+> pretty b)
     pretty (MovRL _ r bl)       = i4 ("mov" <+> pretty r <> "," <+> pretty (decodeUtf8 bl))
     pretty (MovRLK _ r l)       = i4 ("mov" <+> pretty r <> "," <+> prettyLabel l)
+    pretty (MovALK _ a l)       = i4 ("mov qword" <+> pretty a <> "," <+> prettyLabel l)
     pretty (AddRR _ r0 r1)      = i4 ("add" <+> pretty r0 <> "," <+> pretty r1)
     pretty (AddAC _ a c)        = i4 ("add" <+> pretty a <> "," <+> pretty c)
     pretty (SubRR _ r0 r1)      = i4 ("sub" <+> pretty r0 <> "," <> pretty r1)
