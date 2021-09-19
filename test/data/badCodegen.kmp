@@ -4,7 +4,12 @@ id0 : Int -- Int
       =: [ Just dip(0) fromMaybe ]
 
 id1 : Int -- Int
-     =: [ Just {case | Just -> | Nothing -> 0} ]
+     =: [ Just {case | Nothing -> 0 | Just ->} ]
+
+id2 : Int -- Int
+    =: [ Just 0 swap {case | Just -> dip(drop) | Nothing ->} ]
+    ; Just 0 swap drop swap works
 
 %foreign cabi id0
 %foreign cabi id1
+%foreign cabi id2
