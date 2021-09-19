@@ -45,6 +45,11 @@ irEmit _ (IR.MovMem (IR.Reg r) _ (IR.ConstBool b)) =
     pure [ MovABool () (Reg $ toAbsReg r) (toByte b) ]
 irEmit _ (IR.MovMem (IR.Reg r) _ (IR.ConstTag b)) =
     pure [ MovACTag () (Reg $ toAbsReg r) b ]
+-- (movmem (reg datapointer) kmp12)
+irEmit _ (IR.MovMem (IR.Reg r) _ (IR.LabelE l)) = do
+    { r' <- allocReg64
+    ; pure [ MovRLK () r' l, MovAR () (Reg $ toAbsReg r) r' ]
+    }
 irEmit _ (IR.MovMem (IR.Reg r) _ (IR.ExprIntBinOp IR.IntTimesIR (IR.Reg r1) (IR.Reg r2))) = do
     { r' <- allocReg64
     ; pure [ MovRR () r' (toAbsReg r1), ImulRR () r' (toAbsReg r2), MovAR () (Reg $ toAbsReg r) r' ]
