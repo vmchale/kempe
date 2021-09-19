@@ -242,7 +242,6 @@ allocReg (PushMem l a)                         = PushMem () <$> useAddr l a <* f
 allocReg (AddRR l r0 r1)                       = (AddRR () <$> useReg l r0 <*> useReg l r1) <* freeDone l
 allocReg (MovRL l r bl)                        = (MovRL () <$> useReg l r <*> pure bl) <* freeDone l
 allocReg (MovRLK l r l')                       = (MovRLK () <$> useReg l r <*> pure l') <* freeDone l
-allocReg (MovALK l r l')                       = (MovALK () <$> useAddr l r <*> pure l') <* freeDone l
 allocReg (XorRR l r0 r1)                       = (XorRR () <$> useReg l r0 <*> useReg l r1) <* freeDone l
 allocReg (LShiftLRR l r0 r1)                   = (LShiftLRR () <$> useReg l r0 <*> useReg l r1) <* freeDone l
 allocReg (LShiftRRR l r0 r1)                   = (LShiftRRR () <$> useReg l r0 <*> useReg l r1) <* freeDone l

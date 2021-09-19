@@ -136,7 +136,6 @@ uses (PushMem _ a)       = addrRegs a
 uses (PopMem _ a)        = addrRegs a
 uses (MovRA _ _ a)       = addrRegs a
 uses (MovAR _ a r)       = singleton r <> addrRegs a
-uses (MovALK _ a _)      = addrRegs a
 uses (MovRR _ _ r)       = singleton r
 uses (MovRRLower _ _ r)  = singleton r
 uses (AddRR _ r r')      = fromList [r, r']
