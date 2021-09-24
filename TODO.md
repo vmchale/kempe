@@ -58,8 +58,11 @@
   - [ ] quotation without types specified at use site
 - [ ] Only save registers that get clobbered
 - [x] Aarch64 backend
+  - [ ] https://developer.arm.com/documentation/102374/0101/Loads-and-stores---load-pair-and-store-pair
+  - [ ] https://community.arm.com/developer/ip-products/processors/b/processors-ip-blog/posts/arm-a-profile-architecture-developments-2021
 - [ ] Arithmetic and patterns for `i8`
 - [ ] Patterns for words?
+- [ ] or-patterns (easy enough?)
 - [ ] `divMod` builtin?
 - [ ] Floats
 - [ ] `fmt` subcommand

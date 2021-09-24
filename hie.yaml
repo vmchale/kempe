@@ -3,11 +3,11 @@ cradle:
   cabal:
     - path: "./src"
       component: "lib:kempe-modules"
-    - path: "./test/Spec.hs"
+    - path: "./test"
       component: "test:kempe-test"
     - path: "./bench/Bench.hs"
       component: "bench:kempe-bench"
     - path: "./run/Main.hs"
       component: "exe:kc"
-    - path: "./test/Golden.hs"
+    - path: "./golden/Golden.hs"
       component: "test:kempe-golden"

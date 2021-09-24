@@ -254,6 +254,7 @@ writeAtom env l (Case (is, _) ls) =
             ret <- newLabel
             let meat' = (++ [Jump ret]) . toList <$> meat
             pure $ dataPointerDec decSz : concatMap toList switches ++ concat meat' ++ [Labeled ret]
+            -- TODO: why dataPointerDec decSz??
 writeAtom env _ (Quot _ as) = do
     self <- newLabel
     continue <- newLabel
@@ -291,13 +292,15 @@ mkLeaf env l p as = do
 patternSwitch :: SizeEnv -> Pattern (ConsAnn MonoStackType) MonoStackType -> Label -> [Stmt]
 patternSwitch _ (PatternBool _ True) l                   = [MJump (Mem 1 (Reg DataPointer)) l]
 patternSwitch _ (PatternBool _ False) l                  = [MJump (EqByte (Mem 1 (Reg DataPointer)) (ConstTag 0)) l]
-patternSwitch _ (PatternWildcard _) l                    = [Jump l]
+patternSwitch _ (PatternWildcard _) l                    = [Jump l] -- FIXME: what about padding? when standing in for a constructor...
 patternSwitch _ (PatternInt _ i) l                       = [MJump (ExprIntRel IntEqIR (Mem 8 (Reg DataPointer)) (ConstInt $ fromInteger i)) l]
 patternSwitch env (PatternCons ann@(ConsAnn _ tag' _) _) l =
     let padAt = padBytes env ann + 1
         -- decrement by padAt bytes (to discard padding), then we need to access
         -- the tag at [datapointer+padAt] when we check
         in [ dataPointerDec padAt, MJump (EqByte (Mem 1 (ExprIntBinOp IntPlusIR (Reg DataPointer) (ConstInt padAt))) (ConstTag tag')) l]
+        -- FIXME: do we need dataPointerInc padAt at the end? not all
+        -- constructors will have the same padding, it will fall through...
 
 -- | Constructors may need to be padded, this computes the number of bytes of
 -- padding
