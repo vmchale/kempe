@@ -55,8 +55,10 @@
 # Features
 - [ ] Only save registers that get clobbered
 - [x] Aarch64 backend
+  - [ ] https://developer.arm.com/documentation/102374/0101/Loads-and-stores---load-pair-and-store-pair
 - [ ] Arithmetic and patterns for `i8`
 - [ ] Patterns for words?
+- [ ] or-patterns (easy enough?)
 - [ ] `divMod` builtin?
 - [ ] Floats
 - [ ] `fmt` subcommand
