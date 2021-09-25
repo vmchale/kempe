@@ -32,3 +32,10 @@ drop2 : a b --
 
 drop3 : a b c --
       =: [ drop drop drop ]
+
+; from Joy
+choice : a a Bool -- a
+       =: [ if( drop
+              , nip
+              )
+          ]

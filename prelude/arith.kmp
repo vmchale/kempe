@@ -10,6 +10,11 @@ predInt : Int -- Int
 isZeroInt : Int -- Bool
           =: [ 0 = ]
 
+absInt : Int -- Int
+       =: [ dup 0 <
+            if (~ ,)
+          ]
+
 ; More from Mirth
 maxInt : Int Int -- Int
        =: [ dup2 < if(nip, drop) ]
