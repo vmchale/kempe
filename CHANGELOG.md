@@ -1,5 +1,7 @@
 # kempe
 
+  * Add `absInt` and `chocie` functions to prelude.
+  
 ## 0.2.0.5
 
   * Fix bug in arm control-flow analysis
