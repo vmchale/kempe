@@ -1,5 +1,7 @@
 # kempe
 
+## 0.2.0.6
+
   * Add `absInt` and `chocie` functions to prelude.
   * Add lints for `swap >`, `swap *` &c.
   * Fix bug in typing `>=`, `>`, `!=`
