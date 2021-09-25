@@ -77,6 +77,7 @@
 - [ ] `.intel_syntax noprefix` for arm
 - [ ] RCL/RCR/ROL/ROR
 - [ ] real backend? https://github.com/AjayMT/nanoc
+- [ ] neat: http://joy-lang.org/papers-on-joy/atomic-programs-of-joy
 ## Builtins
 - [ ] `rem` builtin or the like? (basically functions in library)
   - [ ] `sal`, `sar`?
