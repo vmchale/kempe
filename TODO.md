@@ -14,6 +14,7 @@
   generator...)
   - [ ] http://prng.di.unimi.it/xoroshiro128plus.c
 - [ ] Exponentiation (O (log n))
+- [ ] regular expressions? machine
 # Backends
 - [x] Linear scan register allocator
 - [ ] Graph (?) register allocator
