@@ -8,6 +8,14 @@ fromMaybe : a (Maybe a) -- a
     }
 ]
 
+join : (Maybe (Maybe a)) -- (Maybe a)
+     =: [
+    { case
+        | Just -> 
+        | Nothing -> Nothing
+    }
+]
+
 isJust : (Maybe a) -- Bool
        =: [
     { case
