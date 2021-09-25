@@ -1,0 +1,2 @@
+lte : Int Int -- Bool
+    =: [ swap > ]
