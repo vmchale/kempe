@@ -11,7 +11,7 @@ fromMaybe : a (Maybe a) -- a
 join : (Maybe (Maybe a)) -- (Maybe a)
      =: [
     { case
-        | Just -> 
+        | Just ->
         | Nothing -> Nothing
     }
 ]
