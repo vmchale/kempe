@@ -1,5 +1,8 @@
 # kempe
 
+  * Add lints for `swap swap` and `1 drop` etc.
+  * Add `join` for `Maybe` and `Either`
+
 ## 0.2.0.6
 
   * Add `absInt` and `chocie` functions to prelude.
