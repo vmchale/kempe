@@ -84,6 +84,7 @@
 - [ ] `rem` builtin or the like? (basically functions in library)
   - [ ] `sal`, `sar`?
 - [x] `popcnt` basically
+- [ ] combinators: http://tunes.org/~iepos/joy.html#swap
 # Test Cases
 - [ ] Unit tests for type merge?
 - [ ] Unit tests for catTypes?
