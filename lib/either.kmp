@@ -14,7 +14,7 @@ fromRight : b ((Either a) b) -- b
 join : ((Either a) ((Either a) b)) -- ((Either a) b)
      =: [
     { case
-        | Left -> Left
+        | Left  -> Left
         | Right ->
     }
 ]
