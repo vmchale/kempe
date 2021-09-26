@@ -16,6 +16,12 @@ lintDecl TyDecl{}             = Nothing
 lintDecl ExtFnDecl{}          = Nothing
 lintDecl (FunDecl _ _ _ _ as) = lintAtoms as
 
+-- TODO: dip(+) + -> + + (assoc. dip)
+-- TODO: dup and -> id
+-- TODO: dup or -> id
+-- TODO: swap drop drop -> drop drop
+
+-- a bunch of this is from http://joy-lang.org/papers-on-joy/the-algebra-of-joy/
 lintAtoms :: [Atom b b] -> Maybe (Warning b)
 lintAtoms []                                                = Nothing
 lintAtoms (a@(Dip l _):a'@Dip{}:_)                          = Just (DoubleDip l a a')
