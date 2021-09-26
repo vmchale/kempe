@@ -19,6 +19,10 @@ lintDecl (FunDecl _ _ _ _ as) = lintAtoms as
 lintAtoms :: [Atom b b] -> Maybe (Warning b)
 lintAtoms []                                                = Nothing
 lintAtoms (a@(Dip l _):a'@Dip{}:_)                          = Just (DoubleDip l a a')
+lintAtoms (a@(IntLit l _):(AtBuiltin _ Drop):_)             = Just (PushDrop l a)
+lintAtoms (a@(WordLit l _):(AtBuiltin _ Drop):_)            = Just (PushDrop l a)
+lintAtoms (a@(BoolLit l _):(AtBuiltin _ Drop):_)            = Just (PushDrop l a)
+lintAtoms (a@(Int8Lit l _):(AtBuiltin _ Drop):_)            = Just (PushDrop l a)
 lintAtoms ((AtBuiltin l Swap):(AtBuiltin _ Swap):_)         = Just (DoubleSwap l)
 lintAtoms ((AtBuiltin l Swap):a'@(AtBuiltin _ IntEq):_)     = Just (SwapBinary l a' a')
 lintAtoms ((AtBuiltin l Swap):a'@(AtBuiltin _ IntNeq):_)    = Just (SwapBinary l a' a')
