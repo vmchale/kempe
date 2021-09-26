@@ -16,7 +16,7 @@ lintDecl TyDecl{}             = Nothing
 lintDecl ExtFnDecl{}          = Nothing
 lintDecl (FunDecl _ _ _ _ as) = lintAtoms as
 
--- TODO: dip(+) + -> + + (assoc. dip)
+-- TODO: dip(+) + -> + + (assoc. dip); also *, and, or
 -- TODO: dup and -> id
 -- TODO: dup or -> id
 -- TODO: swap drop drop -> drop drop
