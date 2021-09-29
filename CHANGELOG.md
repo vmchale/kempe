@@ -1,5 +1,7 @@
 # kempe
 
+  * Add lints for `dip(+) +` to `+ +`, (associative dip) `dup and` to `id`, etc.
+
 ## 0.2.0.6
 
   * Add `absInt` and `chocie` functions to prelude.
