@@ -16,6 +16,7 @@ data Warning a = NameClash a (Name a)
                | DoubleSwap a
                | DipAssoc a (Atom a a)
                | Identity a (Atom a a)
+               | PushDrop a (Atom a a)
 
 instance Pretty a => Pretty (Warning a) where
     pretty (NameClash l x)     = pretty l <> " '" <> pretty x <> "' is defined more than once."
@@ -24,6 +25,7 @@ instance Pretty a => Pretty (Warning a) where
     pretty (DoubleSwap l)      = pretty l <+> "double swap"
     pretty (DipAssoc l a)      = pretty l <+> "dip(" <> pretty a <> ")" <+> pretty a <+> "is equivalent to" <+> pretty a <+> pretty a <+> "by associativity"
     pretty (Identity l a)      = pretty l <+> squotes ("dup" <+> pretty a) <+> "is identity"
+    pretty (PushDrop l a)      = pretty l <+> squotes (pretty a <+> "drop") <+> "is identity"
 
 instance (Pretty a) => Show (Warning a) where
     show = show . pretty

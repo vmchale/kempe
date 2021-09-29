@@ -1,6 +1,8 @@
 # kempe
 
   * Add lints for `dip(+) +` to `+ +`, (associative dip) `dup and` to `id`, etc.
+  * Add lints for `swap swap` and `1 drop` etc.
+  * Add `join` for `Maybe` and `Either`
 
 ## 0.2.0.6
 
