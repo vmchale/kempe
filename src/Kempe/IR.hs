@@ -10,6 +10,7 @@ import           Data.Foldable              (toList, traverse_)
 import           Data.List.NonEmpty         (NonEmpty (..))
 import qualified Data.List.NonEmpty         as NE
 -- strict b/c it's faster according to benchmarks
+import           Control.Monad              (zipWithM)
 import           Control.Monad.State.Strict (State, gets, modify, runState)
 import           Data.Bifunctor             (second)
 import           Data.Foldable.Ext
@@ -249,15 +250,13 @@ writeAtom env l (Case (is, _) ls) =
     let (ps, ass) = NE.unzip ls
         decSz = size' env (last is)
         in do
-            leaves <- zipWithM (mkLeaf env l) ps ass
-            let (switches, meat) = NE.unzip leaves
+            leaves <- zipWithM (mkLeaf env l) (toList ps) (NE.init ass)
+            lastLeaf <- mkLeaf env l (PatternWildcard undefined) (NE.last ass)
+            let (switches, meat) = unzip (leaves ++ [lastLeaf])
             ret <- newLabel
             let meat' = (++ [Jump ret]) . toList <$> meat
             pure $ dataPointerDec decSz : concatMap toList switches ++ concat meat' ++ [Labeled ret]
             -- TODO: why dataPointerDec decSz??
-
-zipWithM :: (Applicative m) => (a -> b -> m c) -> NonEmpty a -> NonEmpty b -> m (NonEmpty c)
-zipWithM f xs ys = sequenceA (NE.zipWith f xs ys)
 
 mkLeaf :: SizeEnv -> Bool -> Pattern (ConsAnn MonoStackType) MonoStackType -> [Atom (ConsAnn MonoStackType) MonoStackType] -> TempM ([Stmt], [Stmt])
 mkLeaf env l p as = do
