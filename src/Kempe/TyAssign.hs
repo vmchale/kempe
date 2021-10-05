@@ -276,7 +276,7 @@ assignAtom (AtName _ n) = do
 assignAtom (AtCons _ tn) = do
     sTy <- renameStack =<< consLookup (void tn)
     pure (sTy, AtCons sTy (tn $> sTy))
-assignAtom (Dip _ as)    = do { (as', ty) <- assignAtoms as ; tyDipped <- dipify ty ; pure (tyDipped, Dip tyDipped as') }
+assignAtom (Dip _ as) = do { (as', ty) <- assignAtoms as ; tyDipped <- dipify ty ; pure (tyDipped, Dip tyDipped as') }
 assignAtom (If _ as0 as1) = do
     (as0', tys) <- assignAtoms as0
     (as1', tys') <- assignAtoms as1
