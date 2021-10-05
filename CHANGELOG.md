@@ -1,7 +1,7 @@
 # kempe
 
   * Fix bug in unification
-  * Fix bug so that `and` and `or` instructions print correctly for assembler
+  * Fix bug so that `and` and `or` instructions print correctly for x86 assembler
   * Add lints for `dip(+) +` to `+ +`, (associative dip) `dup and` to `id`, etc.
   * Add lints for `swap swap` and `1 drop` etc.
   * Add `join` for `Maybe` and `Either`
