@@ -96,6 +96,7 @@ inContext :: UnifyMap -> KempeTy () -> KempeTy ()
 inContext um ty'@(TyVar _ (Name _ (Unique i) _)) =
     case IM.lookup i um of
         Just ty@TyVar{} -> inContext (IM.delete i um) ty -- prevent cyclic lookups
+        -- TODO: does this need a case for TyApp -> inContext?
         Just ty         -> ty
         Nothing         -> ty'
 inContext _ ty'@TyBuiltin{} = ty'
@@ -122,7 +123,6 @@ unifyMatch um ((ty@(TyNamed _ _), TyVar  _ (Name _ (Unique k) _)):tys)       = I
 unifyMatch um ((TyVar _ (Name _ (Unique k) _), ty@(TyNamed _ _)):tys)        = IM.insert k ty <$> unifyPrep (IM.insert k ty um) tys
 unifyMatch um ((ty@TyBuiltin{}, TyVar  _ (Name _ (Unique k) _)):tys)         = IM.insert k ty <$> unifyPrep (IM.insert k ty um) tys
 unifyMatch um ((TyVar _ (Name _ (Unique k) _), ty@(TyBuiltin _ _)):tys)      = IM.insert k ty <$> unifyPrep (IM.insert k ty um) tys
-unifyMatch um ((TyVar _ (Name _ (Unique k) _), ty@(TyVar _ _)):tys)          = IM.insert k ty <$> unifyPrep (IM.insert k ty um) tys
 unifyMatch _ ((ty@TyBuiltin{}, ty'@TyNamed{}):_)                             = Left (UnificationFailed () ty ty')
 unifyMatch _ ((ty@TyNamed{}, ty'@TyBuiltin{}):_)                             = Left (UnificationFailed () ty ty')
 unifyMatch _ ((ty@TyBuiltin{}, ty'@TyApp{}):_)                               = Left (UnificationFailed () ty ty')
@@ -130,8 +130,11 @@ unifyMatch _ ((ty@TyNamed{}, ty'@TyApp{}):_)                                 = L
 unifyMatch _ ((ty@TyApp{}, ty'@TyBuiltin{}):_)                               = Left (UnificationFailed () ty ty')
 unifyMatch um ((TyVar _ (Name _ (Unique k) _), ty@TyApp{}):tys)              = IM.insert k ty <$> unifyPrep (IM.insert k ty um) tys
 unifyMatch um ((ty@TyApp{}, TyVar  _ (Name _ (Unique k) _)):tys)             = IM.insert k ty <$> unifyPrep (IM.insert k ty um) tys
-unifyMatch um ((TyApp _ ty ty', TyApp _ ty'' ty'''):tys)                     = unifyMatch um ((ty, ty'') : (ty', ty''') : tys)
+unifyMatch um ((TyApp _ ty ty', TyApp _ ty'' ty'''):tys)                     = unifyMatch um ((ty, ty'') : (ty', ty''') : tys) -- TODO:  do we need unifyPrep here?
 unifyMatch _ ((ty@TyApp{}, ty'@TyNamed{}):_)                                 = Left (UnificationFailed () (void ty) (void ty'))
+unifyMatch um ((TyVar _ n@(Name _ (Unique k) _), ty@(TyVar _ n')):tys)
+    | n == n' = unifyMatch um tys -- a type variable is always equal to itself, don't bother inserting this!
+    | otherwise = IM.insert k ty <$> unifyPrep (IM.insert k ty um) tys
 
 unify :: [(KempeTy (), KempeTy ())] -> Either (Error ()) (IM.IntMap (KempeTy ()))
 unify = unifyPrep IM.empty

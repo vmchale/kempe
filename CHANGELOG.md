@@ -1,5 +1,6 @@
 # kempe
 
+  * Fix bug in unification
   * Add lints for `dip(+) +` to `+ +`, (associative dip) `dup and` to `id`, etc.
   * Add lints for `swap swap` and `1 drop` etc.
   * Add `join` for `Maybe` and `Either`
