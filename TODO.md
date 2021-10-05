@@ -79,7 +79,7 @@
 - [ ] RCL/RCR/ROL/ROR
 - [ ] real backend? https://github.com/AjayMT/nanoc
 - [ ] neat: http://joy-lang.org/papers-on-joy/atomic-programs-of-joy
-- [ ] fall through on last case arm
+- [x] fall through on last case arm
 ## Builtins
 - [ ] `rem` builtin or the like? (basically functions in library)
   - [ ] `sal`, `sar`?
