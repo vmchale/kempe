@@ -26,6 +26,7 @@ backendTests =
         , pipelineWorks "examples/factorial.kmp"
         , pipelineWorks "test/data/mutual.kmp"
         , pipelineWorks "test/data/multiConstruct.kmp"
+        , pipelineWorks "test/data/mod.kmp"
         , irNoYeet "test/data/export.kmp"
         , irNoYeet "examples/splitmix.kmp"
         , irNoYeet "examples/factorial.kmp"
