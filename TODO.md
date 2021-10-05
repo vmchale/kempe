@@ -14,6 +14,7 @@
   generator...)
   - [ ] http://prng.di.unimi.it/xoroshiro128plus.c
 - [ ] Exponentiation (O (log n))
+- [ ] regular expressions? machine
 # Backends
 - [x] Linear scan register allocator
 - [ ] Graph (?) register allocator
@@ -80,10 +81,13 @@
 - [ ] `.intel_syntax noprefix` for arm
 - [ ] RCL/RCR/ROL/ROR
 - [ ] real backend? https://github.com/AjayMT/nanoc
+- [ ] neat: http://joy-lang.org/papers-on-joy/atomic-programs-of-joy
+- [x] fall through on last case arm
 ## Builtins
 - [ ] `rem` builtin or the like? (basically functions in library)
   - [ ] `sal`, `sar`?
 - [x] `popcnt` basically
+- [ ] combinators: http://tunes.org/~iepos/joy.html#swap
 # Test Cases
 - [ ] Unit tests for type merge?
 - [ ] Unit tests for catTypes?

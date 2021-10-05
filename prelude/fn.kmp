@@ -38,3 +38,10 @@ compose : [a -- b] [b -- c] a -- c
 
 flip : [a b -- c] b a -- c
      =: [ swap apply(2, 1) ]
+
+; from Joy
+choice : a a Bool -- a
+       =: [ if( drop
+              , nip
+              )
+          ]

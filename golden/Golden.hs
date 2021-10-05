@@ -27,4 +27,5 @@ allGoldens =
     , ("test/examples/const.kmp", "test/harness/const.c", "test/golden/const.out")
     , ("test/data/mapMaybe.kmp", "test/harness/succ.c", "test/golden/succ.out")
     , ("test/data/badCodegen.kmp", "test/harness/id.c", "test/golden/id.out")
+    , ("test/data/mod.kmp", "test/harness/mod.c", "test/golden/mod.out")
     ]

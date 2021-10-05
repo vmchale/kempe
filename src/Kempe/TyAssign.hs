@@ -96,6 +96,7 @@ inContext :: UnifyMap -> KempeTy () -> KempeTy ()
 inContext um ty'@(TyVar _ (Name _ (Unique i) _)) =
     case IM.lookup i um of
         Just ty@TyVar{} -> inContext (IM.delete i um) ty -- prevent cyclic lookups
+        -- TODO: does this need a case for TyApp -> inContext?
         Just ty         -> ty
         Nothing         -> ty'
 inContext _ ty'@TyBuiltin{} = ty'
@@ -128,7 +129,6 @@ unifyMatch um ((ty@(TyNamed _ _), TyVar  _ (Name _ (Unique k) _)):tys)       = I
 unifyMatch um ((TyVar _ (Name _ (Unique k) _), ty@(TyNamed _ _)):tys)        = IM.insert k ty <$> unifyPrep (IM.insert k ty um) tys
 unifyMatch um ((ty@TyBuiltin{}, TyVar  _ (Name _ (Unique k) _)):tys)         = IM.insert k ty <$> unifyPrep (IM.insert k ty um) tys
 unifyMatch um ((TyVar _ (Name _ (Unique k) _), ty@TyBuiltin{}):tys)          = IM.insert k ty <$> unifyPrep (IM.insert k ty um) tys
-unifyMatch um ((TyVar _ (Name _ (Unique k) _), ty@TyVar{}):tys)              = IM.insert k ty <$> unifyPrep (IM.insert k ty um) tys
 unifyMatch _ ((ty@TyBuiltin{}, ty'@TyNamed{}):_)                             = Left (UnificationFailed () ty ty')
 unifyMatch _ ((ty@TyNamed{}, ty'@TyBuiltin{}):_)                             = Left (UnificationFailed () ty ty')
 unifyMatch _ ((ty@TyBuiltin{}, ty'@TyApp{}):_)                               = Left (UnificationFailed () ty ty')
@@ -138,7 +138,7 @@ unifyMatch _ ((ty@TyBuiltin{}, ty'@QuotTy{}):_)                              = L
 unifyMatch _ ((ty@TyNamed{}, ty'@QuotTy{}):_)                                = Left (UnificationFailed () ty ty')
 unifyMatch um ((TyVar _ (Name _ (Unique k) _), ty@TyApp{}):tys)              = IM.insert k ty <$> unifyPrep (IM.insert k ty um) tys
 unifyMatch um ((ty@TyApp{}, TyVar  _ (Name _ (Unique k) _)):tys)             = IM.insert k ty <$> unifyPrep (IM.insert k ty um) tys
-unifyMatch um ((TyApp _ ty ty', TyApp _ ty'' ty'''):tys)                     = unifyMatch um ((ty, ty'') : (ty', ty''') : tys)
+unifyMatch um ((TyApp _ ty ty', TyApp _ ty'' ty'''):tys)                     = unifyMatch um ((ty, ty'') : (ty', ty''') : tys) -- TODO:  do we need unifyPrep here?
 unifyMatch _ ((ty@TyApp{}, ty'@TyNamed{}):_)                                 = Left (UnificationFailed () (void ty) (void ty'))
 unifyMatch _ ((ty@QuotTy{}, ty'@TyNamed{}):_)                                = Left (UnificationFailed () (void ty) (void ty'))
 unifyMatch _ ((ty@QuotTy{}, ty'@TyBuiltin{}):_)                              = Left (UnificationFailed () (void ty) (void ty'))
@@ -156,6 +156,9 @@ unifyMatch um ((QuotTy _ tys tys', QuotTy _ tys'' tys'''):tysU)
     | length tys == length tys'' && length tys' == length tys''' -- TODO: is the check redundant?
         = unifyMatch um (zip tys tys'' ++ zip tys' tys''' ++ tysU)
     | otherwise = Left $ MismatchedLengths () (StackType undefined tys tys') (StackType undefined tys'' tys''')
+unifyMatch um ((TyVar _ n@(Name _ (Unique k) _), ty@(TyVar _ n')):tys)
+    | n == n' = unifyMatch um tys -- a type variable is always equal to itself, don't bother inserting this!
+    | otherwise = IM.insert k ty <$> unifyPrep (IM.insert k ty um) tys
 
 unify :: [(KempeTy (), KempeTy ())] -> Either (Error ()) (IM.IntMap (KempeTy ()))
 unify = unifyPrep IM.empty
@@ -199,9 +202,9 @@ typeOfBuiltin WordPlus   = pure wordBinOp
 typeOfBuiltin WordTimes  = pure wordBinOp
 typeOfBuiltin WordShiftR = pure wordShift
 typeOfBuiltin WordShiftL = pure wordShift
-typeOfBuiltin IntGeq     = pure intBinOp
-typeOfBuiltin IntNeq     = pure intBinOp
-typeOfBuiltin IntGt      = pure intBinOp
+typeOfBuiltin IntGeq     = pure intRel
+typeOfBuiltin IntNeq     = pure intRel
+typeOfBuiltin IntGt      = pure intRel
 typeOfBuiltin WordMinus  = pure wordBinOp
 typeOfBuiltin WordDiv    = pure wordBinOp
 typeOfBuiltin WordMod    = pure wordBinOp
@@ -311,7 +314,7 @@ assignAtom (AtName _ n) = do
 assignAtom (AtCons _ tn) = do
     sTy <- renameStack =<< consLookup (void tn)
     pure (sTy, AtCons sTy (tn $> sTy))
-assignAtom (Dip _ as)    = do { (as', ty) <- assignAtoms as ; tyDipped <- dipify ty ; pure (tyDipped, Dip tyDipped as') }
+assignAtom (Dip _ as) = do { (as', ty) <- assignAtoms as ; tyDipped <- dipify ty ; pure (tyDipped, Dip tyDipped as') }
 assignAtom (If _ as0 as1) = do
     (as0', tys) <- assignAtoms as0
     (as1', tys') <- assignAtoms as1

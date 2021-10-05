@@ -1,5 +1,17 @@
 # kempe
 
+  * Fix bug in unification
+  * Add lints for `dip(+) +` to `+ +`, (associative dip) `dup and` to `id`, etc.
+  * Add lints for `swap swap` and `1 drop` etc.
+  * Add `join` for `Maybe` and `Either`
+  * Last branch of case statement always falls through (more efficient code)
+
+## 0.2.0.6
+
+  * Add `absInt` and `chocie` functions to prelude.
+  * Add lints for `swap >`, `swap *` &c.
+  * Fix bug in typing `>=`, `>`, `!=`
+  
 ## 0.2.0.5
 
   * Fix bug in arm control-flow analysis

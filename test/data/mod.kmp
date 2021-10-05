@@ -1,0 +1,6 @@
+import"prelude/arith.kmp"
+
+mod_kmp : Int Int -- Int
+        =: [ modInt ]
+
+%foreign cabi mod_kmp

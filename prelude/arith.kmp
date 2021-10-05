@@ -1,6 +1,21 @@
 import "prelude/fn.kmp"
 import "lib/maybe.kmp"
 
+; like haskell; % is rem and mod is... mod
+;
+; from here: https://hackage.haskell.org/package/ghc-prim-0.7.0/docs/src/GHC-Classes.html#modInt%23
+modInt : Int Int -- Int
+       =: [ dup2 dup2
+            0 < dip(0 >) &
+            dip(0 > dip(0 <) &)
+            || 
+            dip(dup dip(%))
+            if( dip(dip(dup) 0 !=) swap if(+, nip)
+              , drop
+              )
+          ]
+
+
 succInt : Int -- Int
         =: [ 1 + ]
 
@@ -9,6 +24,11 @@ predInt : Int -- Int
 
 isZeroInt : Int -- Bool
           =: [ 0 = ]
+
+absInt : Int -- Int
+       =: [ dup 0 <
+            if (~ ,)
+          ]
 
 ; More from Mirth
 maxInt : Int Int -- Int
