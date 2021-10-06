@@ -241,14 +241,15 @@ writeAtom env _ (AtCons ann@(ConsAnn _ tag' _) _) =
     pure $ dataPointerInc (padBytes env ann) : push 1 (ConstTag tag')
 writeAtom _ _ (Case ([], _) _) = error "Internal error: Ill-typed case statement?!"
 -- single-case leaf
-writeAtom env l (Case (is, _) ((_, as) :| [])) =
-    let decSz = size' env (last is)
-    in do
-        nextAs <- writeAtoms env l as
-        pure $ dataPointerDec decSz : nextAs
+writeAtom env l (Case _ ((_, as) :| [])) =
+    writeAtoms env l as
 writeAtom env l (Case (is, _) ls) =
     let (ps, ass) = NE.unzip ls
-        decSz = size' env (last is)
+        lastTy = last is
+        decSz = case lastTy of
+            TyBuiltin _ TyInt  -> 8
+            TyBuiltin _ TyWord -> 8
+            _                  -> 1 -- size' env (last is)
         in do
             leaves <- zipWithM (mkLeaf env l) (toList ps) (NE.init ass)
             lastLeaf <- mkLeaf env l (PatternWildcard undefined) (NE.last ass)
@@ -264,7 +265,7 @@ mkLeaf env l p as = do
     as' <- writeAtoms env l as
     let (s, mAfter) = patternSwitch env p l'
         modAs = case mAfter of
-            Just dec -> (++ [dec])
+            Just dec -> (dec:)
             Nothing  -> id
     pure (s, Labeled l' : modAs as')
 
