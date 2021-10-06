@@ -5,6 +5,7 @@ id0 : Int -- Int
 
 id1 : Int -- Int
      =: [ Just {case | Nothing -> 0 | Just ->} ]
+     ; works with new fallthrough
 
 id2 : Int -- Int
     =: [ Just 0 swap {case | Just -> dip(drop) | Nothing ->} ]
