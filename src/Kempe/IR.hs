@@ -262,26 +262,30 @@ mkLeaf :: SizeEnv -> Bool -> Pattern (ConsAnn MonoStackType) MonoStackType -> [A
 mkLeaf env l p as = do
     l' <- newLabel
     as' <- writeAtoms env l as
-    let s = patternSwitch env p l'
-    pure (s, Labeled l' : as')
+    let (s, mAfter) = patternSwitch env p l'
+        modAs = case mAfter of
+            Just dec -> (++ [dec])
+            Nothing  -> id
+    pure (s, Labeled l' : modAs as')
 
-patternSwitch :: SizeEnv -> Pattern (ConsAnn MonoStackType) MonoStackType -> Label -> [Stmt]
-patternSwitch _ (PatternBool _ True) l                   = [MJump (Mem 1 (Reg DataPointer)) l]
-patternSwitch _ (PatternBool _ False) l                  = [MJump (EqByte (Mem 1 (Reg DataPointer)) (ConstTag 0)) l]
-patternSwitch _ (PatternWildcard _) l                    = [Jump l] -- FIXME: what about padding? when standing in for a constructor...
-patternSwitch _ (PatternInt _ i) l                       = [MJump (ExprIntRel IntEqIR (Mem 8 (Reg DataPointer)) (ConstInt $ fromInteger i)) l]
+patternSwitch :: SizeEnv -> Pattern (ConsAnn MonoStackType) MonoStackType -> Label -> ([Stmt], Maybe Stmt)
+patternSwitch _ (PatternBool _ True) l                   = ([MJump (Mem 1 (Reg DataPointer)) l], Nothing)
+patternSwitch _ (PatternBool _ False) l                  = ([MJump (EqByte (Mem 1 (Reg DataPointer)) (ConstTag 0)) l], Nothing)
+patternSwitch _ (PatternWildcard _) l                    = ([Jump l], Nothing) -- FIXME: what about padding? when standing in for a constructor...
+patternSwitch _ (PatternInt _ i) l                       = ([MJump (ExprIntRel IntEqIR (Mem 8 (Reg DataPointer)) (ConstInt $ fromInteger i)) l], Nothing)
 patternSwitch env (PatternCons ann@(ConsAnn _ tag' _) _) l =
-    let padAt = padBytes env ann + 1
-        -- decrement by padAt bytes (to discard padding), then we need to access
-        -- the tag at [datapointer+padAt] when we check
-        in [ dataPointerDec padAt, MJump (EqByte (Mem 1 (ExprIntBinOp IntPlusIR (Reg DataPointer) (ConstInt padAt))) (ConstTag tag')) l]
-        -- FIXME: do we need dataPointerInc padAt at the end? not all
-        -- constructors will have the same padding, it will fall through...
+    let padAt = padBytesCons env ann - 1
+        in ([ MJump (EqByte (Mem 1 (Reg DataPointer)) (ConstTag tag')) l], Just $ dataPointerDec padAt)
+        -- FIXME: instead of decrementing, we should copy bytes too...
 
 -- | Constructors may need to be padded, this computes the number of bytes of
 -- padding
 padBytes :: SizeEnv -> ConsAnn MonoStackType -> Int64
 padBytes env (ConsAnn sz _ (is, _)) = sz - sizeStack env is - 1
+
+-- | Patterns for constructors are annotated differently
+padBytesCons :: SizeEnv -> ConsAnn MonoStackType -> Int64
+padBytesCons env (ConsAnn sz _ (_, os)) = sz - sizeStack env os
 
 dipify :: SizeEnv -> Int64 -> Atom (ConsAnn MonoStackType) MonoStackType -> TempM [Stmt]
 dipify _ _ (AtBuiltin ([], _) Drop) = error "Internal error: Ill-typed drop!"
