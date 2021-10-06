@@ -422,7 +422,6 @@ copyBytes :: Int64 -- ^ dest offset
 copyBytes off1 off2 b =
     let (b8, b1) = b `quotRem` 8
         in copyBytes8 off1 off2 b8 ++ copyBytes1 (off1 + b8 * 8) (off2 + b8 * 8) b1
-        -- copyBytesPlain
 
 -- | Copy bytes 8 at a time. Note that @b@ must be divisible by 8.
 copyBytes8 :: Int64
