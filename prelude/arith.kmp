@@ -15,6 +15,17 @@ modInt : Int Int -- Int
               )
           ]
 
+divInt : Int Int -- Int
+       =: [ dup2
+            0 > dip(0 >) &
+            if( dip(1 -) / 1 -
+              , dup2
+                0 < dip(0 >) &
+                if( dip(1 +) / 1 -
+                  , /
+                  )
+              )
+          ]
 
 succInt : Int -- Int
         =: [ 1 + ]
