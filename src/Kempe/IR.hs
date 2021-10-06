@@ -350,7 +350,7 @@ dipify _ sz (BoolLit _ b) = pure $ dipPush sz 1 (ConstBool b)
 dipify env sz (AtCons ann@(ConsAnn _ tag' _) _) =
     pure $
         copyBytes 0 (-sz) sz
-            ++ dataPointerInc (padBytes env ann) : push 1 (ConstTag tag')
+            ++ dataPointerInc (padBytes env ann - 1) : push 1 (ConstTag tag')
             ++ copyBytes (-sz) 0 sz
 dipify env sz a@(If sty _ _) =
     dipSupp env sz sty <$> writeAtom env False a
