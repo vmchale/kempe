@@ -238,7 +238,7 @@ writeAtom env _ (AtBuiltin ([i0, i1], _) Swap) =
                 ++ copyBytes (-sz0) 0 sz0 -- copy i0 at end of stack to its new place
 writeAtom _ _ (AtBuiltin _ Swap) = error "Ill-typed swap!"
 writeAtom env _ (AtCons ann@(ConsAnn _ tag' _) _) =
-    pure $ dataPointerInc (padBytes env ann) : push 1 (ConstTag tag')
+    pure $ dataPointerInc (padBytes env ann - 1) : push 1 (ConstTag tag')
 writeAtom _ _ (Case ([], _) _) = error "Internal error: Ill-typed case statement?!"
 -- single-case leaf
 writeAtom env l (Case _ ((_, as) :| [])) =
@@ -257,7 +257,6 @@ writeAtom env l (Case (is, _) ls) =
             ret <- newLabel
             let meat' = (++ [Jump ret]) . toList <$> meat
             pure $ dataPointerDec decSz : switches ++ concat meat' ++ [Labeled ret]
-            -- TODO: why dataPointerDec decSz??
 
 mkLeaf :: SizeEnv -> Bool -> Pattern (ConsAnn MonoStackType) MonoStackType -> [Atom (ConsAnn MonoStackType) MonoStackType] -> TempM (Stmt, [Stmt])
 mkLeaf env l p as = do
@@ -272,7 +271,7 @@ mkLeaf env l p as = do
 patternSwitch :: SizeEnv -> Pattern (ConsAnn MonoStackType) MonoStackType -> Label -> (Stmt, Maybe Stmt)
 patternSwitch _ (PatternBool _ True) l                   = (MJump (Mem 1 (Reg DataPointer)) l, Nothing)
 patternSwitch _ (PatternBool _ False) l                  = (MJump (EqByte (Mem 1 (Reg DataPointer)) (ConstTag 0)) l, Nothing)
-patternSwitch _ (PatternWildcard _) l                    = (Jump l, Nothing) -- FIXME: what about padding? when standing in for a constructor...
+patternSwitch _ (PatternWildcard _) l                    = (Jump l, Nothing) -- TODO: padding?
 patternSwitch _ (PatternInt _ i) l                       = (MJump (ExprIntRel IntEqIR (Mem 8 (Reg DataPointer)) (ConstInt $ fromInteger i)) l, Nothing)
 patternSwitch env (PatternCons ann@(ConsAnn _ tag' _) _) l =
     let padAt = padBytesCons env ann - 1
@@ -282,7 +281,7 @@ patternSwitch env (PatternCons ann@(ConsAnn _ tag' _) _) l =
 -- | Constructors may need to be padded, this computes the number of bytes of
 -- padding
 padBytes :: SizeEnv -> ConsAnn MonoStackType -> Int64
-padBytes env (ConsAnn sz _ (is, _)) = sz - sizeStack env is - 1
+padBytes env (ConsAnn sz _ (is, _)) = sz - sizeStack env is
 
 -- | Patterns for constructors are annotated differently
 padBytesCons :: SizeEnv -> ConsAnn MonoStackType -> Int64
