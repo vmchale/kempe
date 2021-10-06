@@ -245,21 +245,21 @@ writeAtom env l (Case _ ((_, as) :| [])) =
     writeAtoms env l as
 writeAtom env l (Case (is, _) ls) =
     let (ps, ass) = NE.unzip ls
-        lastTy = last is
-        decSz = case lastTy of
+        decSz = case last is of
             TyBuiltin _ TyInt  -> 8
             TyBuiltin _ TyWord -> 8
-            _                  -> 1 -- size' env (last is)
+            -- one for constructor tags, etc.
+            _                  -> 1
         in do
             leaves <- zipWithM (mkLeaf env l) (toList ps) (NE.init ass)
             lastLeaf <- mkLeaf env l (PatternWildcard undefined) (NE.last ass)
             let (switches, meat) = unzip (leaves ++ [lastLeaf])
             ret <- newLabel
             let meat' = (++ [Jump ret]) . toList <$> meat
-            pure $ dataPointerDec decSz : concatMap toList switches ++ concat meat' ++ [Labeled ret]
+            pure $ dataPointerDec decSz : switches ++ concat meat' ++ [Labeled ret]
             -- TODO: why dataPointerDec decSz??
 
-mkLeaf :: SizeEnv -> Bool -> Pattern (ConsAnn MonoStackType) MonoStackType -> [Atom (ConsAnn MonoStackType) MonoStackType] -> TempM ([Stmt], [Stmt])
+mkLeaf :: SizeEnv -> Bool -> Pattern (ConsAnn MonoStackType) MonoStackType -> [Atom (ConsAnn MonoStackType) MonoStackType] -> TempM (Stmt, [Stmt])
 mkLeaf env l p as = do
     l' <- newLabel
     as' <- writeAtoms env l as
@@ -269,15 +269,15 @@ mkLeaf env l p as = do
             Nothing  -> id
     pure (s, Labeled l' : modAs as')
 
-patternSwitch :: SizeEnv -> Pattern (ConsAnn MonoStackType) MonoStackType -> Label -> ([Stmt], Maybe Stmt)
-patternSwitch _ (PatternBool _ True) l                   = ([MJump (Mem 1 (Reg DataPointer)) l], Nothing)
-patternSwitch _ (PatternBool _ False) l                  = ([MJump (EqByte (Mem 1 (Reg DataPointer)) (ConstTag 0)) l], Nothing)
-patternSwitch _ (PatternWildcard _) l                    = ([Jump l], Nothing) -- FIXME: what about padding? when standing in for a constructor...
-patternSwitch _ (PatternInt _ i) l                       = ([MJump (ExprIntRel IntEqIR (Mem 8 (Reg DataPointer)) (ConstInt $ fromInteger i)) l], Nothing)
+patternSwitch :: SizeEnv -> Pattern (ConsAnn MonoStackType) MonoStackType -> Label -> (Stmt, Maybe Stmt)
+patternSwitch _ (PatternBool _ True) l                   = (MJump (Mem 1 (Reg DataPointer)) l, Nothing)
+patternSwitch _ (PatternBool _ False) l                  = (MJump (EqByte (Mem 1 (Reg DataPointer)) (ConstTag 0)) l, Nothing)
+patternSwitch _ (PatternWildcard _) l                    = (Jump l, Nothing) -- FIXME: what about padding? when standing in for a constructor...
+patternSwitch _ (PatternInt _ i) l                       = (MJump (ExprIntRel IntEqIR (Mem 8 (Reg DataPointer)) (ConstInt $ fromInteger i)) l, Nothing)
 patternSwitch env (PatternCons ann@(ConsAnn _ tag' _) _) l =
     let padAt = padBytesCons env ann - 1
-        in ([ MJump (EqByte (Mem 1 (Reg DataPointer)) (ConstTag tag')) l], Just $ dataPointerDec padAt)
-        -- FIXME: instead of decrementing, we should copy bytes too...
+        in (MJump (EqByte (Mem 1 (Reg DataPointer)) (ConstTag tag')) l, Just $ dataPointerDec padAt)
+        -- FIXME: in addition to flushing padding, we should copy bytes too...
 
 -- | Constructors may need to be padded, this computes the number of bytes of
 -- padding
