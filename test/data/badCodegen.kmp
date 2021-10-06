@@ -12,7 +12,6 @@ id2 : Int -- Int
 
 id3 : Int -- Int
     =: [ Just 0 swap drop swap ]
-    ; TODO: Just 0 swap drop swap
 
 %foreign cabi id0
 %foreign cabi id1
