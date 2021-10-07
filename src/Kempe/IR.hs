@@ -378,12 +378,21 @@ dipHelp excessSz dipSz stmts =
         ++ copyBytes (-dipSz) 0 dipSz -- copy bytes back (now from 0 of stack; data pointer has been set)
         ++ [shiftBack]
 
-dipPush :: Int64 -> Int64 -> Exp -> [Stmt]
-dipPush sz sz' e =
-    -- FIXME: is this right?
+dipPush :: Int64
+        -> Int64 -- ^ Size of thing being pushed
+        -> Exp
+        -> [Stmt]
+dipPush sz sz' e | sz > sz' =
     copyBytes 0 (-sz) sz
-        ++ push sz' e
-        ++ copyBytes (-sz) 0 sz -- copy bytes back (data pointer has been incremented already by push)
+        ++ dataPointerDec sz
+        : push sz' e
+        ++ copyBytes (sz'-sz) 0 sz -- copy bytes back (data pointer has been incremented by push)
+        ++ [dataPointerInc sz]
+                | otherwise =
+    copyBytes (sz'-sz) (-sz) sz
+        ++ dataPointerDec sz
+        : push sz' e
+        ++ [dataPointerInc sz]
 
 -- for e.g. negation where the stack size stays the same
 plainShift :: Int64 -> [Stmt] -> [Stmt]
