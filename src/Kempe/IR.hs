@@ -238,7 +238,7 @@ writeAtom env _ (AtBuiltin ([i0, i1], _) Swap) =
                 ++ copyBytes (-sz0) 0 sz0 -- copy i0 at end of stack to its new place
 writeAtom _ _ (AtBuiltin _ Swap) = error "Ill-typed swap!"
 writeAtom env _ (AtCons ann@(ConsAnn _ tag' _) _) =
-    pure $ dataPointerInc (padBytes env ann - 1) : push 1 (ConstTag tag')
+    pure $ dataPointerInc (padBytes env ann) : push 1 (ConstTag tag')
 writeAtom _ _ (Case ([], _) _) = error "Internal error: Ill-typed case statement?!"
 -- single-case leaf
 writeAtom env l (Case _ ((_, as) :| [])) =
@@ -281,7 +281,7 @@ patternSwitch env (PatternCons ann@(ConsAnn _ tag' _) _) l =
 -- | Constructors may need to be padded, this computes the number of bytes of
 -- padding
 padBytes :: SizeEnv -> ConsAnn MonoStackType -> Int64
-padBytes env (ConsAnn sz _ (is, _)) = sz - sizeStack env is
+padBytes env (ConsAnn sz _ (is, _)) = sz - sizeStack env is - 1
 
 -- | Patterns for constructors are annotated differently
 padBytesCons :: SizeEnv -> ConsAnn MonoStackType -> Int64
@@ -350,7 +350,7 @@ dipify _ sz (BoolLit _ b) = pure $ dipPush sz 1 (ConstBool b)
 dipify env sz (AtCons ann@(ConsAnn _ tag' _) _) =
     pure $
         copyBytes 0 (-sz) sz
-            ++ dataPointerInc (padBytes env ann - 1) : push 1 (ConstTag tag')
+            ++ dataPointerInc (padBytes env ann) : push 1 (ConstTag tag')
             ++ copyBytes (-sz) 0 sz
 dipify env sz a@(If sty _ _) =
     dipSupp env sz sty <$> writeAtom env False a
