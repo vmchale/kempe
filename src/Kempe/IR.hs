@@ -233,6 +233,7 @@ writeAtom env _ (AtBuiltin ([i0, i1], _) Swap) =
         sz1 = size' env i1
     in
         pure $
+            -- TODO: does this work when sz0 > sz1, sz1 > sz0, etc.?
             copyBytes 0 (-sz0 - sz1) sz0 -- copy i0 to end of the stack
                 ++ copyBytes (-sz0 - sz1) (-sz1) sz1 -- copy i1 to where i0 used to be
                 ++ copyBytes (-sz0) 0 sz0 -- copy i0 at end of stack to its new place
