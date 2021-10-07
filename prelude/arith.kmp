@@ -8,7 +8,7 @@ modInt : Int Int -- Int
        =: [ dup2 dup2
             0 < dip(0 >) &
             dip(0 > dip(0 <) &)
-            || 
+            ||
             dip(dup dip(%))
             if( dip(dip(dup) 0 !=) swap if(+, nip)
               , drop
