@@ -4,11 +4,7 @@ import"prelude/fn.kmp"
 type Gaussian { Gaussian Int Int }
 
 unGaussian : Gaussian -- Int Int
-           =: [
-    { case
-        | Gaussian ->
-    }
-]
+           =: [ {case | Gaussian ->} ]
 
 grp : a b c -- b a c
     =: [ dip(swap) ]

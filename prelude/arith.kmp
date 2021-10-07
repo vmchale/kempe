@@ -8,13 +8,24 @@ modInt : Int Int -- Int
        =: [ dup2 dup2
             0 < dip(0 >) &
             dip(0 > dip(0 <) &)
-            || 
+            ||
             dip(dup dip(%))
             if( dip(dip(dup) 0 !=) swap if(+, nip)
               , drop
               )
           ]
 
+divInt : Int Int -- Int
+       =: [ dup2
+            0 > dip(0 >) &
+            if( dip(1 -) / 1 -
+              , dup2
+                0 < dip(0 >) &
+                if( dip(1 +) / 1 -
+                  , /
+                  )
+              )
+          ]
 
 succInt : Int -- Int
         =: [ 1 + ]
@@ -38,14 +49,14 @@ minInt : Int Int -- Int
        =: [ dup2 < if(drop, nip) ]
 
 ; checks for division by zero
-safeDiv : Int Int -- (Maybe Int)
-        =: [ dup isZeroInt
-             if( drop2 Nothing
-               , / Just
-               )
-           ]
+safeQuot : Int Int -- (Maybe Int)
+         =: [ dup isZeroInt
+              if( drop2 Nothing
+                , / Just
+                )
+            ]
 
-safeMod : Int Int -- (Maybe Int)
+safeRem : Int Int -- (Maybe Int)
         =: [ dup isZeroInt
              if( drop2 Nothing
                , % Just

@@ -5,11 +5,15 @@ id0 : Int -- Int
 
 id1 : Int -- Int
      =: [ Just {case | Nothing -> 0 | Just ->} ]
+     ; works with new fallthrough
 
 id2 : Int -- Int
     =: [ Just 0 swap {case | Just -> dip(drop) | Nothing ->} ]
-    ; Just 0 swap drop swap works
+
+id3 : Int -- Int
+    =: [ Just 0 swap drop swap ]
 
 %foreign cabi id0
 %foreign cabi id1
 %foreign cabi id2
+%foreign cabi id3

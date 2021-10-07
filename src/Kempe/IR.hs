@@ -233,30 +233,31 @@ writeAtom env _ (AtBuiltin ([i0, i1], _) Swap) =
         sz1 = size' env i1
     in
         pure $
+            -- TODO: does this work when sz0 > sz1, sz1 > sz0, etc.?
             copyBytes 0 (-sz0 - sz1) sz0 -- copy i0 to end of the stack
                 ++ copyBytes (-sz0 - sz1) (-sz1) sz1 -- copy i1 to where i0 used to be
                 ++ copyBytes (-sz0) 0 sz0 -- copy i0 at end of stack to its new place
 writeAtom _ _ (AtBuiltin _ Swap) = error "Ill-typed swap!"
 writeAtom env _ (AtCons ann@(ConsAnn _ tag' _) _) =
-    pure $ dataPointerInc (padBytes env ann) : push 1 (ConstTag tag')
+    pure $ dataPointerInc (padBytes env ann - 1) : push 1 (ConstTag tag')
 writeAtom _ _ (Case ([], _) _) = error "Internal error: Ill-typed case statement?!"
 -- single-case leaf
-writeAtom env l (Case (is, _) ((_, as) :| [])) =
-    let decSz = size' env (last is)
-    in do
-        nextAs <- writeAtoms env l as
-        pure $ dataPointerDec decSz : nextAs
+writeAtom env l (Case _ ((_, as) :| [])) =
+    writeAtoms env l as
 writeAtom env l (Case (is, _) ls) =
     let (ps, ass) = NE.unzip ls
-        decSz = size' env (last is)
+        decSz = case last is of
+            TyBuiltin _ TyInt  -> 8
+            TyBuiltin _ TyWord -> 8
+            -- one for constructor tags, etc.
+            _                  -> 1
         in do
             leaves <- zipWithM (mkLeaf env l) (toList ps) (NE.init ass)
             lastLeaf <- mkLeaf env l (PatternWildcard undefined) (NE.last ass)
             let (switches, meat) = unzip (leaves ++ [lastLeaf])
             ret <- newLabel
             let meat' = (++ [Jump ret]) . toList <$> meat
-            pure $ dataPointerDec decSz : concatMap toList switches ++ concat meat' ++ [Labeled ret]
-            -- TODO: why dataPointerDec decSz??
+            pure $ dataPointerDec decSz : switches ++ concat meat' ++ [Labeled ret]
 writeAtom env _ (Quot _ as) = do
     self <- newLabel
     continue <- newLabel
@@ -281,30 +282,34 @@ writeAtom _ _ Apply{} = do
             -- jump to address given by quotation
             ++ [JumpReg jAddr, Labeled continue]
 
-mkLeaf :: SizeEnv -> Bool -> Pattern (ConsAnn MonoStackType) MonoStackType -> [Atom (ConsAnn MonoStackType) MonoStackType] -> TempM ([Stmt], [Stmt])
+mkLeaf :: SizeEnv -> Bool -> Pattern (ConsAnn MonoStackType) MonoStackType -> [Atom (ConsAnn MonoStackType) MonoStackType] -> TempM (Stmt, [Stmt])
 mkLeaf env l p as = do
     l' <- newLabel
     as' <- writeAtoms env l as
-    let s = patternSwitch env p l'
-    pure (s, Labeled l' : as')
+    let (s, mAfter) = patternSwitch env p l'
+        modAs = case mAfter of
+            Just dec -> (dec:)
+            Nothing  -> id
+    pure (s, Labeled l' : modAs as')
 
-patternSwitch :: SizeEnv -> Pattern (ConsAnn MonoStackType) MonoStackType -> Label -> [Stmt]
-patternSwitch _ (PatternBool _ True) l                   = [MJump (Mem 1 (Reg DataPointer)) l]
-patternSwitch _ (PatternBool _ False) l                  = [MJump (EqByte (Mem 1 (Reg DataPointer)) (ConstTag 0)) l]
-patternSwitch _ (PatternWildcard _) l                    = [Jump l] -- FIXME: what about padding? when standing in for a constructor...
-patternSwitch _ (PatternInt _ i) l                       = [MJump (ExprIntRel IntEqIR (Mem 8 (Reg DataPointer)) (ConstInt $ fromInteger i)) l]
+patternSwitch :: SizeEnv -> Pattern (ConsAnn MonoStackType) MonoStackType -> Label -> (Stmt, Maybe Stmt)
+patternSwitch _ (PatternBool _ True) l                   = (MJump (Mem 1 (Reg DataPointer)) l, Nothing)
+patternSwitch _ (PatternBool _ False) l                  = (MJump (EqByte (Mem 1 (Reg DataPointer)) (ConstTag 0)) l, Nothing)
+patternSwitch _ (PatternWildcard _) l                    = (Jump l, Nothing) -- TODO: padding?
+patternSwitch _ (PatternInt _ i) l                       = (MJump (ExprIntRel IntEqIR (Mem 8 (Reg DataPointer)) (ConstInt $ fromInteger i)) l, Nothing)
 patternSwitch env (PatternCons ann@(ConsAnn _ tag' _) _) l =
-    let padAt = padBytes env ann + 1
-        -- decrement by padAt bytes (to discard padding), then we need to access
-        -- the tag at [datapointer+padAt] when we check
-        in [ dataPointerDec padAt, MJump (EqByte (Mem 1 (ExprIntBinOp IntPlusIR (Reg DataPointer) (ConstInt padAt))) (ConstTag tag')) l]
-        -- FIXME: do we need dataPointerInc padAt at the end? not all
-        -- constructors will have the same padding, it will fall through...
+    let padAt = padBytesCons env ann - 1
+        in (MJump (EqByte (Mem 1 (Reg DataPointer)) (ConstTag tag')) l, Just $ dataPointerDec padAt)
+        -- FIXME: in addition to flushing padding, we should copy bytes too...
 
 -- | Constructors may need to be padded, this computes the number of bytes of
 -- padding
 padBytes :: SizeEnv -> ConsAnn MonoStackType -> Int64
-padBytes env (ConsAnn sz _ (is, _)) = sz - sizeStack env is - 1
+padBytes env (ConsAnn sz _ (is, _)) = sz - sizeStack env is
+
+-- | Patterns for constructors are annotated differently
+padBytesCons :: SizeEnv -> ConsAnn MonoStackType -> Int64
+padBytesCons env (ConsAnn sz _ (_, os)) = sz - sizeStack env os
 
 dipify :: SizeEnv -> Int64 -> Atom (ConsAnn MonoStackType) MonoStackType -> TempM [Stmt]
 dipify _ _ (AtBuiltin ([], _) Drop) = error "Internal error: Ill-typed drop!"
@@ -369,7 +374,7 @@ dipify _ sz (BoolLit _ b) = pure $ dipPush sz 1 (ConstBool b)
 dipify env sz (AtCons ann@(ConsAnn _ tag' _) _) =
     pure $
         copyBytes 0 (-sz) sz
-            ++ dataPointerInc (padBytes env ann) : push 1 (ConstTag tag')
+            ++ dataPointerInc (padBytes env ann - 1) : push 1 (ConstTag tag')
             ++ copyBytes (-sz) 0 sz
 dipify env sz a@(If sty _ _) =
     dipSupp env sz sty <$> writeAtom env False a
@@ -399,12 +404,21 @@ dipHelp excessSz dipSz stmts =
         ++ copyBytes (-dipSz) 0 dipSz -- copy bytes back (now from 0 of stack; data pointer has been set)
         ++ [shiftBack]
 
-dipPush :: Int64 -> Int64 -> Exp -> [Stmt]
-dipPush sz sz' e =
-    -- FIXME: is this right?
+dipPush :: Int64
+        -> Int64 -- ^ Size of thing being pushed
+        -> Exp
+        -> [Stmt]
+dipPush sz sz' e | sz > sz' =
     copyBytes 0 (-sz) sz
-        ++ push sz' e
-        ++ copyBytes (-sz) 0 sz -- copy bytes back (data pointer has been incremented already by push)
+        ++ dataPointerDec sz
+        : push sz' e
+        ++ copyBytes (sz'-sz) 0 sz -- copy bytes back (data pointer has been incremented by push)
+        ++ [dataPointerInc sz]
+                | otherwise =
+    copyBytes (sz'-sz) (-sz) sz
+        ++ dataPointerDec sz
+        : push sz' e
+        ++ [dataPointerInc sz]
 
 -- for e.g. negation where the stack size stays the same
 plainShift :: Int64 -> [Stmt] -> [Stmt]
