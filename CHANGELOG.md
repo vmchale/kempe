@@ -1,5 +1,8 @@
 # kempe
 
+  * More efficient IR generation; don't copy bytes from a source to the same
+    destination
+
 ## 0.2.0.7
 
   * Fix bug in unification
