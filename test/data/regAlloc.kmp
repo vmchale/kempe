@@ -1,0 +1,10 @@
+import "prelude/fn.kmp"
+import "lib/maybe.kmp"
+
+divInt : Int Int -- Int
+       =: [ dup2
+            0 < dip(0 >) & drop True
+            drop2
+          ]
+
+%foreign kabi divInt
