@@ -14,7 +14,6 @@ import           Kempe.AST.Size
 import qualified Kempe.Asm.Arm.ControlFlow as Arm
 import qualified Kempe.Asm.Arm.Linear      as Arm
 import           Kempe.Asm.Arm.Opt
-import qualified Kempe.Asm.Arm.PreAlloc    as Arm
 import           Kempe.Asm.Arm.Trans
 import qualified Kempe.Asm.Arm.Type        as Arm
 import           Kempe.Asm.Liveness
@@ -40,7 +39,7 @@ armParsed :: Typeable a => Int -> Declarations a c b -> [Arm.Arm Arm.AbsReg ()]
 armParsed i m = let (ir, u, env) = irGen i m in irToAarch64 env u ir
 
 armAlloc :: Typeable a => Int -> Declarations a c b -> [Arm.Arm Arm.ArmReg ()]
-armAlloc = optimizeArm . Arm.allocRegs . Arm.stripRedundantDefines . reconstruct . Arm.mkControlFlow .* armParsed
+armAlloc = optimizeArm . Arm.allocRegs . reconstruct . Arm.mkControlFlow .* armParsed
 
 x86Parsed :: Typeable a => Int -> Declarations a c b -> [X86.X86 X86.AbsReg ()]
 x86Parsed i m = let (ir, u, env) = irGen i m in irToX86 env u ir
