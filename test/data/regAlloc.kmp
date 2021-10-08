@@ -1,10 +1,7 @@
 import "prelude/fn.kmp"
 import "lib/maybe.kmp"
 
-divInt : Int Int -- Int
-       =: [ dup2
-            0 < dip(0 >) & drop True
-            drop2
-          ]
+constTrue : Bool Bool -- Bool
+          =: [ & drop True ]
 
-%foreign kabi divInt
+%foreign kabi constTrue
