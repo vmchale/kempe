@@ -56,6 +56,7 @@ library kempe-modules
         Kempe.Asm.X86.Trans
         Kempe.Asm.X86.ControlFlow
         Kempe.Asm.X86.Linear
+        Kempe.Asm.X86.PreAlloc
         Kempe.Asm.Arm.Trans
         Kempe.Asm.Arm.ControlFlow
         Kempe.Asm.Arm.Linear

@@ -20,6 +20,7 @@ import qualified Kempe.Asm.Arm.Type        as Arm
 import           Kempe.Asm.Liveness
 import qualified Kempe.Asm.X86.ControlFlow as X86
 import qualified Kempe.Asm.X86.Linear      as X86
+import qualified Kempe.Asm.X86.PreAlloc    as X86
 import           Kempe.Asm.X86.Trans
 import qualified Kempe.Asm.X86.Type        as X86
 import           Kempe.Check.Restrict
@@ -46,4 +47,4 @@ x86Parsed :: Typeable a => Int -> Declarations a c b -> [X86.X86 X86.AbsReg ()]
 x86Parsed i m = let (ir, u, env) = irGen i m in irToX86 env u ir
 
 x86Alloc :: Typeable a => Int -> Declarations a c b -> [X86.X86 X86.X86Reg ()]
-x86Alloc = X86.allocRegs . reconstruct . X86.mkControlFlow .* x86Parsed
+x86Alloc = X86.allocRegs . X86.stripRedundantDefines . reconstruct . X86.mkControlFlow .* x86Parsed
