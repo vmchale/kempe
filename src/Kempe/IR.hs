@@ -274,7 +274,7 @@ patternSwitch _ (PatternBool _ False) l                  = (MJump (EqByte (Mem 1
 patternSwitch _ (PatternWildcard _) l                    = (Jump l, Nothing) -- TODO: padding?
 patternSwitch _ (PatternInt _ i) l                       = (MJump (ExprIntRel IntEqIR (Mem 8 (Reg DataPointer)) (ConstInt $ fromInteger i)) l, Nothing)
 patternSwitch env (PatternCons ann@(ConsAnn _ tag' _) _) l =
-    let padAt = padBytesCons env ann - 1
+    let padAt = padBytesCons env ann
         in (MJump (EqByte (Mem 1 (Reg DataPointer)) (ConstTag tag')) l, Just $ dataPointerDec padAt)
         -- FIXME: in addition to flushing padding, we should copy bytes too...
 
@@ -285,7 +285,7 @@ padBytes env (ConsAnn sz _ (is, _)) = sz - sizeStack env is - 1
 
 -- | Patterns for constructors are annotated differently
 padBytesCons :: SizeEnv -> ConsAnn MonoStackType -> Int64
-padBytesCons env (ConsAnn sz _ (_, os)) = sz - sizeStack env os
+padBytesCons env (ConsAnn sz _ (_, os)) = sz - sizeStack env os - 1
 
 dipify :: SizeEnv -> Int64 -> Atom (ConsAnn MonoStackType) MonoStackType -> TempM [Stmt]
 dipify _ _ (AtBuiltin ([], _) Drop) = error "Internal error: Ill-typed drop!"
