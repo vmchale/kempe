@@ -240,9 +240,9 @@ writeAtom _ _ (AtBuiltin _ Swap) = error "Ill-typed swap!"
 writeAtom env _ (AtCons ann@(ConsAnn _ tag' _) _) =
     pure $ dataPointerInc (padBytes env ann) : push 1 (ConstTag tag')
 writeAtom _ _ (Case ([], _) _) = error "Internal error: Ill-typed case statement?!"
--- single-case leaf
+-- single-case leaf (we still have the tag but we don't need to check cases etc.
 writeAtom env l (Case _ ((_, as) :| [])) =
-    writeAtoms env l as
+    (dataPointerDec 1:) <$> writeAtoms env l as
 writeAtom env l (Case (is, _) ls) =
     let (ps, ass) = NE.unzip ls
         decSz = case last is of
@@ -428,7 +428,8 @@ copyBytes :: Int64 -- ^ dest offset
           -> Int64 -- ^ src offset
           -> Int64 -- ^ Number of bytes to copy
           -> [Stmt]
-copyBytes off1 off2 b =
+copyBytes off1 off2 b | off1 == off2 = []
+                      | otherwise =
     let (b8, b1) = b `quotRem` 8
         in copyBytes8 off1 off2 b8 ++ copyBytes1 (off1 + b8 * 8) (off2 + b8 * 8) b1
 
