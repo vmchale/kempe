@@ -164,7 +164,7 @@ newReg8 = do
 
 findReg :: Int -> AllocM X86Reg
 findReg i = gets
-    (IM.findWithDefault (error "Internal error in register allocator: unfound register") i . allocs)
+    (IM.findWithDefault (error $ "Internal error in register allocator: unfound register " ++ show i) i . allocs)
 
 useReg64 :: Liveness -> Int -> AllocM X86Reg
 useReg64 l i =

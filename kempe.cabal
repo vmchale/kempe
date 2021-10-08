@@ -59,6 +59,7 @@ library kempe-modules
         Kempe.Asm.Arm.Trans
         Kempe.Asm.Arm.ControlFlow
         Kempe.Asm.Arm.Linear
+        Kempe.Asm.Arm.PreAlloc
 
     hs-source-dirs:   src
     other-modules:

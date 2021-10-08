@@ -2,6 +2,7 @@ module Kempe.Debug ( armDebug
                    ) where
 
 import qualified Kempe.Asm.Arm.ControlFlow as Arm
+import qualified Kempe.Asm.Arm.PreAlloc    as Arm
 import qualified Kempe.Asm.Arm.Type        as Arm
 import           Kempe.Asm.Liveness
 import           Kempe.Module
@@ -12,6 +13,7 @@ import           Prettyprinter             (Doc)
 armDebug :: FilePath -> IO (Doc ann)
 armDebug fp =
       Arm.prettyDebugAsm
+    . Arm.stripRedundantDefines
     . reconstruct
     . Arm.mkControlFlow
     . uncurry armParsed <$> parseProcess fp

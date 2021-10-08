@@ -74,7 +74,7 @@ newReg = do
 
 findReg :: Int -> AllocM ArmReg
 findReg i = gets
-    (IM.findWithDefault (error $ "Internal error in register allocator: unfound register" ++ show i) i . allocs)
+    (IM.findWithDefault (error $ "Internal error in register allocator: unfound register " ++ show i) i . allocs)
 
 useRegInt :: Liveness -> Int -> AllocM ArmReg
 useRegInt l i =
