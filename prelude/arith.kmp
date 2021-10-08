@@ -23,7 +23,7 @@ divInt : Int Int -- Int
               , dup2
                 0 < dip(0 >) &
                 if( dip(1 +) / 1 -
-                  ; FIXME: hits second brand when 2, -3
+                  ; FIXME: hits second branch when 2, -3
                   , /
                   )
               )
