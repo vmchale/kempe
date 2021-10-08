@@ -2,6 +2,7 @@
 
   * More efficient IR generation; don't copy bytes from a source to the same
     destination
+  * Fix bugs in `case` IR generation
 
 ## 0.2.0.7
 
