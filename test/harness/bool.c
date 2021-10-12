@@ -9,4 +9,3 @@ int main(int argc, char *argv[]) {
     printf("%d\n", not(false));
     printf("%d", eq(true, false));
 }
-
