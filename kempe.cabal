@@ -84,6 +84,7 @@ library kempe-modules
         Prettyprinter.Debug
         Data.Foldable.Ext
         Data.Copointed
+        Language.C.AST
 
     default-language: Haskell2010
     other-extensions:
