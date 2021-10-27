@@ -116,6 +116,7 @@ tokens :-
         dip                      { mkBuiltin BuiltinDip }
         Int                      { mkBuiltin BuiltinInt }
         Int8                     { mkBuiltin BuiltinInt8 }
+        Word8                    { mkBuiltin BuiltinWord8 }
         Word                     { mkBuiltin BuiltinWord }
         Bool                     { mkBuiltin BuiltinBool }
         True                     { mkBuiltin (BuiltinBoolLit True) }
@@ -126,6 +127,7 @@ tokens :-
         swap                     { mkBuiltin BuiltinSwap }
         xori                     { mkBuiltin BuiltinIntXor }
         xoru                     { mkBuiltin BuiltinWordXor }
+        xoru8                    { mkBuiltin BuiltinWord8Xor }
         xor                      { mkBuiltin BuiltinBoolXor }
         popcount                 { mkBuiltin BuiltinPopcount }
 
@@ -305,12 +307,14 @@ data Builtin = BuiltinBool
              | BuiltinInt
              | BuiltinInt8
              | BuiltinWord
+             | BuiltinWord8
              | BuiltinDip
              | BuiltinDrop
              | BuiltinSwap
              | BuiltinDup
              | BuiltinIntXor
              | BuiltinWordXor
+             | BuiltinWord8Xor
              | BuiltinBoolXor
              | BuiltinPopcount
              deriving (Generic, NFData)
@@ -321,12 +325,14 @@ instance Pretty Builtin where
     pretty BuiltinInt         = "Int"
     pretty BuiltinInt8        = "Int8"
     pretty BuiltinWord        = "Word"
+    pretty BuiltinWord8       = "Word9"
     pretty BuiltinDip         = "dip"
     pretty BuiltinDrop        = "drop"
     pretty BuiltinSwap        = "swap"
     pretty BuiltinDup         = "dup"
     pretty BuiltinIntXor      = "xori"
     pretty BuiltinWordXor     = "xoru"
+    pretty BuiltinWord8Xor    = "xoru8"
     pretty BuiltinBoolXor     = "xor"
     pretty BuiltinPopcount    = "popcount"
 
