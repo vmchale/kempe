@@ -15,6 +15,9 @@
   - [ ] http://prng.di.unimi.it/xoroshiro128plus.c
 - [ ] Exponentiation (O (log n))
 - [ ] regular expressions? machine
+- [ ] https://www.doc.ic.ac.uk/~mrh/330tutor/ch04s04.html
+- [ ] A Fast Algorithm for Computing Multiplicative Inverses in GF(2^m) Using Normal Bases
+- [ ] https://en.wikipedia.org/wiki/Finite_field_arithmetic#C_programming_example
 # Backends
 - [x] Linear scan register allocator
 - [ ] Graph (?) register allocator
@@ -91,3 +94,4 @@
 - [ ] Unit tests for type merge?
 - [ ] Unit tests for catTypes?
 - [ ] Test foreign calls (e.g. `random`)
+- [ ] https://en.wikipedia.org/wiki/Division_algorithm#Goldschmidt_division
