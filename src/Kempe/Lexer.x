@@ -339,7 +339,7 @@ instance Pretty Builtin where
     pretty BuiltinInt         = "Int"
     pretty BuiltinInt8        = "Int8"
     pretty BuiltinWord        = "Word"
-    pretty BuiltinWord8       = "Word9"
+    pretty BuiltinWord8       = "Word8"
     pretty BuiltinDip         = "dip"
     pretty BuiltinDrop        = "drop"
     pretty BuiltinSwap        = "swap"

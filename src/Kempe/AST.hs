@@ -170,6 +170,7 @@ data BuiltinFn = Drop
                | WordShiftR
                | WordShiftL
                | WordXor
+               | Word8Xor
                | And
                | Or
                | Xor
@@ -197,6 +198,7 @@ instance Pretty BuiltinFn where
     pretty WordShiftR = ">>~"
     pretty IntXor     = "xori"
     pretty WordXor    = "xoru"
+    pretty Word8Xor   = "xoru8"
     pretty IntGeq     = ">="
     pretty IntGt      = ">"
     pretty IntNeq     = "!="

@@ -184,6 +184,7 @@ typeOfBuiltin IntGt      = pure intRel
 typeOfBuiltin WordMinus  = pure wordBinOp
 typeOfBuiltin WordDiv    = pure wordBinOp
 typeOfBuiltin WordMod    = pure wordBinOp
+typeOfBuiltin Word8Xor   = pure word8BinOp
 typeOfBuiltin And        = pure boolOp
 typeOfBuiltin Or         = pure boolOp
 typeOfBuiltin Xor        = pure boolOp
@@ -204,6 +205,9 @@ intShift = StackType S.empty [TyBuiltin () TyInt, TyBuiltin () TyInt] [TyBuiltin
 
 wordBinOp :: StackType ()
 wordBinOp = StackType S.empty [TyBuiltin () TyWord, TyBuiltin () TyWord] [TyBuiltin () TyWord]
+
+word8BinOp :: StackType ()
+word8BinOp = StackType S.empty [TyBuiltin () TyWord8, TyBuiltin () TyWord8] [TyBuiltin () TyWord8]
 
 wordShift :: StackType ()
 wordShift = StackType S.empty [TyBuiltin () TyWord, TyBuiltin () TyWord] [TyBuiltin () TyWord]

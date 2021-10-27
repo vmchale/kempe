@@ -81,6 +81,7 @@ import Prettyprinter (Pretty (pretty), (<+>))
     intLit { $$@(TokInt _ _) }
     wordLit { $$@(TokWord _ _) }
     int8Lit { $$@(TokInt8 _ _) }
+    word8Lit { $$@(TokWord8 _ _) }
 
     type { TokKeyword $$ KwType }
     case { TokKeyword $$ KwCase }
@@ -97,11 +98,13 @@ import Prettyprinter (Pretty (pretty), (<+>))
     int { TokBuiltin $$ BuiltinInt }
     int8 { TokBuiltin $$ BuiltinInt8 }
     word { TokBuiltin $$ BuiltinWord }
+    word8 { TokBuiltin $$ BuiltinWord8 }
     dup { TokBuiltin $$ BuiltinDup }
     swap { TokBuiltin $$ BuiltinSwap }
     drop { TokBuiltin $$ BuiltinDrop }
     intXor { TokBuiltin $$ BuiltinIntXor }
     wordXor { TokBuiltin $$ BuiltinWordXor }
+    word8Xor { TokBuiltin $$ BuiltinWord8Xor }
     boolXor { TokBuiltin $$ BuiltinBoolXor }
     popcount { TokBuiltin $$ BuiltinPopcount }
 
@@ -157,6 +160,7 @@ Type :: { KempeTy AlexPosn }
      | int { TyBuiltin $1 TyInt }
      | int8 { TyBuiltin $1 TyInt8 }
      | word { TyBuiltin $1 TyWord }
+     | word8 { TyBuiltin $1 TyWord8 }
      | lparen Type Type rparen { TyApp $1 $2 $3 }
 
 FunDecl :: { KempeDecl AlexPosn AlexPosn AlexPosn }
@@ -177,6 +181,7 @@ Atom :: { Atom AlexPosn AlexPosn }
      | intLit { IntLit (loc $1) (int $1) }
      | wordLit { WordLit (loc $1) (word $1) }
      | int8Lit { Int8Lit (loc $1) (int8 $1) }
+     | word8Lit { Word8Lit (loc $1) (word8 $1) }
      | dip parens(many(Atom)) { Dip $1 (reverse $2) }
      | if lparen many(Atom) comma many(Atom) rparen { If $1 (reverse $3) (reverse $5) }
      | boolLit { BoolLit (loc $1) (bool $ builtin $1) }
@@ -205,6 +210,7 @@ Atom :: { Atom AlexPosn AlexPosn }
      | shiftrU { AtBuiltin $1 WordShiftR }
      | intXor { AtBuiltin $1 IntXor }
      | wordXor { AtBuiltin $1 WordXor }
+     | word8Xor { AtBuiltin $1 Word8Xor }
      | boolXor { AtBuiltin $1 Xor }
      | popcount { AtBuiltin $1 Popcount }
 
