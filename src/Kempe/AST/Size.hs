@@ -50,13 +50,15 @@ data BuiltinTy = TyInt
                | TyBool
                | TyInt8
                | TyWord
+               | TyWord8
                deriving (Generic, NFData, Eq, Ord)
 
 instance Pretty BuiltinTy where
-    pretty TyInt  = "Int"
-    pretty TyBool = "Bool"
-    pretty TyInt8 = "Int8"
-    pretty TyWord = "Word"
+    pretty TyInt   = "Int"
+    pretty TyBool  = "Bool"
+    pretty TyInt8  = "Int8"
+    pretty TyWord  = "Word"
+    pretty TyWord8 = "Word8"
 
 instance Pretty (KempeTy a) where
     pretty (TyBuiltin _ b)  = pretty b
@@ -89,6 +91,7 @@ size _ (TyBuiltin _ TyInt)                 = const 8
 size _ (TyBuiltin _ TyBool)                = const 1
 size _ (TyBuiltin _ TyInt8)                = const 1
 size _ (TyBuiltin _ TyWord)                = const 8
+size _ (TyBuiltin _ TyWord8)               = const 1
 size _ TyVar{}                             = error "Internal error: type variables should not be present at this stage."
 size env (TyNamed _ (Name _ (Unique k) _)) = IM.findWithDefault (error "Size not in map!") k env
 size env (TyApp _ ty ty')                  = \tys -> size env ty (size env ty' [] : tys)

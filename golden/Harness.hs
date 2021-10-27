@@ -12,7 +12,6 @@ import           System.Info                (arch)
 import           System.Process             (CreateProcess (env, std_err), StdStream (Inherit), proc, readCreateProcess)
 import           Test.Tasty
 import           Test.Tasty.Golden          (goldenVsString)
-import           Test.Tasty.HUnit           (assertBool, testCase)
 
 data CC = CC
         | ArmCC

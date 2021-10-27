@@ -94,6 +94,7 @@ instance Pretty (Atom c a) where
     pretty (BoolLit _ b)   = pretty b
     pretty (WordLit _ w)   = pretty w <> "u"
     pretty (Int8Lit _ i)   = pretty i <> "i8"
+    pretty (Word8Lit _ i)  = pretty i <> "u8"
     pretty (Case _ ls)     = "case" <+> braces (align (vsep (toList $ fmap (uncurry prettyLeaf) ls)))
 
 prettyLeaf :: Pattern c a -> [Atom c a] -> Doc ann
@@ -111,6 +112,7 @@ prettyTyped (If _ as as')    = "if(" <> fillSep (prettyTyped <$> as) <> ", " <> 
 prettyTyped (IntLit _ i)     = pretty i
 prettyTyped (BoolLit _ b)    = pretty b
 prettyTyped (Int8Lit _ i)    = pretty i <> "i8"
+prettyTyped (Word8Lit _ i)   = pretty i <> "u8"
 prettyTyped (WordLit _ n)    = pretty n <> "u"
 prettyTyped (Case _ ls)      = braces ("case" <+> vsep (toList $ fmap (uncurry prettyTypedLeaf) ls))
 
@@ -121,6 +123,7 @@ data Atom c b = AtName b (Name b)
               | IntLit b Integer
               | WordLit b Natural
               | Int8Lit b Int8
+              | Word8Lit b Word8
               | BoolLit b Bool
               | AtBuiltin b BuiltinFn
               | AtCons c (TyName c)
@@ -133,6 +136,7 @@ instance Bifunctor Atom where
     first _ (IntLit l i)    = IntLit l i
     first _ (WordLit l w)   = WordLit l w
     first _ (Int8Lit l i)   = Int8Lit l i
+    first _ (Word8Lit l i)  = Word8Lit l i
     first _ (BoolLit l b)   = BoolLit l b
     first _ (AtBuiltin l b) = AtBuiltin l b
     first f (Dip l as)      = Dip l (fmap (first f) as)

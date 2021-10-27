@@ -3,6 +3,7 @@
   * More efficient IR generation; don't copy bytes from a source to the same
     destination
   * Fix bugs in `case` IR generation
+  * Fix ??? in lexer
 
 ## 0.2.0.7
 

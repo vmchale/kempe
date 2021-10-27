@@ -33,7 +33,6 @@ import Data.Text.Encoding (decodeUtf8)
 import GHC.Generics (Generic)
 import Kempe.Name
 import Kempe.Unique
-import Numeric (readHex)
 import Numeric.Natural (Natural)
 import Prettyprinter (Pretty (pretty), (<+>), colon, dquotes, squotes)
 
@@ -43,7 +42,7 @@ import Prettyprinter (Pretty (pretty), (<+>), colon, dquotes, squotes)
 
 $digit = [0-9]
 
-$hexit = [0-9a-z]
+$hexit = [0-9a-f]
 
 $latin = [a-zA-Z]
 
@@ -134,8 +133,10 @@ tokens :-
 
         $digit+                  { tok (\p s -> alex $ TokInt p (read $ ASCII.unpack s)) }
         "_"$digit+               { tok (\p s -> alex $ TokInt p (negate $ read $ ASCII.unpack $ BSL.tail s)) }
-        "0x"$hexit+u             { tok (\p s -> TokWord p <$> readHex' (BSL.init $ BSL.drop 2 s)) }
+        "0x"$hexit+u             { tok (\p s -> alex $ TokWord p (readHex (BSL.init $ BSL.drop 2 s))) }
         $digit+u                 { tok (\p s -> alex $ TokWord p $ (read $ ASCII.unpack (BSL.init s))) }
+        "0x"$hexit+u8            { tok (\p s -> alex $ TokWord8 p (readHex (BSL.init $ BSL.init $ BSL.drop 2 s))) }
+        $digit+u8                { tok (\p s -> alex $ TokWord8 p $ (read $ ASCII.unpack (BSL.init $ BSL.init s))) }
         $digit+"i8"              { tok (\p s -> alex $ TokInt8 p (read $ ASCII.unpack (BSL.init $ BSL.init s))) }
         "_"$digit+"i8"           { tok (\p s -> alex $ TokInt8 p (negate $ read $ ASCII.unpack (BSL.tail $ BSL.init $ BSL.init s))) }
 
@@ -152,11 +153,24 @@ tokens :-
 dropQuotes :: BSL.ByteString -> BSL.ByteString
 dropQuotes = BSL.init . BSL.tail
 
-readHex' :: (Eq a, Num a) => BSL.ByteString -> Alex a
-readHex' bs =
-    case readHex (ASCII.unpack bs) of
-        []        -> alexError "Invalid hexadecimal literal"
-        ((i,_):_) -> pure i
+readHex :: Num a => BSL.ByteString -> a
+readHex = ASCII.foldl' (\acc c -> acc * 16 + go c) 0 where
+    go '0' = 0
+    go '1' = 1
+    go '2' = 2
+    go '3' = 3
+    go '4' = 4
+    go '5' = 5
+    go '6' = 6
+    go '7' = 7
+    go '8' = 8
+    go '9' = 9
+    go 'a' = 10
+    go 'b' = 11
+    go 'c' = 12
+    go 'd' = 13
+    go 'e' = 14
+    go 'f' = 15
 
 alex :: a -> Alex a
 alex = pure
@@ -343,6 +357,7 @@ data Token a = EOF { loc :: a }
              | TokKeyword { loc :: a, _kw :: Keyword }
              | TokInt { loc :: a, int :: Integer }
              | TokInt8 { loc :: a, int8 :: Int8 }
+             | TokWord8 { loc :: a, word8 :: Word8 }
              | TokWord { loc :: a, word :: Natural }
              | TokForeign { loc :: a, ident :: BSL.ByteString }
              | TokModuleStr { loc :: a, moduleFp :: BSL.ByteString }
@@ -358,6 +373,7 @@ instance Pretty (Token a) where
     pretty (TokInt _ i)       = pretty i
     pretty (TokWord _ n)      = pretty n <> "u"
     pretty (TokInt8 _ i)      = pretty i <> "i8"
+    pretty (TokWord8 _ n)     = pretty n <> "u8"
     pretty (TokForeign _ fn)  = dquotes (pretty $ mkText fn)
     pretty (TokModuleStr _ m) = dquotes (pretty $ mkText m)
     pretty (TokBuiltin _ b)   = pretty b
