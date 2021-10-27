@@ -1,0 +1,4 @@
+; 𝔽₂₅₆
+
+add : Word8 Word8 -- Word8
+    =: [ xoru8 ]
