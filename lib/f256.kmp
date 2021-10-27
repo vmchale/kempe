@@ -1,4 +1,5 @@
 ; 𝔽₂₅₆
+; see https://en.wikipedia.org/wiki/Finite_field_arithmetic#Rijndael's_(AES)_finite_field
 
 add : Word8 Word8 -- Word8
     =: [ xoru8 ]
