@@ -82,6 +82,7 @@
 - [x] fall through on last case arm
 - [ ] Strip out loads to registers that aren't subsequently used (but not in
   a way that messes up the C ABI)
+- [ ] https://en.wikibooks.org/wiki/LaTeX/Source_Code_Listings <- in papers
 ## Builtins
 - [ ] `rem` builtin or the like? (basically functions in library)
   - [ ] `sal`, `sar`?
