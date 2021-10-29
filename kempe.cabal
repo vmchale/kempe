@@ -84,6 +84,7 @@ library kempe-modules
         Prettyprinter.Debug
         Data.Foldable.Ext
         Data.Copointed
+        Data.Tuple.Ext
 
     default-language: Haskell2010
     other-extensions:
@@ -102,7 +103,6 @@ library kempe-modules
         mtl,
         microlens,
         transformers,
-        extra >=1.7.4,
         prettyprinter >=1.7.0,
         composition-prelude >=2.0.2.0,
         microlens-mtl,

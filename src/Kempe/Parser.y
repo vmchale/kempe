@@ -19,7 +19,7 @@ import qualified Data.ByteString.Lazy as BSL
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Text as T
-import Data.Tuple.Extra (fst3)
+import Data.Tuple.Ext (fst3)
 import Data.Typeable (Typeable)
 import GHC.Generics (Generic)
 import Kempe.AST

@@ -8,7 +8,7 @@ import           Control.Exception          (Exception, throwIO)
 import qualified Data.ByteString.Lazy       as BSL
 import qualified Data.ByteString.Lazy.Char8 as ASCII
 import qualified Data.Set                   as S
-import           Data.Tuple.Extra           (fst3, third3)
+import           Data.Tuple.Ext             (fst3, third3)
 import           Kempe.AST
 import           Kempe.Lexer
 import           Kempe.Parser

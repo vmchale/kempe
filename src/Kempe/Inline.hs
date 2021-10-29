@@ -9,7 +9,7 @@ import qualified Data.IntMap        as IM
 import qualified Data.List.NonEmpty as NE
 import           Data.Maybe         (fromMaybe, mapMaybe)
 import           Data.Semigroup     ((<>))
-import           Data.Tuple.Extra   (third3)
+import           Data.Tuple.Ext     (third3)
 import           Kempe.AST
 import           Kempe.Name
 import           Kempe.Unique
