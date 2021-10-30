@@ -229,9 +229,11 @@ evalE (IR.Mem _ e) r = do -- don't need to check size b/c we're storing in r
     }
 evalE (IR.ExprIntBinOp IR.IntPlusIR (IR.Reg r1) (IR.Reg r2)) r =
     pure [ MovRR () (toAbsReg r) (toAbsReg r1), AddRR () (toAbsReg r) (toAbsReg r2) ]
-evalE (IR.ExprIntBinOp IR.IntTimesIR (IR.Reg r1) (IR.Reg r2)) r = do
+evalE (IR.ExprIntBinOp IR.IntTimesIR (IR.Reg r1) (IR.Reg r2)) r =
     pure [ MovRR () (toAbsReg r) (toAbsReg r1), ImulRR () (toAbsReg r) (toAbsReg r2) ]
-evalE (IR.ExprIntBinOp IR.IntXorIR (IR.Reg r1) (IR.Reg r2)) r = do
+evalE (IR.ExprIntBinOp IR.IntXorIR (IR.Reg r1) (IR.Reg r2)) r =
+    pure [ MovRR () (toAbsReg r) (toAbsReg r1), XorRR () (toAbsReg r) (toAbsReg r2) ]
+evalE (IR.ExprInt8BinOp IR.Int8XorIR (IR.Reg r1) (IR.Reg r2)) r =
     pure [ MovRR () (toAbsReg r) (toAbsReg r1), XorRR () (toAbsReg r) (toAbsReg r2) ]
 evalE (IR.ExprIntBinOp IR.IntMinusIR (IR.Reg r1) (IR.ConstInt i)) r = do
     pure [ MovRR () (toAbsReg r) (toAbsReg r1), SubRC () (toAbsReg r) i ]
