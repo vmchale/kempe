@@ -3,3 +3,5 @@
 
 add : Word8 Word8 -- Word8
     =: [ xoru8 ]
+
+%foreign cabi add

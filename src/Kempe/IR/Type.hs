@@ -89,6 +89,7 @@ data Exp = ConstInt Int64
          | ConstInt8 Int8
          | ConstTag Word8 -- ^ Used to distinguish constructors of a sum type
          | ConstWord Word
+         | ConstWord8 Word8
          | ConstBool Bool
          | Reg Temp -- TODO: size?
          | Mem Int64 Exp -- ^ Fetch from address
