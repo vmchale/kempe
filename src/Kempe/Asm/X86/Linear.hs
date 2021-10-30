@@ -250,6 +250,7 @@ allocReg (IdivR l r)                           = (IdivR () <$> useReg l r) <* fr
 allocReg Cqo{}                                 = pure $ Cqo ()
 allocReg (PopReg l r)                          = (PopReg () <$> useReg l r) <* freeDone l
 allocReg (MovRCi8 l r c)                       = (MovRCi8 () <$> useReg l r <*> pure c) <* freeDone l
+allocReg (MovRCu8 l r c)                       = (MovRCu8 () <$> useReg l r <*> pure c) <* freeDone l
 allocReg (Jl _ l)                              = pure $ Jl () l
 allocReg (MovACTag l a t)                      = (MovACTag () <$> useAddr l a <*> pure t) <* freeDone l
 allocReg (AndRR l r0 r1)                       = (AndRR () <$> useReg l r0 <*> useReg l r1) <* freeDone l

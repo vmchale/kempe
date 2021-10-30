@@ -129,12 +129,19 @@ boolOp op = do
     pure $
         pop 1 t0 ++ pop 1 t1 ++ push 1 (BoolBinOp op (Reg t1) (Reg t0))
 
+int8Op :: Int8BinOp -> TempM [Stmt]
+int8Op cons = do
+    t0 <- getTemp8
+    t1 <- getTemp8
+    pure $
+        pop 1 t0 ++ pop 1 t1 ++ push 1 (ExprInt8BinOp cons (Reg t1) (Reg t0))
+
 intOp :: IntBinOp -> TempM [Stmt]
 intOp cons = do
     t0 <- getTemp64 -- registers are 64 bits for integers
     t1 <- getTemp64
     pure $
-        pop 8 t0 ++ pop 8 t1 ++ push 8 (ExprIntBinOp cons (Reg t1) (Reg t0))
+        pop 8 t0 ++ pop 8 t1 ++ push 8 (ExprIntBinOp cons (Reg t1) (Reg t0)) -- TODO: t0/t1?
 
 -- | Push bytes onto the Kempe data pointer
 push :: Int64 -> Exp -> [Stmt]
@@ -177,6 +184,7 @@ writeAtom :: SizeEnv
 writeAtom _ _ (IntLit _ i)              = pure $ push 8 (ConstInt $ fromInteger i)
 writeAtom _ _ (Int8Lit _ i)             = pure $ push 1 (ConstInt8 i)
 writeAtom _ _ (WordLit _ w)             = pure $ push 8 (ConstWord $ fromIntegral w)
+writeAtom _ _ (Word8Lit _ w)            = pure $ push 1 (ConstWord8 w)
 writeAtom _ _ (BoolLit _ b)             = pure $ push 1 (ConstBool b)
 writeAtom _ _ (AtName _ n)              = pure . KCall <$> lookupName n
 writeAtom _ _ (AtBuiltin ([], _) Drop)  = error "Internal error: Ill-typed drop!"
@@ -196,6 +204,7 @@ writeAtom _ _ (AtBuiltin _ IntLeq)      = intRel IntLeqIR
 writeAtom _ _ (AtBuiltin _ WordPlus)    = intOp IntPlusIR
 writeAtom _ _ (AtBuiltin _ WordTimes)   = intOp IntTimesIR
 writeAtom _ _ (AtBuiltin _ WordXor)     = intOp IntXorIR
+writeAtom _ _ (AtBuiltin _ Word8Xor)    = int8Op Int8XorIR
 writeAtom _ _ (AtBuiltin _ WordMinus)   = intOp IntMinusIR
 writeAtom _ _ (AtBuiltin _ IntNeq)      = intRel IntNeqIR
 writeAtom _ _ (AtBuiltin _ IntGeq)      = intRel IntGeqIR
@@ -320,6 +329,7 @@ dipify _ sz (AtBuiltin _ IntLeq)     = dipRel sz IntLeqIR
 dipify _ sz (AtBuiltin _ IntShiftL)  = dipShift sz WordShiftLIR
 dipify _ sz (AtBuiltin _ IntShiftR)  = dipShift sz WordShiftRIR
 dipify _ sz (AtBuiltin _ WordXor)    = dipOp sz IntXorIR
+dipify _ sz (AtBuiltin _ Word8Xor)   = dip8Op sz Int8XorIR
 dipify _ sz (AtBuiltin _ WordShiftL) = dipShift sz WordShiftLIR
 dipify _ sz (AtBuiltin _ WordShiftR) = dipShift sz WordShiftRIR
 dipify _ sz (AtBuiltin _ WordPlus)   = dipOp sz IntPlusIR
@@ -346,6 +356,7 @@ dipify env sz (AtBuiltin (is, _) Dup) = do
 dipify _ sz (IntLit _ i) = pure $ dipPush sz 8 (ConstInt $ fromInteger i)
 dipify _ sz (WordLit _ w) = pure $ dipPush sz 8 (ConstWord $ fromIntegral w)
 dipify _ sz (Int8Lit _ i) = pure $ dipPush sz 1 (ConstInt8 i)
+dipify _ sz (Word8Lit _ w) = pure $ dipPush sz 1 (ConstWord8 w)
 dipify _ sz (BoolLit _ b) = pure $ dipPush sz 1 (ConstBool b)
 dipify env sz (AtCons ann@(ConsAnn _ tag' _) _) =
     pure $
@@ -420,6 +431,9 @@ dipRel sz rel = dipDo sz <$> intRel rel
 
 dipOp :: Int64 -> IntBinOp -> TempM [Stmt]
 dipOp sz op = dipDo sz <$> intOp op
+
+dip8Op :: Int64 -> Int8BinOp -> TempM [Stmt]
+dip8Op sz op = dipDo sz <$> int8Op op
 
 dipBoolOp :: Int64 -> BoolBinOp -> TempM [Stmt]
 dipBoolOp sz op = dipDo sz <$> boolOp op

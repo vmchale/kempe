@@ -162,6 +162,7 @@ defs (MovRR _ r _)      = singleton r
 defs (MovRRLower _ r _) = singleton r
 defs (MovRC _ r _)      = singleton r
 defs (MovRCBool _ r _)  = singleton r
+defs (MovRCu8 _ r _)    = singleton r
 defs (MovRCi8 _ r _)    = singleton r
 defs (MovRWord _ r _)   = singleton r
 defs (AddRR _ r _)      = singleton r

@@ -211,6 +211,7 @@ evalE (IR.ConstInt i) r                                             = pure [MovR
 evalE (IR.ConstBool b) r                                            = pure [MovRCBool () (toAbsReg r) (toByte b)]
 evalE (IR.ConstInt8 i) r                                            = pure [MovRCi8 () (toAbsReg r) i]
 evalE (IR.ConstWord w) r                                            = pure [MovRWord () (toAbsReg r) w]
+evalE (IR.ConstWord8 w) r                                           = pure [MovRCu8 () (toAbsReg r) w]
 evalE (IR.ConstTag b) r                                             = pure [MovRCTag () (toAbsReg r) b]
 evalE (IR.Reg r') r                                                 = pure [MovRR () (toAbsReg r) (toAbsReg r')]
 evalE (IR.Mem _ (IR.Reg r1)) r                                      = pure [MovRA () (toAbsReg r) (Reg $ toAbsReg r1) ] -- TODO: sanity check reg/mem access size?

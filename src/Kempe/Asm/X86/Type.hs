@@ -178,7 +178,7 @@ data X86 reg a = PushReg { ann :: a, rSrc :: reg }
                -- intel-ish syntax; destination first
                | MovRA { ann :: a, rDest :: reg, addrSrc :: Addr reg }
                | MovAR { ann :: a, addrDest :: Addr reg, rSrc :: reg }
-               | MovABool { ann :: a, addrDest :: Addr reg, boolSrc :: Word8 }
+               | MovABool { ann :: a, addrDest :: Addr reg, boolSrc :: Word8 } -- TODO: supersede this w/ MovAu8
                | MovRR { ann :: a, rDest :: reg, rSrc :: reg } -- for convenience
                | MovRRLower { ann :: a, rDest :: reg, rSrc :: reg } -- ^ Doesn't correspond 1-1 to an instruction, writes a 64-bit register to an 8-bit register
                | MovRC { ann :: a, rDest :: reg, iSrc :: Int64 }
@@ -188,6 +188,7 @@ data X86 reg a = PushReg { ann :: a, rSrc :: reg }
                | MovACTag { ann :: a, addrDest :: Addr reg, tagSrc :: Word8 }
                | MovRCBool { ann :: a, rDest :: reg, boolSrc :: Word8 }
                | MovRCi8 { ann :: a, rDest :: reg, i8Src :: Int8 }
+               | MovRCu8 { ann :: a, rDest :: reg, u8Src :: Word8 }
                | MovRCTag { ann :: a, rDest :: reg, tagSrc :: Word8 }
                | MovRWord { ann :: a, rDest :: reg, wSrc :: Word }
                | AddRR { ann :: a, rAdd1 :: reg, rAdd2 :: reg }
@@ -248,6 +249,7 @@ instance (As8 reg, Pretty reg) => Pretty (X86 reg a) where
     pretty (MovRA _ r a)        = i4 ("mov" <+> pretty r <> "," <+> pretty a)
     pretty (MovAR _ a r)        = i4 ("mov" <+> pretty a <> "," <+> pretty r)
     pretty (MovABool _ a b)     = i4 ("mov byte" <+> pretty a <> "," <+> pretty b)
+    pretty (MovRCu8 _ a w)      = i4 ("mov byte" <+> pretty a <> "," <+> pretty w)
     pretty (MovACi8 _ a i)      = i4 ("mov byte" <+> pretty a <> "," <+> pretty i)
     pretty (MovRCi8 _ r i)      = i4 ("mov byte" <+> pretty r <> "," <+> pretty i)
     pretty (MovRWord _ r w)     = i4 ("mov qword" <+> pretty r <> "," <+> prettyHex w)

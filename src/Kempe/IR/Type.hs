@@ -7,6 +7,7 @@ module Kempe.IR.Type ( Stmt (..)
                      , Exp (..)
                      , RelBinOp (..)
                      , IntBinOp (..)
+                     , Int8BinOp (..)
                      , BoolBinOp (..)
                      , Label
                      , Temp (..)
@@ -94,6 +95,7 @@ data Exp = ConstInt Int64
          | Reg Temp -- TODO: size?
          | Mem Int64 Exp -- ^ Fetch from address
          | ExprIntBinOp IntBinOp Exp Exp
+         | ExprInt8BinOp Int8BinOp Exp Exp
          | ExprIntRel RelBinOp Exp Exp
          | BoolBinOp BoolBinOp Exp Exp
          | IntNegIR Exp
@@ -104,7 +106,7 @@ data Exp = ConstInt Int64
 
 data BoolBinOp = BoolAnd
                | BoolOr
-               | BoolXor
+               | BoolXor -- TODO: same as Int8?
                deriving (Eq, Generic, NFData)
 
 instance Pretty BoolBinOp where
@@ -127,6 +129,9 @@ instance Pretty RelBinOp where
     pretty IntGtIR  = ">"
     pretty IntLeqIR = "<="
     pretty IntGeqIR = ">="
+
+data Int8BinOp = Int8XorIR
+               deriving (Eq, Generic, NFData)
 
 data IntBinOp = IntPlusIR
               | IntTimesIR
