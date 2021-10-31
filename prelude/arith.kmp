@@ -1,6 +1,34 @@
 import "prelude/fn.kmp"
 import "lib/maybe.kmp"
 
+; like haskell; % is rem and mod is... mod
+;
+; from here: https://hackage.haskell.org/package/ghc-prim-0.7.0/docs/src/GHC-Classes.html#modInt%23
+modInt : Int Int -- Int
+       =: [ dup2 dup2
+            0 < dip(0 >) &
+            dip(0 > dip(0 <) &)
+            ||
+            dip(dup dip(%))
+            ; FIXME: hits the second branch when 2, -3
+            if( dip(dip(dup) 0 !=) swap if(+, nip)
+              , drop
+              )
+          ]
+
+divInt : Int Int -- Int
+       =: [ dup2
+            0 < dip(0 >) &
+            if( dip(1 -) / 1 -
+              , dup2
+                0 < dip(0 >) &
+                if( dip(1 +) / 1 -
+                  ; FIXME: hits second branch when 2, -3
+                  , /
+                  )
+              )
+          ]
+
 succInt : Int -- Int
         =: [ 1 + ]
 
@@ -10,6 +38,11 @@ predInt : Int -- Int
 isZeroInt : Int -- Bool
           =: [ 0 = ]
 
+absInt : Int -- Int
+       =: [ dup 0 <
+            if (~ ,)
+          ]
+
 ; More from Mirth
 maxInt : Int Int -- Int
        =: [ dup2 < if(nip, drop) ]
@@ -18,14 +51,14 @@ minInt : Int Int -- Int
        =: [ dup2 < if(drop, nip) ]
 
 ; checks for division by zero
-safeDiv : Int Int -- (Maybe Int)
-        =: [ dup isZeroInt
-             if( drop2 Nothing
-               , / Just
-               )
-           ]
+safeQuot : Int Int -- (Maybe Int)
+         =: [ dup isZeroInt
+              if( drop2 Nothing
+                , / Just
+                )
+            ]
 
-safeMod : Int Int -- (Maybe Int)
+safeRem : Int Int -- (Maybe Int)
         =: [ dup isZeroInt
              if( drop2 Nothing
                , % Just

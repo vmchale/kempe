@@ -32,7 +32,7 @@ import           Data.Semigroup             ((<>))
 import qualified Data.Set                   as S
 import qualified Data.Text                  as T
 import           Data.Tuple                 (swap)
-import           Data.Tuple.Extra           (fst3, snd3, thd3)
+import           Data.Tuple.Ext             (fst3, snd3, thd3)
 import           Kempe.AST
 import           Kempe.AST.Size
 import           Kempe.Error
@@ -40,6 +40,8 @@ import           Kempe.Name
 import           Kempe.Unique
 import           Lens.Micro                 (Lens')
 import           Lens.Micro.Mtl             (modifying)
+import           Prettyprinter              (Doc, Pretty, vsep)
+import           Prettyprinter.Debug
 
 -- | New function names, keyed by name + specialized type
 --
@@ -51,6 +53,9 @@ data RenameEnv = RenameEnv { maxState :: Int
                            }
 
 type MonoM = StateT RenameEnv (Either (Error ()))
+
+prettyDumpBinds :: (Pretty b, Pretty k) => M.Map k b -> Doc a
+prettyDumpBinds b = vsep (prettyBind <$> M.toList b)
 
 maxStateLens :: Lens' RenameEnv Int
 maxStateLens f s = fmap (\x -> s { maxState = x }) (f (maxState s))
@@ -258,7 +263,7 @@ renamed (Name t i _) sty@(is, os) = do
     modifying fnEnvLens (M.insert (i, newStackType) j)
     pure (Name t' j newStackType)
 
-closure :: Ord b => (Declarations a b b, ModuleMap a b b) -> S.Set (Name b, b)
+closure :: (Declarations a (StackType ()) (StackType ()), ModuleMap a (StackType ()) (StackType ())) -> S.Set (Name (StackType ()), StackType ())
 closure (m, key) = loop roots S.empty
     where roots = S.fromList (exports m)
           loop ns avoid =
@@ -271,13 +276,13 @@ closure (m, key) = loop roots S.empty
                 Just decl -> namesInDecl decl
                 Nothing   -> error "Internal error! module map should contain all names."
 
-namesInDecl :: Ord b => KempeDecl a b b -> S.Set (Name b, b)
+namesInDecl :: KempeDecl a (StackType ()) (StackType ()) -> S.Set (Name (StackType ()), StackType ())
 namesInDecl TyDecl{}             = S.empty
 namesInDecl ExtFnDecl{}          = S.empty
 namesInDecl Export{}             = S.empty
 namesInDecl (FunDecl _ _ _ _ as) = foldMap namesInAtom as
 
-namesInAtom :: Ord a => Atom a a -> S.Set (Name a, a)
+namesInAtom :: Atom (StackType ()) (StackType ()) -> S.Set (Name (StackType ()), StackType ())
 namesInAtom AtBuiltin{}                = S.empty
 namesInAtom (If _ as as')              = foldMap namesInAtom as <> foldMap namesInAtom as'
 namesInAtom (Dip _ as)                 = foldMap namesInAtom as
@@ -287,7 +292,11 @@ namesInAtom IntLit{}                   = S.empty
 namesInAtom BoolLit{}                  = S.empty
 namesInAtom Int8Lit{}                  = S.empty
 namesInAtom WordLit{}                  = S.empty
-namesInAtom (Case _ as)                = foldMap namesInAtom (foldMap snd as) -- FIXME: patterns too
+namesInAtom (Case _ as)                = foldMap namesInAtom (foldMap snd as) <> foldMap (namesInPattern . fst) as
+
+namesInPattern :: Pattern (StackType ()) (StackType ()) -> S.Set (Name (StackType ()), StackType ())
+namesInPattern (PatternCons _ tn@(Name _ _ l)) = S.singleton (tn, flipStackType l) -- we have to flipStackType here because the type is the reverse of the constructor that we want to look up
+namesInPattern _                               = S.empty
 
 exports :: Declarations a c b -> [(Name b, b)]
 exports = mapMaybe exportsDecl

@@ -28,10 +28,12 @@ backendTests =
         , pipelineWorks "examples/factorial.kmp"
         , pipelineWorks "test/data/mutual.kmp"
         , pipelineWorks "test/data/multiConstruct.kmp"
+        , pipelineWorks "test/data/mod.kmp"
         , irNoYeet "test/data/export.kmp"
         , irNoYeet "examples/splitmix.kmp"
         , irNoYeet "examples/factorial.kmp"
         , irNoYeet "test/data/maybeC.kmp"
+        , irNoYeet "examples/os.kmp"
         , x86NoYeet "examples/factorial.kmp"
         , x86NoYeet "examples/splitmix.kmp"
         , armNoYeet "examples/factorial.kmp"
@@ -49,11 +51,13 @@ backendTests =
         , codegen "test/data/ccall.kmp"
         , codegen "test/data/mutual.kmp"
         , codegen "lib/rational.kmp"
+        , codegen "test/data/regAlloc.kmp"
         , armCodegen "examples/factorial.kmp"
         , armCodegen "lib/numbertheory.kmp"
         , armCodegen "lib/gaussian.kmp"
         , armCodegen "lib/rational.kmp"
         , armCodegen "examples/splitmix.kmp"
+        , armCodegen "test/data/regAlloc.kmp"
         ]
 
 codegen :: FilePath -> TestTree

@@ -8,7 +8,7 @@ import           Control.Exception          (Exception, throwIO)
 import qualified Data.ByteString.Lazy       as BSL
 import qualified Data.ByteString.Lazy.Char8 as ASCII
 import qualified Data.Set                   as S
-import           Data.Tuple.Extra           (fst3, third3)
+import           Data.Tuple.Ext             (fst3, third3)
 import           Kempe.AST
 import           Kempe.Lexer
 import           Kempe.Parser
@@ -22,7 +22,6 @@ parseProcess fp = do
 yeetIO :: Exception e => Either e a -> IO a
 yeetIO = either throwIO pure
 
--- TODO: if module is imported, discard its exports
 loopFps :: Bool -> [FilePath] -> AlexUserState -> IO (AlexUserState, [FilePath], Declarations AlexPosn AlexPosn AlexPosn)
 loopFps _ [] st = pure (st, [], [])
 loopFps isInit (fp:fps) st = do

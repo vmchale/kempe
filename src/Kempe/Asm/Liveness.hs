@@ -5,12 +5,11 @@ module Kempe.Asm.Liveness ( Liveness
                           , reconstruct
                           ) where
 
-import           Control.Composition (thread)
 import           Data.Copointed
 -- this seems to be faster
-import qualified Data.IntMap.Lazy    as IM
-import qualified Data.IntSet         as IS
-import           Data.Semigroup      ((<>))
+import qualified Data.IntMap.Lazy as IM
+import qualified Data.IntSet      as IS
+import           Data.Semigroup   ((<>))
 import           Kempe.Asm.Type
 
 emptyLiveness :: Liveness
@@ -56,8 +55,8 @@ liveness is nSt =
     where nSt' = {-# SCC "iterNodes" #-} iterNodes is nSt
 
 iterNodes :: [Int] -> LivenessMap -> LivenessMap
--- this is fickle, thread will seemingly thunk leak (??) if optimizations aren't on
 iterNodes is = thread (fmap stepNode is)
+    where thread = foldr (.) id
 
 stepNode :: Int -> LivenessMap -> LivenessMap
 stepNode n ns = {-# SCC "stepNode" #-} IM.insert n (c, Liveness ins' out') ns

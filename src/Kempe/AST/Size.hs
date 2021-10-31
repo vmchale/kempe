@@ -15,7 +15,6 @@ module Kempe.AST.Size ( KempeTy (..)
                       -- * Sizing bits
                       , SizeEnv
                       , Size
-                      , cSize
                       , size
                       , size'
                       , sizeStack
@@ -44,7 +43,7 @@ data StackType b = StackType { quantify :: S.Set (Name b)
 
 type MonoStackType = ([KempeTy ()], [KempeTy ()])
 
-prettyMonoStackType :: MonoStackType -> Doc a
+prettyMonoStackType :: ([KempeTy a], [KempeTy a]) -> Doc ann
 prettyMonoStackType (is, os) = sep (fmap pretty is) <+> "--" <+> sep (fmap pretty os)
 
 data BuiltinTy = TyInt
@@ -84,7 +83,7 @@ instance Pretty ABI where
 type Size = [Int64] -> Int64
 type SizeEnv = IM.IntMap Size
 
--- the kempe sizing system is kind of fucked (it mostly works tho)
+-- the kempe sizing system is kind of fucked (it works tho)
 
 -- | Don't call this on ill-kinded types; it won't throw any error.
 size :: SizeEnv -> KempeTy a -> Size
@@ -96,11 +95,8 @@ size _ TyVar{}                             = error "Internal error: type variabl
 size env (TyNamed _ (Name _ (Unique k) _)) = IM.findWithDefault (error "Size not in map!") k env
 size env (TyApp _ ty ty')                  = \tys -> size env ty (size env ty' [] : tys)
 
-cSize :: Size -> Int64
-cSize = ($ [])
-
 size' :: SizeEnv -> KempeTy a -> Int64
-size' env = cSize . size env
+size' env = ($ []) . size env
 
 sizeStack :: SizeEnv -> [KempeTy a] -> Int64
 sizeStack env = getSum . foldMap (Sum . size' env)

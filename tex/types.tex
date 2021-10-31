@@ -41,6 +41,22 @@ This presents the Kempe type system.
 {\Gamma \vdash x : \alpha_1\cdots\alpha_n -- \beta_1\cdots\beta_m}
 {\Gamma \vdash x : a\alpha_1\cdots\alpha_n -- a\beta_1\cdots\beta_m}
 \quad(\textsc{Generalize})
+
+\inferrule
+{\Gamma \vdash x : \alpha_1\cdots\alpha_n -- \beta_1\cdots\beta_m}
+{\Gamma \vdash [x] : -- [\alpha_1\cdots\alpha_n -- \beta_1\cdots\beta_m]}
+\quad(\textsc{Quote})
+
+\inferrule
+{\Gamma \vdash f : -- [\alpha_1\cdots\alpha_n -- \beta_1\cdots\beta_m]}
+{\Gamma \vdash \textrm{apply} f : \alpha_1\cdots\alpha_n -- \beta_1\cdots\beta_m}
+\quad(\textsc{Apply})
+
+\inferrule
+{\Gamma \vdash x : [\alpha_1\cdots\alpha_n -- \beta_1\cdots\beta_m]}
+{\Gamma \vdash x : [a\alpha_1\cdots\alpha_n -- a\beta_1\cdots\beta_m]}
+\quad(\textsc{Generalize-Quote})
+
 \end{mathpar}
 
 \end{document}

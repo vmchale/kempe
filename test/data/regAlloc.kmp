@@ -1,0 +1,7 @@
+import "prelude/fn.kmp"
+import "lib/maybe.kmp"
+
+constTrue : Bool Bool -- Bool
+          =: [ & drop True ]
+
+%foreign kabi constTrue

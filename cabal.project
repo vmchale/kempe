@@ -10,11 +10,6 @@ package kempe
   ghc-options: -j +RTS -A32m
   flags: +dev
 
-constraints: composition-prelude >= 3.0.0.2
-
-allow-newer:
-  tagged:template-haskell
-
 source-repository-package
   type: git
   location: git@github.com:vmchale/keystone.git

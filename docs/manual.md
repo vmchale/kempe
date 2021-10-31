@@ -251,11 +251,13 @@ int main(int argc, char *argv[]) {
 }
 ```
 
+The C ABI should work on Unix; it does not target Windows.
+
 Unlike the frontend and type checker, the backend is dodgy.
 
 ### Cross-Compilation
 
-`kc` is a cross-compiler;, the target architecture can be set by passing one of
+`kc` is a cross-compiler; the target architecture can be set by passing one of
 `x64` or `aarch64` to `--arch`. By default `kc` targets the architecture of the
 host machine.
 

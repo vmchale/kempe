@@ -1,6 +1,47 @@
 # kempe
 
+## 0.2.0.8
+
+  * More efficient IR generation; don't copy bytes from a source to the same
+    destination
+  * Fix bugs in `case` IR generation
+
+## 0.2.0.7
+
+  * Fix bug in unification
+  * Fix bug so that `and` and `or` instructions print correctly for x86 assembler
+  * Add lints for `dip(+) +` to `+ +`, (associative dip) `dup and` to `id`, etc.
+  * Add lints for `swap swap` and `1 drop` etc.
+  * Add `join` for `Maybe` and `Either`
+  * Last branch of case statement always falls through (more efficient code)
+
+## 0.2.0.6
+
+  * Add `absInt` and `chocie` functions to prelude.
+  * Add lints for `swap >`, `swap *` &c.
+  * Fix bug in typing `>=`, `>`, `!=`
+  
+## 0.2.0.5
+
+  * Fix bug in arm control-flow analysis
+  * Fix bugs in IR optimization pass
+  * Improve IR optimization
+  * Add `fromMaybe` and `fromRight` functions
+
+## 0.2.0.4
+
+  * Kind-check external function declarations
+  * Fix bug in inliner where functions within `dip(...)`s were not inlined
+  * Fix unification bug where solved constraints were not back-substituted correctly.
+
+## 0.2.0.3
+
+  * GHC 8.0.2 and 8.2.2
+
+## 0.2.0.2
+
   * Improve performance + generated code
+  * Fix bug in monomorphization of patterns
 
 ## 0.2.0.1
 

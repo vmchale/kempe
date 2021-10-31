@@ -25,6 +25,7 @@ module Kempe.AST ( ConsAnn (..)
                  , prettyFancyModule
                  , prettyModule
                  , flipStackType
+                 , prettyTypedDecl
                  -- * I resent this...
                  , voidStackType
                  ) where
@@ -79,7 +80,7 @@ instance Pretty (Pattern c a) where
     pretty PatternWildcard{}  = "_"
     pretty (PatternCons _ tn) = pretty tn
 
-prettyTypedPattern :: Pattern (StackType ()) (StackType ()) -> Doc ann
+prettyTypedPattern :: (Pretty a) => Pattern a b -> Doc ann
 prettyTypedPattern (PatternCons ty tn) = parens (pretty tn <+> ":" <+> pretty ty)
 prettyTypedPattern p                   = pretty p
 
@@ -98,10 +99,10 @@ instance Pretty (Atom c a) where
 prettyLeaf :: Pattern c a -> [Atom c a] -> Doc ann
 prettyLeaf p as = pipe <+> pretty p <+> "->" <+> align (fillSep (fmap pretty as))
 
-prettyTypedLeaf :: Pattern (StackType ()) (StackType ()) -> [Atom (StackType ()) (StackType ())] -> Doc ann
+prettyTypedLeaf :: (Pretty a, Pretty b) => Pattern a b -> [Atom a b] -> Doc ann
 prettyTypedLeaf p as = pipe <+> prettyTypedPattern p <+> "->" <+> align (fillSep (fmap prettyTyped as))
 
-prettyTyped :: Atom (StackType ()) (StackType ()) -> Doc ann
+prettyTyped :: (Pretty a, Pretty b) => Atom a b -> Doc ann
 prettyTyped (AtName ty n)    = parens (pretty n <+> ":" <+> pretty ty)
 prettyTyped (Dip _ as)       = "dip(" <> fillSep (prettyTyped <$> as) <> ")"
 prettyTyped (AtBuiltin ty b) = parens (pretty b <+> ":" <+> pretty ty)
@@ -240,10 +241,16 @@ prettyModuleGeneral :: (Atom c b -> Doc ann) -> Module a c b -> Doc ann
 prettyModuleGeneral atomizer (Module [] ds) = prettyDeclarationsGeneral atomizer ds
 prettyModuleGeneral atomizer (Module is ds) = prettyLines (fmap prettyImport is) <##> prettyDeclarationsGeneral atomizer ds
 
-prettyFancyModule :: Declarations () (ConsAnn (StackType ())) (StackType ()) -> Doc ann
+prettyDecls :: Declarations a c b -> Doc ann
+prettyDecls = prettyDeclarationsGeneral pretty
+
+prettyFancyModule :: (Pretty a, Pretty b) => Declarations c (ConsAnn a) b -> Doc ann
 prettyFancyModule = prettyTypedModule . fmap (first consTy)
 
-prettyTypedModule :: Declarations () (StackType ()) (StackType ()) -> Doc ann
+prettyTypedDecl :: (Pretty a, Pretty b) => KempeDecl c a b -> Doc ann
+prettyTypedDecl = prettyKempeDecl prettyTyped
+
+prettyTypedModule :: (Pretty a, Pretty b) => Declarations c a b -> Doc ann
 prettyTypedModule = prettyDeclarationsGeneral prettyTyped
 
 prettyModule :: Module a c b -> Doc ann

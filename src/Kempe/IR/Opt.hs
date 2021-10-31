@@ -43,12 +43,12 @@ successiveBumps
     ((MovTemp DataPointer (ExprIntBinOp IntPlusIR (Reg DataPointer) (ConstInt i)))
         :(MovTemp DataPointer (ExprIntBinOp IntMinusIR (Reg DataPointer) (ConstInt i')))
         :ss) =
-            MovTemp DataPointer (ExprIntBinOp IntMinusIR (Reg DataPointer) (ConstInt $ i-i')) : successiveBumps ss
+            MovTemp DataPointer (ExprIntBinOp IntPlusIR (Reg DataPointer) (ConstInt $ i-i')) : successiveBumps ss
 successiveBumps
     ((MovTemp DataPointer (ExprIntBinOp IntMinusIR (Reg DataPointer) (ConstInt i)))
         :(MovTemp DataPointer (ExprIntBinOp IntPlusIR (Reg DataPointer) (ConstInt i')))
-        :ss) =
-            MovTemp DataPointer (ExprIntBinOp IntMinusIR (Reg DataPointer) (ConstInt $ i'-i)) : successiveBumps ss
+        :ss) = -- TODO: is this particular one right?
+            MovTemp DataPointer (ExprIntBinOp IntMinusIR (Reg DataPointer) (ConstInt $ i-i')) : successiveBumps ss
 successiveBumps
     (st@(MovMem e0 k (Mem 8 e1))
         :(MovMem e0' k' (Mem 8 e1'))
@@ -74,11 +74,18 @@ liftOptE :: [Stmt] -> [Stmt]
 liftOptE []                       = []
 liftOptE ((MovMem e0 sz e1) : ss) = MovMem (optE e0) sz (optE e1) : liftOptE ss
 liftOptE ((MovTemp t e) : ss)     = MovTemp t (optE e) : liftOptE ss
+liftOptE ((MJump e l) : ss)       = MJump (optE e) l : liftOptE ss
+liftOptE ((CJump e l0 l1) : ss)   = CJump (optE e) l0 l1 : liftOptE ss
 liftOptE (s:ss)                   = s : liftOptE ss
 
 optE :: Exp -> Exp
 optE (ExprIntBinOp IntPlusIR e (ConstInt 0))  = optE e
 optE (ExprIntBinOp IntMinusIR e (ConstInt 0)) = optE e
+optE (BoolBinOp op e e')                      = BoolBinOp op (optE e) (optE e')
+optE (Mem sz e)                               = Mem sz (optE e)
+optE (PopcountIR e)                           = PopcountIR (optE e)
+optE (IntNegIR e)                             = IntNegIR (optE e)
+optE (EqByte e e')                            = EqByte (optE e) (optE e')
 optE e                                        = e
 
 removeNop :: [Stmt] -> [Stmt]

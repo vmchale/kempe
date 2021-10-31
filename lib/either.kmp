@@ -3,6 +3,22 @@
 
 type Either a b { Left a | Right b }
 
+fromRight : b ((Either a) b) -- b
+          =: [
+    { case
+        | Left  -> drop
+        | Right -> dip(drop)
+    }
+]
+
+join : ((Either a) ((Either a) b)) -- ((Either a) b)
+     =: [
+    { case
+        | Left  -> Left
+        | Right ->
+    }
+]
+
 isLeft : ((Either a) b) -- Bool
        =: [
     { case

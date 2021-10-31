@@ -1,0 +1,11 @@
+type OS { Macos | Linux | Windows | Freebsd }
+
+isUnix : OS -- Bool
+       =: [
+    { case
+        | Windows -> False
+        | _       -> True
+    }
+]
+
+%foreign cabi isUnix

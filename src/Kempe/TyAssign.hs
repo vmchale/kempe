@@ -21,14 +21,15 @@ import           Data.List.NonEmpty         (NonEmpty (..))
 import           Data.Semigroup             ((<>))
 import qualified Data.Set                   as S
 import qualified Data.Text                  as T
-import           Data.Tuple.Extra           (fst3)
+import           Data.Tuple.Ext             (fst3)
 import           Kempe.AST
 import           Kempe.Error
 import           Kempe.Name
 import           Kempe.Unique
 import           Lens.Micro                 (Lens', over)
 import           Lens.Micro.Mtl             (modifying, (.=))
-import           Prettyprinter              (Doc, Pretty (pretty), hardline, indent, vsep, (<+>))
+import           Prettyprinter              (Doc, Pretty (pretty), vsep, (<+>))
+import           Prettyprinter.Debug
 import           Prettyprinter.Ext
 
 type TyEnv a = IM.IntMap (StackType a)
@@ -41,9 +42,6 @@ data TyState a = TyState { maxU             :: Int -- ^ For renamer
                          , constraints      :: S.Set (KempeTy a, KempeTy a) -- Just need equality between simple types? (do have tyapp but yeah)
                          }
 
-(<#*>) :: Doc a -> Doc a -> Doc a
-(<#*>) x y = x <> hardline <> indent 2 y
-
 instance Pretty (TyState a) where
     pretty (TyState _ te _ r _ cs) =
         "type environment:" <#> vsep (prettyBound <$> IM.toList te)
@@ -53,17 +51,11 @@ instance Pretty (TyState a) where
 prettyConstraints :: S.Set (KempeTy a, KempeTy a) -> Doc ann
 prettyConstraints cs = vsep (prettyEq <$> S.toList cs)
 
-prettyBound :: (Int, StackType a) -> Doc b
-prettyBound (i, e) = pretty i <+> "←" <#*> pretty e
-
 prettyEq :: (KempeTy a, KempeTy a) -> Doc ann
 prettyEq (ty, ty') = pretty ty <+> "≡" <+> pretty ty'
 
 prettyDumpBinds :: Pretty b => IM.IntMap b -> Doc a
 prettyDumpBinds b = vsep (prettyBind <$> IM.toList b)
-
-prettyBind :: Pretty b => (Int, b) -> Doc a
-prettyBind (i, j) = pretty i <+> "→" <+> pretty j
 
 emptyStackType :: StackType a
 emptyStackType = StackType mempty [] []
@@ -104,6 +96,7 @@ inContext :: UnifyMap -> KempeTy () -> KempeTy ()
 inContext um ty'@(TyVar _ (Name _ (Unique i) _)) =
     case IM.lookup i um of
         Just ty@TyVar{} -> inContext (IM.delete i um) ty -- prevent cyclic lookups
+        -- TODO: does this need a case for TyApp -> inContext?
         Just ty         -> ty
         Nothing         -> ty'
 inContext _ ty'@TyBuiltin{} = ty'
@@ -121,16 +114,15 @@ unifyPrep um ((ty, ty'):tys) =
     in unifyMatch um $ (ty'', ty'''):tys
 
 unifyMatch :: UnifyMap -> [(KempeTy (), KempeTy ())] -> Either (Error ()) (IM.IntMap (KempeTy ()))
-unifyMatch _ []                                                             = Right mempty
+unifyMatch _ []                                                              = Right mempty
 unifyMatch um ((ty@(TyBuiltin _ b0), ty'@(TyBuiltin _ b1)):tys) | b0 == b1   = unifyPrep um tys
                                                                 | otherwise  = Left (UnificationFailed () ty ty')
 unifyMatch um ((ty@(TyNamed _ n0), ty'@(TyNamed _ n1)):tys) | n0 == n1       = unifyPrep um tys
-                                                    | otherwise      = Left (UnificationFailed () (void ty) (void ty'))
+                                                            | otherwise      = Left (UnificationFailed () (void ty) (void ty'))
 unifyMatch um ((ty@(TyNamed _ _), TyVar  _ (Name _ (Unique k) _)):tys)       = IM.insert k ty <$> unifyPrep (IM.insert k ty um) tys
 unifyMatch um ((TyVar _ (Name _ (Unique k) _), ty@(TyNamed _ _)):tys)        = IM.insert k ty <$> unifyPrep (IM.insert k ty um) tys
 unifyMatch um ((ty@TyBuiltin{}, TyVar  _ (Name _ (Unique k) _)):tys)         = IM.insert k ty <$> unifyPrep (IM.insert k ty um) tys
 unifyMatch um ((TyVar _ (Name _ (Unique k) _), ty@(TyBuiltin _ _)):tys)      = IM.insert k ty <$> unifyPrep (IM.insert k ty um) tys
-unifyMatch um ((TyVar _ (Name _ (Unique k) _), ty@(TyVar _ _)):tys)          = IM.insert k ty <$> unifyPrep (IM.insert k ty um) tys
 unifyMatch _ ((ty@TyBuiltin{}, ty'@TyNamed{}):_)                             = Left (UnificationFailed () ty ty')
 unifyMatch _ ((ty@TyNamed{}, ty'@TyBuiltin{}):_)                             = Left (UnificationFailed () ty ty')
 unifyMatch _ ((ty@TyBuiltin{}, ty'@TyApp{}):_)                               = Left (UnificationFailed () ty ty')
@@ -138,8 +130,11 @@ unifyMatch _ ((ty@TyNamed{}, ty'@TyApp{}):_)                                 = L
 unifyMatch _ ((ty@TyApp{}, ty'@TyBuiltin{}):_)                               = Left (UnificationFailed () ty ty')
 unifyMatch um ((TyVar _ (Name _ (Unique k) _), ty@TyApp{}):tys)              = IM.insert k ty <$> unifyPrep (IM.insert k ty um) tys
 unifyMatch um ((ty@TyApp{}, TyVar  _ (Name _ (Unique k) _)):tys)             = IM.insert k ty <$> unifyPrep (IM.insert k ty um) tys
-unifyMatch um ((TyApp _ ty ty', TyApp _ ty'' ty'''):tys)                     = unifyMatch um ((ty, ty'') : (ty', ty''') : tys) -- TODO: I think this is right?
+unifyMatch um ((TyApp _ ty ty', TyApp _ ty'' ty'''):tys)                     = unifyMatch um ((ty, ty'') : (ty', ty''') : tys) -- TODO:  do we need unifyPrep here?
 unifyMatch _ ((ty@TyApp{}, ty'@TyNamed{}):_)                                 = Left (UnificationFailed () (void ty) (void ty'))
+unifyMatch um ((TyVar _ n@(Name _ (Unique k) _), ty@(TyVar _ n')):tys)
+    | n == n' = unifyMatch um tys -- a type variable is always equal to itself, don't bother inserting this!
+    | otherwise = IM.insert k ty <$> unifyPrep (IM.insert k ty um) tys
 
 unify :: [(KempeTy (), KempeTy ())] -> Either (Error ()) (IM.IntMap (KempeTy ()))
 unify = unifyPrep IM.empty
@@ -183,9 +178,9 @@ typeOfBuiltin WordPlus   = pure wordBinOp
 typeOfBuiltin WordTimes  = pure wordBinOp
 typeOfBuiltin WordShiftR = pure wordShift
 typeOfBuiltin WordShiftL = pure wordShift
-typeOfBuiltin IntGeq     = pure intBinOp
-typeOfBuiltin IntNeq     = pure intBinOp
-typeOfBuiltin IntGt      = pure intBinOp
+typeOfBuiltin IntGeq     = pure intRel
+typeOfBuiltin IntNeq     = pure intRel
+typeOfBuiltin IntGt      = pure intRel
 typeOfBuiltin WordMinus  = pure wordBinOp
 typeOfBuiltin WordDiv    = pure wordBinOp
 typeOfBuiltin WordMod    = pure wordBinOp
@@ -284,7 +279,7 @@ assignAtom (AtName _ n) = do
 assignAtom (AtCons _ tn) = do
     sTy <- renameStack =<< consLookup (void tn)
     pure (sTy, AtCons sTy (tn $> sTy))
-assignAtom (Dip _ as)    = do { (as', ty) <- assignAtoms as ; tyDipped <- dipify ty ; pure (tyDipped, Dip tyDipped as') }
+assignAtom (Dip _ as) = do { (as', ty) <- assignAtoms as ; tyDipped <- dipify ty ; pure (tyDipped, Dip tyDipped as') }
 assignAtom (If _ as0 as1) = do
     (as0', tys) <- assignAtoms as0
     (as1', tys') <- assignAtoms as1
@@ -418,10 +413,10 @@ tyInsert (FunDecl _ _ ins out as) = do
     traverse_ kindOf (void <$> ins ++ out) -- FIXME: this gives sketchy results?
     sig <- renameStack $ voidStackType $ StackType (freeVars (ins ++ out)) ins out
     inferred <- tyAtoms as
-    _ <- mergeStackTypes sig inferred -- FIXME: need to verify the merged type is as general as the signature?
+    _ <- mergeStackTypes sig inferred
     when (inferred `lessGeneral` sig) $
         throwError $ LessGeneral () sig inferred
-tyInsert ExtFnDecl{} = pure () -- TODO: kind-check
+tyInsert (ExtFnDecl _ _ ins outs _) = traverse_ kindOf (void <$> ins ++ outs)
 tyInsert Export{} = pure ()
 
 tyModule :: Declarations a c b -> TypeM () ()
@@ -537,9 +532,10 @@ substConstraints _ ty@TyNamed{}                         = ty
 substConstraints _ ty@TyBuiltin{}                       = ty
 substConstraints tys ty@(TyVar _ (Name _ (Unique k) _)) =
     case IM.lookup k tys of
-        Just ty'@TyVar{} -> substConstraints (IM.delete k tys) ty' -- TODO: this is to prevent cyclic lookups: is it right?
-        Just ty'         -> ty'
-        Nothing          -> ty
+        Just ty'@TyVar{}       -> substConstraints (IM.delete k tys) ty' -- TODO: this is to prevent cyclic lookups: is it right?
+        Just (TyApp l ty0 ty1) -> TyApp l (substConstraints tys ty0) (substConstraints tys ty1)
+        Just ty'               -> ty'
+        Nothing                -> ty
 substConstraints tys (TyApp l ty ty')                   =
     TyApp l (substConstraints tys ty) (substConstraints tys ty')
 

@@ -25,4 +25,6 @@ allGoldens =
     , ("test/examples/hamming.kmp", "test/harness/hamming.c", "test/golden/hamming.out")
     , ("test/examples/bool.kmp", "test/harness/bool.c", "test/golden/bool.out")
     , ("test/examples/const.kmp", "test/harness/const.c", "test/golden/const.out")
+    , ("test/data/badCodegen.kmp", "test/harness/id.c", "test/golden/id.out")
+    , ("test/data/mod.kmp", "test/harness/mod.c", "test/golden/mod.out")
     ]
