@@ -1,5 +1,8 @@
 # kempe
 
+  * Add `armabi` method of exporting Kempe functions, so that `kc` generates
+    suitable code for M1 darwin. 
+
 ## 0.2.0.8
 
   * More efficient IR generation; don't copy bytes from a source to the same
