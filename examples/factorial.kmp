@@ -17,5 +17,5 @@ fac : Int -- Int
            , dup 1 - fac * )
        ]
 
-%foreign cabi fac
-%foreign cabi fac_tailrec
+%foreign armabi fac
+%foreign armabi fac_tailrec

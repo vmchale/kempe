@@ -1,11 +1,13 @@
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 
-extern bool not(bool);
-extern bool eq(bool, bool);
+extern bool not(void*, bool);
+extern bool eq(void*, bool, bool);
 
 int main(int argc, char *argv[]) {
-    printf("%d\n", not(true));
-    printf("%d\n", not(false));
-    printf("%d", eq(true, false));
+    void* kptr = malloc(32 * 1024);
+    printf("%d\n", not(kptr, true));
+    printf("%d\n", not(kptr, false));
+    printf("%d", eq(kptr, true, false));
 }

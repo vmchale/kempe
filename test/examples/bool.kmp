@@ -15,5 +15,5 @@ nand : Bool Bool -- Bool
 nor : Bool Bool -- Bool
     =: [ || not ]
 
-%foreign cabi not
-%foreign cabi eq
+%foreign armabi not
+%foreign armabi eq

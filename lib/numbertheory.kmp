@@ -35,5 +35,5 @@ is_prime : Int -- Bool
 k_gcd : Int Int -- Int
       =: [ gcd ]
 
-%foreign cabi k_gcd
-%foreign cabi is_prime
+%foreign armabi k_gcd
+%foreign armabi is_prime

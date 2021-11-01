@@ -1,9 +1,11 @@
 #include <stdio.h>
+#include <stdlib.h>
 
-extern int fac_tailrec(int);
-extern int fac(int);
+extern int fac_tailrec(void*, int);
+extern int fac(void*, int);
 
 int main(int argc, char *argv[]) {
-    printf("%d\n", fac_tailrec(3));
-    printf("%d", fac(3));
+    void* kptr = malloc(32 * 1024);
+    printf("%d\n", fac_tailrec(kptr, 3));
+    printf("%d", fac(kptr, 3));
 }

@@ -127,6 +127,12 @@ irEmit env (IR.WrapKCall Cabi (is, [o]) n l) | all (\i -> size' env i <= 8) is &
     ; let argRegs = [CArg1, CArg2, CArg3, CArg4, CArg5, CArg6]
     ; pure $ [BSLabel () n, MovRL () DataPointer "kempe_data", NasmMacro0 () "calleesave"] ++ zipWith (\r i-> MovAR () (AddrRCPlus DataPointer i) r) argRegs offs ++ [AddRC () DataPointer totalSize, Call () l, MovRA () CRet (AddrRCMinus DataPointer (size' env o)), NasmMacro0 () "calleerestore", Ret ()] -- TODO: bytes on the stack eh
     }
+irEmit env (IR.WrapKCall ArmAbi (is, [o]) n l) | all (\i -> size' env i <= 8) is && size' env o <= 8 && length is <= 6 = do
+    { let offs = scanl' (+) 0 (fmap (size' env) is)
+    ; let totalSize = sizeStack env is
+    ; let argRegs = [CArg2, CArg3, CArg4, CArg5, CArg6]
+    ; pure $ [BSLabel () n, MovRR () DataPointer CArg1, NasmMacro0 () "calleesave"] ++ zipWith (\r i-> MovAR () (AddrRCPlus DataPointer i) r) argRegs offs ++ [AddRC () DataPointer totalSize, Call () l, MovRA () CRet (AddrRCMinus DataPointer (size' env o)), NasmMacro0 () "calleerestore", Ret ()] -- TODO: bytes on the stack eh
+    }
 irEmit _ (IR.WrapKCall Kabi (_, _) n l) =
     pure [BSLabel () n, Call () l, Ret ()]
 irEmit _ (IR.WrapKCall Hooked (_, _) n l) =

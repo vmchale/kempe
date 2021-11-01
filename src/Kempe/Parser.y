@@ -90,6 +90,7 @@ import Prettyprinter (Pretty (pretty), (<+>))
     cabi { TokKeyword $$ KwCabi }
     kabi { TokKeyword $$ KwKabi }
     hooked { TokKeyword $$ KwHooked }
+    armabi { TokKeyword $$ KwArmAbi }
     import { TokKeyword $$ KwImport }
 
     dip { TokBuiltin $$ BuiltinDip }
@@ -141,6 +142,7 @@ ABI :: { ABI }
     : cabi { Cabi }
     | kabi { Kabi }
     | hooked { Hooked }
+    | armabi { ArmAbi }
 
 Decl :: { KempeDecl AlexPosn AlexPosn AlexPosn }
      : TyDecl { $1 }

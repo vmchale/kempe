@@ -50,12 +50,21 @@ irEmit _ IR.Ret                         = pure [Ret ()]
 irEmit _ (IR.KCall l)                   = pure (pushLink ++ BranchLink () l : popLink) -- TODO: think more?
 irEmit _ (IR.Labeled l)                 = pure [Label () l]
 irEmit _ (IR.WrapKCall Kabi (_, _) n l) = pure $ [BSLabel () (darwinExport n)] ++ pushLink ++ [BranchLink () l] ++ popLink ++ [Ret ()]
+irEmit _ (IR.WrapKCall Hooked (_, _) n l) =
+    pure $ [MovRR () DataPointer CArg0, BSLabel () n] ++ pushLink ++ [BranchLink () l] ++ popLink ++ [Ret ()]
 irEmit env (IR.WrapKCall Cabi (is, [o]) n l) | all (\i -> size' env i <= 8) is && size' env o <= 8 && length is <= 8 = do
     { let sizes = fmap (size' env) is
     ; let offs = scanl' (+) 0 sizes
     ; let totalSize = sizeStack env is
     ; let argRegs = [CArg0, CArg1, CArg2, CArg3, CArg4, CArg5, CArg6, CArg7]
     ; pure $ [BSLabel () (darwinExport n)] ++ pushLink ++ [LoadLabel () DataPointer "kempe_data", GnuMacro () "calleesave"] ++ zipWith3 (\r sz i -> storeSize sz r (AddRCPlus DataPointer i)) argRegs sizes offs ++ [AddRC () DataPointer DataPointer totalSize, BranchLink () l, loadSize (size' env o) CArg0 (AddRCPlus DataPointer (negate $ size' env o)), GnuMacro () "calleerestore"] ++ popLink ++ [Ret ()]
+    }
+irEmit env (IR.WrapKCall ArmAbi (is, [o]) n l) | all (\i -> size' env i <= 8) is && size' env o <= 8 && length is <= 8 = do
+    { let sizes = fmap (size' env) is
+    ; let offs = scanl' (+) 0 sizes
+    ; let totalSize = sizeStack env is
+    ; let argRegs = [CArg1, CArg2, CArg3, CArg4, CArg5, CArg6, CArg7]
+    ; pure $ [BSLabel () (darwinExport n)] ++ pushLink ++ [MovRR () DataPointer CArg0, GnuMacro () "calleesave"] ++ zipWith3 (\r sz i -> storeSize sz r (AddRCPlus DataPointer i)) argRegs sizes offs ++ [AddRC () DataPointer DataPointer totalSize, BranchLink () l, loadSize (size' env o) CArg0 (AddRCPlus DataPointer (negate $ size' env o)), GnuMacro () "calleerestore"] ++ popLink ++ [Ret ()]
     }
 irEmit _ (IR.MovMem (IR.Reg r) 8 (IR.Reg r')) =
     pure [Store () (toAbsReg r') (Reg $ toAbsReg r)]
