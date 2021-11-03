@@ -31,6 +31,8 @@ syntax match kempeComment "\v;.*$" contains=@Spell
 syntax match kempeIdentifier "$cfun"
 syntax match kempeSymbol "cabi"
 syntax match kempeSymbol "kabi"
+syntax match kempeSymbol "hooked"
+syntax match kempeSymbol "armabi"
 syntax match kempePragma "%foreign"
 
 highlight link kempeComment Comment

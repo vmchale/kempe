@@ -111,6 +111,8 @@ tokens :-
         "%foreign"               { mkKw KwForeign }
         "cabi"                   { mkKw KwCabi }
         "kabi"                   { mkKw KwKabi }
+        "hooked"                 { mkKw KwHooked }
+        "armabi"                 { mkKw KwArmAbi }
 
         -- builtin
         dip                      { mkBuiltin BuiltinDip }
@@ -288,6 +290,8 @@ data Keyword = KwType
              | KwForeign
              | KwCabi
              | KwKabi
+             | KwHooked
+             | KwArmAbi
              deriving (Generic, NFData)
 
 instance Pretty Keyword where
@@ -299,6 +303,8 @@ instance Pretty Keyword where
     pretty KwForeign = "%foreign"
     pretty KwCabi    = "cabi"
     pretty KwKabi    = "kabi"
+    pretty KwHooked  = "hooked"
+    pretty KwArmAbi  = "armabi"
 
 data Builtin = BuiltinBool
              | BuiltinBoolLit { bool :: !Bool }

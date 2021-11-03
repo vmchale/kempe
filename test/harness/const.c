@@ -1,7 +1,9 @@
 #include <stdio.h>
+#include <stdlib.h>
 
-extern int id_int(int);
+extern int id_int(void*, int);
 
 int main(int argc, char *argv[]) {
-    printf("%d", id_int(3));
+    void* kptr = malloc(32 * 1024);
+    printf("%d", id_int(kptr, 3));
 }

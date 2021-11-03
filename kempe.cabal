@@ -1,6 +1,6 @@
 cabal-version:   3.0
 name:            kempe
-version:         0.2.0.7
+version:         0.2.0.8
 license:         BSD-3-Clause
 license-file:    LICENSE
 copyright:       Copyright: (c) 2020-2021 Vanessa McHale
@@ -86,6 +86,7 @@ library kempe-modules
         Data.Foldable.Ext
         Data.Copointed
         Language.C.AST
+        Data.Tuple.Ext
 
     default-language: Haskell2010
     other-extensions:
@@ -104,7 +105,6 @@ library kempe-modules
         mtl,
         microlens,
         transformers,
-        extra >=1.7.4,
         prettyprinter >=1.7.0,
         composition-prelude >=2.0.2.0,
         microlens-mtl,

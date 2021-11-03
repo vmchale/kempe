@@ -253,6 +253,25 @@ int main(int argc, char *argv[]) {
 
 The C ABI should work on Unix; it does not target Windows.
 
+There is also an alternate ABI, `armabi`, which takes a stack (to be used as the
+Kempe data stack) as the first argument. One would use it like so:
+
+```
+%foreign armabi fac
+```
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+
+extern int fact(void*, int);
+
+int main(int argc, char *argv[]) {
+    void* kptr = malloc(32 * 1024);
+    printf("%d", fac(kptr, 3));
+}
+```
+
 Unlike the frontend and type checker, the backend is dodgy.
 
 ### Cross-Compilation
@@ -273,8 +292,8 @@ do not require any registers to be preserved across function calls.
 
 ### C Calls
 
-When exporting to C, `kc` generates code that initializes the Kempe data pointer
-(`rbx`). Thus, one should avoid calling into Kempe code too often!
+When exporting to C with the `cabi`, `kc` generates code that initializes the Kempe data pointer
+(`rbx`). Thus, one should avoid calling into Kempe code with `cabi` too often!
 
 Note that the Kempe data pointer is static, so calling different Kempe functions
 in different threads will fail unpredictably.

@@ -19,7 +19,7 @@ import qualified Data.ByteString.Lazy as BSL
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Text as T
-import Data.Tuple.Extra (fst3)
+import Data.Tuple.Ext (fst3)
 import Data.Typeable (Typeable)
 import GHC.Generics (Generic)
 import Kempe.AST
@@ -89,6 +89,8 @@ import Prettyprinter (Pretty (pretty), (<+>))
     foreign { TokKeyword $$ KwForeign }
     cabi { TokKeyword $$ KwCabi }
     kabi { TokKeyword $$ KwKabi }
+    hooked { TokKeyword $$ KwHooked }
+    armabi { TokKeyword $$ KwArmAbi }
     import { TokKeyword $$ KwImport }
 
     dip { TokBuiltin $$ BuiltinDip }
@@ -139,6 +141,8 @@ Import :: { BSL.ByteString }
 ABI :: { ABI }
     : cabi { Cabi }
     | kabi { Kabi }
+    | hooked { Hooked }
+    | armabi { ArmAbi }
 
 Decl :: { KempeDecl AlexPosn AlexPosn AlexPosn }
      : TyDecl { $1 }

@@ -69,11 +69,15 @@ instance Pretty (StackType a) where
 
 data ABI = Cabi
          | Kabi
+         | Hooked
+         | ArmAbi
          deriving (Eq, Ord, Generic, NFData)
 
 instance Pretty ABI where
-    pretty Cabi = "cabi"
-    pretty Kabi = "kabi"
+    pretty Cabi   = "cabi"
+    pretty Kabi   = "kabi"
+    pretty Hooked = "hooked"
+    pretty ArmAbi = "armabi"
 
 -- machinery for assigning a constructor to a function of its concrete types
 -- (and then curry forward...)

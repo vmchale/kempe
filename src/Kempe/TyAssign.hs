@@ -21,7 +21,7 @@ import           Data.List.NonEmpty         (NonEmpty (..))
 import           Data.Semigroup             ((<>))
 import qualified Data.Set                   as S
 import qualified Data.Text                  as T
-import           Data.Tuple.Extra           (fst3)
+import           Data.Tuple.Ext             (fst3)
 import           Kempe.AST
 import           Kempe.Error
 import           Kempe.Name

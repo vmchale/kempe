@@ -4,6 +4,7 @@ module Kempe.Asm.Arm.Trans ( irToAarch64
                            ) where
 
 import           Data.Bits          (rotateR, (.&.))
+import qualified Data.ByteString    as BS
 import           Data.Foldable.Ext  (foldMapA)
 import           Data.Int           (Int64)
 import           Data.List          (scanl')
@@ -11,6 +12,7 @@ import           Kempe.AST.Size
 import           Kempe.Asm.Arm.Type
 import           Kempe.IR.Monad
 import qualified Kempe.IR.Type      as IR
+import           System.Info        (arch, os)
 
 irToAarch64 :: SizeEnv -> IR.WriteSt -> [IR.Stmt] -> [Arm AbsReg ()]
 irToAarch64 env w = runWriteM w . foldMapA (irEmit env)
@@ -36,18 +38,33 @@ pushLink = [SubRC () StackPtr StackPtr 16, Store () LinkReg (Reg StackPtr)]
 popLink :: [Arm AbsReg ()]
 popLink = [Load () LinkReg (Reg StackPtr), AddRC () StackPtr StackPtr 16]
 
+-- darwin on arm requires _ prepended to export
+darwinExport :: BS.ByteString -> BS.ByteString
+darwinExport = case (os, arch) of
+    ("darwin", "aarch64") -> ("_" <>)
+    _                     -> id
+
 irEmit :: SizeEnv -> IR.Stmt -> WriteM [Arm AbsReg ()]
 irEmit _ (IR.Jump l)                    = pure [Branch () l]
 irEmit _ IR.Ret                         = pure [Ret ()]
 irEmit _ (IR.KCall l)                   = pure (pushLink ++ BranchLink () l : popLink) -- TODO: think more?
 irEmit _ (IR.Labeled l)                 = pure [Label () l]
-irEmit _ (IR.WrapKCall Kabi (_, _) n l) = pure $ [BSLabel () n] ++ pushLink ++ [BranchLink () l] ++ popLink ++ [Ret ()]
+irEmit _ (IR.WrapKCall Kabi (_, _) n l) = pure $ [BSLabel () (darwinExport n)] ++ pushLink ++ [BranchLink () l] ++ popLink ++ [Ret ()]
+irEmit _ (IR.WrapKCall Hooked (_, _) n l) =
+    pure $ [MovRR () DataPointer CArg0, BSLabel () n] ++ pushLink ++ [BranchLink () l] ++ popLink ++ [Ret ()]
 irEmit env (IR.WrapKCall Cabi (is, [o]) n l) | all (\i -> size' env i <= 8) is && size' env o <= 8 && length is <= 8 = do
     { let sizes = fmap (size' env) is
     ; let offs = scanl' (+) 0 sizes
     ; let totalSize = sizeStack env is
     ; let argRegs = [CArg0, CArg1, CArg2, CArg3, CArg4, CArg5, CArg6, CArg7]
-    ; pure $ [BSLabel () n] ++ pushLink ++ [LoadLabel () DataPointer "kempe_data", GnuMacro () "calleesave"] ++ zipWith3 (\r sz i -> storeSize sz r (AddRCPlus DataPointer i)) argRegs sizes offs ++ [AddRC () DataPointer DataPointer totalSize, BranchLink () l, loadSize (size' env o) CArg0 (AddRCPlus DataPointer (negate $ size' env o)), GnuMacro () "calleerestore"] ++ popLink ++ [Ret ()]
+    ; pure $ [BSLabel () (darwinExport n)] ++ pushLink ++ [LoadLabel () DataPointer "kempe_data", GnuMacro () "calleesave"] ++ zipWith3 (\r sz i -> storeSize sz r (AddRCPlus DataPointer i)) argRegs sizes offs ++ [AddRC () DataPointer DataPointer totalSize, BranchLink () l, loadSize (size' env o) CArg0 (AddRCPlus DataPointer (negate $ size' env o)), GnuMacro () "calleerestore"] ++ popLink ++ [Ret ()]
+    }
+irEmit env (IR.WrapKCall ArmAbi (is, [o]) n l) | all (\i -> size' env i <= 8) is && size' env o <= 8 && length is <= 8 = do
+    { let sizes = fmap (size' env) is
+    ; let offs = scanl' (+) 0 sizes
+    ; let totalSize = sizeStack env is
+    ; let argRegs = [CArg1, CArg2, CArg3, CArg4, CArg5, CArg6, CArg7]
+    ; pure $ [BSLabel () (darwinExport n)] ++ pushLink ++ [MovRR () DataPointer CArg0, GnuMacro () "calleesave"] ++ zipWith3 (\r sz i -> storeSize sz r (AddRCPlus DataPointer i)) argRegs sizes offs ++ [AddRC () DataPointer DataPointer totalSize, BranchLink () l, loadSize (size' env o) CArg0 (AddRCPlus DataPointer (negate $ size' env o)), GnuMacro () "calleerestore"] ++ popLink ++ [Ret ()]
     }
 irEmit _ (IR.MovMem (IR.Reg r) 8 (IR.Reg r')) =
     pure [Store () (toAbsReg r') (Reg $ toAbsReg r)]

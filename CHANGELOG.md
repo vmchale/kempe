@@ -1,5 +1,10 @@
 # kempe
 
+  * Add `armabi` method of exporting Kempe functions, so that `kc` generates
+    suitable code for M1 darwin.
+
+## 0.2.0.8
+
   * More efficient IR generation; don't copy bytes from a source to the same
     destination
   * Fix bugs in `case` IR generation
@@ -18,7 +23,7 @@
   * Add `absInt` and `chocie` functions to prelude.
   * Add lints for `swap >`, `swap *` &c.
   * Fix bug in typing `>=`, `>`, `!=`
-  
+
 ## 0.2.0.5
 
   * Fix bug in arm control-flow analysis
