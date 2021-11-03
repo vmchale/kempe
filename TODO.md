@@ -89,6 +89,7 @@
 - [x] `popcnt` basically
 - [ ] combinators: http://tunes.org/~iepos/joy.html#swap
 # Test Cases
+- [ ] golden tests for cgen output
 - [ ] Unit tests for type merge?
 - [ ] Unit tests for catTypes?
 - [ ] Test foreign calls (e.g. `random`)

@@ -2,6 +2,8 @@ module Kempe.File ( tcFile
                   , warnFile
                   , dumpMono
                   , dumpTyped
+                  , dumpCDecl
+                  , cDeclFile
                   , irFile
                   , x86File
                   , armFile
@@ -16,6 +18,7 @@ module Kempe.File ( tcFile
 import           Control.Applicative       ((<|>))
 import           Control.Composition       ((.*))
 import           Control.Exception         (Exception, throwIO)
+import           Control.Monad             ((<=<))
 import           Data.Bifunctor            (bimap)
 import           Data.Functor              (void)
 import           Data.Semigroup            ((<>))
@@ -57,11 +60,14 @@ warnFile fp = do
 yeetIO :: Exception e => Either e a -> IO a
 yeetIO = either throwIO pure
 
-dumpCDecl :: FilePath -> IO ()
-dumpCDecl fp = do
+cDeclFile :: FilePath -> IO [CFunc]
+cDeclFile fp = do
     (i, m) <- parseProcess fp
     (mTyped, _) <- yeetIO $ runTypeM i (assignModule m)
-    putDoc $ prettyHeaders $ cGen mTyped
+    pure $ cGen mTyped
+
+dumpCDecl :: FilePath -> IO ()
+dumpCDecl = putDoc . prettyHeaders <=< cDeclFile
 
 dumpTyped :: FilePath -> IO ()
 dumpTyped fp = do

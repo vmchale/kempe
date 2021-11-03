@@ -59,6 +59,7 @@ library kempe-modules
         Kempe.Asm.Arm.Trans
         Kempe.Asm.Arm.ControlFlow
         Kempe.Asm.Arm.Linear
+        Language.C.AST
 
     hs-source-dirs:   src
     other-modules:
@@ -85,7 +86,6 @@ library kempe-modules
         Prettyprinter.Debug
         Data.Foldable.Ext
         Data.Copointed
-        Language.C.AST
         Data.Tuple.Ext
 
     default-language: Haskell2010

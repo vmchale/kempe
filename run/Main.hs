@@ -9,12 +9,13 @@ import           Kempe.AST
 import           Kempe.File
 import           Kempe.Lexer
 import           Kempe.Parser
+import           Language.C.AST
 import           Options.Applicative
 import qualified Paths_kempe               as P
 import           Prettyprinter             (LayoutOptions (LayoutOptions), PageWidth (AvailablePerLine), hardline, layoutSmart)
-import           Prettyprinter.Render.Text (renderIO)
+import           Prettyprinter.Render.Text (hPutDoc, putDoc, renderIO)
 import           System.Exit               (ExitCode (ExitFailure), exitWith)
-import           System.IO                 (stdout)
+import           System.IO                 (IOMode (ReadMode), stdout, withFile)
 import           System.Info               (arch)
 
 data Arch = Aarch64
@@ -24,6 +25,16 @@ data Command = TypeCheck !FilePath
              | Compile !FilePath !(Maybe FilePath) !Arch !Bool !Bool !Bool
              | Format !FilePath
              | Lint !FilePath
+             | CDecl !FilePath !(Maybe FilePath)
+
+cdecl :: FilePath -> IO ()
+cdecl = putDoc . (<> hardline) . prettyHeaders <=< cDeclFile
+
+writeCDecl :: FilePath -> FilePath -> IO ()
+writeCDecl fp o = do
+    ds <- cDeclFile fp
+    withFile o ReadMode $ \h ->
+        hPutDoc h (prettyHeaders ds)
 
 fmt :: FilePath -> IO ()
 fmt = renderIO stdout <=< fmap (render . (<> hardline) . prettyModule) . parsedFp
@@ -48,6 +59,8 @@ run (Compile fp Nothing _ False True False)       = irFile fp
 run (Compile fp Nothing X64 False False True)     = x86File fp
 run (Compile fp Nothing Aarch64 False False True) = armFile fp
 run (Format fp)                                   = fmt fp
+run (CDecl fp Nothing)                            = cdecl fp
+run (CDecl fp (Just o))                           = writeCDecl fp o
 run _                                             = putStrLn "Invalid combination of CLI options. Try kc --help" *> exitWith (ExitFailure 1)
 
 kmpFile :: Parser FilePath
@@ -61,6 +74,9 @@ fmtP = Format <$> kmpFile
 
 lintP :: Parser Command
 lintP = Lint <$> kmpFile
+
+cdeclP :: Parser Command
+cdeclP = CDecl <$> kmpFile <*> outFile
 
 debugSwitch :: Parser Bool
 debugSwitch = switch
@@ -96,8 +112,8 @@ asmSwitch = switch
     (long "dump-asm"
     <> help "Write assembly (intel syntax) to stdout")
 
-exeFile :: Parser (Maybe FilePath)
-exeFile = optional $ argument str
+outFile :: Parser (Maybe FilePath)
+outFile = optional $ argument str
     (metavar "OUTPUT"
     <> help "File output")
 
@@ -109,10 +125,11 @@ commandP = hsubparser
     (command "typecheck" (info tcP (progDesc "Type-check module contents"))
     <> command "lint" (info lintP (progDesc "Lint a file")))
     <|> hsubparser (command "fmt" (info fmtP (progDesc "Pretty-print a Kempe file")) <> internal)
+    <|> hsubparser (command "cdecl" (info cdeclP (progDesc "Generate C headers for exported Kempe code")))
     <|> compileP
     where
         tcP = TypeCheck <$> kmpFile
-        compileP = Compile <$> kmpFile <*> exeFile <*> archFlag <*> debugSwitch <*> irSwitch <*> asmSwitch
+        compileP = Compile <$> kmpFile <*> outFile <*> archFlag <*> debugSwitch <*> irSwitch <*> asmSwitch
 
 wrapper :: ParserInfo Command
 wrapper = info (helper <*> versionMod <*> commandP)
