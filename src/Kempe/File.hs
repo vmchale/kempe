@@ -25,6 +25,7 @@ import           Data.Typeable             (Typeable)
 import           Kempe.AST
 import qualified Kempe.Asm.Arm.Type        as Arm
 import qualified Kempe.Asm.X86.Type        as X86
+import           Kempe.CGen
 import           Kempe.Check.Lint
 import           Kempe.Check.Pattern
 import           Kempe.Check.TopLevel
@@ -37,6 +38,7 @@ import           Kempe.Proc.As             as As
 import qualified Kempe.Proc.Nasm           as Nasm
 import           Kempe.Shuttle
 import           Kempe.TyAssign
+import           Language.C.AST
 import           Prettyprinter             (Doc, hardline)
 import           Prettyprinter.Render.Text (putDoc)
 
@@ -54,6 +56,12 @@ warnFile fp = do
 
 yeetIO :: Exception e => Either e a -> IO a
 yeetIO = either throwIO pure
+
+dumpCDecl :: FilePath -> IO ()
+dumpCDecl fp = do
+    (i, m) <- parseProcess fp
+    (mTyped, _) <- yeetIO $ runTypeM i (assignModule m)
+    putDoc $ prettyHeaders $ cGen mTyped
 
 dumpTyped :: FilePath -> IO ()
 dumpTyped fp = do
