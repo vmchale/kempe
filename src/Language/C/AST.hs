@@ -6,6 +6,7 @@ module Language.C.AST ( CType (..)
                       , cSettings
                       ) where
 
+import           Data.Semigroup    ((<>))
 import qualified Data.Set          as S
 import qualified Data.Text         as T
 import           Prettyprinter     (Doc, LayoutOptions (..), PageWidth (..), Pretty (..), tupled, (<+>))

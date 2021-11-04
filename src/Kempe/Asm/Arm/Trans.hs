@@ -8,6 +8,7 @@ import qualified Data.ByteString    as BS
 import           Data.Foldable.Ext  (foldMapA)
 import           Data.Int           (Int64)
 import           Data.List          (scanl')
+import           Data.Semigroup     ((<>))
 import           Kempe.AST.Size
 import           Kempe.Asm.Arm.Type
 import           Kempe.IR.Monad
