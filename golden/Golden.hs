@@ -1,5 +1,6 @@
 module Main (main) where
 
+import           CDecl
 import           Data.Tuple.Extra (uncurry3)
 import           Harness
 import           System.Info      (arch)
@@ -9,6 +10,7 @@ main :: IO ()
 main = defaultMain $
     testGroup "Golden output tests" $
         fmap (uncurry3 goldenOutput) allGoldens ++ crossTests
+            ++ fmap (uncurry goldenCDecl) headerGoldens
 
 -- These are redundant on arm
 crossTests :: [TestTree]
@@ -16,6 +18,9 @@ crossTests = case arch of
     "x86_64"  -> fmap (uncurry3 crossGolden) allGoldens
     "aarch64" -> []
     _         -> error "Test suite must be run on x86_64 or aarch64"
+
+headerGoldens :: [(FilePath, FilePath)]
+headerGoldens = [ ("test/examples/splitmix.kmp", "test/include/splitmix.h") ]
 
 allGoldens :: [(FilePath, FilePath, FilePath)]
 allGoldens =
