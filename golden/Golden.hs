@@ -20,7 +20,9 @@ crossTests = case arch of
     _         -> error "Test suite must be run on x86_64 or aarch64"
 
 headerGoldens :: [(FilePath, FilePath)]
-headerGoldens = [ ("test/examples/splitmix.kmp", "test/include/splitmix.h") ]
+headerGoldens = [ ("test/examples/splitmix.kmp", "test/include/splitmix.h")
+                , ("lib/numbertheory.kmp", "test/include/num.h")
+                ]
 
 allGoldens :: [(FilePath, FilePath, FilePath)]
 allGoldens =
