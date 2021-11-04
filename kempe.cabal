@@ -17,6 +17,7 @@ data-files:
     test/examples/*.kmp
     test/golden/*.out
     test/golden/*.ir
+    test/include/*.h
     test/harness/*.c
     examples/*.kmp
     prelude/*.kmp
