@@ -25,6 +25,7 @@ prettyInclude StdInt  = "#include <stdint.h>"
 data CType = CInt
            | CBool
            | CUInt64
+           | CInt8
            | CVoid
            | CVoidPtr
            -- ADTs etc.
@@ -43,6 +44,7 @@ mentioned CBool    = S.singleton StdBool
 mentioned CUInt64  = S.singleton StdInt
 mentioned CVoid    = mempty
 mentioned CVoidPtr = mempty
+mentioned CInt8    = S.singleton StdInt
 
 mentionedFunc :: CFunc -> S.Set CHeader
 mentionedFunc (CFunc _ args ret) = foldMap mentioned (ret : args)
@@ -53,6 +55,7 @@ instance Pretty CType where
     pretty CUInt64  = "uint64_t"
     pretty CVoid    = "void"
     pretty CVoidPtr = "void*"
+    pretty CInt8    = "int8_t"
 
 instance Pretty CFunc where
     pretty (CFunc fname args retType) = "extern" <+> pretty retType <+> pretty fname <+> tupled (pretty <$> args) <> ";"
