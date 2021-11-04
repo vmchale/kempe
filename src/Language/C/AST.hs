@@ -3,12 +3,16 @@
 module Language.C.AST ( CType (..)
                       , CFunc (..)
                       , prettyHeaders
+                      , cSettings
                       ) where
 
 import qualified Data.Set          as S
 import qualified Data.Text         as T
-import           Prettyprinter     (Doc, Pretty (..), tupled, (<+>))
+import           Prettyprinter     (Doc, LayoutOptions (..), PageWidth (..), Pretty (..), tupled, (<+>))
 import           Prettyprinter.Ext
+
+cSettings :: LayoutOptions
+cSettings = LayoutOptions $ AvailablePerLine 180 0.8
 
 data CHeader = StdBool -- ^ @stdbool.h@
              | StdInt -- ^ @stdint.h@

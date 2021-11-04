@@ -155,7 +155,8 @@ executable kc
         optparse-applicative,
         kempe-modules,
         prettyprinter >=1.7.0,
-        bytestring
+        bytestring,
+        text
 
     if impl(ghc >=8.0)
         ghc-options:

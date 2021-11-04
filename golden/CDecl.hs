@@ -11,8 +11,7 @@ import           Test.Tasty                (TestTree)
 import           Test.Tasty.Golden         (goldenVsString)
 
 renderBSL :: Doc ann -> BSL.ByteString
-renderBSL = encodeUtf8 . renderLazy . layoutSmart settings where
-    settings = LayoutOptions $ AvailablePerLine 180 0.8
+renderBSL = encodeUtf8 . renderLazy . layoutSmart cSettings where
 
 compileOutput :: FilePath
               -> IO BSL.ByteString

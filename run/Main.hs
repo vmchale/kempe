@@ -4,6 +4,7 @@ import           Control.Exception         (Exception, throwIO)
 import           Control.Monad             ((<=<))
 import qualified Data.ByteString.Lazy      as BSL
 import           Data.Semigroup            ((<>))
+import qualified Data.Text.Lazy.IO         as TLIO
 import qualified Data.Version              as V
 import           Kempe.AST
 import           Kempe.File
@@ -13,9 +14,9 @@ import           Language.C.AST
 import           Options.Applicative
 import qualified Paths_kempe               as P
 import           Prettyprinter             (LayoutOptions (LayoutOptions), PageWidth (AvailablePerLine), hardline, layoutSmart)
-import           Prettyprinter.Render.Text (hPutDoc, putDoc, renderIO)
+import           Prettyprinter.Render.Text (putDoc, renderIO, renderLazy)
 import           System.Exit               (ExitCode (ExitFailure), exitWith)
-import           System.IO                 (IOMode (ReadMode), stdout, withFile)
+import           System.IO                 (stdout)
 import           System.Info               (arch)
 
 data Arch = Aarch64
@@ -33,8 +34,7 @@ cdecl = putDoc . (<> hardline) . prettyHeaders <=< cDeclFile
 writeCDecl :: FilePath -> FilePath -> IO ()
 writeCDecl fp o = do
     ds <- cDeclFile fp
-    withFile o ReadMode $ \h ->
-        hPutDoc h (prettyHeaders ds)
+    TLIO.writeFile o (renderLazy $ layoutSmart cSettings $ prettyHeaders ds)
 
 fmt :: FilePath -> IO ()
 fmt = renderIO stdout <=< fmap (render . (<> hardline) . prettyModule) . parsedFp
