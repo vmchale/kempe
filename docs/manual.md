@@ -274,6 +274,25 @@ int main(int argc, char *argv[]) {
 
 Unlike the frontend and type checker, the backend is dodgy.
 
+### Generating C Headers
+
+`kc` has the `cdecl` subcommand, which generates headers from exported Kempe
+functions.
+
+For the above example, one would get
+
+```c
+extern int fac(int);
+```
+
+for `cabi` and
+
+```c
+extern int fac(void*, int);
+```
+
+for `armabi`.
+
 ### Cross-Compilation
 
 `kc` is a cross-compiler; the target architecture can be set by passing one of

@@ -2,6 +2,7 @@
 
   * Add `armabi` method of exporting Kempe functions, so that `kc` generates
     suitable code for M1 darwin.
+  * Add `cdecl` subcommand to generate C headers for exported functions
 
 ## 0.2.0.8
 
