@@ -8,7 +8,6 @@
                        , runAlex
                        , runAlexSt
                        , withAlexSt
-                       , lexKempe
                        , AlexPosn (..)
                        , Alex (..)
                        , Token (..)
@@ -375,16 +374,6 @@ newIdent pos t pre@(max', names, uniqs) =
         Nothing -> let i = max' + 1
             in let newName = Name t (Unique i) pos
                 in ((i, M.insert t i names, IM.insert i newName uniqs), newName)
-
-loop :: Alex [Token AlexPosn]
-loop = do
-    tok' <- alexMonadScan
-    case tok' of
-        EOF{} -> pure []
-        _ -> (tok' :) <$> loop
-
-lexKempe :: BSL.ByteString -> Either String [Token AlexPosn]
-lexKempe = flip runAlex loop
 
 runAlexSt :: BSL.ByteString -> Alex a -> Either String (AlexUserState, a)
 runAlexSt inp = withAlexSt inp alexInitUserState

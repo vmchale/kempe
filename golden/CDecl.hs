@@ -5,7 +5,7 @@ import qualified Data.ByteString.Lazy      as BSL
 import           Data.Text.Lazy.Encoding   (encodeUtf8)
 import           Kempe.File
 import           Language.C.AST
-import           Prettyprinter             (Doc, LayoutOptions (..), PageWidth (..), layoutSmart)
+import           Prettyprinter             (Doc, layoutSmart)
 import           Prettyprinter.Render.Text (renderLazy)
 import           Test.Tasty                (TestTree)
 import           Test.Tasty.Golden         (goldenVsString)

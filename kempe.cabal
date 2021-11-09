@@ -41,7 +41,6 @@ flag cross
 library kempe-modules
     exposed-modules:
         Kempe.File
-        Kempe.Lexer
         Kempe.Parser
         Kempe.AST
         Kempe.TyAssign
@@ -71,6 +70,7 @@ library kempe-modules
         Kempe.Name
         Kempe.Error
         Kempe.Error.Warning
+        Kempe.Lexer
         Kempe.AST.Size
         Kempe.Asm.Arm.Type
         Kempe.Asm.Arm.Opt
