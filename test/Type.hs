@@ -30,8 +30,6 @@ typeTests =
         , badType "test/err/merge.kmp" "Type a_5 -- Int a_4 is not as general as type a_3 -- a_3 a_3"
         , badType "test/err/kind.kmp" "Ill-kinded type: '(Maybe_1 Maybe_1)'. Note that type variables have kind \11089 in Kempe."
         , badType "test/err/patternMatch.kmp" "Inexhaustive pattern match."
-        , detectsWarn "test/err/stupid.kmp" "4:1 'rand_1' is defined more than once."
-        , detectsWarn "test/err/questionable.kmp" "3:19 'Some_3' is defined more than once."
         , testAssignment "test/data/ty.kmp"
         , testAssignment "lib/either.kmp"
         , testAssignment "prelude/fn.kmp"
@@ -57,13 +55,6 @@ tyInfer fp = testCase ("Checks types (" ++ fp ++ ")") $ do
     case res of
         Left err -> assertFailure (show $ pretty err)
         Right{}  -> assertBool "Doesn't fail type-checking" True
-
-detectsWarn :: FilePath -> String -> TestTree
-detectsWarn fp msg = testCase ("Warns (" ++ fp ++ ")") $ do
-    res <- warnFile fp
-    case res of
-        Just err -> show (pretty err) @?= msg
-        Nothing  -> assertFailure "Failed to warn!"
 
 badType :: FilePath -> String -> TestTree
 badType fp msg = testCase ("Detects error (" ++ fp ++ ")") $ do
