@@ -16,7 +16,6 @@ import           Data.Bifunctor             (bimap, second)
 import           Data.Foldable              (traverse_)
 import           Data.Functor               (void, ($>))
 import qualified Data.IntMap                as IM
-import           Data.List                  (foldl')
 import           Data.List.NonEmpty         (NonEmpty (..))
 import           Data.Semigroup             ((<>))
 import qualified Data.Set                   as S
@@ -334,7 +333,7 @@ assignTyLeaf n@(Name _ (Unique k) _) vars (tn@(Name _ (Unique i) _), ins) | S.nu
     (tn $> ty, fmap void ins)
 
 app :: KempeTy a -> [Name a] -> KempeTy a
-app = foldl' (\ty n -> TyApp undefined ty (TyVar undefined n))
+app = foldr (\n ty -> TyApp undefined ty (TyVar undefined n))
 
 kindLookup :: TyName a -> TypeM a Kind
 kindLookup n@(Name _ (Unique i) l) = do
