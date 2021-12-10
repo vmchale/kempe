@@ -360,6 +360,13 @@ assignDecl (FunDecl _ n ins os a) = do
     sig <- renameStack $ voidStackType $ StackType (freeVars (ins ++ os)) ins os
     (as, inferred) <- assignAtoms a
     reconcile <- mergeStackTypes sig inferred
+    -- FIXME: this is too simple-minded.
+    -- a b -- a b c
+    -- checks against
+    -- dup
+    -- because it dispatches the constraint b = c...
+    when (inferred `lessGeneral` sig) $
+        throwError $ LessGeneral () sig inferred
     -- assign comes after tyInsert
     pure $ FunDecl reconcile (n $> reconcile) (void <$> ins) (void <$> os) as
 assignDecl (ExtFnDecl _ n ins os cn) = do

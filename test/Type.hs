@@ -30,6 +30,7 @@ typeTests =
         , badType "test/err/merge.kmp" "Type a_5 -- Int a_4 is not as general as type a_3 -- a_3 a_3"
         , badType "test/err/kind.kmp" "Ill-kinded type: '(Maybe_1 Maybe_1)'. Note that type variables have kind \11089 in Kempe."
         , badType "test/err/patternMatch.kmp" "Inexhaustive pattern match."
+        , badType "test/err/typecheck.kmp" "_"
         , testAssignment "test/data/ty.kmp"
         , testAssignment "lib/either.kmp"
         , testAssignment "prelude/fn.kmp"
