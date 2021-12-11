@@ -400,8 +400,17 @@ tyHeader (ExtFnDecl _ n@(Name _ (Unique i) _) ins os _) = do
     modifying tyEnvLens (IM.insert i sig)
 tyHeader TyDecl{} = pure ()
 
-lessGeneral :: StackType a -> StackType a -> Bool
-lessGeneral (StackType _ is os) (StackType _ is' os') = lessGenerals (is ++ os) (is' ++ os')
+lessGeneral :: StackType a -- ^ Inferred type
+            -> StackType a -- ^ Type from signature
+            -> Bool
+lessGeneral (StackType _ is os) (StackType _ is' os') =
+    let il = length is
+        il' = length is'
+        ol = length os
+        ol' = length os'
+        in if il > il' || ol > ol'
+            then lessGenerals (drop (il-il') is) is' || lessGenerals (drop (ol-ol') os) os'
+            else lessGenerals is (drop (il'-il) is') || lessGenerals os (drop (ol'-ol) os')
     where lessGeneralAtom :: KempeTy a -> KempeTy a -> Bool
           lessGeneralAtom TyBuiltin{} TyVar{}                   = True
           lessGeneralAtom TyApp{} TyVar{}                       = True
@@ -410,8 +419,6 @@ lessGeneral (StackType _ is os) (StackType _ is' os') = lessGenerals (is ++ os) 
           lessGenerals :: [KempeTy a] -> [KempeTy a] -> Bool
           lessGenerals [] []               = False
           lessGenerals (ty:tys) (ty':tys') = lessGeneralAtom ty ty' || lessGenerals tys tys'
-          lessGenerals _ []                = False -- shouldn't happen; will be caught later
-          lessGenerals [] _                = False
 
 tyInsert :: KempeDecl a c b -> TypeM () ()
 tyInsert (TyDecl _ tn ns ls) = traverse_ (tyInsertLeaf tn (S.fromList ns)) ls
