@@ -367,14 +367,12 @@ assignDecl (FunDecl _ n ins os a) = do
     -- because it dispatches the constraint b = c...
     when (inferred `lessGeneral` sig) $
         throwError $ LessGeneral () sig inferred
-    -- assign comes after tyInsert
     pure $ FunDecl reconcile (n $> reconcile) (void <$> ins) (void <$> os) as
 assignDecl (ExtFnDecl _ n ins os cn) = do
     traverse_ kindOf (void <$> ins ++ os)
     unless (length os <= 1) $
         throwError $ InvalidCImport () (void n)
     let sig = voidStackType $ StackType S.empty ins os
-    -- assign always comes after tyInsert
     pure $ ExtFnDecl sig (n $> sig) (void <$> ins) (void <$> os) cn
 assignDecl (Export _ abi n) = do
     ty@(StackType _ _ os) <- tyLookup (void n)
