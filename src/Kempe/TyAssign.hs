@@ -16,7 +16,9 @@ import           Data.Bifunctor             (bimap, second)
 import           Data.Foldable              (traverse_)
 import           Data.Functor               (void, ($>))
 import qualified Data.IntMap                as IM
+import qualified Data.IntSet                as IS
 import           Data.List.NonEmpty         (NonEmpty (..))
+import           Data.Maybe                 (mapMaybe)
 import           Data.Semigroup             ((<>))
 import qualified Data.Set                   as S
 import qualified Data.Text                  as T
@@ -293,14 +295,22 @@ assignAtom (Case _ ls) = do
     where dropFst (_, y, z) = (y, z)
 
 assignAtoms :: [Atom b a] -> TypeM () ([Atom (StackType ()) (StackType ())], StackType ())
-assignAtoms = foldM
-    (\seed a -> do { (ty, r) <- assignAtom a ; (fst seed ++ [r] ,) <$> catTypes (snd seed) ty })
-    ([], emptyStackType)
+assignAtoms []  = pure ([], emptyStackType)
+assignAtoms [a] = do
+    (ty, a') <- assignAtom a
+    pure ([a'], ty)
+assignAtoms (a:as) = do
+    (ty, a') <- assignAtom a
+    (as', ty') <- assignAtoms as
+    (a':as' ,) <$> catTypes ty ty'
 
 tyAtoms :: [Atom b a] -> TypeM () (StackType ())
-tyAtoms = foldM
-    (\seed a -> do { tys' <- tyAtom a ; catTypes seed tys' })
-    emptyStackType
+tyAtoms [] = pure emptyStackType
+tyAtoms [a] = tyAtom a
+tyAtoms (a:as) = do
+    ty <- tyAtom a
+    tys <- tyAtoms as
+    catTypes ty tys
 
 -- from size,
 mkHKT :: Int -> Kind
@@ -398,18 +408,33 @@ tyHeader (ExtFnDecl _ n@(Name _ (Unique i) _) ins os _) = do
     modifying tyEnvLens (IM.insert i sig)
 tyHeader TyDecl{} = pure ()
 
+tyVars :: [KempeTy a] -> IS.IntSet
+tyVars = fromVars . mapMaybe go where
+    go (TyVar _ n) = Just n
+    go _           = Nothing
+
+fromVars :: [Name a] -> IS.IntSet
+fromVars = IS.fromList . fmap (unUnique . unique)
+
 lessGeneral :: StackType a -- ^ Inferred type
             -> StackType a -- ^ Type from signature
             -> Bool
 lessGeneral (StackType _ is os) (StackType _ is' os') =
-    let il = length is
-        il' = length is'
-        ol = length os
-        ol' = length os'
-        in if il > il' || ol > ol'
-            then lessGenerals (drop (il-il') is) is' || lessGenerals (drop (ol-ol') os) os'
-            else lessGenerals is (drop (il'-il) is') || lessGenerals os (drop (ol'-ol) os')
-    where lessGeneralAtom :: KempeTy a -> KempeTy a -> Bool
+    if il > il' || ol > ol'
+        then IS.size (tyVars (trimIs++trimOs)) < IS.size (tyVars (is'++os'))
+            || lessGenerals trimIs is' || lessGenerals trimOs os'
+        else IS.size (tyVars (is++os)) < IS.size (tyVars (trimIs'++trimOs'))
+            || lessGenerals is trimIs' || lessGenerals os trimOs'
+    where il = length is
+          il' = length is'
+          ol = length os
+          ol' = length os'
+          trimIs = drop (il-il') is
+          trimIs' = drop (il'-il) is'
+          trimOs = drop (ol-ol') os
+          trimOs' = drop (ol'-ol) os'
+
+          lessGeneralAtom :: KempeTy a -> KempeTy a -> Bool
           lessGeneralAtom TyBuiltin{} TyVar{}                   = True
           lessGeneralAtom TyApp{} TyVar{}                       = True
           lessGeneralAtom (TyApp _ ty ty') (TyApp _ ty'' ty''') = lessGeneralAtom ty ty'' || lessGeneralAtom ty' ty''' -- lazy pattern match?
