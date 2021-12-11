@@ -1,3 +1,3 @@
 ; FIXME: should not typecheck (just generates constraint b = c, which should not be allowed
-pick0 : a b -- a b c
-      =: [ dup ]
+pick : a b c -- a b c a
+     =: [ dip(dip(dup)) ]
