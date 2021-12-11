@@ -1,5 +1,3 @@
-import "lib/bool.kmp"
-
 odd : Int -- Bool
     =: [ dup 0 =
             if( drop False
