@@ -406,14 +406,8 @@ type Vars a = IM.IntMap (Name a)
 -- TODO: do we want strict or lazy?
 type EqState a = State (Vars a)
 
--- FIXME: this is too simple-minded.
--- a -- a b
--- checks against
--- dup
--- because it results in the constraint a = b...
---
--- NEED to check stack types are equivalent up to "alpha-equivalence"
--- (implicit binding with every space/new var!)
+-- need to check stack types are less general up to "alpha-equivalence"
+-- (implicit forall with every new var! in a stack type)
 lessGeneral :: StackType a -- ^ Inferred type
             -> StackType a -- ^ Type from signature
             -> Bool
@@ -434,9 +428,6 @@ lessGeneral (StackType _ is os) (StackType _ is' os') =
           lessGeneralAtom :: KempeTy a -> KempeTy a -> EqState a Bool
           lessGeneralAtom TyBuiltin{} TyVar{}                   = pure True
           lessGeneralAtom TyApp{} TyVar{}                       = pure True
-          -- FIXME: Type a_13 (Maybe_1 a_10) -- a_12 is not as general as type a_9 (Maybe_1 a_9) -- a_9
-          --
-          -- FIXME Type a_38 b_39 a_40 -- b_39 b_42 a_41 is not as general as type a_35 b_36 c_37 -- c_37 b_36 a_35
           lessGeneralAtom (TyApp _ ty ty') (TyApp _ ty'' ty''') = (||) <$> lessGeneralAtom ty ty'' <*> lessGeneralAtom ty' ty''' -- lazy pattern match?
           lessGeneralAtom _ _                                   = pure False
           lessGenerals :: [KempeTy a] -> [KempeTy a] -> EqState a Bool
