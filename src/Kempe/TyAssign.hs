@@ -16,9 +16,7 @@ import           Data.Bifunctor             (bimap, second)
 import           Data.Foldable              (traverse_)
 import           Data.Functor               (void, ($>))
 import qualified Data.IntMap                as IM
-import qualified Data.IntSet                as IS
 import           Data.List.NonEmpty         (NonEmpty (..))
-import           Data.Maybe                 (mapMaybe)
 import           Data.Semigroup             ((<>))
 import qualified Data.Set                   as S
 import qualified Data.Text                  as T
@@ -402,14 +400,6 @@ tyHeader (ExtFnDecl _ n@(Name _ (Unique i) _) ins os _) = do
     let sig = voidStackType $ StackType S.empty ins os -- no free variables allowed in c functions
     modifying tyEnvLens (IM.insert i sig)
 tyHeader TyDecl{} = pure ()
-
-tyVars :: [KempeTy a] -> IS.IntSet
-tyVars = fromVars . mapMaybe go where
-    go (TyVar _ n) = Just n
-    go _           = Nothing
-
-fromVars :: [Name a] -> IS.IntSet
-fromVars = IS.fromList . fmap (unUnique . unique)
 
 type Vars a = IM.IntMap (Name a)
 

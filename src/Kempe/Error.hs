@@ -43,7 +43,7 @@ instance Pretty (Error a) where
     pretty (UnificationFailed _ ty ty')  = "could not unify type" <+> squotes (pretty ty) <+> "with" <+> squotes (pretty ty')
     pretty (TyVarExt _ n)                = "Error in function" <+> pretty n <> ": type variables may not occur in external or exported functions."
     pretty (MonoFailed _)                = "Monomorphization step failed"
-    pretty (LessGeneral _ sty sty')      = "Type" <+> pretty sty' <+> "is not as general as type" <+> pretty sty
+    pretty (LessGeneral _ sty sty')      = "Type" <+> pretty sty' <+> "is not as general as type" <+> pretty sty <+> "or does not match."
     pretty (InvalidCExport _ n)          = "C export" <+> pretty n <+> "has more than one return value"
     pretty (InvalidCImport _ n)          = pretty n <+> "imported functions can have at most one return value"
     pretty (IllKinded _ ty)              = "Ill-kinded type:" <+> squotes (pretty ty) <> ". Note that type variables have kind ⭑ in Kempe."
