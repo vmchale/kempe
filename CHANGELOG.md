@@ -1,5 +1,8 @@
 # kempe
 
+  * Fix bug in typechecking against inferred signatures.
+  * Fix bug in prelude
+
 ## 0.2.0.9
 
   * Add `armabi` method of exporting Kempe functions, so that `kc` generates
