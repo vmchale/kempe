@@ -1,5 +1,7 @@
 # kempe
 
+## 0.2.0.10
+
   * Fix bug in typechecking against inferred signatures.
   * Fix bug in prelude
 
