@@ -11,7 +11,7 @@ module Kempe.TyAssign ( TypeM
 import           Control.Composition        (thread, (.$))
 import           Control.Monad              (foldM, replicateM, unless, when, zipWithM_)
 import           Control.Monad.Except       (throwError)
-import           Control.Monad.State.Strict (StateT, get, gets, modify, put, runStateT)
+import           Control.Monad.State.Strict (State, StateT, evalState, get, gets, modify, put, runStateT)
 import           Data.Bifunctor             (bimap, second)
 import           Data.Foldable              (traverse_)
 import           Data.Functor               (void, ($>))
@@ -370,11 +370,6 @@ assignDecl (FunDecl _ n ins os a) = do
     sig <- renameStack $ voidStackType $ StackType (freeVars (ins ++ os)) ins os
     (as, inferred) <- assignAtoms a
     reconcile <- mergeStackTypes sig inferred
-    -- FIXME: this is too simple-minded.
-    -- a b -- a b c
-    -- checks against
-    -- dup
-    -- because it dispatches the constraint b = c...
     when (inferred `lessGeneral` sig) $
         throwError $ LessGeneral () sig inferred
     pure $ FunDecl reconcile (n $> reconcile) (void <$> ins) (void <$> os) as
@@ -416,15 +411,27 @@ tyVars = fromVars . mapMaybe go where
 fromVars :: [Name a] -> IS.IntSet
 fromVars = IS.fromList . fmap (unUnique . unique)
 
+type Vars a = IM.IntMap (Name a)
+
+-- TODO: do we want strict or lazy?
+type EqState a = State (Vars a)
+
+-- FIXME: this is too simple-minded.
+-- a -- a b
+-- checks against
+-- dup
+-- because it results in the constraint a = b...
+--
+-- NEED to check stack types are equivalent up to "alpha-equivalence"
+-- (implicit binding with every space/new var!)
 lessGeneral :: StackType a -- ^ Inferred type
             -> StackType a -- ^ Type from signature
             -> Bool
 lessGeneral (StackType _ is os) (StackType _ is' os') =
-    if il > il' || ol > ol'
-        then IS.size (tyVars (trimIs++trimOs)) < IS.size (tyVars (is'++os'))
-            || lessGenerals trimIs is' || lessGenerals trimOs os'
-        else IS.size (tyVars (is++os)) < IS.size (tyVars (trimIs'++trimOs'))
-            || lessGenerals is trimIs' || lessGenerals os trimOs'
+    flip evalState mempty $
+        if il > il' || ol > ol'
+            then (||) <$> lessGenerals trimIs is' <*> lessGenerals trimOs os'
+            else (||) <$> lessGenerals is trimIs' <*> lessGenerals os trimOs'
     where il = length is
           il' = length is'
           ol = length os
@@ -434,14 +441,14 @@ lessGeneral (StackType _ is os) (StackType _ is' os') =
           trimOs = drop (ol-ol') os
           trimOs' = drop (ol'-ol) os'
 
-          lessGeneralAtom :: KempeTy a -> KempeTy a -> Bool
-          lessGeneralAtom TyBuiltin{} TyVar{}                   = True
-          lessGeneralAtom TyApp{} TyVar{}                       = True
-          lessGeneralAtom (TyApp _ ty ty') (TyApp _ ty'' ty''') = lessGeneralAtom ty ty'' || lessGeneralAtom ty' ty''' -- lazy pattern match?
-          lessGeneralAtom _ _                                   = False
-          lessGenerals :: [KempeTy a] -> [KempeTy a] -> Bool
-          lessGenerals [] []               = False
-          lessGenerals (ty:tys) (ty':tys') = lessGeneralAtom ty ty' || lessGenerals tys tys'
+          lessGeneralAtom :: KempeTy a -> KempeTy a -> EqState a Bool
+          lessGeneralAtom TyBuiltin{} TyVar{}                   = pure True
+          lessGeneralAtom TyApp{} TyVar{}                       = pure True
+          lessGeneralAtom (TyApp _ ty ty') (TyApp _ ty'' ty''') = (||) <$> lessGeneralAtom ty ty'' <*> lessGeneralAtom ty' ty''' -- lazy pattern match?
+          lessGeneralAtom _ _                                   = pure False
+          lessGenerals :: [KempeTy a] -> [KempeTy a] -> EqState a Bool
+          lessGenerals [] []               = pure False
+          lessGenerals (ty:tys) (ty':tys') = (||) <$> lessGeneralAtom ty ty' <*> lessGenerals tys tys'
 
 tyInsert :: KempeDecl a c b -> TypeM () ()
 tyInsert (TyDecl _ tn ns ls) = traverse_ (tyInsertLeaf tn (S.fromList ns)) ls
