@@ -10,7 +10,7 @@ rotr : a b c -- c a b
      =: [ swap dip(swap) ]
 
 rotl : a b c -- c b a
-     =: [ dip(swap) swap ]
+     =: [ rotr swap ]
 
 ; from https://docs.factorcode.org/content/word-pick%2Ckernel.html
 pick : a b c -- a b c a
