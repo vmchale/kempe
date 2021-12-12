@@ -444,11 +444,23 @@ lessGeneral (StackType _ is os) (StackType _ is' os') =
           lessGeneralAtom :: KempeTy a -> KempeTy a -> EqState a Bool
           lessGeneralAtom TyBuiltin{} TyVar{}                   = pure True
           lessGeneralAtom TyApp{} TyVar{}                       = pure True
+          -- FIXME: Type a_13 (Maybe_1 a_10) -- a_12 is not as general as type a_9 (Maybe_1 a_9) -- a_9
+          --
+          -- FIXME Type a_38 b_39 a_40 -- b_39 b_42 a_41 is not as general as type a_35 b_36 c_37 -- c_37 b_36 a_35
           lessGeneralAtom (TyApp _ ty ty') (TyApp _ ty'' ty''') = (||) <$> lessGeneralAtom ty ty'' <*> lessGeneralAtom ty' ty''' -- lazy pattern match?
           lessGeneralAtom _ _                                   = pure False
           lessGenerals :: [KempeTy a] -> [KempeTy a] -> EqState a Bool
-          lessGenerals [] []               = pure False
-          lessGenerals (ty:tys) (ty':tys') = (||) <$> lessGeneralAtom ty ty' <*> lessGenerals tys tys'
+          lessGenerals [] []                                 = pure False
+          lessGenerals ((TyVar _ n):tys) ((TyVar _ n'):tys') = do
+                st <- get
+                let i = unUnique $ unique n
+                case IM.lookup i st of
+                    Nothing ->
+                        modify (IM.insert i n') *>
+                        lessGenerals tys tys' -- we can skip checking ty `lessGeneral` ty' at the first site
+                    Just n'' ->
+                        (n'' /= n' ||) <$> lessGenerals tys tys'
+          lessGenerals (ty:tys) (ty':tys')                  = (||) <$> lessGeneralAtom ty ty' <*> lessGenerals tys tys'
 
 tyInsert :: KempeDecl a c b -> TypeM () ()
 tyInsert (TyDecl _ tn ns ls) = traverse_ (tyInsertLeaf tn (S.fromList ns)) ls
