@@ -408,6 +408,10 @@ type EqState a = State (Vars a)
 
 -- need to check stack types are less general up to "alpha-equivalence"
 -- (implicit forall with every new var! in a stack type)
+--
+-- Basically the inferred type has to check against the type in the signature.
+-- Which I'm not sure this does; it should be better-founded with an
+-- explanation of why it works (I'm not sure it works)
 lessGeneral :: StackType a -- ^ Inferred type
             -> StackType a -- ^ Type from signature
             -> Bool
@@ -569,7 +573,7 @@ substConstraints _ ty@TyBuiltin{}                       = ty
 substConstraints tys ty@(TyVar _ (Name _ (Unique k) _)) =
     case IM.lookup k tys of
         Just ty'@TyVar{}       -> substConstraints (IM.delete k tys) ty' -- TODO: this is to prevent cyclic lookups: is it right?
-        Just (TyApp l ty0 ty1) -> TyApp l (substConstraints tys ty0) (substConstraints tys ty1)
+        Just (TyApp l ty0 ty1) -> let tys' = IM.delete k tys in TyApp l (substConstraints tys' ty0) (substConstraints tys' ty1) -- FIXME: cyclic?
         Just ty'               -> ty'
         Nothing                -> ty
 substConstraints tys (TyApp l ty ty')                   =
