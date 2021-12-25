@@ -129,20 +129,6 @@ library kempe-modules
     if !flag(cross)
         build-tool-depends: alex:alex, happy:happy
 
-    if impl(ghc >=8.0)
-        ghc-options:
-            -Wincomplete-uni-patterns -Wincomplete-record-updates
-            -Wredundant-constraints -Widentities
-
-    if impl(ghc >=8.4)
-        ghc-options: -Wmissing-export-lists
-
-    if impl(ghc >=8.2)
-        ghc-options: -Wcpp-undef
-
-    if impl(ghc >=8.10)
-        ghc-options: -Wunused-packages
-
 executable kc
     main-is:          Main.hs
     hs-source-dirs:   run
