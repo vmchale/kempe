@@ -104,8 +104,8 @@ inContext um (TyApp l ty ty') = TyApp l (inContext um ty) (inContext um ty')
 
 -- | Perform substitutions before handing off to 'unifyMatch'
 unifyPrep :: UnifyMap
-           -> [(KempeTy (), KempeTy ())]
-           -> Either (Error ()) (IM.IntMap (KempeTy ()))
+          -> [(KempeTy (), KempeTy ())]
+          -> Either (Error ()) (IM.IntMap (KempeTy ()))
 unifyPrep _ [] = Right mempty
 unifyPrep um ((ty, ty'):tys) =
     let ty'' = inContext um ty
