@@ -123,9 +123,9 @@ kmpCompletions = completer . bashCompleter $ "file -X '!*.kmp' -o plusdirs"
 commandP :: Parser Command
 commandP = hsubparser
     (command "typecheck" (info tcP (progDesc "Type-check module contents"))
-    <> command "lint" (info lintP (progDesc "Lint a file")))
+    <> command "lint" (info lintP (progDesc "Lint a file"))
+    <> command "cdecl" (info cdeclP (progDesc "Generate C headers for exported Kempe code")))
     <|> hsubparser (command "fmt" (info fmtP (progDesc "Pretty-print a Kempe file")) <> internal)
-    <|> hsubparser (command "cdecl" (info cdeclP (progDesc "Generate C headers for exported Kempe code")))
     <|> compileP
     where
         tcP = TypeCheck <$> kmpFile
