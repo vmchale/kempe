@@ -22,7 +22,6 @@ import           Control.Monad             ((<=<))
 import           Data.Bifunctor            (bimap)
 import           Data.Functor              (void)
 import           Data.Semigroup            ((<>))
-import qualified Data.Set                  as S
 import           Data.Tuple.Ext            (fst3)
 import           Data.Typeable             (Typeable)
 import           Kempe.AST

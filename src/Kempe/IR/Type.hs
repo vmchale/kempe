@@ -13,17 +13,16 @@ module Kempe.IR.Type ( Stmt (..)
                      , WriteSt (..)
                      ) where
 
-import           Control.DeepSeq            (NFData)
-import           Control.Monad.State.Strict (State)
-import qualified Data.ByteString            as BS
-import qualified Data.ByteString.Lazy       as BSL
-import           Data.Int                   (Int64, Int8)
-import           Data.Semigroup             ((<>))
-import           Data.Text.Encoding         (decodeUtf8)
-import           Data.Word                  (Word8)
-import           GHC.Generics               (Generic)
+import           Control.DeepSeq      (NFData)
+import qualified Data.ByteString      as BS
+import qualified Data.ByteString.Lazy as BSL
+import           Data.Int             (Int64, Int8)
+import           Data.Semigroup       ((<>))
+import           Data.Text.Encoding   (decodeUtf8)
+import           Data.Word            (Word8)
+import           GHC.Generics         (Generic)
 import           Kempe.AST.Size
-import           Prettyprinter              (Doc, Pretty (pretty), braces, brackets, colon, hardline, parens, (<+>))
+import           Prettyprinter        (Doc, Pretty (pretty), braces, brackets, colon, hardline, parens, (<+>))
 import           Prettyprinter.Ext
 
 data WriteSt = WriteSt { wlabels :: [Label]
