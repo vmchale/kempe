@@ -1,5 +1,9 @@
 # kempe
 
+# 0.2.0.12
+
+  * Typechecker is 𝜖 faster
+  
 # 0.2.0.11
 
   * Fix bug in typechecker
