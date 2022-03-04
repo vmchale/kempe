@@ -36,8 +36,7 @@ data KempeTy a = TyBuiltin a BuiltinTy
                | TyApp a (KempeTy a) (KempeTy a) -- type applied to another, e.g. Just Int
                deriving (Generic, NFData, Functor, Eq, Ord) -- questionable eq instance but eh
 
-data StackType b = StackType { quantify :: S.Set (Name b)
-                             , inTypes  :: [KempeTy b]
+data StackType b = StackType { inTypes  :: [KempeTy b]
                              , outTypes :: [KempeTy b]
                              } deriving (Generic, NFData, Eq, Ord)
 
@@ -65,7 +64,7 @@ instance Pretty (KempeTy a) where
     pretty (TyApp _ ty ty') = parens (pretty ty <+> pretty ty')
 
 instance Pretty (StackType a) where
-    pretty (StackType _ ins outs) = sep (fmap pretty ins) <+> "--" <+> sep (fmap pretty outs)
+    pretty (StackType ins outs) = sep (fmap pretty ins) <+> "--" <+> sep (fmap pretty outs)
 
 data ABI = Cabi
          | Kabi

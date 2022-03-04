@@ -59,7 +59,7 @@ instance Pretty a => Pretty (ConsAnn a) where
     pretty (ConsAnn tSz b ty) = braces ("tySz" <+> colon <+> pretty tSz <+> "tag" <+> colon <+> pretty b <+> "type" <+> colon <+> pretty ty)
 
 voidStackType :: StackType a -> StackType ()
-voidStackType (StackType vars ins outs) = StackType (S.map void vars) (void <$> ins) (void <$> outs)
+voidStackType (StackType ins outs) = StackType (void <$> ins) (void <$> outs)
 
 data Pattern c b = PatternInt b Integer
                  | PatternCons { patternKind :: c, patternName :: TyName c } -- a constructed pattern
@@ -273,4 +273,4 @@ freeVars tys = S.fromList (concatMap extrVars tys)
 
 -- | Used in "Kempe.Monomorphize" for patterns
 flipStackType :: StackType () -> StackType ()
-flipStackType (StackType vars is os) = StackType vars os is
+flipStackType (StackType is os) = StackType os is

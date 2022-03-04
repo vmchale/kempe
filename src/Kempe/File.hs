@@ -80,7 +80,7 @@ dumpMono fp = do
     (i, m) <- parseProcess fp
     (mMono, _) <- yeetIO $ monomorphize i m
     putDoc $ prettyTypedModule (fmap (bimap fromMonoConsAnn fromMono) mMono)
-    where fromMono (is, os) = StackType S.empty is os
+    where fromMono (is, os) = StackType is os
           fromMonoConsAnn (ConsAnn _ _ ty) = fromMono ty
 
 dumpIR :: Typeable a => Int -> Declarations a c b -> Doc ann

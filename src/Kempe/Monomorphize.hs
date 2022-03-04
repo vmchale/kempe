@@ -79,8 +79,8 @@ freshName n ty = do
         <$ modifying maxStateLens (+1)
 
 tryMono :: MonadError (Error ()) m => StackType () -> m MonoStackType
-tryMono (StackType _ is os) | S.null (freeVars (is ++ os)) = pure (is, os)
-                            | otherwise = throwError $ MonoFailed ()
+tryMono (StackType is os) | S.null (freeVars (is ++ os)) = pure (is, os)
+                          | otherwise = throwError $ MonoFailed ()
 
 -- | A 'ModuleMap' is a map which retrives the 'KempeDecl' associated with
 -- a given 'Name'
@@ -238,7 +238,7 @@ mkTyDecl _ _ = error "Shouldn't happen."
 
 specializeDecl :: KempeDecl () (StackType ()) (StackType ()) -> StackType () -> MonoM (KempeDecl () (StackType ()) (StackType ()))
 specializeDecl (FunDecl _ n _ _ as) sty = do
-    (Name t u newStackType@(StackType _ is os)) <- renamed n =<< tryMono sty
+    (Name t u newStackType@(StackType is os)) <- renamed n =<< tryMono sty
     pure $ FunDecl newStackType (Name t u newStackType) is os as
 specializeDecl (ExtFnDecl l n tys tys' b) _ = pure $ ExtFnDecl l n tys tys' b
 specializeDecl (Export l abi n) _           = pure $ Export l abi n
@@ -249,7 +249,7 @@ renamedCons :: TyName a -> MonoStackType -> (MonoStackType -> ConsAnn MonoStackT
 renamedCons (Name t i _) sty@(is, os) fAnn = do
     let t' = t <> squishMonoStackType sty
     (Name _ j _) <- freshName t' sty
-    let newStackType = StackType S.empty is os
+    let newStackType = StackType is os
         ann = fAnn sty
     modifying consEnvLens (M.insert (i, newStackType) (j, ann))
     pure (Name t' j newStackType)
@@ -259,7 +259,7 @@ renamed :: Name a -> MonoStackType -> MonoM (Name (StackType ()))
 renamed (Name t i _) sty@(is, os) = do
     let t' = t <> squishMonoStackType sty
     (Name _ j _) <- freshName t' sty
-    let newStackType = StackType S.empty is os
+    let newStackType = StackType is os
     modifying fnEnvLens (M.insert (i, newStackType) j)
     pure (Name t' j newStackType)
 
