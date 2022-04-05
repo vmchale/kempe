@@ -31,6 +31,9 @@
         font-size: 0.9em;
         padding: 1em;
       }
+      h1 {
+        font-size: 1.8em;
+      }
     }
     @media print {
       body {
@@ -135,6 +138,12 @@
     #TOC li {
       list-style: none;
     }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
     #TOC a:not(:hover) {
       text-decoration: none;
     }
@@ -220,78 +229,100 @@
 </header>
 <nav id="TOC" role="doc-toc">
 <ul>
-<li><a href="#introduction">Introduction</a></li>
-<li><a href="#installing-kc">Installing kc</a>
+<li><a href="#introduction" id="toc-introduction">Introduction</a></li>
+<li><a href="#installing-kc" id="toc-installing-kc">Installing kc</a>
 <ul>
-<li><a href="#editor-integration">Editor Integration</a></li>
+<li><a href="#editor-integration" id="toc-editor-integration">Editor
+Integration</a></li>
 </ul></li>
-<li><a href="#kempe-language">Kempe Language</a>
+<li><a href="#kempe-language" id="toc-kempe-language">Kempe Language</a>
 <ul>
-<li><a href="#types">Types</a>
+<li><a href="#types" id="toc-types">Types</a>
 <ul>
-<li><a href="#polymorphism">Polymorphism</a></li>
+<li><a href="#polymorphism" id="toc-polymorphism">Polymorphism</a></li>
 </ul></li>
-<li><a href="#literals">Literals</a></li>
-<li><a href="#builtins">Builtins</a>
+<li><a href="#literals" id="toc-literals">Literals</a></li>
+<li><a href="#builtins" id="toc-builtins">Builtins</a>
 <ul>
-<li><a href="#if-blocks">If Blocks</a></li>
+<li><a href="#if-blocks" id="toc-if-blocks">If Blocks</a></li>
 </ul></li>
-<li><a href="#sum-types">Sum Types</a>
+<li><a href="#sum-types" id="toc-sum-types">Sum Types</a>
 <ul>
-<li><a href="#pattern-matching">Pattern Matching</a></li>
+<li><a href="#pattern-matching" id="toc-pattern-matching">Pattern
+Matching</a></li>
 </ul></li>
-<li><a href="#imports">Imports</a></li>
-<li><a href="#ffi">FFI</a></li>
-<li><a href="#recursion">Recursion</a></li>
-<li><a href="#non-features">Non-Features</a></li>
+<li><a href="#imports" id="toc-imports">Imports</a></li>
+<li><a href="#ffi" id="toc-ffi">FFI</a></li>
+<li><a href="#recursion" id="toc-recursion">Recursion</a></li>
+<li><a href="#non-features" id="toc-non-features">Non-Features</a></li>
 </ul></li>
-<li><a href="#programming-in-kempe">Programming in Kempe</a>
+<li><a href="#programming-in-kempe"
+id="toc-programming-in-kempe">Programming in Kempe</a>
 <ul>
-<li><a href="#invoking-the-compiler">Invoking the Compiler</a>
+<li><a href="#invoking-the-compiler"
+id="toc-invoking-the-compiler">Invoking the Compiler</a>
 <ul>
-<li><a href="#generating-c-headers">Generating C Headers</a></li>
-<li><a href="#cross-compilation">Cross-Compilation</a></li>
+<li><a href="#generating-c-headers"
+id="toc-generating-c-headers">Generating C Headers</a></li>
+<li><a href="#cross-compilation"
+id="toc-cross-compilation">Cross-Compilation</a></li>
 </ul></li>
-<li><a href="#internals">Internals</a>
+<li><a href="#internals" id="toc-internals">Internals</a>
 <ul>
-<li><a href="#c-calls">C Calls</a></li>
-<li><a href="#kempe-abi">Kempe ABI</a></li>
+<li><a href="#c-calls" id="toc-c-calls">C Calls</a></li>
+<li><a href="#kempe-abi" id="toc-kempe-abi">Kempe ABI</a></li>
 </ul></li>
 </ul></li>
-<li><a href="#examples">Examples</a>
+<li><a href="#examples" id="toc-examples">Examples</a>
 <ul>
-<li><a href="#splitmix-pseudorandom-number-generator">Splitmix Pseudorandom Number Generator</a></li>
-<li><a href="#gcd">GCD</a></li>
-<li><a href="#mutual-recursion">Mutual Recursion</a></li>
+<li><a href="#splitmix-pseudorandom-number-generator"
+id="toc-splitmix-pseudorandom-number-generator">Splitmix Pseudorandom
+Number Generator</a></li>
+<li><a href="#gcd" id="toc-gcd">GCD</a></li>
+<li><a href="#mutual-recursion" id="toc-mutual-recursion">Mutual
+Recursion</a></li>
 </ul></li>
 </ul>
 </nav>
 <h1 id="introduction">Introduction</h1>
-<p>Kempe is a stack-based language, and <code>kc</code> is a toy compiler for x86_64 and aarch64.</p>
+<p>Kempe is a stack-based language, and <code>kc</code> is a toy
+compiler for x86_64 and aarch64.</p>
 <h1 id="installing-kc">Installing kc</h1>
-<p>First, install <a href="https://www.haskell.org/cabal/download.html">cabal</a> and <a href="https://www.haskell.org/ghc/download.html">GHC</a>. Then:</p>
+<p>First, install <a
+href="https://www.haskell.org/cabal/download.html">cabal</a> and <a
+href="https://www.haskell.org/ghc/download.html">GHC</a>. Then:</p>
 <pre><code>cabal install kempe</code></pre>
 <p>This provides <code>kc</code>, the Kempe compiler.</p>
-<p><code>kc</code> requires <a href="https://www.nasm.us/">NASM</a> when targeting x86_64.</p>
+<p><code>kc</code> requires <a href="https://www.nasm.us/">NASM</a> when
+targeting x86_64.</p>
 <h2 id="editor-integration">Editor Integration</h2>
-<p>A <a href="https://github.com/vmchale/kempe/tree/master/vim">vim plugin</a> is available.</p>
-<p>To install with <a href="https://github.com/junegunn/vim-plug">vim-plug</a>:</p>
+<p>A <a href="https://github.com/vmchale/kempe/tree/master/vim">vim
+plugin</a> is available.</p>
+<p>To install with <a
+href="https://github.com/junegunn/vim-plug">vim-plug</a>:</p>
 <pre class="vimscript"><code>Plug &#39;vmchale/kempe&#39; , { &#39;rtp&#39; : &#39;vim&#39; }</code></pre>
 <h1 id="kempe-language">Kempe Language</h1>
 <h2 id="types">Types</h2>
-<p>Kempe has a stack-based type system. So if you see a type signature:</p>
+<p>Kempe has a stack-based type system. So if you see a type
+signature:</p>
 <pre><code>next : Word -- Word Word</code></pre>
-<p>that means that the stack must have a <code>Word</code> on it for <code>next</code> to be invoked, and that it will have two <code>Word</code>s on the stack after it is invoked.</p>
+<p>that means that the stack must have a <code>Word</code> on it for
+<code>next</code> to be invoked, and that it will have two
+<code>Word</code>s on the stack after it is invoked.</p>
 <h3 id="polymorphism">Polymorphism</h3>
 <p>Kempe allows polymorphic functions. So we can define:</p>
 <pre><code>id : a -- a
    =: [ ]</code></pre>
 <h2 id="literals">Literals</h2>
 <p>Integer literals have type <code>-- Int</code>.</p>
-<p>Positive literals followed by a <code>u</code> have type <code>-- Word</code>, e.g. <code>1u</code>.</p>
-<p>Negative integer literals are indicated by an underscore, <code>_</code>, i.e. <code>_1</code> has type <code>-- Int</code>.</p>
+<p>Positive literals followed by a <code>u</code> have type
+<code>-- Word</code>, e.g. <code>1u</code>.</p>
+<p>Negative integer literals are indicated by an underscore,
+<code>_</code>, i.e. <code>_1</code> has type <code>-- Int</code>.</p>
 <h2 id="builtins">Builtins</h2>
-<p>The Kempe compiler has a few builtin functions that you can use for arithmetic and for shuffling data around. Many of them are familiar to stack-based programmers:</p>
+<p>The Kempe compiler has a few builtin functions that you can use for
+arithmetic and for shuffling data around. Many of them are familiar to
+stack-based programmers:</p>
 <ul>
 <li><code>dup : a -- a a</code></li>
 <li><code>swap : a b -- b a</code></li>
@@ -326,12 +357,19 @@
 <li><code>xor : Bool Bool -- Bool</code></li>
 <li><code>~ : Int -- Int</code></li>
 </ul>
-<p><code>%</code> is like Haskell’s <code>rem</code> and <code>/</code> is like Haskell’s <code>quot</code>. <code>&gt;&gt;</code>, <code>&lt;&lt;</code>, <code>&gt;&gt;~</code>, and <code>&lt;&lt;~</code> are like Haskell’s <code>rotate</code>; i.e. they are logical shifts (not arithmetic shifts).</p>
-<p>There is one higher-order construct, <code>dip</code>, which we illustrate by example:</p>
+<p><code>%</code> is like Haskell’s <code>rem</code> and <code>/</code>
+is like Haskell’s <code>quot</code>. <code>&gt;&gt;</code>,
+<code>&lt;&lt;</code>, <code>&gt;&gt;~</code>, and
+<code>&lt;&lt;~</code> are like Haskell’s <code>rotate</code>; i.e. they
+are logical shifts (not arithmetic shifts).</p>
+<p>There is one higher-order construct, <code>dip</code>, which we
+illustrate by example:</p>
 <pre><code>nip : a b -- b
     =: [ dip(drop) ]</code></pre>
 <h3 id="if-blocks">If Blocks</h3>
-<p>If-blocks are atoms which contain two blocks of atoms on each arm. If the next item on the stack is <code>True</code>, the first will be executed, otherwise the second.</p>
+<p>If-blocks are atoms which contain two blocks of atoms on each arm. If
+the next item on the stack is <code>True</code>, the first will be
+executed, otherwise the second.</p>
 <pre><code>loop : Int Int -- Int
      =: [ swap dup 0 =
           if( drop
@@ -395,7 +433,9 @@ nip : a b -- b
 </ul>
 <h1 id="programming-in-kempe">Programming in Kempe</h1>
 <h2 id="invoking-the-compiler">Invoking the Compiler</h2>
-<p><code>kc</code> cannot be used to produce executables. Rather, the Kempe compiler will produce <code>.o</code> files which contain functions.</p>
+<p><code>kc</code> cannot be used to produce executables. Rather, the
+Kempe compiler will produce <code>.o</code> files which contain
+functions.</p>
 <p>Kempe functions can be exported with a C ABI:</p>
 <pre><code>fac : Int -- Int
     =: [ dup 0 =
@@ -413,7 +453,9 @@ nip : a b -- b
 <span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>    printf<span class="op">(</span><span class="st">&quot;%d&quot;</span><span class="op">,</span> fac<span class="op">(</span><span class="dv">3</span><span class="op">));</span></span>
 <span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
 <p>The C ABI should work on Unix; it does not target Windows.</p>
-<p>There is also an alternate ABI, <code>armabi</code>, which takes a stack (to be used as the Kempe data stack) as the first argument. One would use it like so:</p>
+<p>There is also an alternate ABI, <code>armabi</code>, which takes a
+stack (to be used as the Kempe data stack) as the first argument. One
+would use it like so:</p>
 <pre><code>%foreign armabi fac</code></pre>
 <div class="sourceCode" id="cb17"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;stdio.h&gt;</span></span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;stdlib.h&gt;</span></span>
@@ -426,37 +468,56 @@ nip : a b -- b
 <span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
 <p>Unlike the frontend and type checker, the backend is dodgy.</p>
 <h3 id="generating-c-headers">Generating C Headers</h3>
-<p><code>kc</code> has the <code>cdecl</code> subcommand, which generates headers from exported Kempe functions.</p>
+<p><code>kc</code> has the <code>cdecl</code> subcommand, which
+generates headers from exported Kempe functions.</p>
 <p>For the above example, one would get</p>
 <div class="sourceCode" id="cb18"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="kw">extern</span> <span class="dt">int</span> fac<span class="op">(</span><span class="dt">int</span><span class="op">);</span></span></code></pre></div>
 <p>for <code>cabi</code> and</p>
 <div class="sourceCode" id="cb19"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="kw">extern</span> <span class="dt">int</span> fac<span class="op">(</span><span class="dt">void</span><span class="op">*,</span> <span class="dt">int</span><span class="op">);</span></span></code></pre></div>
 <p>for <code>armabi</code>.</p>
 <h3 id="cross-compilation">Cross-Compilation</h3>
-<p><code>kc</code> is a cross-compiler; the target architecture can be set by passing one of <code>x64</code> or <code>aarch64</code> to <code>--arch</code>. By default <code>kc</code> targets the architecture of the host machine.</p>
+<p><code>kc</code> is a cross-compiler; the target architecture can be
+set by passing one of <code>x64</code> or <code>aarch64</code> to
+<code>--arch</code>. By default <code>kc</code> targets the architecture
+of the host machine.</p>
 <p>You will need the appropriate assembler installed.</p>
 <h2 id="internals">Internals</h2>
-<p>Kempe maintains its own stack and stores the pointer in <code>rbp</code> (x86) or <code>x19</code> (aarch64).</p>
-<p>Kempe procedures do not require any registers to be preserved across function calls.</p>
+<p>Kempe maintains its own stack and stores the pointer in
+<code>rbp</code> (x86) or <code>x19</code> (aarch64).</p>
+<p>Kempe procedures do not require any registers to be preserved across
+function calls.</p>
 <h3 id="c-calls">C Calls</h3>
-<p>When exporting to C with the <code>cabi</code>, <code>kc</code> generates code that initializes the Kempe data pointer (<code>rbx</code>). Thus, one should avoid calling into Kempe code with <code>cabi</code> too often!</p>
-<p>Note that the Kempe data pointer is static, so calling different Kempe functions in different threads will fail unpredictably.</p>
+<p>When exporting to C with the <code>cabi</code>, <code>kc</code>
+generates code that initializes the Kempe data pointer
+(<code>rbx</code>). Thus, one should avoid calling into Kempe code with
+<code>cabi</code> too often!</p>
+<p>Note that the Kempe data pointer is static, so calling different
+Kempe functions in different threads will fail unpredictably.</p>
 <h3 id="kempe-abi">Kempe ABI</h3>
-<p>Sum types have a guaranteed representation so that they can be used from other languages.</p>
+<p>Sum types have a guaranteed representation so that they can be used
+from other languages.</p>
 <p>Consider:</p>
 <pre><code>type Param a b c
     { C a b b
     | D a b c
     }</code></pre>
-<p>Kempe types always have the same size; a value constructed with <code>C</code> will occupy the same number of bytes on the stack as a value constructed with <code>D</code>.</p>
+<p>Kempe types always have the same size; a value constructed with
+<code>C</code> will occupy the same number of bytes on the stack as a
+value constructed with <code>D</code>.</p>
 <p>So, for instance</p>
 <pre><code>mkD : Int8 Int Int8 -- (((Param Int8) Int) Int8)
     =: [ D ]</code></pre>
-<p>will pad the value with 7 bytes, as a <code>(((Param Int8) Int) Int8)</code> constructed with <code>C</code> would be 7 bytes bigger.</p>
+<p>will pad the value with 7 bytes, as a
+<code>(((Param Int8) Int) Int8)</code> constructed with <code>C</code>
+would be 7 bytes bigger.</p>
 <h1 id="examples">Examples</h1>
-<h2 id="splitmix-pseudorandom-number-generator">Splitmix Pseudorandom Number Generator</h2>
-<p>The generator in question comes from a <a href="https://dl.acm.org/doi/10.1145/2714064.2660195">recent paper</a>.</p>
-<p>Implementation turns out to be quite nice thanks to Kempe’s multiple return values:</p>
+<h2 id="splitmix-pseudorandom-number-generator">Splitmix Pseudorandom
+Number Generator</h2>
+<p>The generator in question comes from a <a
+href="https://dl.acm.org/doi/10.1145/2714064.2660195">recent
+paper</a>.</p>
+<p>Implementation turns out to be quite nice thanks to Kempe’s multiple
+return values:</p>
 <pre><code>; given a seed, return a random value and the new seed
 next : Word -- Word Word
      =: [ 0x9e3779b97f4a7c15u +~ dup
@@ -466,7 +527,8 @@ next : Word -- Word Word
         ]
 
 %foreign kabi next</code></pre>
-<p>Compare this <a href="http://prng.di.unimi.it/splitmix64.c">C implementation</a>:</p>
+<p>Compare this <a href="http://prng.di.unimi.it/splitmix64.c">C
+implementation</a>:</p>
 <div class="sourceCode" id="cb23"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;stdint.h&gt;</span></span>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a><span class="co">// modified to have &quot;&quot;multiple return&quot;&quot; with destination-passing style</span></span>
