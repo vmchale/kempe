@@ -13,7 +13,7 @@ BINS := bin/x86_64-linux-kc.lz \
     bin/aarch64-linux-kc.zst
 
 install:
-	cabal install exe:kc --overwrite-policy=always -w ghc-9.2.1
+	cabal install exe:kc --overwrite-policy=always -w ghc-9.2.2
 	strip $$(readlink -f $$(which kc))
 
 moddeps.svg: $(HS_SRC)
