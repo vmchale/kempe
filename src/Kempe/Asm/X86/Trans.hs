@@ -8,8 +8,8 @@ module Kempe.Asm.X86.Trans ( irToX86
 import           Data.Foldable.Ext
 import           Data.List          (scanl')
 import           Data.Word          (Word8)
-import           Kempe.AST.Size
 import           Kempe.Asm.X86.Type
+import           Kempe.AST.Size
 import           Kempe.IR.Monad
 import qualified Kempe.IR.Type      as IR
 

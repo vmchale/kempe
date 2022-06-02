@@ -24,9 +24,9 @@ import           Data.Functor              (void)
 import           Data.Semigroup            ((<>))
 import           Data.Tuple.Ext            (fst3)
 import           Data.Typeable             (Typeable)
-import           Kempe.AST
 import qualified Kempe.Asm.Arm.Type        as Arm
 import qualified Kempe.Asm.X86.Type        as X86
+import           Kempe.AST
 import           Kempe.CGen
 import           Kempe.Check.Lint
 import           Kempe.Check.Pattern

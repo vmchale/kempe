@@ -150,4 +150,3 @@ instance Pretty IntBinOp where
     pretty WordShiftLIR = "<<"
     pretty WordModIR    = "%~"
     pretty WordDivIR    = "/~"
-

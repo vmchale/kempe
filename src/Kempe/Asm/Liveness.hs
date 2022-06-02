@@ -1,8 +1,7 @@
 -- FIXME: this module is slow
 
 -- | Based on the Appel book.
-module Kempe.Asm.Liveness ( Liveness
-                          , reconstruct
+module Kempe.Asm.Liveness ( reconstruct
                           ) where
 
 import           Data.Copointed

@@ -24,7 +24,7 @@ import           Data.Word               (Word8)
 import           GHC.Generics            (Generic)
 import           Kempe.Asm.Pretty
 import           Kempe.Asm.Type
-import           Prettyprinter           (Doc, Pretty (pretty), brackets, colon, concatWith, hardline, (<+>))
+import           Prettyprinter           (Doc, Pretty (pretty), brackets, colon, hardline, (<+>))
 import           Prettyprinter.Ext
 
 type Label = Word
@@ -295,7 +295,7 @@ prettyAsm :: (As8 reg, Pretty reg) => [X86 reg a] -> Doc ann
 prettyAsm = ((prolegomena <#> macros <#> "section .text" <> hardline) <>) . prettyLines . fmap pretty
 
 prettyDebugAsm :: (As8 reg, Pretty reg) => [X86 reg Liveness] -> Doc ann
-prettyDebugAsm = concatWith (<#>) . fmap prettyLive
+prettyDebugAsm = prettyLines . fmap prettyLive
 
 prolegomena :: Doc ann
 prolegomena = "section .bss" <> hardline <> "kempe_data: resb 0x8012" -- 32 kb

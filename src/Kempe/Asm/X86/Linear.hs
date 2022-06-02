@@ -4,8 +4,7 @@
 -- | Linear scan register allocator
 --
 -- See: https://web.stanford.edu/class/archive/cs/cs143/cs143.1128/lectures/17/Slides17.pdf
-module Kempe.Asm.X86.Linear ( X86Reg (..)
-                            , allocRegs
+module Kempe.Asm.X86.Linear ( allocRegs
                             ) where
 
 import           Control.Monad.State.Strict (State, evalState, gets)

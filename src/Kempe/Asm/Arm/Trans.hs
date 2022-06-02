@@ -9,8 +9,8 @@ import           Data.Foldable.Ext  (foldMapA)
 import           Data.Int           (Int64)
 import           Data.List          (scanl')
 import           Data.Semigroup     ((<>))
-import           Kempe.AST.Size
 import           Kempe.Asm.Arm.Type
+import           Kempe.AST.Size
 import           Kempe.IR.Monad
 import qualified Kempe.IR.Type      as IR
 import           System.Info        (arch, os)

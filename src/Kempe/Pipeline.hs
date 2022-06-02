@@ -9,8 +9,6 @@ import           Control.Composition       ((.*))
 import           Control.Exception         (throw)
 import           Data.Bifunctor            (first)
 import           Data.Typeable             (Typeable)
-import           Kempe.AST
-import           Kempe.AST.Size
 import qualified Kempe.Asm.Arm.ControlFlow as Arm
 import qualified Kempe.Asm.Arm.Linear      as Arm
 import           Kempe.Asm.Arm.Opt
@@ -21,6 +19,8 @@ import qualified Kempe.Asm.X86.ControlFlow as X86
 import qualified Kempe.Asm.X86.Linear      as X86
 import           Kempe.Asm.X86.Trans
 import qualified Kempe.Asm.X86.Type        as X86
+import           Kempe.AST
+import           Kempe.AST.Size
 import           Kempe.Check.Restrict
 import           Kempe.IR
 import           Kempe.IR.Opt
