@@ -13,7 +13,7 @@ BINS := bin/x86_64-linux-kc.lz \
     bin/aarch64-linux-kc.zst
 
 install:
-	cabal install exe:kc --overwrite-policy=always -w ghc-9.2.3
+	cabal install exe:kc --overwrite-policy=always -w ghc-9.2.4
 	strip $$(readlink -f $$(which kc))
 
 moddeps.svg: $(HS_SRC)
@@ -72,7 +72,7 @@ bin/aarch64-linux-kc: $(HS_SRC)
 
 bin/x86_64-linux-kc: $(HS_SRC)
 	@mkdir -p $(dir $@)
-	cabal build exe:kc -w ghc-9.2.3
+	cabal build exe:kc -w ghc-9.2.4
 	export BIN=$$(fd 'x86_64-linux.*kc$$' dist-newstyle -t x -p -I); \
 	    cp $$BIN $@ ; \
 	    strip $@
