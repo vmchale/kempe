@@ -1,5 +1,9 @@
 # kempe
 
+## 0.2.0.13
+
+  * Update for latest `alex` templates
+
 ## 0.2.0.12
 
   * Typechecker is 𝜖 faster
