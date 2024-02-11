@@ -6,6 +6,7 @@
 # Documentation
 - [ ] http://texdoc.net/texmf-dist/doc/latex/bytefield/bytefield.pdf
 # Examples
+- [ ] https://github.com/Keith-Cancel/k-hash/blob/main/khash.h
 - [ ] delink?
 - [x] Primality test (and link to C...)
   - [ ] Totient function

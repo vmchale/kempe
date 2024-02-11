@@ -178,16 +178,8 @@ instance (Pretty reg) => Pretty (Addr reg) where
     pretty (AddRCPlus r i)   = brackets (pretty r <~> prettyInt i)
 
 -- | See: https://developer.arm.com/documentation/dui0068/b/arm-instruction-reference/conditional-execution?lang=en
-data Cond = Eq
-          | Neq
-          | UnsignedLeq
-          | UnsignedGeq
-          | UnsignedLt
-          | Geq
-          | Lt
-          | Gt
-          | Leq
-          deriving (Generic, NFData)
+data Cond = Eq | Neq | UnsignedLeq | UnsignedGeq | UnsignedLt
+          | Geq | Lt | Gt | Leq deriving (Generic, NFData)
 
 instance Pretty Cond where
     pretty Eq          = "EQ"
@@ -291,7 +283,9 @@ prettyAsm = (<> hardline) . ((prolegomena <#> macros <#> ".text" <> hardline) <>
 
 -- http://www.mathcs.emory.edu/~cheung/Courses/255/Syl-ARM/7-ARM/array-define.html
 prolegomena :: Doc ann
-prolegomena = ".data" <#> "kempe_data: .skip 32768" -- 32kb
+prolegomena = ".p2align 3" <#> ".data" <#> "kempe_data: .skip 32768" -- 32kb
+-- see https://stackoverflow.com/questions/65748033/how-to-fix-ld-warning-arm64-function-not-4-byte-aligned-warning
+-- since mine are byte-aligned
 
 macros :: Doc ann
 macros = prettyLines
