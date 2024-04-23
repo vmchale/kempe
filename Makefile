@@ -72,7 +72,7 @@ bin/aarch64-linux-kc: $(HS_SRC)
 
 bin/x86_64-linux-kc: $(HS_SRC)
 	@mkdir -p $(dir $@)
-	cabal build exe:kc -w ghc-9.2.4
+	cabal build exe:kc
 	export BIN=$$(fd 'x86_64-linux.*kc$$' dist-newstyle -t x -p -I); \
 	    cp $$BIN $@ ; \
 	    strip $@
