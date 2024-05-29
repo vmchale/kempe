@@ -17,7 +17,6 @@ import           Control.DeepSeq    (NFData)
 import qualified Data.ByteString    as BS
 import           Data.Copointed
 import           Data.Int           (Int64, Int8)
-import           Data.Semigroup     ((<>))
 import           Data.Text.Encoding (decodeUtf8)
 import           Data.Word          (Word16)
 import           GHC.Generics       (Generic)
@@ -232,7 +231,7 @@ data Arm reg a = Branch { ann :: a, label :: Label } -- like jump
                deriving (Functor, Generic, NFData)
 
 -- | Don't call this on a negative number!
-prettyUInt :: (Integral a, Show a) => a -> Doc b
+prettyUInt :: Integral a => a -> Doc b
 prettyUInt i = "#" <> prettyHex i
 
 prettyInt :: (Pretty a) => a -> Doc b

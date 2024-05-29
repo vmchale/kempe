@@ -4,11 +4,11 @@
 module Kempe.Inline ( inline
                     ) where
 
+import qualified Data.Functor       as Fun
 import           Data.Graph         (Graph, Vertex, graphFromEdges, path)
 import qualified Data.IntMap        as IM
 import qualified Data.List.NonEmpty as NE
 import           Data.Maybe         (fromMaybe, mapMaybe)
-import           Data.Semigroup     ((<>))
 import           Data.Tuple.Ext     (third3)
 import           Kempe.AST
 import           Kempe.Name
@@ -32,7 +32,7 @@ inline m = fmap inlineDecl m
           inlineAtom declName (Dip l as) =
             [Dip l (inlineAtoms declName as)]
           inlineAtom declName (Case l ls) =
-            let (ps, ass) = NE.unzip ls
+            let (ps, ass) = Fun.unzip ls
                 in [Case l (NE.zip ps $ fmap (inlineAtoms declName) ass)]
           inlineAtom _ a = [a]
           fnMap = mkFnModuleMap m

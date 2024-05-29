@@ -8,7 +8,6 @@ module Kempe.Asm.Type ( ControlAnn (..)
 
 import           Control.DeepSeq (NFData)
 import qualified Data.IntSet     as IS
-import           Data.Semigroup  ((<>))
 import           GHC.Generics    (Generic)
 import           Prettyprinter   (Pretty (pretty), braces, punctuate, (<+>))
 

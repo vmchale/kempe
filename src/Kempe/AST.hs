@@ -35,10 +35,10 @@ import           Data.Bifunctor          (Bifunctor (..))
 import qualified Data.ByteString.Lazy    as BSL
 import           Data.Foldable           (toList)
 import           Data.Functor            (void)
+import qualified Data.Functor            as Fun
 import           Data.Int                (Int64, Int8)
 import           Data.List.NonEmpty      (NonEmpty)
 import qualified Data.List.NonEmpty      as NE
-import           Data.Semigroup          ((<>))
 import qualified Data.Set                as S
 import           Data.Text.Lazy.Encoding (decodeUtf8)
 import           Data.Word               (Word8)
@@ -138,7 +138,7 @@ instance Bifunctor Atom where
     first f (Dip l as)      = Dip l (fmap (first f) as)
     first f (If l as as')   = If l (fmap (first f) as) (fmap (first f) as')
     first f (Case l ls)     =
-        let (ps, aLs) = NE.unzip ls
+        let (ps, aLs) = Fun.unzip ls
             in Case l $ NE.zip (fmap (first f) ps) (fmap (fmap (first f)) aLs)
 
 data BuiltinFn = Drop

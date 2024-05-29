@@ -6,16 +6,17 @@ module Kempe.IR ( writeModule
                 , size
                 ) where
 
-import           Data.Foldable              (toList, traverse_)
-import           Data.List.NonEmpty         (NonEmpty (..))
-import qualified Data.List.NonEmpty         as NE
 -- strict b/c it's faster according to benchmarks
 import           Control.Monad              (zipWithM)
 import           Control.Monad.State.Strict (State, gets, modify, runState)
 import           Data.Bifunctor             (second)
+import           Data.Foldable              (toList, traverse_)
 import           Data.Foldable.Ext
+import qualified Data.Functor               as Fun
 import           Data.Int                   (Int64)
 import qualified Data.IntMap                as IM
+import           Data.List.NonEmpty         (NonEmpty (..))
+import qualified Data.List.NonEmpty         as NE
 import           Data.Text.Encoding         (encodeUtf8)
 import           Kempe.AST
 import           Kempe.AST.Size
@@ -244,7 +245,7 @@ writeAtom _ _ (Case ([], _) _) = error "Internal error: Ill-typed case statement
 writeAtom env l (Case _ ((_, as) :| [])) =
     (dataPointerDec 1:) <$> writeAtoms env l as
 writeAtom env l (Case (is, _) ls) =
-    let (ps, ass) = NE.unzip ls
+    let (ps, ass) = Fun.unzip ls
         decSz = case last is of
             TyBuiltin _ TyInt  -> 8
             TyBuiltin _ TyWord -> 8

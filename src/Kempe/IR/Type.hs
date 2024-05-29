@@ -17,7 +17,6 @@ import           Control.DeepSeq      (NFData)
 import qualified Data.ByteString      as BS
 import qualified Data.ByteString.Lazy as BSL
 import           Data.Int             (Int64, Int8)
-import           Data.Semigroup       ((<>))
 import           Data.Text.Encoding   (decodeUtf8)
 import           Data.Word            (Word8)
 import           GHC.Generics         (Generic)

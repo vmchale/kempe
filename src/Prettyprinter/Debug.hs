@@ -5,8 +5,7 @@ module Prettyprinter.Debug ( prettyBind
                            , (<#*>)
                            ) where
 
-import           Data.Semigroup ((<>))
-import           Prettyprinter  (Doc, Pretty (pretty), hardline, indent, (<+>))
+import           Prettyprinter (Doc, Pretty (pretty), hardline, indent, (<+>))
 
 
 (<#*>) :: Doc a -> Doc a -> Doc a

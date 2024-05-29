@@ -10,7 +10,6 @@ import           Data.Foldable              (traverse_)
 import qualified Data.IntMap                as IM
 import qualified Data.IntSet                as IS
 import           Data.Maybe                 (fromMaybe)
-import           Data.Semigroup             ((<>))
 import qualified Data.Set                   as S
 import           Kempe.Asm.Arm.Type
 import           Kempe.Asm.Type

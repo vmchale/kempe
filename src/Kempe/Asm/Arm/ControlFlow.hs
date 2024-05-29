@@ -7,7 +7,6 @@ import           Data.Bifunctor             (first, second)
 import           Data.Functor               (($>))
 import qualified Data.IntSet                as IS
 import qualified Data.Map                   as M
-import           Data.Semigroup             ((<>))
 import           Kempe.Asm.Arm.Type
 import           Kempe.Asm.Type
 
