@@ -1,6 +1,6 @@
 cabal-version:   3.0
 name:            kempe
-version:         0.2.0.13
+version:         0.2.0.14
 license:         BSD-3-Clause
 license-file:    LICENSE
 copyright:       Copyright: (c) 2020-2022 Vanessa McHale
@@ -97,7 +97,7 @@ library kempe-modules
 
     ghc-options:      -Wall
     build-depends:
-        base >=4.9 && <5,
+        base >=4.19 && <5,
         array,
         bytestring,
         containers >=0.6.0.0,

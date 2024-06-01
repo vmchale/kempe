@@ -17,7 +17,6 @@ import qualified Data.ByteString         as BS
 import qualified Data.ByteString.Lazy    as BSL
 import           Data.Copointed
 import           Data.Int                (Int64, Int8)
-import           Data.Semigroup          ((<>))
 import           Data.Text.Encoding      (decodeUtf8)
 import qualified Data.Text.Lazy.Encoding as TL
 import           Data.Word               (Word8)

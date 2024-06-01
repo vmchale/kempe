@@ -26,7 +26,7 @@ infixr 6 <~>
 (<~>) :: Doc a -> Doc a -> Doc a
 (<~>) x y = x <> ", " <> y
 
-prettyHex :: (Integral a, Show a) => a -> Doc ann
+prettyHex :: Integral a => a -> Doc ann
 prettyHex x = "0x" <> pretty (showHex x mempty)
 
 prettyLines :: [Doc ann] -> Doc ann

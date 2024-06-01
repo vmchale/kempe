@@ -21,7 +21,6 @@ import           Control.Exception         (Exception, throwIO)
 import           Control.Monad             ((<=<))
 import           Data.Bifunctor            (bimap)
 import           Data.Functor              (void)
-import           Data.Semigroup            ((<>))
 import           Data.Tuple.Ext            (fst3)
 import           Data.Typeable             (Typeable)
 import qualified Kempe.Asm.Arm.Type        as Arm

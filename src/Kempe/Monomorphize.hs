@@ -28,7 +28,6 @@ import qualified Data.IntMap                as IM
 import           Data.List                  (elemIndex, find, groupBy, partition)
 import qualified Data.Map                   as M
 import           Data.Maybe                 (fromMaybe, mapMaybe)
-import           Data.Semigroup             ((<>))
 import qualified Data.Set                   as S
 import qualified Data.Text                  as T
 import           Data.Tuple                 (swap)
@@ -219,7 +218,7 @@ sizeLeaf fv tys = do
 
 insTyDecl :: KempeDecl a c b -> MonoM ()
 insTyDecl (TyDecl _ (Name _ (Unique k) _) fv leaves) = do
-    leafSizes <- traverse (sizeLeaf fv) (fmap snd leaves)
+    leafSizes <- traverse (sizeLeaf fv.snd) leaves
     let consSz = \tys -> 1 + maximum (($tys) <$> leafSizes) -- for the tag
     modifying szEnvLens (IM.insert k consSz)
 insTyDecl _ = error "Shouldn't happen."
