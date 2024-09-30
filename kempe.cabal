@@ -98,6 +98,7 @@ library kempe-modules
     ghc-options:      -Wall -Wmissing-export-lists -Wcpp-undef
                       -Wincomplete-uni-patterns -Wincomplete-record-updates
                       -Wredundant-constraints -Widentities -Wunused-packages
+                      -Wno-x-partial -Wno-missing-signatures
 
     build-depends:
         base >=4.19 && <5,
