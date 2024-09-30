@@ -95,7 +95,10 @@ library kempe-modules
         FlexibleContexts GeneralizedNewtypeDeriving OverloadedStrings
         StandaloneDeriving TupleSections DeriveAnyClass
 
-    ghc-options:      -Wall
+    ghc-options:      -Wall -Wmissing-export-lists -Wcpp-undef
+                      -Wincomplete-uni-patterns -Wincomplete-record-updates
+                      -Wredundant-constraints -Widentities -Wunused-packages
+
     build-depends:
         base >=4.19 && <5,
         array,
@@ -112,20 +115,6 @@ library kempe-modules
         process >=1.2.3.0,
         temporary
 
-    if impl(ghc >=8.0)
-        ghc-options:
-            -Wincomplete-uni-patterns -Wincomplete-record-updates
-            -Wredundant-constraints -Widentities
-
-    if impl(ghc >=8.4)
-        ghc-options: -Wmissing-export-lists
-
-    if impl(ghc >=8.2)
-        ghc-options: -Wcpp-undef
-
-    if impl(ghc >=8.10)
-        ghc-options: -Wunused-packages
-
     if !flag(cross)
         build-tool-depends: alex:alex >=3.3.0.0, happy:happy >=1.17.1
 
@@ -136,6 +125,10 @@ executable kc
     autogen-modules:  Paths_kempe
     default-language: Haskell2010
     ghc-options:      -Wall -rtsopts -with-rtsopts=-A4m
+                      -Wmissing-export-lists -Wcpp-undef
+                      -Wincomplete-uni-patterns -Wincomplete-record-updates
+                      -Wredundant-constraints -Widentities -Wunused-packages
+
     build-depends:
         base,
         optparse-applicative,
@@ -143,20 +136,6 @@ executable kc
         prettyprinter >=1.7.0,
         bytestring,
         text
-
-    if impl(ghc >=8.0)
-        ghc-options:
-            -Wincomplete-uni-patterns -Wincomplete-record-updates
-            -Wredundant-constraints -Widentities
-
-    if impl(ghc >=8.4)
-        ghc-options: -Wmissing-export-lists
-
-    if impl(ghc >=8.2)
-        ghc-options: -Wcpp-undef
-
-    if impl(ghc >=8.10)
-        ghc-options: -Wunused-packages
 
 test-suite kempe-test
     type:             exitcode-stdio-1.0
@@ -170,6 +149,9 @@ test-suite kempe-test
 
     default-language: Haskell2010
     ghc-options:      -threaded -rtsopts "-with-rtsopts=-N -K1K" -Wall
+                      -Wmissing-export-lists -Wcpp-undef
+                      -Wincomplete-uni-patterns -Wincomplete-record-updates
+                      -Wredundant-constraints -Widentities -Wunused-packages
     build-depends:
         base,
         kempe-modules,
@@ -182,20 +164,6 @@ test-suite kempe-test
         text,
         composition-prelude
 
-    if impl(ghc >=8.0)
-        ghc-options:
-            -Wincomplete-uni-patterns -Wincomplete-record-updates
-            -Wredundant-constraints -Widentities
-
-    if impl(ghc >=8.4)
-        ghc-options: -Wmissing-export-lists
-
-    if impl(ghc >=8.2)
-        ghc-options: -Wcpp-undef
-
-    if impl(ghc >=8.10)
-        ghc-options: -Wunused-packages
-
 test-suite kempe-golden
     type:             exitcode-stdio-1.0
     main-is:          Golden.hs
@@ -206,6 +174,9 @@ test-suite kempe-golden
 
     default-language: Haskell2010
     ghc-options:      -threaded -rtsopts "-with-rtsopts=-N -K1K" -Wall
+                      -Wmissing-export-lists -Wcpp-undef
+                      -Wincomplete-uni-patterns -Wincomplete-record-updates
+                      -Wredundant-constraints -Widentities -Wunused-packages
     build-depends:
         base,
         kempe-modules,
@@ -219,26 +190,15 @@ test-suite kempe-golden
         prettyprinter,
         text
 
-    if impl(ghc >=8.0)
-        ghc-options:
-            -Wincomplete-uni-patterns -Wincomplete-record-updates
-            -Wredundant-constraints -Widentities
-
-    if impl(ghc >=8.4)
-        ghc-options: -Wmissing-export-lists
-
-    if impl(ghc >=8.2)
-        ghc-options: -Wcpp-undef
-
-    if impl(ghc >=8.10)
-        ghc-options: -Wunused-packages
-
 benchmark kempe-bench
     type:             exitcode-stdio-1.0
     main-is:          Bench.hs
     hs-source-dirs:   bench
     default-language: Haskell2010
-    ghc-options:      -Wall -rtsopts -with-rtsopts=-A4m
+    ghc-options:      -Wall -rtsopts -with-rtsopts=-A4m -Wcpp-undef
+                      -Wincomplete-uni-patterns -Wincomplete-record-updates
+                      -Wredundant-constraints -Widentities -Wunused-packages
+                      -Wmissing-export-lists
     build-depends:
         base,
         kempe-modules,
@@ -247,17 +207,3 @@ benchmark kempe-bench
         prettyprinter,
         text,
         temporary
-
-    if impl(ghc >=8.0)
-        ghc-options:
-            -Wincomplete-uni-patterns -Wincomplete-record-updates
-            -Wredundant-constraints -Widentities
-
-    if impl(ghc >=8.4)
-        ghc-options: -Wmissing-export-lists
-
-    if impl(ghc >=8.2)
-        ghc-options: -Wcpp-undef
-
-    if impl(ghc >=8.10)
-        ghc-options: -Wunused-packages
